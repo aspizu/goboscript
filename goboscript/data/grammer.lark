@@ -1,0 +1,25 @@
+!start: onflag
+!onflag: "onflag" stack
+!stack: "{" statement+ "}"
+!statement: /[a-zA-Z0-9_]+/ " " (expr ","?)+ ";"
+!expr: expr|not|or|and|eq|gt|lt|add|sub|mul|div|bool|num|name|call|string
+!call: /[a-zA-Z0-9_]+/ "(" (expr ","?)* ")"
+!not: "not" expr
+!or: expr "or" expr
+!and: expr "and" expr
+!eq: expr "=" expr
+!gt: expr "<" expr
+!lt: expr ">" expr
+!add: expr "+" expr
+!sub: expr "-" expr
+!mul: expr "*" expr
+!div: expr "/" expr
+
+num: /[0-9.]+/
+name: /[a-zA-Z0-9_]+/
+bool: /(true|false)/
+string: ESCAPED_STRING
+
+%import common.WS
+%import common.ESCAPED_STRING
+%ignore WS
