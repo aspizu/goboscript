@@ -1,9 +1,0 @@
-def ln_rect(x, y, w, h) {
-    setPenSize(1);
-    goto(x, y);
-    penDown();
-    goto(x + w - 1, y + h - 1);
-    goto(x, y + h - 1);
-    goto(x, y);
-    penUp();
-}
