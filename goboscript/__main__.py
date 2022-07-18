@@ -1,7 +1,4 @@
-from parser import parse
+import sys
+import project
 
-
-with open("examples/demo/main.gs") as fp:
-    file = fp.read()
-    tree = parse(file)
-    print(tree)
+project.build_project(sys.argv[1], sys.argv[2])

@@ -59,6 +59,12 @@
 
         list[expression] = expression; // replace element expression of list with expression
 
+            somelist.delete  10;
+            somelist.insert  10, item;
+            somelist.append  item;
+            say  somelist.contains(item);
+            say  somelist.index(item);
+        
     // Control
 
     if boolean_expression {
@@ -102,7 +108,15 @@
 
         // Proecdures can only be defined top-level and are local to this file
 
-    // Pre processor
+    // Pre processor and sprite declarations
+
+    costumes "/assets/main/*.png";
+
+    costumes "/assets/main/blank.png", "/assets/main/character.png";
+
+    sounds "/assets/main/*.wav";
+
+    sounds "/assets/main/alert.wav", "/assets/main/character.wav";
 
     use "file.gs";
 

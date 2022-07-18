@@ -1,2 +1,2 @@
 # goboscript
-Goboscript is a text-based programming language that transpiles 1:1 to Scratch.
+Goboscript ही एक प्रोग्रामिंग भाषा आहे जी Scratch मध्ये बदलते.
