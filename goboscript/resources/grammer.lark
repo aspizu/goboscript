@@ -1,0 +1,36 @@
+start: toplevel*
+
+toplevel: "costumes" STRING ("," STRING)* ";" -> costumes
+    | "sounds" STRING ("," STRING)* ";"       -> sounds
+    | "use" STRING ";"                        -> use
+    | "def" NAME [NAME ("," NAME)*] stack     -> deff
+    | NAME _exprlist stack                    -> hat
+
+stack: "{" statement* "}"
+
+statement: NAME _exprlist ";"
+    | NAME "=" expr ";"            -> varset
+    | NAME "=" "[" "]" ";"         -> lstset
+    | "if" expr stack              -> iff
+    | "if" expr stack "else" stack -> ifelse
+    | "repeat" expr stack          -> repeat
+    | "until" expr stack           -> until
+    | NAME "." NAME _exprlist ";"  -> ofstatement
+
+?expr: "(" expr ")"
+    | NAME "(" _exprlist ")"          -> reporter
+    | NAME "." NAME "(" _exprlist ")" -> ofreporter
+    | "@"NAME                         -> argument
+    | NAME                            -> var
+    | NUMBER | BOOL | STRING
+
+_exprlist: [expr ("," expr)*]
+
+NAME:   /[a-zA-Z_][a-zA-Z0-9_]*/
+STRING: /"([^"\\]|\\.)*"/
+NUMBER: /[0-9.]+/
+BOOL:   "true" | "false"
+
+%ignore " "
+%ignore "\n"
+%ignore "\t"

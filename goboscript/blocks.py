@@ -123,6 +123,7 @@ STATEMENT_BLOCKS: dict[str, Callable] = {
 
 
 REPORTER_BLOCKS: dict[str, Callable] = {
+    "mousedown": gm.MouseDown,
     "xposition": gm.XPosition,
     "yposition": gm.YPosition,
     "direction": gm.Direction,
@@ -135,6 +136,9 @@ REPORTER_BLOCKS: dict[str, Callable] = {
     "sub": gm.Sub,
     "mul": gm.Mul,
     "div": gm.Div,
+    "eq": gm.Eq,
+    "lt": gm.Lt,
+    "gt": gm.Gt,
     "random": gm.Random,
     "join": gm.Join,
     "letter": gm.Letter,

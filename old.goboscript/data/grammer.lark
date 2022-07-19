@@ -8,16 +8,18 @@ toplevel: [/nowarp/] "def " NAME [NAME ("," NAME)*] stack         -> procdef
 
 stack: "{" statement* "}"
 
-statement: "forever" stack           -> forever
-    | "repeat" expr stack            -> repeat
-    | "until" expr stack             -> until
-    | "if" expr stack                -> iff
-    | "if" expr stack "else" stack   -> ifelse
-    | NAME "=" expr ";"              -> varset
-    | NAME "+=" expr ";"             -> varchange
-    | NAME "=" "[" _exprlist "]" ";" -> listset
-    | NAME "[" expr "]" "=" expr ";" -> listchange
-    | NAME "." NAME _exprlist ";"    -> ofstatement
+statement: "forever" stack                                -> forever
+    | "repeat" expr stack                                 -> repeat
+    | "until" expr stack                                  -> until
+    | "if" expr stack                                     -> iff
+    | "if" expr stack "else" stack                        -> ifelse
+    | "if" expr stack ("elseif" expr stack)+              -> ifelseif
+    | "if" expr stack ("elseif" expr stack)+ "else" stack -> ifelseifelse
+    | NAME "=" expr ";"                                   -> varset
+    | NAME "+=" expr ";"                                  -> varchange
+    | NAME "=" "[" _exprlist "]" ";"                      -> listset
+    | NAME "[" expr "]" "=" expr ";"                      -> listchange
+    | NAME "." NAME _exprlist ";"                         -> ofstatement
     | NAME _exprlist ";"
 
 ?expr: "(" expr ")"
@@ -28,7 +30,7 @@ statement: "forever" stack           -> forever
     | expr "<" expr                   -> lt
     | expr ">" expr                   -> gt
     | expr "+" expr                   -> add
-    | expr "#" expr                   -> join
+    | expr "++" expr                  -> join
     | expr "-" expr                   -> sub
     | "-" expr                        -> minus
     | expr "*" expr                   -> mul
@@ -37,6 +39,7 @@ statement: "forever" stack           -> forever
     | NAME "(" _exprlist ")"          -> reporter
     | NAME "." NAME "(" _exprlist ")" -> ofreporter
     | NAME "[" _exprlist "]"          -> listget
+    | "@" NAME                        -> argument
     | NUMBER
     | BOOL
     | NAME
@@ -51,5 +54,5 @@ _exprlist: [expr ("," expr)*]
 
 %ignore " "
 %ignore "\n"
-%ignore ":--" /(.|\n)+/ ":--" /.+/ "\n"
-    | ":" /.+/ "\n"
+%ignore "/*" /(.|\n)+/ "*/"
+    | "//" /.+/ "\n"

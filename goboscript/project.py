@@ -1,36 +1,40 @@
 from rich import print
-from os.path import basename
-import parser
 import gobomatic as gm
-from glob import glob
+from pathlib import Path
+from parser import parser
+from interpreter import Interpreter
 
 
-def sprite_from_file(file: str, name: str = None) -> gm.Sprite:
-    sprite = gm.Sprite(name or basename(file)[:-3], [""])
-    with open(file, "r") as fp:
-        file = fp.read()
-    tree = parser.parse(file)
-    first_pass = parser.FirstPass(sprite)
-    first_pass.visit(tree)
+def DEBUG_print_gm_sprite(sprite: gm.Sprite) -> None:
+    print(f"[blue] * Sprite '{sprite.name}':")
+    print("[green]  > Costumes:")
+    print("      " + "\n      ".join(sprite.costumes))
+    print("[green]  > Sounds:")
+    print("      " + "\n      ".join(sprite.sounds))
+    print("[green]  > Blocks:")
+    print("      " + "\n      ".join(map(repr, sprite.blocks)))
+    print()
 
-    second_pass = parser.SecondPass(
-        sprite, first_pass.vars, first_pass.lsts, first_pass.funcs
-    )
-    print(sprite.costumes)
-    print(sprite.variables)
-    print(sprite.lists)
-    print(first_pass.funcs)
-    blocks = second_pass.transform(tree)
-    print(blocks)
-    sprite.blocks.extend(blocks)
+
+def build_gm_sprite(sprite_pth: Path) -> gm.Sprite:
+    print(f"BUILDING SPRITE: '{sprite_pth}'")
+    sprite = gm.Sprite(sprite_pth.name, costumes=[""])
+    tree = parser.parse(sprite_pth.read_text())
+    print("[blue] * Parsed Tree:")
+    print(tree)
+    Interpreter(sprite, sprite_pth).visit(tree)
+    DEBUG_print_gm_sprite(sprite)
+    print()
     return sprite
 
 
-def build_project(folder: str, out: str):
+def build_gm_project(project_dir: Path) -> gm.Project:
     sprites = []
-    for sprite in glob(f"{folder}/*.gs"):
-        if basename(sprite) == "stage.gs":
-            stage = sprite_from_file(sprite, name="Stage")
+    for sprite in project_dir.glob("*.gs"):
+        if sprite.name == "stage.gs":
+            stage = build_gm_sprite(sprite)
+            stage.name = "Stage"
         else:
-            sprites.append(sprite_from_file(sprite))
-    gm.Project([stage] + sprites).export(out)
+            sprites.append(build_gm_sprite(sprite))
+    project = gm.Project([stage] + sprites)
+    return project

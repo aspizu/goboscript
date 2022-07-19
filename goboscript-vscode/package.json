@@ -1,0 +1,29 @@
+{
+    "name": "goboscript",
+    "displayName": "goboscript",
+    "description": "",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.69.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "goboscript",
+            "aliases": ["goboscript", "goboscript"],
+            "extensions": [".gs"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "goboscript",
+            "scopeName": "source.goboscript",
+            "path": "./syntaxes/goboscript.tmLanguage.json"
+        }],
+        "snippets": [{
+            "language": "goboscript",
+            "path": "./snippets.json"
+        }]
+    }
+}

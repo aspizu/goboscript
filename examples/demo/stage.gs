@@ -1,5 +1,6 @@
-costumes "examples/demo/assets/blank.svg";
+costumes "assets/blank.svg";
 
-def func x {
-    say "none";
+onflag {
+    list = [];
+    say list.__getitem__(100);
 }
