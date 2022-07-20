@@ -1,5 +1,5 @@
 # goboscript
-[goboscript](https://github.com/aspizu/goboscript) is a text-based programming language which compiles to [Scratch](https://scratch.mit.edu).
+[goboscript](https://github.com/aspizu/goboscript) is a text-based programming language which transpiles to [Scratch](https://scratch.mit.edu).
 
 [goboscript](goboscript) will transpile your goboscript project into a Scratch project.
 
