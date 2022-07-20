@@ -29,12 +29,11 @@ def build_gm_sprite(sprite_pth: Path) -> gm.Sprite:
 
 
 def build_gm_project(project_dir: Path) -> gm.Project:
-    sprites = []
+    stage = build_gm_sprite(project_dir / "stage.gs")
+    stage.name = "Stage"
+    sprites = [stage]
     for sprite in project_dir.glob("*.gs"):
-        if sprite.name == "stage.gs":
-            stage = build_gm_sprite(sprite)
-            stage.name = "Stage"
-        else:
+        if sprite.name != "stage.gs":
             sprites.append(build_gm_sprite(sprite))
-    project = gm.Project([stage] + sprites)
+    project = gm.Project(sprites)
     return project

@@ -9,20 +9,56 @@ toplevel: "costumes" STRING ("," STRING)* ";" -> costumes
 stack: "{" statement* "}"
 
 statement: NAME _exprlist ";"
-    | NAME "=" expr ";"            -> varset
-    | NAME "=" "[" "]" ";"         -> lstset
-    | "if" expr stack              -> iff
-    | "if" expr stack "else" stack -> ifelse
-    | "repeat" expr stack          -> repeat
-    | "until" expr stack           -> until
-    | NAME "." NAME _exprlist ";"  -> ofstatement
+    | NAME "=" expr ";"                       -> varset
+    | NAME "+=" expr ";"                      -> varchange
+    | NAME "-=" expr ";"                      -> varsub
+    | NAME "*=" expr ";"                      -> varmul
+    | NAME "/=" expr ";"                      -> vardiv
+    | NAME "%=" expr ";"                      -> varmod
+    | NAME "++=" expr ";"                     -> varjoin
+    | "$"NAME "+=" expr ";"                   -> gvarchange
+    | "$"NAME "-=" expr ";"                   -> gvarsub
+    | "$"NAME "*=" expr ";"                   -> gvarmul
+    | "$"NAME "/=" expr ";"                   -> gvardiv
+    | "$"NAME "%=" expr ";"                   -> gvarmod
+    | "$"NAME "++=" expr ";"                  -> gvarjoin
+    | NAME "=" "[" "]" ";"                    -> lstset
+    | NAME "[" expr "]" "=" expr ";"          -> lstchange
+    | "$"NAME "[" expr "]" "=" expr ";"       -> glstchange
+    | "$"NAME "=" expr ";"                    -> gvarset
+    | "$"NAME "=" "[" "]" ";"                 -> glstset
+    | "if" expr stack                         -> iff
+    | "if" expr stack "else" stack            -> ifelse
+    | "repeat" expr stack                     -> repeat
+    | "until" expr stack                      -> until
+    | NAME "." NAME _exprlist ";"             -> ofstatement
+    | "$"NAME "." NAME _exprlist ";"          -> gofstatement
 
 ?expr: "(" expr ")"
-    | NAME "(" _exprlist ")"          -> reporter
-    | NAME "." NAME "(" _exprlist ")" -> ofreporter
-    | "@"NAME                         -> argument
-    | NAME                            -> var
-    | NUMBER | BOOL | STRING
+    | NUMBER
+    | BOOL
+    | STRING
+    | NAME "(" _exprlist ")"                  -> reporter
+    | NAME "." NAME "(" _exprlist ")"         -> ofreporter
+    | "$"NAME "." NAME "(" _exprlist ")"      -> gofreporter
+    | NAME "[" expr "]"                       -> lstitem
+    | "$"NAME "[" expr "]"                    -> glstitem
+    | "!" expr                                -> nott
+    | expr "&" expr                           -> andd
+    | expr "|" expr                           -> orr
+    | expr "=" expr                           -> eq
+    | expr "<" expr                           -> lt
+    | expr ">" expr                           -> gt
+    | expr "++" expr                          -> join
+    | expr "+" expr                           -> add
+    | expr "-" expr                           -> sub
+    | expr "*" expr                           -> mul
+    | expr "/" expr                           -> div
+    | expr "%" expr                           -> mod
+    | "-" expr                                -> minus
+    | "@"NAME                                 -> argument
+    | "$"NAME                                 -> gvar
+    | NAME                                    -> var
 
 _exprlist: [expr ("," expr)*]
 
@@ -30,7 +66,9 @@ NAME:   /[a-zA-Z_][a-zA-Z0-9_]*/
 STRING: /"([^"\\]|\\.)*"/
 NUMBER: /[0-9.]+/
 BOOL:   "true" | "false"
+COMMENT: "/*" /(.|\n)+/ "*/"
 
 %ignore " "
 %ignore "\n"
 %ignore "\t"
+%ignore COMMENT
