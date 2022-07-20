@@ -56,13 +56,14 @@ class Interpreter(lark.visitors.Interpreter):
         args
 
     def deff(self, tree: Tree):
-        name = typing.cast(Token, tree.children[0])
-        args = typing.cast(list[Token], tree.children[1:-1])
+        warp: bool = tree.children[0] != "nowarp"
+        name = typing.cast(Token, tree.children[1])
+        args = typing.cast(list[Token], tree.children[2:-1])
         stack = tree.children[-1]
         if args[0] is None:
             del args[0]
         if name not in self.funcs:
             self.funcs[name] = self.sprite.Func(
-                *[getattr(gm.Arg, i) for i in args], name=name
+                *[getattr(gm.Arg, i) for i in args], name=name, warp=warp
             )
             self.funcs[name].Define(*BlockTransformer(self).transform(stack))

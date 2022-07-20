@@ -1,29 +1,48 @@
 {
     "name": "goboscript",
+    "publisher": "aspizu",
     "displayName": "goboscript",
     "description": "",
     "version": "0.0.1",
-    "engines": {
-        "vscode": "^1.69.0"
-    },
+    "main": "./src/extension.ts",
     "categories": [
         "Programming Languages"
     ],
+    "activationEvents": [
+        "onLanguage:goboscript"
+    ],
     "contributes": {
-        "languages": [{
-            "id": "goboscript",
-            "aliases": ["goboscript", "goboscript"],
-            "extensions": [".gs"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "goboscript",
-            "scopeName": "source.goboscript",
-            "path": "./syntaxes/goboscript.tmLanguage.json"
-        }],
-        "snippets": [{
-            "language": "goboscript",
-            "path": "./snippets.json"
-        }]
+        "languages": [
+            {
+                "id": "goboscript",
+                "aliases": [
+                    "goboscript",
+                    "goboscript"
+                ],
+                "extensions": [
+                    ".gs"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "goboscript",
+                "scopeName": "source.goboscript",
+                "path": "./syntaxes/goboscript.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "goboscript",
+                "path": "./snippets.json"
+            }
+        ]
+    },
+    "dependencies": {
+        "vscode": "^0.9.9"
+    },
+    "engines": {
+        "vscode": "^1.1.37"
     }
 }

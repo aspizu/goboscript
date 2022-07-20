@@ -272,3 +272,6 @@ class BlockTransformer(lark.Transformer):
     def minus(self, args):
         left: Tree = args[0]
         return gm.Sub(0, left)
+    
+    def parenexpr(self, args):
+        return args[0]

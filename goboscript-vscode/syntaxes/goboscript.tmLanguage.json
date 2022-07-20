@@ -15,7 +15,7 @@
 					"match": "\\b(use|costumes|sounds|def|nowrap|if|else|elseif|repeat|until|onflag|onclone|onevent|onkey|onclick)\\b"
 				},{
 					"name": "keyword.operator",
-					"match": "[+\\-*/!&%|=]"
+					"match": "[+\\-*/!&%|=<>]"
 				},{
 					"name": "punctuation",
 					"match": "[;,.]"

@@ -1,10 +1,10 @@
 start: toplevel*
 
-toplevel: "costumes" STRING ("," STRING)* ";" -> costumes
-    | "sounds" STRING ("," STRING)* ";"       -> sounds
-    | "use" STRING ";"                        -> use
-    | "def" NAME [NAME ("," NAME)*] stack     -> deff
-    | NAME _exprlist stack                    -> hat
+toplevel: "costumes" STRING ("," STRING)* ";"            -> costumes
+    | "sounds" STRING ("," STRING)* ";"                  -> sounds
+    | "use" STRING ";"                                   -> use
+    | [/nowarp/] "def" NAME [NAME ("," NAME)*] stack     -> deff
+    | NAME _exprlist stack                               -> hat
 
 stack: "{" statement* "}"
 
@@ -34,7 +34,7 @@ statement: NAME _exprlist ";"
     | NAME "." NAME _exprlist ";"             -> ofstatement
     | "$"NAME "." NAME _exprlist ";"          -> gofstatement
 
-?expr: "(" expr ")"
+?expr: "(" expr ")"                           -> parenexpr
     | NUMBER
     | BOOL
     | STRING
@@ -62,13 +62,13 @@ statement: NAME _exprlist ";"
 
 _exprlist: [expr ("," expr)*]
 
-NAME:   /[a-zA-Z_][a-zA-Z0-9_]*/
-STRING: /"([^"\\]|\\.)*"/
-NUMBER: /[0-9.]+/
-BOOL:   "true" | "false"
-COMMENT: "/*" /(.|\n)+/ "*/"
+NAME:    /[a-zA-Z_][a-zA-Z0-9_]*/
+STRING:  /"([^"\\]|\\.)*"/
+NUMBER:  /[0-9.]+/
+BOOL:    "true" | "false"
+ML_COMMENT: /\/\*.*?\*\//s
 
+%ignore ML_COMMENT
 %ignore " "
 %ignore "\n"
 %ignore "\t"
-%ignore COMMENT
