@@ -46,7 +46,7 @@ Binary packages are not provided.
 `alias gsc='python /path/to/goboscript-git/goboscript'`.
 
 ##### Install dependencies with pip
-Dependencies: `lark`, `rich`, `gobomatic`
+Dependencies: `lark`, `rich`, `gobomatic`, `typer`
 
 (Note: It is recommended to install gobomatic from [source](https://github.com/aspizu/gobomatic))
 
@@ -56,4 +56,10 @@ Dependencies: `lark`, `rich`, `gobomatic`
 ## Basic Usage
 
 ### Building a project
-`gsc /path/to/project/folder /path/to/output.sb3`
+`gsc build /path/to/project/folder /path/to/output.sb3`
+
+### Formatting a file
+`gsc fmt /path/to/file.gs`
+
+### Formatting all files in a folder (Recursively)
+`gsc fmt-all /path/to/project/folder`
