@@ -29,6 +29,8 @@ statement: NAME _exprlist ";"
     | "$"NAME "=" "[" "]" ";"                 -> glstset
     | "if" expr stack                         -> iff
     | "if" expr stack "else" stack            -> ifelse
+    | "if" expr stack ("elseif" expr stack)+  -> ifelseif
+    | "if" expr stack ("elseif" expr stack)+ "else" stack  -> ifelseifelse
     | "repeat" expr stack                     -> repeat
     | "until" expr stack                      -> until
     | NAME "." NAME _exprlist ";"             -> ofstatement

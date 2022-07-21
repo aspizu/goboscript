@@ -1,30 +1,24 @@
-from rich import print
 import gobomatic as gm
 from pathlib import Path
 from parser import parser
 from interpreter import Interpreter
+import lark
 
-
-def DEBUG_print_gm_sprite(sprite: gm.Sprite) -> None:
-    print(f"[blue] * Sprite '{sprite.name}':")
-    print("[green]  > Costumes:")
-    print("      " + "\n      ".join(sprite.costumes))
-    print("[green]  > Sounds:")
-    print("      " + "\n      ".join(sprite.sounds))
-    print("[green]  > Blocks:")
-    print("      " + "\n      ".join(map(repr, sprite.blocks)))
-    print()
+class TokenException(Exception):
+    ...
 
 
 def build_gm_sprite(sprite_pth: Path) -> gm.Sprite:
-    print(f"BUILDING SPRITE: '{sprite_pth}'")
     sprite = gm.Sprite(sprite_pth.name, costumes=[""])
     tree = parser.parse(sprite_pth.read_text())
-    print("[blue] * Parsed Tree:")
-    print(tree)
-    Interpreter(sprite, sprite_pth).visit(tree)
-    DEBUG_print_gm_sprite(sprite)
-    print()
+    try:
+        Interpreter(sprite, sprite_pth).visit(tree)
+    except lark.exceptions.VisitError as e:
+        if type(e.orig_exc.args[0]) is lark.Token:
+            raise TokenException("name not defined", e.orig_exc.args[0], sprite_pth)
+        else:
+            raise e.orig_exc
+                
     return sprite
 
 

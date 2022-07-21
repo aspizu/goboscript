@@ -1,7 +1,7 @@
 from pathlib import Path
 from parser import parser
 from lark.visitors import Interpreter
-from lark import Tree
+from lark.tree import Tree
 
 
 def fmt_all(pathdir: Path) -> None:

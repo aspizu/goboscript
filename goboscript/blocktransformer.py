@@ -10,8 +10,13 @@ def Token_STRING_to_str(string) -> str:
 
 
 class BlockTransformer(lark.Transformer):
-    def __init__(self, state: "interpreter.Interpreter"):
+    def __init__(
+        self,
+        state: "interpreter.Interpreter",
+        allowed_args: list[Token] = None,
+    ):
         self.state = state
+        self.allowed_args = allowed_args or []
 
     def STRING(self, token: Token):
         return Token_STRING_to_str(token)
@@ -44,6 +49,8 @@ class BlockTransformer(lark.Transformer):
 
     def argument(self, args):
         name: Token = args[0]
+        if name not in self.allowed_args:
+            raise KeyError(name)
         return getattr(gm.Arg, name)
 
     def varset(self, args):
@@ -67,6 +74,31 @@ class BlockTransformer(lark.Transformer):
         condition: Tree = args[0]
         stack: Tree = args[1]
         return gm.If(condition)(*stack)
+
+    def ifelseif(self, args):
+        condition: Tree = args[0]
+        stack: Tree = args[1]
+        a = gm.If(condition)(*stack)
+        a1 = a
+        i = iter(args[2:])
+        for i, j in zip(i, i):
+            b = gm.If(i)(*j)
+            a1.Else(b)
+            a1 = b
+        return a
+
+    def ifelseifelse(self, args):
+        condition: Tree = args[0]
+        stack: Tree = args[1]
+        a = gm.If(condition)(*stack)
+        a1 = a
+        i = iter(args[2:-1])
+        for i, j in zip(i, i):
+            b = gm.If(i)(*j)
+            a1.Else(b)
+            a1 = b
+        b.Else(*args[-1])
+        return a
 
     def ifelse(self, args):
         condition: Tree = args[0]
@@ -272,6 +304,6 @@ class BlockTransformer(lark.Transformer):
     def minus(self, args):
         left: Tree = args[0]
         return gm.Sub(0, left)
-    
+
     def parenexpr(self, args):
         return args[0]

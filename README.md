@@ -46,7 +46,7 @@ Binary packages are not provided.
 `alias gsc='python /path/to/goboscript-git/goboscript'`.
 
 ##### Install dependencies with pip
-Dependencies: `lark`, `rich`, `gobomatic`, `typer`
+Dependencies: `lark`, `rich`, `gobomatic`
 
 (Note: It is recommended to install gobomatic from [source](https://github.com/aspizu/gobomatic))
 

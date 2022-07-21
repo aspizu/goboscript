@@ -1,4 +1,4 @@
-from lark import Lark
+from lark.lark import Lark
 from importlib.resources import read_text
 
 

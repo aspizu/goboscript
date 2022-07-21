@@ -2,7 +2,8 @@ import typing
 from typing import Any
 import lark
 import gobomatic as gm
-from lark import Tree, Token
+from lark.tree import Tree
+from lark.lexer import Token
 from pathlib import Path
 from blocktransformer import BlockTransformer, Token_STRING_to_str
 
@@ -17,9 +18,7 @@ class Interpreter(lark.visitors.Interpreter):
 
     def costumes(self, tree: Tree):
         costumes: list[str] = [
-            self.sprite_pth.parent.as_posix()
-            + "/"
-            + Token_STRING_to_str(typing.cast(Token, i))
+            self.sprite_pth.parent.as_posix() + "/" + Token_STRING_to_str(i)
             for i in tree.children
         ]
         self.sprite.costumes = costumes
@@ -49,11 +48,14 @@ class Interpreter(lark.visitors.Interpreter):
             self.sprite.WhenStartAsClone(*stack)
         elif name == "onclick":
             self.sprite.WhenThisSpriteClicked(*stack)
-        elif name == "whentimegreaterthan":
+        elif name == "ontimer":
             self.sprite.WhenTimerGreaterThan(
                 BlockTransformer(self).transform(typing.cast(Tree[Any], args[0]))
             )(*stack)
-        args
+        elif name == "onbackdrop":
+            self.sprite.WhenBackdropSwitchesTo(Token_STRING_to_str(args[0]))(*stack)
+        elif name == "onloudness":
+            self.sprite.WhenLoudnessGreaterThan(Token_STRING_to_str(args[0]))(*stack)
 
     def deff(self, tree: Tree):
         warp: bool = tree.children[0] != "nowarp"
@@ -66,4 +68,4 @@ class Interpreter(lark.visitors.Interpreter):
             self.funcs[name] = self.sprite.Func(
                 *[getattr(gm.Arg, i) for i in args], name=name, warp=warp
             )
-            self.funcs[name].Define(*BlockTransformer(self).transform(stack))
+            self.funcs[name].Define(*BlockTransformer(self, allowed_args=args).transform(stack))
