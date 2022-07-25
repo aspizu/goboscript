@@ -17,10 +17,10 @@ class Interpreter(lark.visitors.Interpreter):
         self.funcs: dict[Token, gm.Sprite.FuncFactory] = {}
 
     def costumes(self, tree: Tree):
-        costumes: list[str] = [
-            self.sprite_pth.parent.as_posix() + "/" + Token_STRING_to_str(i)
-            for i in tree.children
-        ]
+        costumes: list[str] = []
+        for i in tree.children:
+            for j in self.sprite_pth.parent.glob(Token_STRING_to_str(i)):
+                costumes.append(j.as_posix())
         self.sprite.costumes = costumes
 
     def sounds(self, tree: Tree):
@@ -68,4 +68,6 @@ class Interpreter(lark.visitors.Interpreter):
             self.funcs[name] = self.sprite.Func(
                 *[getattr(gm.Arg, i) for i in args], name=name, warp=warp
             )
-            self.funcs[name].Define(*BlockTransformer(self, allowed_args=args).transform(stack))
+            self.funcs[name].Define(
+                *BlockTransformer(self, allowed_args=args).transform(stack)
+            )
