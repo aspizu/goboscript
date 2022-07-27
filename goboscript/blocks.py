@@ -2,6 +2,9 @@ import gobomatic as gm
 from typing import Callable
 
 STATEMENT_BLOCKS: dict[str, Callable] = {
+    "return": gm.StopThisScript,
+    "exit": gm.StopAll,
+    "stopotherscripts": gm.StopOtherScripts,
     "if": gm.If,
     "until": gm.Until,
     "repeat": gm.Repeat,
