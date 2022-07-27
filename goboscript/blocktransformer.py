@@ -109,6 +109,10 @@ class BlockTransformer(lark.Transformer):
         stack: Tree = args[1]
         return gm.Repeat(expr)(*stack)
 
+    def forever(self, args):
+        stack: Tree = args[0]
+        return gm.Forever(*stack)
+
     def until(self, args):
         condition: Tree = args[0]
         stack: Tree = args[1]

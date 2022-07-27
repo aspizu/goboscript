@@ -33,6 +33,7 @@ statement: NAME _exprlist ";"
     | "if" expr stack ("elseif" expr stack)+ "else" stack  -> ifelseifelse
     | "repeat" expr stack                     -> repeat
     | "until" expr stack                      -> until
+    | "forever" stack                         -> forever
     | NAME "." NAME _exprlist ";"             -> ofstatement
     | "$"NAME "." NAME _exprlist ";"          -> gofstatement
 
