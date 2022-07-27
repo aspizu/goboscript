@@ -62,13 +62,11 @@ class BlockTransformer(lark.Transformer):
 
     def var(self, args):
         name: Token = args[0]
-        if name in self.state.vars:
-            return self.state.vars[name]
+        return self.state.vars[name]
 
     def gvar(self, args):
         name: Token = "$" + args[0]
-        if name in self.state.vars:
-            return self.state.vars[name]
+        return self.state.vars[name]
 
     def iff(self, args):
         condition: Tree = args[0]
