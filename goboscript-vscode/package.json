@@ -4,12 +4,8 @@
     "displayName": "goboscript",
     "description": "",
     "version": "0.0.1",
-    "main": "./src/extension.ts",
     "categories": [
         "Programming Languages"
-    ],
-    "activationEvents": [
-        "onLanguage:goboscript"
     ],
     "contributes": {
         "languages": [
@@ -38,9 +34,6 @@
                 "path": "./snippets.json"
             }
         ]
-    },
-    "dependencies": {
-        "vscode": "^0.9.9"
     },
     "engines": {
         "vscode": "^1.1.37"
