@@ -17,9 +17,17 @@ class Interpreter(lark.visitors.Interpreter):
         self.funcs: dict[Token, gm.Sprite.FuncFactory] = {}
 
     def costumes(self, tree: Tree):
+        from __main__ import STD_LIB_PATH
+
         costumes: list[str] = []
         for i in tree.children:
-            for j in self.sprite_pth.parent.glob(Token_STRING_to_str(i)):
+            path = Token_STRING_to_str(i)
+            if path.startswith("@stdlib:"):
+                path = path[len("@stdlib:") :]
+                paths = (STD_LIB_PATH / "costumes").glob(path)
+            else:
+                paths = self.sprite_pth.parent.glob(path)
+            for j in paths:
                 costumes.append(j.as_posix())
         self.sprite.costumes = costumes
 

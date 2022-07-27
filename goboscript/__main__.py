@@ -4,6 +4,8 @@ import fmt as Fmt
 from sys import argv
 import lark
 
+STD_LIB_PATH = Path(__file__).parent / "stdlib"
+
 
 def build(project_dir: Path, output_pth: Path):
     project.build_gm_project(project_dir).export(output_pth.as_posix())
