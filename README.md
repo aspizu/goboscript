@@ -10,13 +10,12 @@
 ##### File structure
 ```
 project/
- |--assets/                 # Costumes and Sounds
- |   | blank.svg      
- |   | scratchcat.svg 
- | main.gs                  # Main sprite
- | stage.gs                 # Stage sprite
+ ├── assets/                # Costumes and Sounds
+ │    ├ blank.svg      
+ │    └ scratchcat.svg 
+ ├ main.gs                  # Main sprite
+ └ stage.gs                 # Stage sprite
 ```
-
 ##### main.gs
 ```
 costumes "assets/blank.svg";
