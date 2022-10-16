@@ -1,1 +1,0 @@
-costumes "blank.svg";
