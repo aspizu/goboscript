@@ -1,0 +1,1 @@
+costumes "assets/blank.svg";

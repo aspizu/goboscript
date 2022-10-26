@@ -1,0 +1,4 @@
+[tool.pyright]
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
