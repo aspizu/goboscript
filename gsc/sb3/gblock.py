@@ -124,7 +124,7 @@ class gProcCall(gBlock):
                 "tagName": "mutation",
                 "children": [],
                 "proccode": self.name + " " + " ".join(["%s"] * len(self.inputs)),
-                "argumentids": json.dumps(self.inputs.keys()),
+                "argumentids": json.dumps(list(self.inputs.keys())),
                 "warp": True,  # FIXME
             },
         }

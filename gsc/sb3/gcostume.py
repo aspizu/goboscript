@@ -14,14 +14,15 @@ def md5_hexdigest(path: Path) -> str:
 class gCostume:
     def __init__(self, path: Path) -> None:
         self.path = path
+        self.hash = md5_hexdigest(self.path)
+        self.name = self.hash + self.path.suffix
 
     def serialize(self) -> dict[str, Any]:
-        hash = md5_hexdigest(self.path)
         return {
             "name": self.path.name,
-            "assetId": hash,
+            "assetId": self.hash,
             "dataFormat": self.path.suffix[1:],
-            "md5ext": hash + self.path.suffix,
+            "md5ext": self.name,
         }
 
     def __rich_repr__(self):

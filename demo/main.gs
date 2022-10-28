@@ -1,4 +1,4 @@
-costumes "demo/assets/blank.svg";
+costumes "assets/blank.svg";
 
 nowarp def foo_bar {
   repeat 10 {

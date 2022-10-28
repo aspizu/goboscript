@@ -1,29 +1,37 @@
 from pathlib import Path
 
-from gexception import *
 from lark.tree import Tree
 from lark.visitors import Interpreter, Visitor
 from sb3 import *
 
 from .gblock_transformer import gBlockTransformer
+from .gexception import *
 from .gparser import parse_token
 
 
 class DefCollector(Visitor):
-    def __init__(self) -> None:
+    def __init__(self, prefix: Path) -> None:
         self.procs: dict[str, list[str]] = {}
         self.variables: dict[str, gVariable] = {}
         self.global_variables: dict[str, gVariable] = {}
         self.lists: dict[str, gList] = {}
         self.global_lists: dict[str, gList] = {}
         self.costumes: list[Path] = []
+        self.prefix = prefix
         super().__init__()
 
     def declr_costumes(self, tree):
         for i in tree.children:
-            glob = list(Path(".").glob(parse_token(i)))
-            for j in glob:
-                self.costumes.append(j)
+            if "*" in str(i):
+                paths = list(self.prefix.glob(parse_token(i)))
+                if len(paths) == 0:
+                    raise gCodeError(i, "Glob is empty")
+                self.costumes.extend(paths)
+            else:
+                path = self.prefix / parse_token(i)
+                if not path.is_file():
+                    raise gCodeError(i, "File not found")
+                self.costumes.append(path)
 
     def declr_proc(self, tree):
         self.procs[str(tree.children[1])] = [str(i) for i in tree.children[2:-1]]
@@ -44,9 +52,9 @@ class DefCollector(Visitor):
 
 
 class gSpriteInterpreter(Interpreter):
-    def __init__(self, tree: Tree) -> None:
+    def __init__(self, tree: Tree, prefix: Path) -> None:
         super().__init__()
-        self.collector = DefCollector()
+        self.collector = DefCollector(prefix)
         self.collector.visit(tree)
         self.gblocktrans = gBlockTransformer(self.collector)
         if len(self.collector.costumes) == 0:

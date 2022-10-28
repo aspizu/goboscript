@@ -1,10 +1,11 @@
-from gexception import *
 from lark.lexer import Token
 from lark.visitors import Transformer
 from sb3 import *
 from sb3.gblock import InputType
 
 from . import blockdefs, gsprite_interpreter
+from .gexception import *
+from .gparser import parse_token
 
 
 def create_gblock(
@@ -61,7 +62,7 @@ class gBlockTransformer(Transformer):
                 "data_setvariableto",
                 {
                     "VALUE": create_gblock(
-                        str(_args[1]), [_args[0], _args[2]], blockdefs.statement
+                        str(_args[1]), [_args[0], _args[2]], blockdefs.reporter
                     )
                 },
                 {"VARIABLE": _args[0]},
@@ -123,11 +124,15 @@ class gBlockTransformer(Transformer):
         name: Token = _args[0]
         try:
             if name[0] == "$":
-                return self.collector.global_variables.get(
-                    name, self.collector.global_lists[name]
-                )
+                try:
+                    return self.collector.global_lists[str(name)]
+                except KeyError:
+                    return self.collector.global_variables[str(name)]
             else:
-                return self.collector.variables.get(name, self.collector.lists[name])
+                try:
+                    return self.collector.lists[str(name)]
+                except KeyError:
+                    return self.collector.variables[str(name)]
         except KeyError:
             raise gCodeError(name, "Undefined variable/list")
 
@@ -165,3 +170,6 @@ class gBlockTransformer(Transformer):
 
     def div(self, _args) -> gBlock:
         return create_gblock("/", _args, blockdefs.reporter)
+
+    def expr(self, _args):
+        return parse_token(_args[0])

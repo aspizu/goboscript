@@ -1,11 +1,11 @@
 from pathlib import Path
+from sys import argv
 
-from rich import print
+from gparser.gbuild import build_gproject
+from gparser.gexception import gError
 
-from gparser.gparser import gparser
-from gparser.gsprite_interpreter import gSpriteInterpreter
-
-tree = gparser.parse(Path("demo/main.gs").read_text())
-inter = gSpriteInterpreter(tree)
-s = inter.to_gSprite("main.gs")
-print(s)
+try:
+    build_gproject(Path(argv[1])).package(Path(argv[2]))
+except gError as e:
+    e.print()
+    exit(1)
