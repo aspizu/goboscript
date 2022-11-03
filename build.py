@@ -7,6 +7,6 @@ def render(f, schema_name):
         f.write("}\n\n")
 
 
-with open("proscript/blockdefs.py", "w") as f:
+with open("gsc/gparser/blockdefs.py", "w") as f:
     render(f, "reporter")
     render(f, "statement")
