@@ -1,0 +1,3 @@
+onflag {
+  say "Hello, World!";
+}

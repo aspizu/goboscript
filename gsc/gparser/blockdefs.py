@@ -4,10 +4,10 @@ blockdef_T: TypeAlias = dict[str, tuple[str, tuple[str, ...]]]
 
 reporter: blockdef_T = {
     # fmt: off
-    "+"  : ( "operator_add"      , ( "NUM1" , "NUM2" ) ) ,
-    "-"  : ( "operator_subtract" , ( "NUM1" , "NUM2" ) ) ,
-    "*"  : ( "operator_multiply" , ( "NUM1" , "NUM2" ) ) ,
-    "/"  : ( "operator_divide"   , ( "NUM1" , "NUM2" ) ) ,
+    "+"    : ( "operator_add"      , ( "NUM1" , "NUM2" ) ) ,
+    "-"    : ( "operator_subtract" , ( "NUM1" , "NUM2" ) ) ,
+    "*"    : ( "operator_multiply" , ( "NUM1" , "NUM2" ) ) ,
+    "/"    : ( "operator_divide"   , ( "NUM1" , "NUM2" ) ) ,
     "eq"   : ( "operator_equals"   , ( "NUM1" , "NUM2" ) ) ,
     "gt"   : ( "operator_gt"       , ( "NUM1" , "NUM2" ) ) ,
     "lt"   : ( "operator_lt"       , ( "NUM1" , "NUM2" ) ) ,
