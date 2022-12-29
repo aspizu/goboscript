@@ -94,10 +94,11 @@ def wrap_lark_errors(func: Callable[[], T], file: Path) -> T:
         if isinstance(e.orig_exc, gTokenError | gFileError):
             e.orig_exc.file = file
             raise e.orig_exc
-        if isinstance(e.orig_exc, gError):
-            raise e.orig_exc
-        raise e
+        raise e.orig_exc
     except gTokenError as e:
+        e.file = file
+        raise e
+    except gFileError as e:
         e.file = file
         raise e
     except lark.exceptions.UnexpectedToken as e:

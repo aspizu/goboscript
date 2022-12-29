@@ -17,7 +17,9 @@ def build_gsprite(sprite: Path):
         )
     name = "Stage" if name == "stage" else name
     ast = wrap_lark_errors(lambda: gparser.parse(sprite.read_text()), sprite)
-    return wrap_lark_errors(lambda: gSpriteInterpreter(name, ast), sprite).sprite
+    return wrap_lark_errors(
+        lambda: gSpriteInterpreter(sprite.parent, name, ast), sprite
+    ).sprite
 
 
 def build_gproject(project: Path):
