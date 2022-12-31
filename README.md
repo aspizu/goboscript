@@ -19,9 +19,8 @@ Installation
 3. Clone this repository
 4. Add a alias or create a shell script to run gsc with Python
 
-**Commands for Arch Linux**
+**Commands**
  - `cd ~/Downloads/SRC`
- - `sudo pacman -S python python-pip git`
  - `pip install lark`
  - `git clone https://github.com/aspizu/goboscript`
  - `cd goboscript`
