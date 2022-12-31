@@ -1,0 +1,3 @@
+NAME   | ARGUMENTS | OPCODE
+-------+-----------+----------------------
+onflag |           | event_whenflagclicked

@@ -1,0 +1,27 @@
+start: declr*
+
+declr: "costumes" _stringlist ";" -> declr_costumes
+     | "fn" NAME _namelist stack  -> declr_function 
+     | NAME stack                 -> declr_hat
+
+stack: "{" block* "}"
+
+block: "if" expr stack -> block_if
+     | NAME _exprlist ";"
+
+expr: "(" expr ")"
+    | NAME | STRING | NUMBER | FLOAT
+    | NAME "(" _exprlist ")" -> reporter
+
+_exprlist: [expr ("," expr)*]
+_stringlist: [STRING ("," STRING)*]
+_namelist: [NAME ("," NAME)*]
+
+NAME: /[_a-zA-Z][_a-zA-Z0-9]*/
+STRING: /"([^"\\]|\\.)*"/
+NUMBER: /[0-9]+/
+FLOAT: /[0-9]+\.[0-9]+/
+
+%ignore " "
+%ignore "\n"
+%ignore "\t"

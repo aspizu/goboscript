@@ -1,0 +1,4 @@
+NAME | ARGUMENTS  | OPCODE
+-----+------------+-------------
+add  | NUM1, NUM2 | operator_add
+sub  | NUM1, NUM2 | operator_sub

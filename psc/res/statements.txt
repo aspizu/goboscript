@@ -1,0 +1,3 @@
+NAME | ARGUMENTS  | OPCODE
+-----+------------+-------------
+say  | MESSAGE    | looks_say
