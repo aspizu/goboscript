@@ -1,9 +1,7 @@
-<div style="display: flex; flex-direction: column; align-items: center;
-            border: 1px solid rgba(255,255,255,0.1); padding: 2em; border-radius: 0.5em;
-            margin: 1em">
-  <h1>Goboscript</h1>
-  <p>Goboscript is a text-based programming language that transpiles 1:1 to Scratch.</p>
-</div>
+Goboscript
+==========
+
+Goboscript is a text-based programming language that transpiles 1:1 to Scratch.
 
 Installation
 ------------
