@@ -1,3 +1,4 @@
-NAME | ARGUMENTS  | OPCODE
------+------------+-------------
-say  | MESSAGE    | looks_say
+NAME       | ARGUMENTS | OPCODE
+-----------+-----------+-----------------
+say        | MESSAGE   | looks_say
+sayfor     | MESSAGE   | looks_sayforsecs

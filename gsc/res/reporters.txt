@@ -1,4 +1,7 @@
-NAME | ARGUMENTS  | OPCODE
------+------------+-------------
-add  | NUM1, NUM2 | operator_add
-sub  | NUM1, NUM2 | operator_sub
+NAME | ARGUMENTS        | OPCODE
+-----+------------------+------------------
+add  | NUM1, NUM2       | operator_add
+sub  | NUM1, NUM2       | operator_subtract
+mul  | NUM1, NUM2       | operator_multiply
+div  | NUM1, NUM2       | operator_divide
+join | STRING1, STRING2 | operator_join

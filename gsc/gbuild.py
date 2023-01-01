@@ -8,7 +8,6 @@ from sb3 import gProject
 
 
 def build_gsprite(sprite: Path):
-
     name = sprite.name.removesuffix(f".{EXT}")
     if name == "Stage":
         raise gFileError(

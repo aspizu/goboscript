@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, TypeVar, cast
+from typing import Callable, TypeVar
 
 import lark.exceptions
 import term as t
@@ -61,27 +61,19 @@ class gTokenError(gError):
 
     def print(self):
         assert isinstance(self.file, Path)
-        line = self.file.read_text().split("\n")[cast(int, self.token.line) - 1]
-        t.w(t.brred)
-        t.w("ERROR: ")
-        t.w(self.description)
-        t.w("\n")
-        t.w(t.brgreen)
-        t.w(f"{self.file}:{self.token.line}:{self.token.column}")
-        t.w("\n")
-        t.w(t.brblack)
-        t.w(str(self.token.line).rjust(8))
-        t.w(" | ")
+        assert isinstance(self.token.line, int)
+        assert isinstance(self.token.column, int)
+        with self.file.open("r") as file:
+            iter = enumerate(file)
+            while next(iter)[0] < self.token.line - 2:
+                continue
+            _, line = next(iter)
+        t.w(f"Error! {t.brred}{self.description}{t.reset}\n")
+        t.w(f"in {t.brblue}{self.file}:{self.token.line}:{self.token.column}\n")
+        t.w(f"{t.brblack}{self.token.line: 4} | {t.reset}{line}")
+        t.w(f"{t.brpink}{' '*(6+self.token.column)}{'^'*len(self.token)}")
+        t.w(((" " + self.help) if self.help else "") + "\n")
         t.w(t.reset)
-        t.w(line)
-        t.w("\n")
-        t.w(t.brpink)
-        t.w(" " * (cast(int, self.token.column) + 10))
-        t.w("^" * len(self.token))
-        if self.help:
-            t.w(" help: ")
-            t.w(self.help)
-        t.w("\n")
 
 
 T = TypeVar("T")

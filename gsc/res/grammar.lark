@@ -1,8 +1,9 @@
 start: declr*
 
-declr: "costumes" _stringlist ";" -> declr_costumes
-     | "fn" NAME _namelist stack  -> declr_function 
-     | NAME stack                 -> declr_hat
+declr: "costumes" _stringlist ";"          -> declr_costumes
+     | "fn" NAME _namelist stack           -> declr_function
+     | "nowarp" "fn" NAME _namelist stack  -> declr_function_nowarp
+     | NAME _exprlist stack                -> declr_hat
 
 stack: "{" block* "}"
 
@@ -10,18 +11,28 @@ block: "if" expr stack -> block_if
      | NAME _exprlist ";"
 
 expr: "(" expr ")"
-    | NAME | STRING | NUMBER | FLOAT
+    | STRING | NUMBER | FLOAT
+    | ARGUMENT -> argument
     | NAME "(" _exprlist ")" -> reporter
+    | add | sub | mul | div
+
+add.2: expr "+" expr
+sub.3: expr "-" expr
+mul.4: expr "*" expr
+div.5: expr "/" expr
 
 _exprlist: [expr ("," expr)*]
 _stringlist: [STRING ("," STRING)*]
 _namelist: [NAME ("," NAME)*]
 
+ARGUMENT: /\$[_a-zA-Z][_a-zA-Z0-9]*/
 NAME: /[_a-zA-Z][_a-zA-Z0-9]*/
 STRING: /"([^"\\]|\\.)*"/
 NUMBER: /[0-9]+/
 FLOAT: /[0-9]+\.[0-9]+/
 
+COMMENT: "'" /.+/ "'"
+%ignore COMMENT
 %ignore " "
 %ignore "\n"
 %ignore "\t"

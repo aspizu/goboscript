@@ -1,8 +1,10 @@
 import json
-from typing import Any, Sized, Union, cast
+from typing import Any, Sized, Union
 
-from gblockfactory import gPrototype
+from lark import Token
 from lib import JSON, tripletwise
+
+from .gblockfactory import gPrototype
 
 gInputType = Union[str, "gBlock", "gStack", "gVariable", "gList"]
 gFieldType = Union[str, "gVariable", "gList"]
@@ -39,6 +41,9 @@ class gBlock:
         yield "inputs", self.inputs
         yield "fields", self.fields
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.opcode}, {self.inputs}, {self.fields})"
+
     def serialize_input(self, blocks: gBlockListType, value: gInputType) -> JSON:
         if type(value) is str:
             return [1, [10, value]]
@@ -51,9 +56,12 @@ class gBlock:
         elif isinstance(value, gBlock):
             value.serialize(blocks, None, self.id)
             return [2, value.id]
+        raise ValueError(self, value)
 
-    def serialize_field(self, blocks: gBlockListType, value: gInputType) -> JSON:
-        raise NotImplementedError
+    def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
+        if isinstance(value, str):
+            return [value]
+        raise ValueError(self, value)
 
     def serialize_inputs(self, blocks: gBlockListType):
         return {
@@ -103,11 +111,8 @@ class gHatBlock(gBlock):
             prototype.opcode, dict(zip(prototype.arguments, arguments)), {}, stack
         )
 
-    def __rich_repr__(self) -> Any:
-        yield "opcode", self.opcode
-        yield "inputs", self.inputs
-        yield "fields", self.fields
-        yield "stack", self.stack
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.opcode}, {self.inputs}, {self.fields}, {self.stack})"
 
     def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
         super().serialize(
@@ -120,20 +125,12 @@ class gArgument(gBlock):
     def __init__(self, name: str):
         super().__init__("argument_reporter_string_number", {}, {"VALUE": name})
 
-    def __rich_repr__(self):
-        yield "name", self.fields["VALUE"]
-
 
 class gProcCall(gBlock):
     def __init__(self, name: str, inputs: dict[str, gInputType], warp: bool):
         super().__init__("procedures_call", inputs, {})
         self.name = name
         self.warp = warp
-
-    def __rich_repr__(self):
-        yield "name", self.name
-        yield "inputs", self.inputs
-        yield "warp", self.warp
 
     def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
@@ -147,7 +144,7 @@ class gProcCall(gBlock):
 
 
 class gProcProto(gBlock):
-    def __init__(self, name: str, arguments: list[str], warp: bool):
+    def __init__(self, name: str, arguments: list[Token], warp: bool):
         super().__init__(
             "procedures_prototype",
             {argument: gArgument(argument) for argument in arguments},
@@ -156,14 +153,9 @@ class gProcProto(gBlock):
         self.name = name
         self.warp = warp
 
-    def __rich_repr__(self):
-        yield "name", self.name
-        yield "arguments", self.inputs.keys()
-        yield "warp", self.warp
-
     def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
-        argumentids = json.dumps(list(self.inputs.values()))
+        argumentids = json.dumps(list(self.inputs.keys()))
         blocks[self.id]["mutation"] = {
             "tagName": "mutation",
             "children": [],
@@ -179,7 +171,7 @@ class gProcDef(gHatBlock):
     def __init__(
         self,
         name: str,
-        arguments: list[str],
+        arguments: list[Token],
         warp: bool,
         stack: gStack,
     ):
@@ -189,8 +181,3 @@ class gProcDef(gHatBlock):
             {},
             stack,
         )
-
-    def __rich_repr__(self):
-        custom_block = cast(gProcProto, self.inputs["custom_block"])
-        yield "prototype", custom_block
-        yield "stack", self.stack

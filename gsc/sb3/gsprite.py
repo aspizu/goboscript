@@ -2,7 +2,7 @@ from typing import cast
 
 from lib import JSON
 
-from .gblock import gBlockListType, gHatBlock, gList, gVariable
+from .gblock import gBlock, gBlockListType, gList, gVariable
 from .gcostume import gCostume
 
 
@@ -12,7 +12,7 @@ class gSprite:
         name: str,
         variables: list[gVariable],
         lists: list[gList],
-        blocks: list[gHatBlock],
+        blocks: list[gBlock],
         costumes: list[gCostume],
     ):
         self.name = name
