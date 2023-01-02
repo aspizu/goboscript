@@ -1,5 +1,12 @@
 costumes "blank.svg";
 
 onflag {
-    say 1 * 2 + 3 / 4;
+    broadcast "my_event";
+}
+
+on "my_event" {
+    say "my event recieved";
+    if not 2<3 {
+        ...
+    }
 }

@@ -1,14 +1,53 @@
 from difflib import get_close_matches
 from itertools import chain
-from typing import Any
+from typing import Any, Iterator, cast
 
 from gdefinitionvisitor import gDefinitionVisitor, gFunction
-from gerror import gTokenError
+from gerror import gFileError, gTokenError
 from gparser import literal
 from lark import Token, Transformer
 from lib import num_plural
-from sb3 import gArgument, gBlock, gHatBlock, gInputType, gProcCall, gProcDef, gStack
+from sb3 import (
+    gArgument,
+    gBlock,
+    gHatBlock,
+    gInputType,
+    gList,
+    gProcCall,
+    gProcDef,
+    gStack,
+    gVariable,
+)
 from sb3.gblockfactory import hat_prototypes, reporter_prototypes, statement_prototypes
+
+
+def mkelif(
+    rest: Iterator[tuple[gInputType, gStack]],
+    this: tuple[gInputType, gStack] | None = None,
+    _else: gStack | None = None,
+) -> gBlock:
+    if this is None:
+        this = next(rest)
+    try:
+        nxt = next(rest)
+    except StopIteration:
+        if _else is None:
+            return gBlock("control_if", {"CONDITION": this[0], "SUBSTACK": this[1]}, {})
+        else:
+            return gBlock(
+                "control_if_else",
+                {"CONDITION": this[0], "SUBSTACK": this[1], "SUBSTACK2": _else},
+                {},
+            )
+    return gBlock(
+        "control_if_else",
+        {
+            "CONDITION": this[0],
+            "SUBSTACK": this[1],
+            "SUBSTACK2": gStack([mkelif(rest, nxt, _else)]),
+        },
+        {},
+    )
 
 
 class gBlockTransformer(Transformer[Token, gBlock]):
@@ -19,6 +58,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     ):
         super().__init__(True)
         self.gdefinitionvisitor = gdefinitionvisitor
+        self.sprite = gdefinitionvisitor.sprite
         self.prototype = prototype
 
     def STRING(self, token: Token):
@@ -78,7 +118,13 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gHatBlock.from_prototype(prototype, arguments, stack)
 
     def stack(self, args: list[gBlock]) -> gStack:
-        return gStack(args)
+        stack = gStack(args)
+        for i, block in enumerate(stack):
+            if block.opcode == "control_forever" and (i + 1) != len(stack):
+                raise gFileError(
+                    "forever cannot be precceded by any statements"
+                )  # FIXME: switch to gTokenError but cannot because
+        return stack
 
     def block(self, args: list[Any]) -> gBlock:
         opcode: Token = args[0]
@@ -171,3 +217,146 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def div(self, args: list[gInputType]):
         return gBlock.from_prototype(reporter_prototypes["div"], args)
+
+    def mod(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["mod"], args)
+
+    def join(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["join"], args)
+
+    def eq(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["eq"], args)
+
+    def gt(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["gt"], args)
+
+    def lt(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["lt"], args)
+
+    def andop(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["and"], args)
+
+    def orop(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["or"], args)
+
+    def notop(self, args: list[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["not"], args)
+
+    def block_if(self, args: tuple[gInputType, gStack]):
+        return gBlock("control_if", {"CONDITION": args[0], "SUBSTACK": args[1]}, {})
+
+    def block_if_else(self, args: tuple[gInputType, gStack, gStack]):
+        return gBlock(
+            "control_if_else",
+            {"CONDITION": args[0], "SUBSTACK": args[1], "SUBSTACK2": args[2]},
+            {},
+        )
+
+    def block_if_elif(self, args: list[Any]):
+        return mkelif(cast(Any, zip(*[iter(args)] * 2)))
+
+    def block_if_elif_else(self, args: list[Any]):
+        return mkelif(cast(Any, zip(*[iter(args[:-1])] * 2)), _else=args[-1])
+
+    def until(self, args: tuple[gInputType, gStack]):
+        return gBlock(
+            "control_repeat_until", {"CONDITION": args[0], "SUBSTACK": args[1]}, {}
+        )
+
+    def repeat(self, args: tuple[gInputType, gStack]):
+        return gBlock("control_repeat", {"TIMES": args[0], "SUBSTACK": args[1]}, {})
+
+    def forever(self, args: tuple[gStack]):
+        return gBlock("control_forever", {"SUBSTACK": args[0]}, {})
+
+    def varset(self, args: tuple[Token, gInputType]):
+        return gBlock("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": args[0]})
+
+    def var(self, args: tuple[Token]) -> gVariable:
+        if (
+            gVariable(args[0]) not in self.sprite.variables
+            and args[0] not in self.gdefinitionvisitor.globals
+        ):
+            matches = get_close_matches(
+                args[0], self.sprite.variables + self.gdefinitionvisitor.globals  # type: ignore
+            )
+            raise gTokenError(
+                f"Undefined variable `{args[0]}`",
+                args[0],
+                f"Did you mean `{matches[0]}?`" if matches else None,
+            )
+        return gVariable(args[0])
+
+    def listset(self, args: tuple[Token]):
+        return gBlock("data_deletealloflist", {}, {"LIST": args[0]})
+
+    def islist(self, token: Token):
+        if (
+            gList(token) not in self.sprite.lists
+            and token not in self.gdefinitionvisitor.listglobals
+        ):
+            matches = get_close_matches(
+                token, self.sprite.lists + self.gdefinitionvisitor.listglobals  # type: ignore
+            )
+            raise gTokenError(
+                f"Undefined list `{token}`",
+                token,
+                f"Did you mean `{matches[0]}`?" if matches else None,
+            )
+
+    def listadd(self, args: tuple[Token, gInputType]):
+        self.islist(args[0])
+        return gBlock("data_addtolist", {"ITEM": args[1]}, {"LIST": args[0]})
+
+    def listdelete(self, args: tuple[Token, gInputType]):
+        self.islist(args[0])
+        return gBlock("data_deleteoflist", {"INDEX": args[1]}, {"LIST": args[0]})
+
+    def listinsert(self, args: tuple[Token, gInputType, gInputType]):
+        self.islist(args[0])
+        return gBlock(
+            "data_insertatlist", {"INDEX": args[1], "ITEM": args[2]}, {"LIST": args[0]}
+        )
+
+    def listreplace(self, args: tuple[Token, gInputType, gInputType]):
+        self.islist(args[0])
+        return gBlock(
+            "data_replaceitemoflist",
+            {"INDEX": args[1], "ITEM": args[2]},
+            {"LIST": args[0]},
+        )
+
+    def listshow(self, args: tuple[Token]):
+        self.islist(args[0])
+        return gBlock("data_showlist", {}, {"LIST": args[0]})
+
+    def listhide(self, args: tuple[Token]):
+        self.islist(args[0])
+        return gBlock("data_hidelist", {}, {"LIST": args[0]})
+
+    def listitem(self, args: tuple[Token, gInputType]):
+        self.islist(args[0])
+        return gBlock("data_itemoflist", {"INDEX": args[1]}, {"LIST": args[0]})
+
+    def listindex(self, args: tuple[Token, gInputType]):
+        self.islist(args[0])
+        return gBlock("data_itemnumoflist", {"ITEM": args[1]}, {"LIST": args[0]})
+
+    def listcontains(self, args: tuple[Token, gInputType]):
+        self.islist(args[0])
+        return gBlock("data_listcontainsitem", {"ITEM": args[1]}, {"LIST": args[0]})
+
+    def listlength(self, args: tuple[Token]):
+        self.islist(args[0])
+        return gBlock("data_lengthoflist", {}, {"LIST": args[0]})
+
+    def declr_on(self, args: tuple[Token, gStack]):
+        return gHatBlock(
+            "event_whenbroadcastreceived",
+            {},
+            {"BROADCAST_OPTION": [args[0], args[0]]},
+            args[1],
+        )
+
+    def nop(self, args: tuple[()]):
+        return gBlock("control_wait", {"DURATION": "0"}, {})

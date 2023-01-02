@@ -6,7 +6,6 @@ from typing import Iterable, TypeVar
 EXT = "gs"
 JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 
-
 T = TypeVar("T")
 
 

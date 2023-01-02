@@ -5,7 +5,7 @@ from gerror import gTokenError
 from gparser import literal
 from lark import Token, Tree, Visitor
 from lib import file_suggest
-from sb3 import gCostume, gSprite
+from sb3 import gCostume, gList, gSprite, gVariable
 
 
 class gFunction(NamedTuple):
@@ -19,6 +19,8 @@ class gDefinitionVisitor(Visitor[Token]):
         self.project = project
         self.sprite = sprite
         self.functions: dict[Token, gFunction] = {}
+        self.globals: list[Token] = []
+        self.listglobals: list[Token] = []
         self.visit(tree)
 
     def declr_costumes(self, tree: Tree[Token]):
@@ -46,3 +48,37 @@ class gDefinitionVisitor(Visitor[Token]):
 
     def declr_function_nowarp(self, tree: Tree[Token]):
         return self.declr_function(tree, False)
+
+    def varset(self, tree: Tree[Token]):
+        if tree.children[0] in self.globals:
+            return
+        if gVariable(tree.children[0]) not in self.sprite.variables:
+            self.sprite.variables.append(gVariable(tree.children[0]))
+
+    def listset(self, tree: Tree[Token]):
+        if tree.children[0] in self.listglobals:
+            return
+        if gList(tree.children[0]) not in self.sprite.lists:
+            self.sprite.lists.append(gList(tree.children[0]))
+
+    def declr_globals(self, tree: Tree[Token]):
+        for variable in cast(list[Token], tree.children):
+            if variable in self.globals:
+                raise gTokenError(
+                    f"variable `{variable}` was repeated", variable, "Remove this"
+                )
+            self.globals.append(variable)
+            try:
+                self.sprite.variables.remove(gVariable(variable))
+            except ValueError:
+                pass
+
+    def declr_listglobals(self, tree: Tree[Token]):
+        for lst in cast(list[Token], tree.children):
+            if lst in self.listglobals:
+                raise gTokenError(f"list `{lst}` was repeated", lst, "Remove this")
+            self.listglobals.append(lst)
+            try:
+                self.sprite.lists.remove(gList(lst))
+            except ValueError:
+                pass

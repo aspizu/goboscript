@@ -7,7 +7,7 @@ from lib import JSON, tripletwise
 from .gblockfactory import gPrototype
 
 gInputType = Union[str, "gBlock", "gStack", "gVariable", "gList"]
-gFieldType = Union[str, "gVariable", "gList"]
+gFieldType = Union[str, "gVariable", "gList", list[str]]
 gBlockListType = dict[str, dict[str, JSON]]
 
 
@@ -34,7 +34,20 @@ class gBlock:
 
     @classmethod
     def from_prototype(cls, prototype: gPrototype, arguments: list[gInputType]):
-        return cls(prototype.opcode, dict(zip(prototype.arguments, arguments)), {})
+        opcode = prototype.opcode
+        fields: dict[str, gFieldType] = {}
+        inputs: dict[str, gInputType] = {}
+        if "." in prototype.opcode:
+            opcode, fields = prototype.opcode.split(".")  # type: ignore
+            fields = (i.split("=") for i in fields.split(","))  # type: ignore
+            fields = {k: v for k, v in fields}
+        elif "!" in prototype.opcode:
+            opcode, inputs = prototype.opcode.split("!")  # type: ignore
+            inputs = (i.split("=") for i in inputs.split(","))  # type: ignore
+            inputs = {k: v for k, v in inputs}
+        return cls(
+            opcode, {**dict(zip(prototype.arguments, arguments)), **inputs}, fields
+        )
 
     def __rich_repr__(self) -> Any:
         yield "opcode", self.opcode
@@ -52,7 +65,11 @@ class gBlock:
         elif type(value) is gList:
             ...
         elif isinstance(value, gStack):
-            return [2, value[0].id]
+            value.serialize(blocks, self.id)
+            if len(value) == 0:
+                return []
+            else:
+                return [2, value[0].id]
         elif isinstance(value, gBlock):
             value.serialize(blocks, None, self.id)
             return [2, value.id]
@@ -61,6 +78,8 @@ class gBlock:
     def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
         if isinstance(value, str):
             return [value]
+        else:
+            return value  # type: ignore
         raise ValueError(self, value)
 
     def serialize_inputs(self, blocks: gBlockListType):
@@ -107,8 +126,22 @@ class gHatBlock(gBlock):
     def from_prototype(
         cls, prototype: gPrototype, arguments: list[gInputType], stack: gStack
     ):
+        opcode = prototype.opcode
+        fields = {}
+        inputs = {}
+        if "." in prototype.opcode:
+            opcode, fields = prototype.opcode.split(".")
+            fields = (i.split("=") for i in fields.split(","))
+            fields = {k: v for k, v in fields}
+        elif "!" in prototype.opcode:
+            opcode, inputs = prototype.opcode.split(".")
+            inputs = (i.split("=") for i in inputs.split(","))
+            inputs = {k: v for k, v in inputs}
         return cls(
-            prototype.opcode, dict(zip(prototype.arguments, arguments)), {}, stack
+            opcode,
+            {**dict(zip(prototype.arguments, arguments)), **inputs},
+            fields,  # type: ignore
+            stack,
         )
 
     def __repr__(self) -> str:

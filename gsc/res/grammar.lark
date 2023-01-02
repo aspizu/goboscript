@@ -1,25 +1,54 @@
 start: declr*
 
-declr: "costumes" _stringlist ";"          -> declr_costumes
-     | "fn" NAME _namelist stack           -> declr_function
-     | "nowarp" "fn" NAME _namelist stack  -> declr_function_nowarp
-     | NAME _exprlist stack                -> declr_hat
+declr: "costumes" _stringlist ";" -> declr_costumes
+     | "globals" _namelist ";" -> declr_globals
+     | "listglobals" _namelist ";" -> declr_listglobals
+     | "def" NAME _namelist stack -> declr_function
+     | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
+     | "on" STRING stack -> declr_on
+     | NAME _exprlist stack -> declr_hat
 
 stack: "{" block* "}"
 
-block: "if" expr stack -> block_if
+block: NAME "=" expr ";" -> varset
+     | "if" expr stack -> block_if
+     | "if" expr stack "else" stack -> block_if_else
+     | "if" expr stack ("elif" expr stack)+ -> block_if_elif
+     | "if" expr stack ("elif" expr stack)+ "else" stack -> block_if_elif_else
+     | "until" expr stack -> until
+     | "forever" stack -> forever
+     | "repeat" expr stack -> repeat
+     | NAME "[" "]" ";" -> listset
+     | NAME ".add" expr ";" -> listadd
+     | NAME ".delete" expr ";" -> listdelete
+     | NAME ".insert" expr "," expr ";" -> listinsert
+     | NAME "[" expr "]" "=" expr ";" -> listreplace
+     | NAME ".show" ";" -> listshow
+     | NAME ".hide" ";" -> listhide
+     | "..." -> nop
      | NAME _exprlist ";"
 
 expr: "(" expr ")"
     | STRING | NUMBER | FLOAT
+    | NAME -> var
     | ARGUMENT -> argument
     | NAME "(" _exprlist ")" -> reporter
-    | add | sub | mul | div
-
-add.2: expr "+" expr
-sub.3: expr "-" expr
-mul.4: expr "*" expr
-div.5: expr "/" expr
+    | "not" expr -> notop
+    | expr "and" expr -> andop
+    | expr "or" expr -> orop
+    | expr "=" expr -> eq
+    | expr ">" expr -> gt
+    | expr "<" expr -> lt
+    | expr "+" expr -> add
+    | expr "-" expr -> sub
+    | expr "*" expr -> mul
+    | expr "/" expr -> div
+    | expr "%" expr -> mod
+    | expr "&" expr -> join
+    | NAME "[" expr "]" -> listitem
+    | NAME ".index" "(" expr ")" -> listindex
+    | NAME ".contains" "(" expr ")" -> listcontains
+    | NAME ".length" -> listlength
 
 _exprlist: [expr ("," expr)*]
 _stringlist: [STRING ("," STRING)*]

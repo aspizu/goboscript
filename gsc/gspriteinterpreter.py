@@ -29,4 +29,5 @@ class gSpriteInterpreter(Interpreter[Token, None]):
             gBlockTransformer(self.gdefinitionvisitor, prototype).transform(tree)
         )
 
-    declr_function_nowarp = declr_hat
+    declr_function_nowarp = declr_function
+    declr_on = declr_hat

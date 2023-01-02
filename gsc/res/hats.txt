@@ -1,3 +1,4 @@
-NAME   | ARGUMENTS | OPCODE
--------+-----------+----------------------
-onflag |           | event_whenflagclicked
+NAME   | ARGUMENTS        | OPCODE
+-------+------------------+----------------------------
+onflag |                  | event_whenflagclicked
+onkey  | KEY_OPTION       | event_whenkeypressed
