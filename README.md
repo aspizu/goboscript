@@ -24,3 +24,16 @@ Installation
  - `cd goboscript`
  - `echo -e "#\!/bin/bash\nset -e\npython $(pwd)/gsc \"\$@\"" > ~/.local/bin/gsc`
  - `chmod +x ~/.local/bin/gsc`
+
+Contributing
+------------
+
+Pull requests are appreciated.
+
+Before creating a pull request make sure to run black and pyright.
+
+```sh
+# in repository root
+pyright . # this should not fail!
+black .
+```
