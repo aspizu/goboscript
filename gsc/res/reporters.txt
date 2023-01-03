@@ -1,4 +1,4 @@
-# Operators
+# Built-in Operators
 add           | NUM1, NUM2         | operator_add
 sub           | NUM1, NUM2         | operator_subtract
 mul           | NUM1, NUM2         | operator_multiply
@@ -52,3 +52,24 @@ minute || sensing_current.CURRENTMENU=MINUTE
 second || sensing_current.CURRENTMENU=SECOND
 dayssince2000 || sensing_dayssince2000
 username || sensing_username
+
+# Operators
+random | FROM, TO | operator_random
+letter | LETTER, STRING | operator_letter_of
+length | STRING | operator_length
+contains | STRING1, STRING2 | operator_contains
+round | NUM | operator_round
+abs|NUM|operator_mathop.OPERATOR=abs
+floor|NUM|operator_mathop.OPERATOR=floor
+ceil|NUM|operator_mathop.OPERATOR=ceiling
+sqrt|NUM|operator_mathop.OPERATOR=sqrt
+sin|NUM|operator_mathop.OPERATOR=sin
+cos|NUM|operator_mathop.OPERATOR=cos
+tan|NUM|operator_mathop.OPERATOR=tan
+asin|NUM|operator_mathop.OPERATOR=asin
+acos|NUM|operator_mathop.OPERATOR=acos
+atan|NUM|operator_mathop.OPERATOR=atan
+ln|NUM|operator_mathop.OPERATOR=ln
+log|NUM|operator_mathop.OPERATOR=log
+antiln|NUM|operator_mathop.OPERATOR=e ^
+antilog|NUM|operator_mathop.OPERATOR=10 ^
