@@ -45,6 +45,7 @@ expr: "(" expr ")"
     | expr "/" expr -> div
     | expr "%" expr -> mod
     | expr "&" expr -> join
+    | "-" expr -> minus
     | NAME "[" expr "]" -> listitem
     | NAME ".index" "(" expr ")" -> listindex
     | NAME ".contains" "(" expr ")" -> listcontains

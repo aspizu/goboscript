@@ -212,6 +212,9 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def sub(self, args: list[gInputType]):
         return gBlock.from_prototype(reporter_prototypes["sub"], args)
 
+    def minus(self, args: tuple[gInputType]):
+        return gBlock.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
+
     def mul(self, args: list[gInputType]):
         return gBlock.from_prototype(reporter_prototypes["mul"], args)
 

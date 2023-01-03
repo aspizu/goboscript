@@ -1,5 +1,5 @@
 costumes "blank.svg";
 
 onflag {
-    v = -v;
+    v = 10 + 20;
 }
