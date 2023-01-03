@@ -66,3 +66,7 @@ setpitcheffect|VALUE|sound_setpitcheffectto.EFFECT=PITCH
 changepitcheffect|CHANGE|sound_changeeffectby.EFFECT=PITCH
 setpaneffect|VALUE|sound_setpaneffectto.EFFECT=PAN
 changepaneffect|CHANGE|sound_changeeffectby.EFFECT=PAN
+
+# Events
+broadcast        | BROADCAST_INPUT | event_broadcast
+broadcastandwait | BROADCAST_INPUT | event_broadcastandwait
