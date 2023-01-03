@@ -86,3 +86,20 @@ ask | QUESTION | sensing_askandwait
 draggable || sensing_setdragmode.DRAG_MODE=draggable 
 notdraggable || sensing_setdragmode.DRAG_MODE=not draggable 
 resettimer || sensing_resettimer
+
+# Pen
+clear || pen_clear
+stamp || pen_stamp
+pendown || pen_penDown
+penup || pen_penUp
+setpencolor | COLOR | pen_setPenColorToColor
+setpensize | SIZE | pen_setPenSizeTo
+changepensize | SIZE | pen_changePenSizeBy
+setpenhue|VALUE|pen_setPenColorParamTo!COLOR_PARAM=color
+changepenhue|VALUE|pen_changePenColorParamBy!COLOR_PARAM=color
+setpensaturation|VALUE|pen_setPenColorParamTo!COLOR_PARAM=saturation
+changepensaturation|VALUE|pen_changePenColorParamBy!COLOR_PARAM=saturation
+setpenbrightness|VALUE|pen_setPenColorParamTo!COLOR_PARAM=brightness
+changepenbrightness|VALUE|pen_changePenColorParamBy!COLOR_PARAM=brightness
+setpentransparency|VALUE|pen_setPenColorParamTo!COLOR_PARAM=transparency
+changepentransparency|VALUE|pen_changePenColorParamBy!COLOR_PARAM=transparency
