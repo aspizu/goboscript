@@ -76,11 +76,14 @@ class gBlock:
         raise ValueError(self, value)
 
     def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
+        if isinstance(value, gVariable):
+            return [value, value]
+        if isinstance(value, gList):
+            return [value, value]
         if isinstance(value, str):
             return [value]
         else:
             return value  # type: ignore
-        raise ValueError(self, value)
 
     def serialize_inputs(self, blocks: gBlockListType):
         return {
