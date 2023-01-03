@@ -13,11 +13,17 @@ class gFunction(NamedTuple):
     arguments: list[Token]
 
 
+class gMacro(NamedTuple):
+    arguments: list[str]
+    body: Tree[Token]
+
+
 class gDefinitionVisitor(Visitor[Token]):
     def __init__(self, project: Path, sprite: gSprite, tree: Tree[Token]):
         super().__init__()
         self.project = project
         self.sprite = sprite
+        self.macros: dict[str, gMacro] = {}
         self.functions: dict[Token, gFunction] = {}
         self.globals: list[Token] = []
         self.listglobals: list[Token] = []
@@ -45,6 +51,17 @@ class gDefinitionVisitor(Visitor[Token]):
         if arguments == [None]:
             arguments = []
         self.functions[name] = gFunction(warp, arguments)
+
+    def declr_macro(self, tree: Tree[Token]):
+        name = cast(Token, tree.children[0])
+        if name in self.macros:
+            raise gTokenError("Redeclaration of macro", name, "Rename this macro")
+        arguments = cast(list[Token], tree.children[1:-1])
+        if arguments == [None]:
+            arguments = []
+        self.macros[name] = gMacro(
+            [str(i) for i in arguments], cast(Tree[Token], tree.children[-1])
+        )
 
     def declr_function_nowarp(self, tree: Tree[Token]):
         return self.declr_function(tree, False)

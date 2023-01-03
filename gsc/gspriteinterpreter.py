@@ -4,6 +4,7 @@ from typing import cast
 from gblocktransformer import gBlockTransformer
 from gdefinitionvisitor import gDefinitionVisitor
 from gerror import gFileError
+from gmacrotransformer import gMacroTransformer
 from lark import Token, Tree
 from lark.visitors import Interpreter
 from sb3 import gSprite
@@ -16,6 +17,10 @@ class gSpriteInterpreter(Interpreter[Token, None]):
         self.gdefinitionvisitor = gDefinitionVisitor(project, self.sprite, tree)
         if len(self.sprite.costumes) == 0:
             raise gFileError("No costumes defined", "Add a costumes statement")
+        tree = gMacroTransformer(self.gdefinitionvisitor.macros).transform(tree)
+        from rich import print
+
+        print(tree)
         self.visit(tree)
 
     def declr_hat(self, tree: Tree[Token]):

@@ -1,7 +1,8 @@
 costumes "blank.svg";
 
+macro A v -> !v+1;
+
 onflag {
-    if 1 < 2 {
-        
-    }
+    v = 10;
+    say !A(v);
 }

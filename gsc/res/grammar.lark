@@ -6,6 +6,7 @@ declr: "costumes" _stringlist ";" -> declr_costumes
      | "def" NAME _namelist stack -> declr_function
      | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
      | "on" STRING stack -> declr_on
+     | "macro" NAME _namelist "->" expr ";" -> declr_macro
      | NAME _exprlist stack -> declr_hat
 
 stack: "{" block* "}"
@@ -32,7 +33,9 @@ expr: "(" expr ")"
     | STRING | NUMBER | FLOAT
     | NAME -> var
     | ARGUMENT -> argument
+    | MACROVAR -> macrovar
     | NAME "(" _exprlist ")" -> reporter
+    | MACROVAR "(" _exprlist ")" -> macro
     | "not" expr -> notop
     | expr "and" expr -> andop
     | expr "or" expr -> orop
@@ -55,6 +58,7 @@ _exprlist: [expr ("," expr)*]
 _stringlist: [STRING ("," STRING)*]
 _namelist: [NAME ("," NAME)*]
 
+MACROVAR: /\![_a-zA-Z][_a-zA-Z0-9]*/
 ARGUMENT: /\$[_a-zA-Z][_a-zA-Z0-9]*/
 NAME: /[_a-zA-Z][_a-zA-Z0-9]*/
 STRING: /"([^"\\]|\\.)*"/
