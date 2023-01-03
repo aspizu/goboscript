@@ -13,13 +13,7 @@ def parse_args():
         )
     project = Path(sys.argv[1])
     output = Path(sys.argv[2])
-    gproj = build_gproject(project)
-    import json
-
-    from rich import print
-
-    print(json.dumps(gproj.serialize(), indent=2))
-    gproj.package(output)
+    build_gproject(project).package(output)
 
 
 def main():
