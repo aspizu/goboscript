@@ -21,3 +21,36 @@ ifonedgebounce  |                    | motion_ifonedgebounce
 rotateflip      |                    | motion_setrotationstyle.STYLE=left-right
 rotateany       |                    | motion_setrotationstyle.STYLE=all around
 rotatenone      |                    | motion_setrotationstyle.STYLE=don't rotate
+
+# Looks
+say                 | MESSAGE            | looks_say
+sayfor              | SECS, MESSAGE      | looks_sayforsecs
+think               | MESSAGE            | looks_think
+thinkfor            | SECS, MESSAGE      | looks_thinkforsecs
+switchcostume       | COSTUME            | looks_switchcostumeto
+nextcostume         |                    | looks_nextcostume
+switchbackdrop      | BACKDROP           | looks_switchbackdropto
+nextbackdrop        |                    | looks_nextbackdrop
+changesize          | CHANGE             | looks_changesizeby
+setsize             | SIZE               | looks_setsizeto
+cleargraphiceffects |                    | looks_cleargraphiceffects
+hide                |                    | looks_hide
+show                |                    | looks_show
+gotofront           |                    | looks_gotofrontback.FRONT_BACK=front
+gotoback            |                    | looks_gotofrontback.FRONT_BACK=back
+goforward           | NUM                | looks_goforwardbackwardlayers.FORWARD_BACKWARD=forward
+gobackward          | NUM                | looks_goforwardbackwardlayers.FORWARD_BACKWARD=backward
+setcoloreffect|VALUE|looks_setcoloreffectto.EFFECT=COLOR
+changecoloreffect|CHANGE|looks_changecoloreffectby.EFFECT=COLOR
+setfisheyeeffect|VALUE|looks_setfisheyeeffectto.EFFECT=FISHEYE
+changefisheyeeffect|CHANGE|looks_changefisheyeeffectby.EFFECT=FISHEYE
+setwhirleffect|VALUE|looks_setwhirleffectto.EFFECT=WHIRL
+changewhirleffect|CHANGE|looks_changewhirleffectby.EFFECT=WHIRL
+setpixelateeffect|VALUE|looks_setpixelateeffectto.EFFECT=PIXELATE
+changepixelateeffect|CHANGE|looks_changepixelateeffectby.EFFECT=PIXELATE
+setmosaiceffect|VALUE|looks_setmosaiceffectto.EFFECT=MOSAIC
+changemosaiceffect|CHANGE|looks_changemosaiceffectby.EFFECT=MOSAIC
+setbrightnesseffect|VALUE|looks_setbrightnesseffectto.EFFECT=BRIGHTNESS
+changebrightnesseffect|CHANGE|looks_changebrightnesseffectby.EFFECT=BRIGHTNESS
+setghosteffect|VALUE|looks_setghosteffectto.EFFECT=GHOST
+changeghosteffect|CHANGE|looks_changeghosteffectby.EFFECT=GHOST
