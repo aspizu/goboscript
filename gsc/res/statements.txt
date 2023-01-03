@@ -80,3 +80,9 @@ deleteclone |              | control_delete_this_clone
 stopall     |              | control_stop.STOP_OPTION=all
 return      |              | control_stop.STOP_OPTION=this script
 stopother   |              | control_stop.STOP_OPTION=other scripts in sprite
+
+# Sensing
+ask | QUESTION | sensing_askandwait
+draggable || sensing_setdragmode.DRAG_MODE=draggable 
+notdraggable || sensing_setdragmode.DRAG_MODE=not draggable 
+resettimer || sensing_resettimer
