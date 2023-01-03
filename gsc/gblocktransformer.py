@@ -207,12 +207,12 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(prototype, arguments)
 
     def add(self, args: list[gInputType]):
-        if isinstance(args[0], str) and isinstance(args[1], str):
+        if type(args[0]) is str and type(args[1]) is str:
             return str(number(args[0]) + number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["add"], args)
 
     def sub(self, args: list[gInputType]):
-        if isinstance(args[0], str) and isinstance(args[1], str):
+        if type(args[0]) is str and type(args[1]) is str:
             return str(number(args[0]) - number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["sub"], args)
 
@@ -220,22 +220,22 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
 
     def mul(self, args: list[gInputType]):
-        if isinstance(args[0], str) and isinstance(args[1], str):
+        if type(args[0]) is str and type(args[1]) is str:
             return str(number(args[0]) * number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["mul"], args)
 
     def div(self, args: list[gInputType]):
-        if isinstance(args[0], str) and isinstance(args[1], str):
+        if type(args[0]) is str and type(args[1]) is str:
             return str(number(args[0]) / number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["div"], args)
 
     def mod(self, args: list[gInputType]):
-        if isinstance(args[0], str) and isinstance(args[1], str):
+        if type(args[0]) is str and type(args[1]) is str:
             return str(number(args[0]) % number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["mod"], args)
 
     def join(self, args: list[gInputType]):
-        if isinstance(args[0], str) and isinstance(args[1], str):
+        if type(args[0]) is str and type(args[1]) is str:
             return args[0] + args[1]
         return gBlock.from_prototype(reporter_prototypes["join"], args)
 

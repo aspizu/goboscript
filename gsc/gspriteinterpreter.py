@@ -18,9 +18,6 @@ class gSpriteInterpreter(Interpreter[Token, None]):
         if len(self.sprite.costumes) == 0:
             raise gFileError("No costumes defined", "Add a costumes statement")
         tree = gMacroTransformer(self.gdefinitionvisitor.macros).transform(tree)
-        from rich import print
-
-        print(tree)
         self.visit(tree)
 
     def declr_hat(self, tree: Tree[Token]):
