@@ -40,20 +40,20 @@ gotofront           |                    | looks_gotofrontback.FRONT_BACK=front
 gotoback            |                    | looks_gotofrontback.FRONT_BACK=back
 goforward           | NUM                | looks_goforwardbackwardlayers.FORWARD_BACKWARD=forward
 gobackward          | NUM                | looks_goforwardbackwardlayers.FORWARD_BACKWARD=backward
-setcoloreffect|VALUE|looks_setcoloreffectto.EFFECT=COLOR
-changecoloreffect|CHANGE|looks_changecoloreffectby.EFFECT=COLOR
-setfisheyeeffect|VALUE|looks_setfisheyeeffectto.EFFECT=FISHEYE
-changefisheyeeffect|CHANGE|looks_changefisheyeeffectby.EFFECT=FISHEYE
-setwhirleffect|VALUE|looks_setwhirleffectto.EFFECT=WHIRL
-changewhirleffect|CHANGE|looks_changewhirleffectby.EFFECT=WHIRL
-setpixelateeffect|VALUE|looks_setpixelateeffectto.EFFECT=PIXELATE
-changepixelateeffect|CHANGE|looks_changepixelateeffectby.EFFECT=PIXELATE
-setmosaiceffect|VALUE|looks_setmosaiceffectto.EFFECT=MOSAIC
-changemosaiceffect|CHANGE|looks_changemosaiceffectby.EFFECT=MOSAIC
-setbrightnesseffect|VALUE|looks_setbrightnesseffectto.EFFECT=BRIGHTNESS
-changebrightnesseffect|CHANGE|looks_changebrightnesseffectby.EFFECT=BRIGHTNESS
-setghosteffect|VALUE|looks_setghosteffectto.EFFECT=GHOST
-changeghosteffect|CHANGE|looks_changeghosteffectby.EFFECT=GHOST
+setcoloreffect|VALUE|looks_seteffectto.EFFECT=COLOR
+changecoloreffect|CHANGE|looks_changeeffectby.EFFECT=COLOR
+setfisheyeeffect|VALUE|looks_seteffectto.EFFECT=FISHEYE
+changefisheyeeffect|CHANGE|looks_changeeffectby.EFFECT=FISHEYE
+setwhirleffect|VALUE|looks_seteffectto.EFFECT=WHIRL
+changewhirleffect|CHANGE|looks_changeeffectby.EFFECT=WHIRL
+setpixelateeffect|VALUE|looks_seteffectto.EFFECT=PIXELATE
+changepixelateeffect|CHANGE|looks_changeeffectby.EFFECT=PIXELATE
+setmosaiceffect|VALUE|looks_seteffectto.EFFECT=MOSAIC
+changemosaiceffect|CHANGE|looks_changeeffectby.EFFECT=MOSAIC
+setbrightnesseffect|VALUE|looks_seteffectto.EFFECT=BRIGHTNESS
+changebrightnesseffect|CHANGE|looks_changeeffectby.EFFECT=BRIGHTNESS
+setghosteffect|VALUE|looks_seteffectto.EFFECT=GHOST
+changeghosteffect|CHANGE|looks_changeeffectby.EFFECT=GHOST
 
 # Sounds
 playsound         | SOUND_MENU | sound_playuntildone
