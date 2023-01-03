@@ -12,3 +12,8 @@ abs           | NUM                | operator_mathop.OPERATOR=abs
 and           | OPERAND1, OPERAND2 | operator_and
 or            | OPERAND1, OPERAND2 | operator_or
 not           | OPERAND            | operator_not
+
+# Motion
+x             |                    | motion_xposition
+y             |                    | motion_yposition
+direction     |                    | motion_direction
