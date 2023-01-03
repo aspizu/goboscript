@@ -1,3 +1,4 @@
+import math
 from difflib import get_close_matches
 from itertools import chain
 from typing import Any, Iterator, cast
@@ -178,7 +179,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                 + "Read --doc statements for available statements",
             )
 
-    def reporter(self, args: list[Any]) -> gBlock:
+    def reporter(self, args: list[Any]) -> gInputType:
         opcode: Token = args[0]
         arguments: list[gInputType] = args[1:]
         if arguments == [None]:
@@ -204,6 +205,11 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                 opcode,
                 f"Missing {', '.join(prototype.arguments[len(arguments):])}",
             )
+        if (
+            prototype.opcode == "operator_mathop.OPERATOR=sqrt"
+            and type(arguments[0]) is str
+        ):
+            return str(math.sqrt(number(arguments[0])))
         return gBlock.from_prototype(prototype, arguments)
 
     def add(self, args: list[gInputType]):

@@ -26,12 +26,12 @@
     },
     {
       "name": "punctuation",
-      "match": "[;,.]"
+      "match": "[;,.!]"
     },
     
     {
       "name": "keyword.control",
-      "match": "\\b(costumes|globals|listglobals|def|nowarp|if|else|elif|repeat|until|on|onflag|onkey|onclick|onbackdrop|onloudness|ontimer|onclone)\\b"
+      "match": "\\b(costumes|globals|listglobals|def|macro|nowarp|if|else|elif|repeat|until|on|onflag|onkey|onclick|onbackdrop|onloudness|ontimer|onclone)\\b"
     },
     {
       "name": "constant.numeric",
