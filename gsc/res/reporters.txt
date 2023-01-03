@@ -24,3 +24,6 @@ costumename   |                    | looks_costumenumbername!NUMBER_NAME=name
 backdrop      |                    | looks_backdropnumbername!NUMBER_NAME=number
 backdropname  |                    | looks_backdropnumbername!NUMBER_NAME=name
 size          |                    | looks_size
+
+# Sound
+VOLUME || sound_volume
