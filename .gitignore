@@ -127,4 +127,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-*_build.sb3
+*build.sb3
