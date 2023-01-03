@@ -6,7 +6,7 @@ from gdefinitionvisitor import gDefinitionVisitor, gFunction
 from gerror import gFileError, gTokenError
 from gparser import literal
 from lark import Token, Transformer
-from lib import num_plural
+from lib import num_plural, number
 from sb3 import (
     gArgument,
     gBlock,
@@ -207,24 +207,36 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(prototype, arguments)
 
     def add(self, args: list[gInputType]):
+        if isinstance(args[0], str) and isinstance(args[1], str):
+            return str(number(args[0]) + number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["add"], args)
 
     def sub(self, args: list[gInputType]):
+        if isinstance(args[0], str) and isinstance(args[1], str):
+            return str(number(args[0]) - number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["sub"], args)
 
     def minus(self, args: tuple[gInputType]):
         return gBlock.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
 
     def mul(self, args: list[gInputType]):
+        if isinstance(args[0], str) and isinstance(args[1], str):
+            return str(number(args[0]) * number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["mul"], args)
 
     def div(self, args: list[gInputType]):
+        if isinstance(args[0], str) and isinstance(args[1], str):
+            return str(number(args[0]) / number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["div"], args)
 
     def mod(self, args: list[gInputType]):
+        if isinstance(args[0], str) and isinstance(args[1], str):
+            return str(number(args[0]) % number(args[1]))
         return gBlock.from_prototype(reporter_prototypes["mod"], args)
 
     def join(self, args: list[gInputType]):
+        if isinstance(args[0], str) and isinstance(args[1], str):
+            return args[0] + args[1]
         return gBlock.from_prototype(reporter_prototypes["join"], args)
 
     def eq(self, args: list[gInputType]):

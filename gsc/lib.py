@@ -37,3 +37,10 @@ def dir_suggest(path: Path) -> list[Path]:
 
 def num_plural(num: int, word: str) -> str:
     return (str(num) if num > 0 else "no") + word + ("s" if num > 1 else "")
+
+
+def number(number: str) -> int | float:
+    try:
+        return int(number)
+    except:
+        return float(number)
