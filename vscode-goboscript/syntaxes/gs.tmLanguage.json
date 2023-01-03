@@ -1,0 +1,50 @@
+{
+  "patterns": [
+    {
+      "begin": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape",
+          "match": "\\\\."
+        }
+      ],
+      "end": "\"",
+      "name": "string"
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment"
+    },
+    {
+      "name": "variable.other.property",
+      "match": "\\$[_a-zA-Z][_a-zA-Z0-9]*"
+    },
+    {
+      "name": "keyword.operator",
+      "match": "([+\\-*/&%=<>]|and|or|not)"
+    },
+    {
+      "name": "punctuation",
+      "match": "[;,.]"
+    },
+    
+    {
+      "name": "keyword.control",
+      "match": "\\b(costumes|globals|listglobals|def|nowarp|if|else|elif|repeat|until|on|onflag|onkey|onclick|onbackdrop|onloudness|ontimer|onclone)\\b"
+    },
+    {
+      "name": "constant.numeric",
+      "match": "\\b[0-9.]+\\b"
+    },
+    {
+      "name": "entity.name.function",
+      "match": "\\b[_a-zA-Z][_a-zA-Z0-9]*\\s*\\("
+    },
+    {
+      "name": "entity.name.function",
+      "match": "\\b(\\.index|\\.contains|\\.length|\\.add|\\.insert|\\.delete|\\.show|\\.hide)\\b"
+    }
+  ],
+  "scopeName": "source.gs"
+}

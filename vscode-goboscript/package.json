@@ -1,0 +1,42 @@
+{
+  "name": "vscode-goboscript",
+  "version": "0.1.0",
+  "publisher": "aspizu",
+  "engines": {
+    "vscode": "^1.2.0"
+  },
+  "license": "Apache-2.0",
+  "displayName": "GoboScript syntax support",
+  "description": "Language support for GoboScript files",
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aspizu/goboscript"
+  },
+  "bugs": {
+    "url": "https://github.com/aspizu/goboscript/issues"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "gs",
+        "aliases": [
+          "gs"
+        ],
+        "extensions": [
+          ".gs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gs",
+        "scopeName": "source.gs",
+        "path": "./syntaxes/gs.tmLanguage.json"
+      }
+    ]
+  }
+}
