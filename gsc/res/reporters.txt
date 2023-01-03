@@ -1,5 +1,4 @@
-NAME          | ARGUMENTS          | OPCODE
---------------+--------------------+------------------
+# Operators
 add           | NUM1, NUM2         | operator_add
 sub           | NUM1, NUM2         | operator_subtract
 mul           | NUM1, NUM2         | operator_multiply
