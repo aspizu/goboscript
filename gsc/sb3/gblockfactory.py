@@ -11,9 +11,9 @@ class gPrototype(NamedTuple):
 def load_prototypes(file: str):
     prototypes: dict[str, gPrototype] = {}
     i = importlib.resources.open_text("res", file)
-    next(i)
-    next(i)
     for line in i:
+        if line.strip().startswith("#") or line.strip() == "":
+            continue
         name, arguments, opcode = [i.strip() for i in line.strip(" \n").split("|")]
         arguments = [i.strip() for i in arguments.split(",")]
         if arguments[0] == "":
