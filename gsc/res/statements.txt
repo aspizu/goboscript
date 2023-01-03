@@ -1,8 +1,23 @@
-NAME           | ARGUMENTS          | OPCODE
----------------+--------------------+-----------------------
-say            | MESSAGE            | looks_say
-sayfor         | MESSAGE            | looks_sayforsecs
-gotosprite     | TO                 | motion_goto
-gotomouse      |                    | motion_goto!TO=_mouse_
-setcoloreffect | VALUE              | looks_seteffectto.EFFECT=COLOR
-broadcast      | BROADCAST_INPUT    | event_broadcast 
+# Motion
+move            | STEPS              | motion_movesteps
+turnright       | DEGREES            | motion_turnright
+turnleft        | DEGREES            | motion_turnleft
+gotosprite      | TO                 | motion_goto
+gotomouse       |                    | motion_goto!TO=_mouse_
+gotorandom      |                    | motion_goto!TO=_random_
+goto            | X, Y               | motion_gotoxy
+glidetosprite   | SECS, TO           | motion_glideto
+glidetomouse    | SECS               | motion_glideto!TO=_mouse_
+glidetorandom   | SECS               | motion_glideto!TO=_random_
+glide           | SECS, X, Y         | motion_glidesecstoxy
+point           | DIRECTION          | motion_pointindirection
+pointtowards    | TOWARDS            | motion_pointtowards
+pointmouse      |                    | motion_pointtowards!TOWARDS=_mouse_
+changex         | DX                 | motion_changexby
+changey         | DY                 | motion_changeyby
+setx            | X                  | motion_setx
+sety            | Y                  | motion_sety
+ifonedgebounce  |                    | motion_ifonedgebounce
+rotateflip      |                    | motion_setrotationstyle.STYLE=left-right
+rotateany       |                    | motion_setrotationstyle.STYLE=all around
+rotatenone      |                    | motion_setrotationstyle.STYLE=don't rotate
