@@ -60,7 +60,7 @@ STRING: /"([^"\\]|\\.)*"/
 NUMBER: /-?[0-9]+/
 FLOAT: /-?[0-9]+\.[0-9]+/
 
-COMMENT: "'" /.+/ "'"
+COMMENT: "/*" /.+/ "*/"
 %ignore COMMENT
 %ignore " "
 %ignore "\n"
