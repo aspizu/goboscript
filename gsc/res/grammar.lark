@@ -57,8 +57,8 @@ _namelist: [NAME ("," NAME)*]
 ARGUMENT: /\$[_a-zA-Z][_a-zA-Z0-9]*/
 NAME: /[_a-zA-Z][_a-zA-Z0-9]*/
 STRING: /"([^"\\]|\\.)*"/
-NUMBER: /[0-9]+/
-FLOAT: /[0-9]+\.[0-9]+/
+NUMBER: /-?[0-9]+/
+FLOAT: /-?[0-9]+\.[0-9]+/
 
 COMMENT: "'" /.+/ "'"
 %ignore COMMENT
