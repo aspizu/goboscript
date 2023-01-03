@@ -61,7 +61,7 @@ class gBlock:
         if type(value) is str:
             return [1, [10, value]]
         elif type(value) is gVariable:
-            return [2, [12, value, value]]
+            return [3, [12, value, value], [4, ""]]
         elif type(value) is gList:
             ...
         elif isinstance(value, gStack):
@@ -72,7 +72,7 @@ class gBlock:
                 return [2, value[0].id]
         elif isinstance(value, gBlock):
             value.serialize(blocks, None, self.id)
-            return [2, value.id]
+            return [3, value.id, [4, ""]]
         raise ValueError(self, value)
 
     def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
