@@ -1,7 +1,20 @@
 costumes "blank.svg";
 
-macro dist x1, y1, x2, y2 -> sqrt((!x2-!x1)*(!x2-!x1)+(!y2-!y1)*(!y2-!y1));
-
 onflag {
-    say !dist(1, 2, 3, 4);
+    split "One,Two,Three,Four", ",";
+}
+
+def split string, sep {
+    splitted[];
+    key = "";
+    i = 1;
+    until i > length($string) {
+        if letter(i, $string) = $sep {
+            splitted.add key;
+        } else {
+            key = key & letter(i, $string);    
+        }
+        i = i + 1;
+    }
+    splitted.add key;
 }

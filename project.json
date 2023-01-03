@@ -1,0 +1,342 @@
+{
+  "targets": [
+    {
+      "isStage": true,
+      "name": "Stage",
+      "variables": {},
+      "blocks": {},
+      "lists": {},
+      "costumes": [
+        {
+          "name": "blank.svg",
+          "assetId": "7593bc24f7bb47732df87f02a411edaa",
+          "dataFormat": "svg",
+          "md5ext": "7593bc24f7bb47732df87f02a411edaa.svg"
+        }
+      ],
+      "sounds": []
+    },
+    {
+      "isStage": false,
+      "name": "main",
+      "variables": {
+        "key": ["key", 0],
+        "i": ["i", 0]
+      },
+      "blocks": {
+        "139951843611792": {
+          "opcode": "event_whenflagclicked",
+          "next": "139951843612624",
+          "parent": null,
+          "inputs": {},
+          "fields": {},
+          "topLevel": true
+        },
+        "139951843612624": {
+          "opcode": "procedures_call",
+          "next": null,
+          "parent": "139951843611792",
+          "inputs": {
+            "string": [1, [10, "One,Two,Three,Four"]],
+            "sep": [1, [10, ","]]
+          },
+          "fields": {},
+          "topLevel": false,
+          "mutation": {
+            "tagName": "mutation",
+            "children": [],
+            "proccode": "split %s %s",
+            "argumentids": "[\"string\", \"sep\"]",
+            "warp": true
+          }
+        },
+        "139951843614096": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "139951843612880",
+          "inputs": {},
+          "fields": {
+            "VALUE": ["string"]
+          },
+          "topLevel": false
+        },
+        "139951843732048": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "139951843612880",
+          "inputs": {},
+          "fields": {
+            "VALUE": ["sep"]
+          },
+          "topLevel": false
+        },
+        "139951843612880": {
+          "opcode": "procedures_prototype",
+          "next": null,
+          "parent": "139951843612560",
+          "inputs": {
+            "string": [3, "139951843614096", [4, ""]],
+            "sep": [3, "139951843732048", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false,
+          "mutation": {
+            "tagName": "mutation",
+            "children": [],
+            "proccode": "split %s %s",
+            "argumentids": "[\"string\", \"sep\"]",
+            "argumentnames": "[\"string\", \"sep\"]",
+            "argumentdefaults": "[\"0\", \"0\"]",
+            "warp": "true"
+          }
+        },
+        "139951843612560": {
+          "opcode": "procedures_definition",
+          "next": "139951843613072",
+          "parent": null,
+          "inputs": {
+            "custom_block": [3, "139951843612880", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": true
+        },
+        "139951843613072": {
+          "opcode": "data_deletealloflist",
+          "next": "139951843614032",
+          "parent": "139951843612560",
+          "inputs": {},
+          "fields": {
+            "LIST": ["splitted"]
+          },
+          "topLevel": false
+        },
+        "139951843614032": {
+          "opcode": "data_setvariableto",
+          "next": "139951843614288",
+          "parent": "139951843613072",
+          "inputs": {
+            "VALUE": [1, [10, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["key"]
+          },
+          "topLevel": false
+        },
+        "139951843614288": {
+          "opcode": "data_setvariableto",
+          "next": "139951843614480",
+          "parent": "139951843614032",
+          "inputs": {
+            "VALUE": [1, [10, "1"]]
+          },
+          "fields": {
+            "VARIABLE": ["i"]
+          },
+          "topLevel": false
+        },
+        "139951843614864": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "139951843614800",
+          "inputs": {},
+          "fields": {
+            "VALUE": ["string"]
+          },
+          "topLevel": false
+        },
+        "139951843614800": {
+          "opcode": "operator_length",
+          "next": null,
+          "parent": "139951843614672",
+          "inputs": {
+            "STRING": [3, "139951843614864", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843614672": {
+          "opcode": "operator_gt",
+          "next": null,
+          "parent": "139951843614480",
+          "inputs": {
+            "OPERAND1": [3, [12, "i", "i"], [4, ""]],
+            "OPERAND2": [3, "139951843614800", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843618768": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "139951843618960",
+          "inputs": {},
+          "fields": {
+            "VALUE": ["string"]
+          },
+          "topLevel": false
+        },
+        "139951843618960": {
+          "opcode": "operator_letter_of",
+          "next": null,
+          "parent": "139951843618320",
+          "inputs": {
+            "LETTER": [3, [12, "i", "i"], [4, ""]],
+            "STRING": [3, "139951843618768", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843618704": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "139951843618320",
+          "inputs": {},
+          "fields": {
+            "VALUE": ["sep"]
+          },
+          "topLevel": false
+        },
+        "139951843618320": {
+          "opcode": "operator_equals",
+          "next": null,
+          "parent": "139951843618128",
+          "inputs": {
+            "OPERAND1": [3, "139951843618960", [4, ""]],
+            "OPERAND2": [3, "139951843618704", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843730960": {
+          "opcode": "data_addtolist",
+          "next": null,
+          "parent": "139951843618128",
+          "inputs": {
+            "ITEM": [3, [12, "key", "key"], [4, ""]]
+          },
+          "fields": {
+            "LIST": ["splitted"]
+          },
+          "topLevel": false
+        },
+        "139951843731408": {
+          "opcode": "argument_reporter_string_number",
+          "next": null,
+          "parent": "139951843731344",
+          "inputs": {},
+          "fields": {
+            "VALUE": ["string"]
+          },
+          "topLevel": false
+        },
+        "139951843731344": {
+          "opcode": "operator_letter_of",
+          "next": null,
+          "parent": "139951843731216",
+          "inputs": {
+            "LETTER": [3, [12, "i", "i"], [4, ""]],
+            "STRING": [3, "139951843731408", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843731216": {
+          "opcode": "operator_join",
+          "next": null,
+          "parent": "139951843731088",
+          "inputs": {
+            "STRING1": [3, [12, "key", "key"], [4, ""]],
+            "STRING2": [3, "139951843731344", [4, ""]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843731088": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "139951843618128",
+          "inputs": {
+            "VALUE": [3, "139951843731216", [4, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["key"]
+          },
+          "topLevel": false
+        },
+        "139951843618128": {
+          "opcode": "control_if_else",
+          "next": "139951843618192",
+          "parent": "139951843614480",
+          "inputs": {
+            "CONDITION": [3, "139951843618320", [4, ""]],
+            "SUBSTACK": [2, "139951843730960"],
+            "SUBSTACK2": [2, "139951843731088"]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843730896": {
+          "opcode": "operator_add",
+          "next": null,
+          "parent": "139951843618192",
+          "inputs": {
+            "NUM1": [3, [12, "i", "i"], [4, ""]],
+            "NUM2": [1, [10, "1"]]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843618192": {
+          "opcode": "data_setvariableto",
+          "next": null,
+          "parent": "139951843618128",
+          "inputs": {
+            "VALUE": [3, "139951843730896", [4, ""]]
+          },
+          "fields": {
+            "VARIABLE": ["i"]
+          },
+          "topLevel": false
+        },
+        "139951843614480": {
+          "opcode": "control_repeat_until",
+          "next": "139951843614608",
+          "parent": "139951843614288",
+          "inputs": {
+            "CONDITION": [3, "139951843614672", [4, ""]],
+            "SUBSTACK": [2, "139951843618128"]
+          },
+          "fields": {},
+          "topLevel": false
+        },
+        "139951843614608": {
+          "opcode": "data_addtolist",
+          "next": null,
+          "parent": "139951843614480",
+          "inputs": {
+            "ITEM": [3, [12, "key", "key"], [4, ""]]
+          },
+          "fields": {
+            "LIST": ["splitted"]
+          },
+          "topLevel": false
+        }
+      },
+      "lists": {
+        "splitted": ["splitted", []]
+      },
+      "costumes": [
+        {
+          "name": "blank.svg",
+          "assetId": "7593bc24f7bb47732df87f02a411edaa",
+          "dataFormat": "svg",
+          "md5ext": "7593bc24f7bb47732df87f02a411edaa.svg"
+        }
+      ],
+      "sounds": []
+    }
+  ],
+  "meta": {
+    "semver": "3.0.0"
+  }
+}

@@ -309,7 +309,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gVariable(args[0])
 
     def listset(self, args: tuple[Token]):
-        return gBlock("data_deletealloflist", {}, {"LIST": args[0]})
+        return gBlock("data_deletealloflist", {}, {"LIST": gList(args[0])})
 
     def islist(self, token: Token):
         if (
@@ -327,16 +327,18 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def listadd(self, args: tuple[Token, gInputType]):
         self.islist(args[0])
-        return gBlock("data_addtolist", {"ITEM": args[1]}, {"LIST": args[0]})
+        return gBlock("data_addtolist", {"ITEM": args[1]}, {"LIST": gList(args[0])})
 
     def listdelete(self, args: tuple[Token, gInputType]):
         self.islist(args[0])
-        return gBlock("data_deleteoflist", {"INDEX": args[1]}, {"LIST": args[0]})
+        return gBlock("data_deleteoflist", {"INDEX": args[1]}, {"LIST": gList(args[0])})
 
     def listinsert(self, args: tuple[Token, gInputType, gInputType]):
         self.islist(args[0])
         return gBlock(
-            "data_insertatlist", {"INDEX": args[1], "ITEM": args[2]}, {"LIST": args[0]}
+            "data_insertatlist",
+            {"INDEX": args[1], "ITEM": args[2]},
+            {"LIST": gList(args[0])},
         )
 
     def listreplace(self, args: tuple[Token, gInputType, gInputType]):
@@ -344,32 +346,34 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock(
             "data_replaceitemoflist",
             {"INDEX": args[1], "ITEM": args[2]},
-            {"LIST": args[0]},
+            {"LIST": gList(args[0])},
         )
 
     def listshow(self, args: tuple[Token]):
         self.islist(args[0])
-        return gBlock("data_showlist", {}, {"LIST": args[0]})
+        return gBlock("data_showlist", {}, {"LIST": gList(args[0])})
 
     def listhide(self, args: tuple[Token]):
         self.islist(args[0])
-        return gBlock("data_hidelist", {}, {"LIST": args[0]})
+        return gBlock("data_hidelist", {}, {"LIST": gList(args[0])})
 
     def listitem(self, args: tuple[Token, gInputType]):
         self.islist(args[0])
-        return gBlock("data_itemoflist", {"INDEX": args[1]}, {"LIST": args[0]})
+        return gBlock("data_itemoflist", {"INDEX": args[1]}, {"LIST": gList(args[0])})
 
     def listindex(self, args: tuple[Token, gInputType]):
         self.islist(args[0])
-        return gBlock("data_itemnumoflist", {"ITEM": args[1]}, {"LIST": args[0]})
+        return gBlock("data_itemnumoflist", {"ITEM": args[1]}, {"LIST": gList(args[0])})
 
     def listcontains(self, args: tuple[Token, gInputType]):
         self.islist(args[0])
-        return gBlock("data_listcontainsitem", {"ITEM": args[1]}, {"LIST": args[0]})
+        return gBlock(
+            "data_listcontainsitem", {"ITEM": args[1]}, {"LIST": gList(args[0])}
+        )
 
     def listlength(self, args: tuple[Token]):
         self.islist(args[0])
-        return gBlock("data_lengthoflist", {}, {"LIST": args[0]})
+        return gBlock("data_lengthoflist", {}, {"LIST": gList(args[0])})
 
     def declr_on(self, args: tuple[Token, gStack]):
         return gHatBlock(
