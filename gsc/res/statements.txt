@@ -54,3 +54,15 @@ setbrightnesseffect|VALUE|looks_setbrightnesseffectto.EFFECT=BRIGHTNESS
 changebrightnesseffect|CHANGE|looks_changebrightnesseffectby.EFFECT=BRIGHTNESS
 setghosteffect|VALUE|looks_setghosteffectto.EFFECT=GHOST
 changeghosteffect|CHANGE|looks_changeghosteffectby.EFFECT=GHOST
+
+# Sounds
+playsound         | SOUND_MENU | sound_playuntildone
+startsound        | SOUND_MENU | sound_play
+stopallsounds     |            | sound_stopallsounds
+clearsoundeffects |            | sound_cleareffects
+changevolume      | VOLUME     | sound_changevolumeby
+setvolume         | VOLUME     | sound_setvolumeto
+setpitcheffect|VALUE|sound_setpitcheffectto.EFFECT=PITCH
+changepitcheffect|CHANGE|sound_changeeffectby.EFFECT=PITCH
+setpaneffect|VALUE|sound_setpaneffectto.EFFECT=PAN
+changepaneffect|CHANGE|sound_changeeffectby.EFFECT=PAN
