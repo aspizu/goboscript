@@ -70,3 +70,13 @@ changepaneffect|CHANGE|sound_changeeffectby.EFFECT=PAN
 # Events
 broadcast        | BROADCAST_INPUT | event_broadcast
 broadcastandwait | BROADCAST_INPUT | event_broadcastandwait
+
+# Control
+wait        | DURATION     | control_wait
+waituntil   | CONDITION    | control_wait_until
+cloneself   |              | control_create_clone_of!CLONE_OPTION=_myself_
+clone       | CLONE_OPTION | control_create_clone_of
+deleteclone |              | control_delete_this_clone
+stopall     |              | control_stop.STOP_OPTION=all
+return      |              | control_stop.STOP_OPTION=this script
+stopother   |              | control_stop.STOP_OPTION=other scripts in sprite
