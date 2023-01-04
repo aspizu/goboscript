@@ -259,6 +259,11 @@ NAME.contains(<EXPRESSION>)
 NAME.length
 ```
 
+### Item N of list
+```
+NAME[<INDEX>]
+```
+
 Control-flow Statements
 -----------------------
 
