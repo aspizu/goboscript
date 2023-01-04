@@ -1,7 +1,22 @@
-Goboscript
+GoboScript
 ==========
 
-Goboscript is a text-based programming language that transpiles 1:1 to Scratch.
+GoboScript is a text-based programming language that transpiles 1:1 to Scratch.
+
+Overview
+--------
+
+GoboScript lets you create Scratch projects from text files.
+
+GoboScript code                            | Generated blocks
+-------------------------------------------|--------------------------------------------------
+![](/docs/img/example_helloworld_main.png) | ![](/docs/img/example_helloworld_main_blocks.png)
+
+Documentation
+-------------
+
+See [DOCS.md](/docs/DOCS.md)
+
 
 Installation
 ------------
