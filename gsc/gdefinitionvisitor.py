@@ -47,9 +47,17 @@ class gDefinitionVisitor(Visitor[Token]):
         name = cast(Token, tree.children[0])
         if name in self.functions:
             raise gTokenError("Redeclaration of function", name, "Rename this function")
-        arguments = cast(list[Token], tree.children[1:-1])
-        if arguments == [None]:
-            arguments = []
+        arguments: list[Token] = []
+        for argument in cast(list[Token | None], tree.children[1:-1]):
+            if argument is None:
+                break
+            if argument in arguments:
+                raise gTokenError(
+                    f"Argument `{argument}` was repeated",
+                    argument,
+                    "Rename this argument",
+                )
+            arguments.append(argument)
         self.functions[name] = gFunction(warp, arguments)
 
     def declr_macro(self, tree: Tree[Token]):

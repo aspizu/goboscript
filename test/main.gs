@@ -4,7 +4,7 @@ onflag {
     split "One,Two,Three,Four", ",";
 }
 
-def split string, sep {
+def split string, sep, string {
     splitted[];
     key = "";
     i = 1;
