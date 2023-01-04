@@ -57,7 +57,9 @@ class gBlock:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.opcode}, {self.inputs}, {self.fields})"
 
-    def serialize_input(self, blocks: gBlockListType, value: gInputType) -> JSON:
+    def serialize_input(
+        self, blocks: gBlockListType, value: gInputType, name: str
+    ) -> JSON:
         if type(value) is str:
             return [1, [10, value]]
         elif type(value) is gVariable:
@@ -72,6 +74,8 @@ class gBlock:
                 return [2, value[0].id]
         elif isinstance(value, gBlock):
             value.serialize(blocks, None, self.id)
+            if "CONDITION" in name:
+                return [2, value.id]
             return [3, value.id, [10, ""]]
         raise ValueError(self, value)
 
@@ -87,7 +91,7 @@ class gBlock:
 
     def serialize_inputs(self, blocks: gBlockListType):
         return {
-            name: self.serialize_input(blocks, value)
+            name: self.serialize_input(blocks, value, name)
             for name, value in self.inputs.items()
         }
 
