@@ -291,7 +291,9 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock("control_forever", {"SUBSTACK": args[0]}, {})
 
     def varset(self, args: tuple[Token, gInputType]):
-        return gBlock("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": args[0]})
+        return gBlock(
+            "data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": gVariable(args[0])}
+        )
 
     def var(self, args: tuple[Token]) -> gVariable:
         if (

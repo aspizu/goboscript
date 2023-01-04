@@ -11,6 +11,7 @@ def split string, sep {
     until i > length($string) {
         if letter(i, $string) = $sep {
             splitted.add key;
+            key = "";
         } else {
             key = key & letter(i, $string);    
         }
