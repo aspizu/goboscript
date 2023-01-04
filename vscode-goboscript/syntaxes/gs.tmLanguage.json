@@ -22,7 +22,7 @@
     },
     {
       "name": "keyword.operator",
-      "match": "([+\\-*/&%=<>]|and|or|not)"
+      "match": "([+\\-*/&%=<>]|\\b(and|or|not)\\b)"
     },
     {
       "name": "punctuation",
@@ -31,7 +31,7 @@
     
     {
       "name": "keyword.control",
-      "match": "\\b(costumes|globals|listglobals|def|macro|nowarp|if|else|elif|repeat|until|on|onflag|onkey|onclick|onbackdrop|onloudness|ontimer|onclone)\\b"
+      "match": "\\b(use|costumes|globals|listglobals|def|macro|nowarp|if|else|elif|repeat|until|on|onflag|onkey|onclick|onbackdrop|onloudness|ontimer|onclone)\\b"
     },
     {
       "name": "constant.numeric",
@@ -43,7 +43,7 @@
     },
     {
       "name": "entity.name.function",
-      "match": "\\b(\\.index|\\.contains|\\.length|\\.add|\\.insert|\\.delete|\\.show|\\.hide)\\b"
+      "match": "\\.(index|contains|length|add|insert|delete|show|hide)\\b"
     }
   ],
   "scopeName": "source.gs"

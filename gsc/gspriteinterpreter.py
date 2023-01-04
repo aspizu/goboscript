@@ -4,6 +4,7 @@ from typing import cast
 from gblocktransformer import gBlockTransformer
 from gdefinitionvisitor import gDefinitionVisitor
 from gerror import gFileError
+from gincluder import gIncluder
 from gmacrotransformer import gMacroTransformer
 from lark import Token, Tree
 from lark.visitors import Interpreter
@@ -12,6 +13,7 @@ from sb3 import gSprite
 
 class gSpriteInterpreter(Interpreter[Token, None]):
     def __init__(self, project: Path, name: str, tree: Tree[Token]):
+        tree = gIncluder(project).transform(tree)
         super().__init__()
         self.sprite = gSprite(name, [], [], [], [])
         self.gdefinitionvisitor = gDefinitionVisitor(project, self.sprite, tree)

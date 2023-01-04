@@ -35,6 +35,6 @@ def build_gproject(project: Path):
     sprites = [
         build_gsprite(sprite)
         for sprite in project.glob(f"*.{EXT}")
-        if sprite.name != f"stage.{EXT}"
+        if sprite.name != f"stage.{EXT}" and not sprite.name.endswith(f".h.{EXT}")
     ]
     return gProject(build_gsprite(stage), sprites)
