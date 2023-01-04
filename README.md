@@ -9,7 +9,7 @@ Overview
 GoboScript lets you create Scratch projects from text files.
 
 GoboScript code                            | Generated blocks
--------------------------------------------|--------------------------------------------------
+-------------------------------------------|--------------------------------------------
 ![](/docs/img/example_helloworld_main.png) | ![](/docs/img/example_helloworld_main_blocks.png)
 
 Documentation
