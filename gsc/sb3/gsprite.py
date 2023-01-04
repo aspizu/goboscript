@@ -30,8 +30,8 @@ class gSprite:
             "isStage": self.name == "Stage",
             "name": self.name,
             "variables": {variable: [variable, 0] for variable in self.variables},
-            "blocks": cast(JSON, blocks),
             "lists": {lst: [lst, []] for lst in self.lists},
+            "blocks": cast(JSON, blocks),
             "costumes": [costume.serialize() for costume in self.costumes],
             "sounds": [],
         }
