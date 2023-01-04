@@ -25,11 +25,16 @@ class gList(str):
 
 class gBlock:
     def __init__(
-        self, opcode: str, inputs: dict[str, gInputType], fields: dict[str, gFieldType]
+        self,
+        opcode: str,
+        inputs: dict[str, gInputType],
+        fields: dict[str, gFieldType],
+        comment: str | None = None,
     ):
         self.opcode = opcode
         self.inputs = inputs
         self.fields = fields
+        self.comment: str | None = comment
         self.id = str(id(self))
 
     @classmethod
@@ -109,6 +114,7 @@ class gBlock:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, gHatBlock),
+            "comment": self.comment,
         }
 
 

@@ -26,6 +26,15 @@ class gSprite:
         blocks: gBlockListType = {}
         for block in self.blocks:
             block.serialize(blocks, None, None)
+        comments: dict[str, dict[str, JSON]] = {}
+        for id, block in blocks.items():
+            if block["comment"]:
+                assert isinstance(block["comment"], str)
+                comments[block["comment"]] = {
+                    "blockId": id,
+                    "minimized": True,
+                    "text": block["comment"],
+                }
         return {
             "isStage": self.name == "Stage",
             "name": self.name,
@@ -33,5 +42,6 @@ class gSprite:
             "lists": {lst: [lst, []] for lst in self.lists},
             "blocks": cast(JSON, blocks),
             "costumes": [costume.serialize() for costume in self.costumes],
+            "comments": cast(JSON, comments),
             "sounds": [],
         }
