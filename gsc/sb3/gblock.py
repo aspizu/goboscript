@@ -38,7 +38,12 @@ class gBlock:
         self.id = str(id(self))
 
     @classmethod
-    def from_prototype(cls, prototype: gPrototype, arguments: list[gInputType]):
+    def from_prototype(
+        cls,
+        prototype: gPrototype,
+        arguments: list[gInputType],
+        comment: str | None = None,
+    ):
         opcode = prototype.opcode
         fields: dict[str, gFieldType] = {}
         inputs: dict[str, gInputType] = {}
@@ -51,7 +56,10 @@ class gBlock:
             inputs = (i.split("=") for i in inputs.split(","))  # type: ignore
             inputs = {k: v for k, v in inputs}
         return cls(
-            opcode, {**dict(zip(prototype.arguments, arguments)), **inputs}, fields
+            opcode,
+            {**dict(zip(prototype.arguments, arguments)), **inputs},
+            fields,
+            comment,
         )
 
     def __rich_repr__(self) -> Any:
@@ -114,8 +122,9 @@ class gBlock:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, gHatBlock),
-            "comment": self.comment,
         }
+        if self.comment:
+            blocks[self.id]["comment"] = self.comment
 
 
 class gStack(list[gBlock]):
@@ -173,8 +182,10 @@ class gArgument(gBlock):
 
 
 class gProcCall(gBlock):
-    def __init__(self, name: str, inputs: dict[str, gInputType], warp: bool):
-        super().__init__("procedures_call", inputs, {})
+    def __init__(
+        self, name: str, inputs: dict[str, gInputType], warp: bool, comment: str | None
+    ):
+        super().__init__("procedures_call", inputs, {}, comment)
         self.name = name
         self.warp = warp
 

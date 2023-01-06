@@ -28,7 +28,7 @@ class gSprite:
             block.serialize(blocks, None, None)
         comments: dict[str, dict[str, JSON]] = {}
         for id, block in blocks.items():
-            if block["comment"]:
+            if "comment" in block:
                 assert isinstance(block["comment"], str)
                 comments[block["comment"]] = {
                     "blockId": id,

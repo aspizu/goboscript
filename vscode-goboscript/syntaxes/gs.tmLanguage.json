@@ -17,6 +17,11 @@
       "name": "comment"
     },
     {
+      "begin": "\\(\\*",
+      "end": "\\*\\)",
+      "name": "comment"
+    },
+    {
       "name": "variable.other.property",
       "match": "\\$[_a-zA-Z][_a-zA-Z0-9]*"
     },

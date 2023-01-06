@@ -16,4 +16,6 @@ def literal(literal: Token) -> str:
         return str(float(literal))
     if literal.type == "ARGUMENT":
         return str(literal)[1:]
+    if literal.type == "LCOMMENT":
+        return str(literal)[2:-2]
     raise ValueError(literal.type, literal)

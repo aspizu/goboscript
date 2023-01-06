@@ -9,9 +9,9 @@ eq            | OPERAND1, OPERAND2 | operator_equals
 gt            | OPERAND1, OPERAND2 | operator_gt
 lt            | OPERAND1, OPERAND2 | operator_lt
 abs           | NUM                | operator_mathop.OPERATOR=abs
-and           | OPERAND1, OPERAND2 | operator_and
-or            | OPERAND1, OPERAND2 | operator_or
-not           | OPERAND            | operator_not
+AND           | OPERAND1, OPERAND2 | operator_and
+OR            | OPERAND1, OPERAND2 | operator_or
+NOT           | OPERAND            | operator_not
 
 # Motion
 x             |                    | motion_xposition

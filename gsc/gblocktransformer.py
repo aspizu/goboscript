@@ -129,7 +129,8 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def block(self, args: list[Any]) -> gBlock:
         opcode: Token = args[0]
-        arguments: list[gInputType] = args[1:]
+        arguments: list[gInputType] = args[1:-1]
+        comment: str | None = literal(args[-1])
         if arguments == [None]:
             arguments = []
         if opcode in statement_prototypes:
@@ -146,7 +147,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                     opcode,
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
-            return gBlock.from_prototype(prototype, arguments)
+            return gBlock.from_prototype(prototype, arguments, comment)
         elif opcode in self.gdefinitionvisitor.functions.keys():
             prototype = self.gdefinitionvisitor.functions[opcode]
             if len(arguments) > len(prototype.arguments):
@@ -162,7 +163,10 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
             return gProcCall(
-                opcode, dict(zip(prototype.arguments, arguments)), prototype.warp
+                opcode,
+                dict(zip(prototype.arguments, arguments)),
+                prototype.warp,
+                comment,
             )
         else:
             matches = get_close_matches(
@@ -255,13 +259,13 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(reporter_prototypes["lt"], args)
 
     def andop(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["and"], args)
+        return gBlock.from_prototype(reporter_prototypes["AND"], args)
 
     def orop(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["or"], args)
+        return gBlock.from_prototype(reporter_prototypes["OR"], args)
 
     def notop(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["not"], args)
+        return gBlock.from_prototype(reporter_prototypes["NOT"], args)
 
     def block_if(self, args: tuple[gInputType, gStack]):
         return gBlock("control_if", {"CONDITION": args[0], "SUBSTACK": args[1]}, {})
