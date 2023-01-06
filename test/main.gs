@@ -3,7 +3,7 @@ costumes "blank.svg";
 onflag {
     split "One,Two,Three,Four", ","; (* This is a comment *)
     x = 0;
-    x += 1;
+    x += costume();
 }
 
 def split string, sep {
