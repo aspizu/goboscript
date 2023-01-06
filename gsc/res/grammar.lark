@@ -13,6 +13,7 @@ declr: "costumes" _stringlist ";" -> declr_costumes
 stack: "{" block* "}"
 
 block: NAME "=" expr ";" -> varset
+     | NAME "+=" expr ";" -> varchange
      | "if" expr stack -> block_if
      | "if" expr stack "else" stack -> block_if_else
      | "if" expr stack ("elif" expr stack)+ -> block_if_elif

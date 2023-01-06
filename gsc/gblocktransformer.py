@@ -299,6 +299,27 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             "data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": gVariable(args[0])}
         )
 
+    def isvariable(self, variable: Token):
+        if variable not in chain(
+            self.sprite.variables, self.gdefinitionvisitor.globals
+        ):
+            matches = get_close_matches(
+                variable, chain(self.sprite.variables, self.gdefinitionvisitor.globals)
+            )
+            raise gTokenError(
+                f"Undefined variable `{variable}`",
+                variable,
+                f"Did you mean `{matches[0]}`?" if matches else None,
+            )
+
+    def varchange(self, args: tuple[Token, gInputType]):
+        self.isvariable(args[0])
+        return gBlock(
+            "data_changevariableby",
+            {"VALUE": args[1]},
+            {"VARIABLE": gVariable(args[0])},
+        )
+
     def var(self, args: tuple[Token]) -> gVariable:
         if (
             gVariable(args[0]) not in self.sprite.variables
