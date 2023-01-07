@@ -130,7 +130,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def block(self, args: list[Any]) -> gBlock:
         opcode: Token = args[0]
         arguments: list[gInputType] = args[1:-1]
-        comment: str | None = literal(args[-1])
+        comment: str | None = literal(args[-1]) if args[-1] else None
         if arguments == [None]:
             arguments = []
         if opcode in statement_prototypes:
