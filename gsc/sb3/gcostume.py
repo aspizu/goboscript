@@ -20,7 +20,7 @@ class gCostume:
 
     def serialize(self) -> JSON:
         return {
-            "name": self.path.name,
+            "name": self.path.name.removesuffix(self.path.suffix),
             "assetId": self.hash,
             "dataFormat": self.path.suffix[1:],
             "md5ext": self.md5ext,
