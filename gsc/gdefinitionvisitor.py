@@ -107,3 +107,7 @@ class gDefinitionVisitor(Visitor[Token]):
                 self.sprite.lists.remove(gList(lst))
             except ValueError:
                 pass
+
+    def declr_comment(self, tree: Tree[Token]):
+        comment: str = literal(cast(Token, tree.children[0]))
+        self.sprite.comment = comment

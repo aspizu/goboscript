@@ -15,6 +15,7 @@ declr: "costumes" _stringlist ";" -> declr_costumes
      | "ontimer" expr stack -> declr_ontimer
      | "onclone" stack -> declr_onclone
      | "macro" NAME _namelist "->" expr ";" -> declr_macro
+     | LCOMMENT -> declr_comment
 
 stack: "{" block* "}"
 

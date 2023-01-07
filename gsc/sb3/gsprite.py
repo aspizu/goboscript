@@ -14,12 +14,14 @@ class gSprite:
         lists: list[gList],
         blocks: list[gBlock],
         costumes: list[gCostume],
+        comment: str | None = None,
     ):
         self.name = name
         self.variables = variables
         self.lists = lists
         self.blocks = blocks
         self.costumes = costumes
+        self.comment = comment
 
     def serialize(self) -> dict[str, JSON]:
         assert len(self.costumes) > 0
@@ -30,11 +32,21 @@ class gSprite:
         for id, block in blocks.items():
             if "comment" in block:
                 assert isinstance(block["comment"], str)
-                comments[block["comment"]] = {
+                comments[id + block["comment"]] = {
                     "blockId": id,
-                    "minimized": True,
+                    "minimized": False,
                     "text": block["comment"],
                 }
+        if self.comment:
+            comments["__docComment__"] = {
+                "blockId": None,
+                "minimized": False,
+                "text": self.comment,
+                "width": 200,
+                "height": 200,
+                "x": 0,
+                "y": 0,
+            }
         return {
             "isStage": self.name == "Stage",
             "name": self.name,
