@@ -7,7 +7,7 @@ from lib import JSON, tripletwise
 from .gblockfactory import gPrototype
 
 gInputType = Union[str, "gBlock", "gStack", "gVariable", "gList"]
-gFieldType = Union[str, "gVariable", "gList", list[str]]
+gFieldType = Union[str, "gVariable", "gList"]
 gBlockListType = dict[str, dict[str, JSON]]
 
 
@@ -97,10 +97,8 @@ class gBlock:
             return [value, value]
         if isinstance(value, gList):
             return [value, value]
-        if isinstance(value, str):
-            return [value, None]
         else:
-            return value  # type: ignore
+            return [value, None]
 
     def serialize_inputs(self, blocks: gBlockListType):
         return {
@@ -143,28 +141,6 @@ class gHatBlock(gBlock):
     ):
         super().__init__(opcode, inputs, fields)
         self.stack = stack
-
-    @classmethod
-    def from_prototype(
-        cls, prototype: gPrototype, arguments: list[gInputType], stack: gStack
-    ):
-        opcode = prototype.opcode
-        fields = {}
-        inputs = {}
-        if "." in prototype.opcode:
-            opcode, fields = prototype.opcode.split(".")
-            fields = (i.split("=") for i in fields.split(","))
-            fields = {k: v for k, v in fields}
-        elif "!" in prototype.opcode:
-            opcode, inputs = prototype.opcode.split(".")
-            inputs = (i.split("=") for i in inputs.split(","))
-            inputs = {k: v for k, v in inputs}
-        return cls(
-            opcode,
-            {**dict(zip(prototype.arguments, arguments)), **inputs},
-            fields,  # type: ignore
-            stack,
-        )
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.opcode}, {self.inputs}, {self.fields}, {self.stack})"

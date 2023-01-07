@@ -24,4 +24,3 @@ def load_prototypes(file: str):
 
 reporter_prototypes = load_prototypes("reporters.txt")
 statement_prototypes = load_prototypes("statements.txt")
-hat_prototypes = load_prototypes("hats.txt")

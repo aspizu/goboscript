@@ -1,23 +1,33 @@
 costumes "blank.svg";
 
 onflag {
-    split "One,Two,Three,Four", ","; (* This is a comment *)
-    x = 0;
-    x += costume();
+    say "when flag clicked";
 }
 
-def split string, sep {
-    splitted[];
-    key = "";
-    i = 1;
-    until i > length($string) {
-        if letter(i, $string) = $sep {
-            splitted.add key;
-            key = "";
-        } else {
-            key = key & letter(i, $string);    
-        }
-        i = i + 1;
-    }
-    splitted.add key;
+onkey "space" {
+    say "space key pressed";
+}
+
+onclick {
+    say "when this sprite clicked";
+}
+
+onbackdrop "blank" {
+    say "when backdrop switches to";
+}
+
+onloudness 10 {
+    say "when loudness > 10";
+}
+
+ontimer 10 {
+    say "when timer > 10";
+}
+
+on "message1" {
+    say "when I receive";
+}
+
+onclone {
+    say "when I start as a clone";
 }

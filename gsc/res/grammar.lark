@@ -7,8 +7,14 @@ declr: "costumes" _stringlist ";" -> declr_costumes
      | "def" NAME _namelist stack -> declr_function
      | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
      | "on" STRING stack -> declr_on
+     | "onflag" stack -> declr_onflag
+     | "onkey" STRING stack -> declr_onkey
+     | "onclick" stack -> declr_onclick
+     | "onbackdrop" STRING stack -> declr_onbackdrop
+     | "onloudness" expr stack -> declr_onloudness
+     | "ontimer" expr stack -> declr_ontimer
+     | "onclone" stack -> declr_onclone
      | "macro" NAME _namelist "->" expr ";" -> declr_macro
-     | NAME _exprlist stack -> declr_hat
 
 stack: "{" block* "}"
 

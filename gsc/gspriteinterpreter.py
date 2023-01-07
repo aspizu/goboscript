@@ -22,7 +22,7 @@ class gSpriteInterpreter(Interpreter[Token, None]):
         tree = gMacroTransformer(self.gdefinitionvisitor.macros).transform(tree)
         self.visit(tree)
 
-    def declr_hat(self, tree: Tree[Token]):
+    def declr_on(self, tree: Tree[Token]):
         self.sprite.blocks.append(
             gBlockTransformer(self.gdefinitionvisitor).transform(tree)
         )
@@ -34,4 +34,9 @@ class gSpriteInterpreter(Interpreter[Token, None]):
         )
 
     declr_function_nowarp = declr_function
-    declr_on = declr_hat
+    declr_onflag = declr_on
+    declr_onclone = declr_on
+    declr_ontimer = declr_on
+    declr_onloudness = declr_on
+    declr_onkey = declr_on
+    declr_onbackdrop = declr_on

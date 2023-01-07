@@ -19,7 +19,7 @@ from sb3 import (
     gStack,
     gVariable,
 )
-from sb3.gblockfactory import hat_prototypes, reporter_prototypes, statement_prototypes
+from sb3.gblockfactory import reporter_prototypes, statement_prototypes
 
 
 def mkelif(
@@ -101,23 +101,6 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def declr_function_nowarp(self, args: list[Any]) -> gProcDef:
         return self.declr_function(args, False)
 
-    def declr_hat(self, args: list[Any]) -> gHatBlock:
-        opcode: Token = args[0]
-        arguments: list[gInputType] = args[1:-1]
-        if arguments == [None]:
-            arguments = []
-        stack: gStack = args[-1]
-        if opcode not in hat_prototypes:
-            matches = get_close_matches(opcode, hat_prototypes.keys())
-            raise gTokenError(
-                f"Undefined hat `{opcode}`",
-                opcode,
-                (f"Did you mean `{matches[0]}`?\n" if matches else "")
-                + "Read --doc hats for available hats",
-            )
-        prototype = hat_prototypes[opcode]
-        return gHatBlock.from_prototype(prototype, arguments, stack)
-
     def stack(self, args: list[gBlock]) -> gStack:
         stack = gStack(args)
         for i, block in enumerate(stack):
@@ -189,7 +172,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         if arguments == [None]:
             arguments = []
         if opcode not in reporter_prototypes:
-            matches = get_close_matches(args[0], reporter_prototypes.keys())
+            matches = get_close_matches(str(args[0]), reporter_prototypes.keys())
             raise gTokenError(
                 f"Undefined reporter `{opcode}`",
                 args[0],
@@ -325,9 +308,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             gVariable(args[0]) not in self.sprite.variables
             and args[0] not in self.gdefinitionvisitor.globals
         ):
-            matches = get_close_matches(
-                args[0], self.sprite.variables + self.gdefinitionvisitor.globals  # type: ignore
-            )
+            matches = get_close_matches(args[0], self.sprite.variables + self.gdefinitionvisitor.globals)  # type: ignore
             raise gTokenError(
                 f"Undefined variable `{args[0]}`",
                 args[0],
@@ -343,9 +324,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             gList(token) not in self.sprite.lists
             and token not in self.gdefinitionvisitor.listglobals
         ):
-            matches = get_close_matches(
-                token, self.sprite.lists + self.gdefinitionvisitor.listglobals  # type: ignore
-            )
+            matches = get_close_matches(token, self.sprite.lists + self.gdefinitionvisitor.listglobals)  # type: ignore
             raise gTokenError(
                 f"Undefined list `{token}`",
                 token,
@@ -406,9 +385,47 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gHatBlock(
             "event_whenbroadcastreceived",
             {},
-            {"BROADCAST_OPTION": [args[0], args[0]]},
+            {"BROADCAST_OPTION": gVariable(args[0])},
             args[1],
         )
+
+    def declr_onkey(self, args: tuple[Token, gStack]):
+        return gHatBlock(
+            "event_whenkeypressed", {}, {"KEY_OPTION": gVariable(args[0])}, args[1]
+        )
+
+    def declr_onbackdrop(self, args: tuple[Token, gStack]):
+        return gHatBlock(
+            "event_whenbackdropswitchesto",
+            {},
+            {"BACKDROP_OPTION": gVariable(args[0])},
+            args[1],
+        )
+
+    def declr_onloudness(self, args: tuple[gInputType, gStack]):
+        return gHatBlock(
+            "event_whengreaterthan",
+            {"VALUE": args[0]},
+            {"WHENGREATERTHANMENU": "LOUDNESS"},
+            args[1],
+        )
+
+    def declr_ontimer(self, args: tuple[gInputType, gStack]):
+        return gHatBlock(
+            "event_whengreaterthan",
+            {"VALUE": args[0]},
+            {"WHENGREATERTHANMENU": "TIMER"},
+            args[1],
+        )
+
+    def declr_onflag(self, args: tuple[gStack]):
+        return gHatBlock("event_whenflagclicked", {}, {}, args[0])
+
+    def declr_onclick(self, args: tuple[gStack]):
+        return gHatBlock("event_whenthisspriteclicked", {}, {}, args[0])
+
+    def declr_onclone(self, args: tuple[gStack]):
+        return gHatBlock("control_start_as_clone", {}, {}, args[0])
 
     def nop(self, args: tuple[()]):
         return gBlock("control_wait", {"DURATION": "0"}, {})
