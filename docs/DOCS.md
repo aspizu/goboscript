@@ -323,3 +323,8 @@ repeat <EXPRESSION>  {
     ...
 }
 ```
+
+Style Guide
+===========
+
+See [the style guide](/docs/style_guide.gs) written in GoboScript.
