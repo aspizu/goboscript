@@ -303,6 +303,18 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             {"VARIABLE": gVariable(args[0])},
         )
 
+    def varsub(self, args: tuple[Token, gInputType]):
+        self.isvariable(args[0])
+        return gBlock(
+            "data_changevariableby",
+            {
+                "VALUE": gBlock.from_prototype(
+                    reporter_prototypes["sub"], ["0", args[1]]
+                )
+            },
+            {"VARIABLE": gVariable(args[0])},
+        )
+
     def var(self, args: tuple[Token]) -> gVariable:
         if (
             gVariable(args[0]) not in self.sprite.variables
