@@ -31,17 +31,25 @@ class gDefinitionVisitor(Visitor[Token]):
 
     def declr_costumes(self, tree: Tree[Token]):
         for costume in cast(list[Token], tree.children):
-            path = self.project / literal(costume)
-            if not path.is_file():
-                matches = file_suggest(path)
-                raise gTokenError(
-                    f"File not found {path}",
-                    costume,
-                    f"Did you mean {matches[0].relative_to(self.project)}?"
-                    if matches
-                    else None,
-                )
-            self.sprite.costumes.append(gCostume(path))
+            pattern = literal(costume)
+            if "*" in pattern:
+                paths = list(self.project.glob(pattern))
+                if len(paths) == 0:
+                    raise gTokenError(
+                        f"Glob does not match any files {pattern}", costume
+                    )
+                for pattern in paths:
+                    self.sprite.costumes.append(gCostume(pattern))
+            else:
+                path = self.project / pattern
+                if not path.is_file():
+                    matches = file_suggest(path)
+                    raise gTokenError(
+                        f"Costume file not found {pattern}",
+                        costume,
+                        f"Did you mean {matches[0].relative_to(self.project)}?",
+                    )
+                self.sprite.costumes.append(gCostume(path))
 
     def declr_function(self, tree: Tree[Token], warp: bool = True):
         name = cast(Token, tree.children[0])
