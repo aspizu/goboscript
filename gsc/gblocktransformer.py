@@ -390,6 +390,45 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             {"LIST": gList(args[0])},
         )
 
+    def listreplaceOP(self, opcode: str, args: tuple[Token, gInputType, gInputType]):
+        self.islist(args[0])
+        return gBlock(
+            "data_replaceitemoflist",
+            {
+                "INDEX": args[1],
+                "ITEM": gBlock.from_prototype(
+                    reporter_prototypes[opcode],
+                    [
+                        gBlock(
+                            "data_itemoflist",
+                            {"INDEX": args[1]},
+                            {"LIST": gList(args[0])},
+                        ),
+                        args[2],
+                    ],
+                ),
+            },
+            {"LIST": gList(args[0])},
+        )
+
+    def listreplaceadd(self, args: Any):
+        return self.listreplaceOP("add", args)
+
+    def listreplacesub(self, args: Any):
+        return self.listreplaceOP("sub", args)
+
+    def listreplacemul(self, args: Any):
+        return self.listreplaceOP("mul", args)
+
+    def listreplacediv(self, args: Any):
+        return self.listreplaceOP("div", args)
+
+    def listreplacemod(self, args: Any):
+        return self.listreplaceOP("mod", args)
+
+    def listreplacejoin(self, args: Any):
+        return self.listreplaceOP("join", args)
+
     def listshow(self, args: tuple[Token]):
         self.islist(args[0])
         return gBlock("data_showlist", {}, {"LIST": gList(args[0])})

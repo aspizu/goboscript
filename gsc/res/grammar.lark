@@ -38,6 +38,12 @@ block: NAME "=" expr ";" -> varset
      | NAME ".delete" expr ";" -> listdelete
      | NAME ".insert" expr "," expr ";" -> listinsert
      | NAME "[" expr "]" "=" expr ";" -> listreplace
+     | NAME "[" expr "]" "+=" expr ";" -> listreplaceadd
+     | NAME "[" expr "]" "-=" expr ";" -> listreplacesub
+     | NAME "[" expr "]" "*=" expr ";" -> listreplacemul
+     | NAME "[" expr "]" "/=" expr ";" -> listreplacediv
+     | NAME "[" expr "]" "%=" expr ";" -> listreplacemod
+     | NAME "[" expr "]" "&=" expr ";" -> listreplacejoin
      | NAME ".show" ";" -> listshow
      | NAME ".hide" ";" -> listhide
      | "..." -> nop

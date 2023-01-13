@@ -1,11 +1,11 @@
 costumes "blank.svg";
 
 onflag {
-  variable = 100;
-  variable += 2;
-  variable -= 2;
-  variable *= 2;
-  variable /= 2;
-  variable %= 2;
-  variable &= 2;
+  list[];
+  list[200] += 100;
+  list[200] -= 100;
+  list[200] *= 100;
+  list[200] /= 100;
+  list[200] %= 100;
+  list[200] &= 100;
 }
