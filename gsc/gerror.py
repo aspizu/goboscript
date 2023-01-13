@@ -65,9 +65,9 @@ class gTokenError(gError):
         assert isinstance(self.token.column, int)
         with self.file.open("r") as file:
             iter = enumerate(file)
-            while next(iter)[0] < self.token.line - 2:
+            while (line := next(iter))[0] < self.token.line - 1:
                 continue
-            _, line = next(iter)
+            line = line[1]
         t.w(f"Error! {t.brred}{self.description}{t.reset}\n")
         t.w(f"in {t.brblue}{self.file}:{self.token.line}:{self.token.column}\n")
         t.w(f"{t.brblack}{self.token.line: 4} | {t.reset}{line}")
