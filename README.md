@@ -12,6 +12,9 @@ GoboScript code                            | Generated blocks
 -------------------------------------------|--------------------------------------------
 ![](/docs/img/example_helloworld_main.png) | ![](/docs/img/example_helloworld_main_blocks.png)
 
+Use GoboScript's sister project: [sb2gs](https://github.com/aspizu/sb2gs) to convert your existing Scratch projects into GoboScript projects,
+so you can continue working on it. sb2gs still requires some manual editing. ( See the project homepage for more information. ) 
+
 Documentation
 -------------
 
