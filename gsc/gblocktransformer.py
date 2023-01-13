@@ -282,6 +282,17 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             "data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": gVariable(args[0])}
         )
 
+    def varmul(self, args: tuple[Token, gInputType]):
+        return gBlock(
+            "data_setvariableto",
+            {
+                "VALUE": gBlock.from_prototype(
+                    reporter_prototypes["mul"], [gVariable(args[0]), args[1]]
+                )
+            },
+            {"VARIABLE": gVariable(args[0])},
+        )
+
     def isvariable(self, variable: Token):
         if variable not in chain(
             self.sprite.variables, self.gdefinitionvisitor.globals

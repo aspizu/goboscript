@@ -22,6 +22,7 @@ stack: "{" block* "}"
 block: NAME "=" expr ";" -> varset
      | NAME "+=" expr ";" -> varchange
      | NAME "-=" expr ";" -> varsub
+     | NAME "*=" expr ";" -> varmul
      | "if" expr stack -> block_if
      | "if" expr stack "else" stack -> block_if_else
      | "if" expr stack ("elif" expr stack)+ -> block_if_elif
