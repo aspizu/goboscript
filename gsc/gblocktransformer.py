@@ -282,16 +282,28 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             "data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": gVariable(args[0])}
         )
 
-    def varmul(self, args: tuple[Token, gInputType]):
+    def varOP(self, opcode: str, args: tuple[Token, gInputType]):
         return gBlock(
             "data_setvariableto",
             {
                 "VALUE": gBlock.from_prototype(
-                    reporter_prototypes["mul"], [gVariable(args[0]), args[1]]
+                    reporter_prototypes[opcode], [gVariable(args[0]), args[1]]
                 )
             },
             {"VARIABLE": gVariable(args[0])},
         )
+
+    def varmul(self, args: Any):
+        return self.varOP("mul", args)
+
+    def vardiv(self, args: Any):
+        return self.varOP("div", args)
+
+    def varmod(self, args: Any):
+        return self.varOP("mod", args)
+
+    def varjoin(self, args: Any):
+        return self.varOP("join", args)
 
     def isvariable(self, variable: Token):
         if variable not in chain(

@@ -23,6 +23,9 @@ block: NAME "=" expr ";" -> varset
      | NAME "+=" expr ";" -> varchange
      | NAME "-=" expr ";" -> varsub
      | NAME "*=" expr ";" -> varmul
+     | NAME "/=" expr ";" -> vardiv
+     | NAME "%=" expr ";" -> varmod
+     | NAME "&=" expr ";" -> varjoin
      | "if" expr stack -> block_if
      | "if" expr stack "else" stack -> block_if_else
      | "if" expr stack ("elif" expr stack)+ -> block_if_elif
