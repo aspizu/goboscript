@@ -1,11 +1,7 @@
 costumes "blank.svg";
 
 onflag {
-  list[];
-  list[200] += 100;
-  list[200] -= 100;
-  list[200] *= 100;
-  list[200] /= 100;
-  list[200] %= 100;
-  list[200] &= 100;
+  v=1;
+  say v+v+v+v+v+v+v+v+v+v+v;
 }
+onflag {}

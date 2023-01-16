@@ -35,6 +35,8 @@ class gBlock:
         self.inputs = inputs
         self.fields = fields
         self.comment: str | None = comment
+        self.x = 0
+        self.y = 0
         self.id = str(id(self))
 
     @classmethod
@@ -120,6 +122,8 @@ class gBlock:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, gHatBlock),
+            "x": self.x,
+            "y": self.y,
         }
         if self.comment:
             blocks[self.id]["comment"] = self.comment

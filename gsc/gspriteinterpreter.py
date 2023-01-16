@@ -9,6 +9,7 @@ from gmacrotransformer import gMacroTransformer
 from lark import Token, Tree
 from lark.visitors import Interpreter
 from sb3 import gSprite
+from sb3.cleanup import cleanup
 
 
 class gSpriteInterpreter(Interpreter[Token, None]):
@@ -21,6 +22,7 @@ class gSpriteInterpreter(Interpreter[Token, None]):
             raise gFileError("No costumes defined", "Add a costumes statement")
         tree = gMacroTransformer(self.gdefinitionvisitor.macros).transform(tree)
         self.visit(tree)
+        cleanup(self.sprite.blocks)
 
     def declr_on(self, tree: Tree[Token]):
         self.sprite.blocks.append(
