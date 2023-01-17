@@ -7,14 +7,14 @@ BLOCK_SIZE = 48
 
 def input_height(input: gInputType) -> int:
     if isinstance(input, gBlock):
-        return 8 + max(input_height(i) for i in input.inputs.values())
+        return 8 + max((*(input_height(i) for i in input.inputs.values()), 0))
     return 0
 
 
 def height(block: gBlock) -> int:
     if isinstance(block, gHatBlock):
         return HAT_BLOCK_HEIGHT + sum(height(i) for i in block.stack)
-    return BLOCK_SIZE + max(input_height(i) for i in block.inputs.values())
+    return BLOCK_SIZE + max((*(input_height(i) for i in block.inputs.values()), 0))
 
 
 def cleanup(blocks: list[gBlock]) -> None:

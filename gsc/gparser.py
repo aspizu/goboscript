@@ -2,9 +2,7 @@ import importlib.resources
 
 from lark import Lark, Token
 
-gparser = Lark(
-    importlib.resources.open_text("res", "grammar.lark"),  # parser="lalr"
-)
+gparser = Lark(importlib.resources.open_text("res", "grammar.lark"))
 
 
 def literal(literal: Token) -> str:
