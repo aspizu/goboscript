@@ -85,9 +85,9 @@ STRING: /"([^"\\]|\\.)*"/
 NUMBER: /-?[0-9]+/
 FLOAT: /-?[0-9]+\.[0-9]+/
 
-COMMENT: "/*" /(.|\n)+/ "*/"
+COMMENT: /\/\*(\*(?!\/)|[^*])*\*\//
 LCOMMENT: "(*" /(.|\n)+/ "*)"
-%ignore COMMENT
 %ignore " "
 %ignore "\n"
 %ignore "\t"
+%ignore COMMENT
