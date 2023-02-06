@@ -80,7 +80,7 @@ class gBlock:
         elif type(value) is gVariable:
             return [3, [12, value, value], [10, ""]]
         elif type(value) is gList:
-            ...
+            return [3, [13, value, ""], [10, ""]]
         elif isinstance(value, gStack):
             value.serialize(blocks, self.id)
             if len(value) == 0:
