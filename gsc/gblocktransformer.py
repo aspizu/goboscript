@@ -338,18 +338,23 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             {"VARIABLE": gVariable(args[0])},
         )
 
-    def var(self, args: tuple[Token]) -> gVariable:
+    def var(self, args: tuple[Token]):
         if (
-            gVariable(args[0]) not in self.sprite.variables
-            and args[0] not in self.gdefinitionvisitor.globals
+            gVariable(args[0]) in self.sprite.variables
+            or args[0] in self.gdefinitionvisitor.globals
         ):
-            matches = get_close_matches(args[0], self.sprite.variables + self.gdefinitionvisitor.globals)  # type: ignore
-            raise gTokenError(
-                f"Undefined variable `{args[0]}`",
-                args[0],
-                f"Did you mean `{matches[0]}?`" if matches else None,
-            )
-        return gVariable(args[0])
+            return gVariable(args[0])
+        if (
+            gList(args[0]) in self.sprite.lists
+            or args[0] in self.gdefinitionvisitor.listglobals
+        ):
+            return gList(args[0])
+        matches = get_close_matches(args[0], self.sprite.variables + self.gdefinitionvisitor.globals)  # type: ignore
+        raise gTokenError(
+            f"Undefined variable `{args[0]}`",
+            args[0],
+            f"Did you mean `{matches[0]}?`" if matches else None,
+        )
 
     def listset(self, args: tuple[Token]):
         return gBlock("data_deletealloflist", {}, {"LIST": gList(args[0])})
