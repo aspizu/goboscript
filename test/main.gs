@@ -1,6 +1,10 @@
 costumes "blank.svg";
 
-onflag {
-  return;
+def function {
+  local var = 10;
+  say var;
 }
-onflag {}
+
+onflag {
+  say function.var;
+}

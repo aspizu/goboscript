@@ -19,7 +19,8 @@ declr: "costumes" _stringlist ";" -> declr_costumes
 
 stack: "{" block* "}"
 
-block: NAME "=" expr ";" -> varset
+block: "local" NAME "=" expr ";" -> localvar
+     | NAME "=" expr ";" -> varset
      | NAME "+=" expr ";" -> varchange
      | NAME "-=" expr ";" -> varsub
      | NAME "*=" expr ";" -> varmul
@@ -51,7 +52,7 @@ block: NAME "=" expr ";" -> varset
 
 expr: "(" expr ")"
     | STRING | NUMBER | FLOAT
-    | NAME -> var
+    | VARIABLE -> var
     | ARGUMENT -> argument
     | MACROVAR -> macrovar
     | NAME "(" _exprlist ")" -> reporter
@@ -80,6 +81,7 @@ _namelist: [NAME ("," NAME)*]
 
 MACROVAR: /\![_a-zA-Z][_a-zA-Z0-9]*/
 ARGUMENT: /\$[_a-zA-Z][_a-zA-Z0-9]*/
+VARIABLE: (NAME "." NAME) | NAME
 NAME: /[_a-zA-Z][_a-zA-Z0-9]*/
 STRING: /"([^"\\]|\\.)*"/
 NUMBER: /-?[0-9]+/

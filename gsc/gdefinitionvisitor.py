@@ -3,14 +3,18 @@ from typing import NamedTuple, cast
 
 from gerror import gTokenError
 from gparser import literal
-from lark import Token, Tree, Visitor
+from lark.lexer import Token
+from lark.tree import Tree
+from lark.visitors import Interpreter, Visitor
 from lib import file_suggest
 from sb3 import gCostume, gList, gSprite, gVariable
 
 
 class gFunction(NamedTuple):
+    name: Token
     warp: bool
     arguments: list[Token]
+    locals: list[str]
 
 
 class gMacro(NamedTuple):
@@ -18,7 +22,45 @@ class gMacro(NamedTuple):
     body: Tree[Token]
 
 
-class gDefinitionVisitor(Visitor[Token]):
+class LocalsCollector(Visitor[Token]):
+    def __init__(
+        self,
+        tree: Tree[Token],
+        sprite: gSprite,
+        globals: list[Token],
+        listglobals: list[Token],
+        name: str | None = None,
+    ):
+        super().__init__()
+        self.sprite = sprite
+        self.globals = globals
+        self.listglobals = listglobals
+        self.locals: list[str] = []
+        self.name = name
+        self.visit(tree)
+
+    def localvar(self, tree: Tree[Token]):
+        if not self.name:
+            return
+        self.locals.append(str(tree.children[0]))
+        self.sprite.variables.append(gVariable(self.name + "." + str(tree.children[0])))
+
+    def varset(self, tree: Tree[Token]):
+        if tree.children[0] in self.locals:
+            return
+        if tree.children[0] in self.globals:
+            return
+        if gVariable(tree.children[0]) not in self.sprite.variables:
+            self.sprite.variables.append(gVariable(tree.children[0]))
+
+    def listset(self, tree: Tree[Token]):
+        if tree.children[0] in self.listglobals:
+            return
+        if gList(tree.children[0]) not in self.sprite.lists:
+            self.sprite.lists.append(gList(tree.children[0]))
+
+
+class gDefinitionVisitor(Interpreter[Token, None]):
     def __init__(self, project: Path, sprite: gSprite, tree: Tree[Token]):
         super().__init__()
         self.project = project
@@ -66,7 +108,30 @@ class gDefinitionVisitor(Visitor[Token]):
                     "Rename this argument",
                 )
             arguments.append(argument)
-        self.functions[name] = gFunction(warp, arguments)
+        locals = LocalsCollector(
+            cast(Tree[Token], tree.children[-1]),
+            self.sprite,
+            self.globals,
+            self.listglobals,
+            name,
+        ).locals
+        self.functions[name] = gFunction(name, warp, arguments, locals)
+
+    def declr_on(self, tree: Tree[Token]):
+        LocalsCollector(
+            cast(Tree[Token], tree.children[-1]),
+            self.sprite,
+            self.globals,
+            self.listglobals,
+        )
+
+    declr_function_nowarp = declr_function
+    declr_onflag = declr_on
+    declr_onclone = declr_on
+    declr_ontimer = declr_on
+    declr_onloudness = declr_on
+    declr_onkey = declr_on
+    declr_onbackdrop = declr_on
 
     def declr_macro(self, tree: Tree[Token]):
         name = cast(Token, tree.children[0])
@@ -82,17 +147,9 @@ class gDefinitionVisitor(Visitor[Token]):
     def declr_function_nowarp(self, tree: Tree[Token]):
         return self.declr_function(tree, False)
 
-    def varset(self, tree: Tree[Token]):
-        if tree.children[0] in self.globals:
-            return
-        if gVariable(tree.children[0]) not in self.sprite.variables:
-            self.sprite.variables.append(gVariable(tree.children[0]))
-
-    def listset(self, tree: Tree[Token]):
-        if tree.children[0] in self.listglobals:
-            return
-        if gList(tree.children[0]) not in self.sprite.lists:
-            self.sprite.lists.append(gList(tree.children[0]))
+    def declr_comment(self, tree: Tree[Token]):
+        comment: str = literal(cast(Token, tree.children[0]))
+        self.sprite.comment = comment
 
     def declr_globals(self, tree: Tree[Token]):
         for variable in cast(list[Token], tree.children):
@@ -115,7 +172,3 @@ class gDefinitionVisitor(Visitor[Token]):
                 self.sprite.lists.remove(gList(lst))
             except ValueError:
                 pass
-
-    def declr_comment(self, tree: Tree[Token]):
-        comment: str = literal(cast(Token, tree.children[0]))
-        self.sprite.comment = comment

@@ -6,7 +6,8 @@ from gdefinitionvisitor import gDefinitionVisitor
 from gerror import gFileError
 from gincluder import gIncluder
 from gmacrotransformer import gMacroTransformer
-from lark import Token, Tree
+from lark.lexer import Token
+from lark.tree import Tree
 from lark.visitors import Interpreter
 from sb3 import gSprite
 from sb3.cleanup import cleanup

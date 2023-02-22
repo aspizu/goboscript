@@ -6,7 +6,8 @@ from typing import Any, Iterator, cast
 from gdefinitionvisitor import gDefinitionVisitor, gFunction
 from gerror import gFileError, gTokenError
 from gparser import literal
-from lark import Token, Transformer
+from lark.lexer import Token
+from lark.visitors import Transformer
 from lib import num_plural, number
 from sb3 import (
     gArgument,
@@ -277,20 +278,39 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def forever(self, args: tuple[gStack]):
         return gBlock("control_forever", {"SUBSTACK": args[0]}, {})
 
-    def varset(self, args: tuple[Token, gInputType]):
+    def localvar(self, args: tuple[Token, gInputType]):
+        if not self.prototype:
+            raise gTokenError(
+                "local variables cannot be used outside of functions",
+                args[0],
+                help="switch to a non-local variable",
+            )
         return gBlock(
-            "data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": gVariable(args[0])}
+            "data_setvariableto",
+            {"VALUE": args[1]},
+            {"VARIABLE": gVariable(self.prototype.name + "." + args[0])},
         )
 
+    def varset(self, args: tuple[Token, gInputType]):
+        variable = gVariable(args[0])
+        if self.prototype:
+            if args[0] in self.prototype.locals:
+                variable = gVariable(self.prototype.name + "." + args[0])
+        return gBlock("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": variable})
+
     def varOP(self, opcode: str, args: tuple[Token, gInputType]):
+        variable = gVariable(args[0])
+        if self.prototype:
+            if args[0] in self.prototype.locals:
+                variable = gVariable(self.prototype.name + "." + args[0])
         return gBlock(
             "data_setvariableto",
             {
                 "VALUE": gBlock.from_prototype(
-                    reporter_prototypes[opcode], [gVariable(args[0]), args[1]]
+                    reporter_prototypes[opcode], [variable, args[1]]
                 )
             },
-            {"VARIABLE": gVariable(args[0])},
+            {"VARIABLE": variable},
         )
 
     def varmul(self, args: Any):
@@ -306,17 +326,20 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return self.varOP("join", args)
 
     def isvariable(self, variable: Token):
-        if variable not in chain(
-            self.sprite.variables, self.gdefinitionvisitor.globals
-        ):
-            matches = get_close_matches(
-                variable, chain(self.sprite.variables, self.gdefinitionvisitor.globals)
-            )
-            raise gTokenError(
-                f"Undefined variable `{variable}`",
-                variable,
-                f"Did you mean `{matches[0]}`?" if matches else None,
-            )
+        if self.prototype and variable in self.prototype.locals:
+            return
+        if gVariable(variable) in self.sprite.variables:
+            return
+        if variable in self.gdefinitionvisitor.globals:
+            return
+        matches = get_close_matches(
+            variable, chain(self.sprite.variables, self.gdefinitionvisitor.globals)
+        )
+        raise gTokenError(
+            f"Undefined variable `{variable}`",
+            variable,
+            f"Did you mean `{matches[0]}`?" if matches else None,
+        )
 
     def varchange(self, args: tuple[Token, gInputType]):
         self.isvariable(args[0])
@@ -339,6 +362,8 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         )
 
     def var(self, args: tuple[Token]):
+        if self.prototype and args[0] in self.prototype.locals:
+            return gVariable(self.prototype.name + "." + args[0])
         if (
             gVariable(args[0]) in self.sprite.variables
             or args[0] in self.gdefinitionvisitor.globals
