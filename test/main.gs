@@ -1,10 +1,15 @@
 costumes "blank.svg";
 
-def function {
-  local var = 10;
-  say var;
+def foo {
+    local bar = 100;
+    foo2;
+}
+
+def foo2 {
+   local bar = 200;
 }
 
 onflag {
-  say function.var;
+    list[];
+    say list.length;
 }

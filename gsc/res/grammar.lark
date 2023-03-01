@@ -52,7 +52,6 @@ block: "local" NAME "=" expr ";" -> localvar
 
 expr: "(" expr ")"
     | STRING | NUMBER | FLOAT
-    | VARIABLE -> var
     | ARGUMENT -> argument
     | MACROVAR -> macrovar
     | NAME "(" _exprlist ")" -> reporter
@@ -74,6 +73,7 @@ expr: "(" expr ")"
     | NAME ".index" "(" expr ")" -> listindex
     | NAME ".contains" "(" expr ")" -> listcontains
     | NAME ".length" -> listlength
+    | VARIABLE -> var
 
 _exprlist: [expr ("," expr)*]
 _stringlist: [STRING ("," STRING)*]
