@@ -1,5 +1,5 @@
 import json
-from typing import Any, Sized, Union
+from typing import Any, Union
 
 from lark.lexer import Token
 from lib import JSON, tripletwise
@@ -11,8 +11,9 @@ gFieldType = Union[str, "gVariable", "gList"]
 gBlockListType = dict[str, dict[str, JSON]]
 
 
-def proccode(name: str, inputs: Sized):
-    return name + " " + " ".join(["%s"] * len(inputs))
+def proccode(name: str, inputs: dict[Token, "gArgument"]):
+    args = [str(i.fields["VALUE"]) for i in inputs.values()]
+    return name + " " + " ".join([f"{arg}: %s" for arg in args])
 
 
 class gVariable(str):
