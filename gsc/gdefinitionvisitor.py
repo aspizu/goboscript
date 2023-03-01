@@ -56,8 +56,8 @@ class LocalsCollector(Visitor[Token]):
     def listset(self, tree: Tree[Token]):
         if tree.children[0] in self.listglobals:
             return
-        if gList(tree.children[0]) not in self.sprite.lists:
-            self.sprite.lists.append(gList(tree.children[0]))
+        if gList(cast(Token, tree.children[0])) not in self.sprite.lists:
+            self.sprite.lists.append(gList(cast(Token, tree.children[0])))
 
 
 class gDefinitionVisitor(Interpreter[Token, None]):
@@ -92,6 +92,11 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                         f"Did you mean {matches[0].relative_to(self.project)}?",
                     )
                 self.sprite.costumes.append(gCostume(path))
+
+    def datalist(self, tree: Tree[Token]) -> None:
+        name = cast(Token, tree.children[0])
+        file: Path = self.project / literal(cast(Token, tree.children[1]))
+        self.sprite.lists.append(gList(name, file.read_text().splitlines()))
 
     def declr_function(self, tree: Tree[Token], warp: bool = True):
         name = cast(Token, tree.children[0])

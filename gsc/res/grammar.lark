@@ -4,6 +4,7 @@ declr: "costumes" _stringlist ";" -> declr_costumes
      | "use" STRING ";" -> declr_use
      | "globals" _namelist ";" -> declr_globals
      | "listglobals" _namelist ";" -> declr_listglobals
+     | "datalist" NAME STRING ";" -> datalist
      | "def" NAME _namelist stack -> declr_function
      | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
      | "on" STRING stack -> declr_on

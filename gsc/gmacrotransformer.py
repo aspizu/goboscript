@@ -3,7 +3,9 @@ from typing import Any
 
 from gdefinitionvisitor import gMacro
 from gerror import gTokenError
-from lark import Token, Transformer, Tree
+from lark.lexer import Token
+from lark.tree import Tree
+from lark.visitors import Transformer
 
 
 class gMacroTransformer(Transformer[Token, Tree[Token]]):

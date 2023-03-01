@@ -1,15 +1,7 @@
 costumes "blank.svg";
 
+datalist data "data.txt";
+
 def foo {
-    local bar = 100;
-    foo2;
-}
-
-def foo2 {
-   local bar = 200;
-}
-
-onflag {
-    list[];
-    say list.length;
+    localfoo = 1;
 }

@@ -3,7 +3,7 @@ from typing import Callable, TypeVar
 
 import lark.exceptions
 import term as t
-from lark import Token
+from lark.lexer import Token
 
 
 class gError(Exception):
@@ -94,7 +94,6 @@ def wrap_lark_errors(func: Callable[[], T], file: Path) -> T:
         e.file = file
         raise e
     except lark.exceptions.UnexpectedToken as e:
-
         raise gTokenError(
             "Unexpected token",
             e.token,

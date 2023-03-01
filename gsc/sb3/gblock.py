@@ -1,7 +1,7 @@
 import json
 from typing import Any, Sized, Union
 
-from lark import Token
+from lark.lexer import Token
 from lib import JSON, tripletwise
 
 from .gblockfactory import gPrototype
@@ -19,8 +19,10 @@ class gVariable(str):
     ...
 
 
-class gList(str):
-    ...
+class gList:
+    def __init__(self, name: str, data: list[str] | None = None):
+        self.name = name
+        self.data = data or []
 
 
 class gBlock:
@@ -80,7 +82,7 @@ class gBlock:
         elif type(value) is gVariable:
             return [3, [12, value, value], [10, ""]]
         elif type(value) is gList:
-            return [3, [13, value, ""], [10, ""]]
+            return [3, [13, value.name, ""], [10, ""]]
         elif isinstance(value, gStack):
             value.serialize(blocks, self.id)
             if len(value) == 0:
@@ -98,7 +100,7 @@ class gBlock:
         if isinstance(value, gVariable):
             return [value, value]
         if isinstance(value, gList):
-            return [value, value]
+            return [value.name, value.name]
         else:
             return [value, None]
 

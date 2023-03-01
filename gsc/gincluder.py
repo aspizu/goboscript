@@ -1,7 +1,9 @@
 from pathlib import Path
 
 from gparser import gparser, literal
-from lark import Token, Transformer, Tree
+from lark.lexer import Token
+from lark.tree import Tree
+from lark.visitors import Transformer
 from lib import EXT
 
 

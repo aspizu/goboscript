@@ -1,6 +1,7 @@
 import importlib.resources
 
-from lark import Lark, Token
+from lark.lark import Lark
+from lark.lexer import Token
 
 gparser = Lark(importlib.resources.open_text("res", "grammar.lark"))
 
