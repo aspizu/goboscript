@@ -19,8 +19,8 @@ declr: "costumes" _stringlist ";" -> declr_costumes
 
 stack: "{" block* "}"
 
-block: "local" NAME "=" expr ";" -> localvar
-     | NAME "=" expr ";" -> varset
+block: NAME "=" expr ";" -> varset
+     | "local"  NAME "=" expr ";" -> localvar
      | NAME "+=" expr ";" -> varchange
      | NAME "-=" expr ";" -> varsub
      | NAME "*=" expr ";" -> varmul
