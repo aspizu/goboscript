@@ -389,7 +389,11 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             gList(token) not in self.sprite.lists
             and token not in self.gdefinitionvisitor.listglobals
         ):
-            matches = get_close_matches(token, self.sprite.lists + self.gdefinitionvisitor.listglobals)  # type: ignore
+            matches = get_close_matches(
+                token,
+                [i.name for i in self.sprite.lists]
+                + self.gdefinitionvisitor.listglobals,
+            )
             raise gTokenError(
                 f"Undefined list `{token}`",
                 token,

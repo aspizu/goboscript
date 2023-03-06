@@ -11,8 +11,8 @@ gFieldType = Union[str, "gVariable", "gList"]
 gBlockListType = dict[str, dict[str, JSON]]
 
 
-def proccode(name: str, inputs: dict[Token, "gArgument"]):
-    args = [str(i.fields["VALUE"]) for i in inputs.values()]
+def proccode(name: str, inputs: dict[str, "gArgument"]):
+    args = [i.fields["VALUE"] for i in inputs.values()]
     return name + " " + " ".join([f"{arg}: %s" for arg in args])
 
 
@@ -177,7 +177,9 @@ class gProcCall(gBlock):
         blocks[self.id]["mutation"] = {
             "tagName": "mutation",
             "children": [],
-            "proccode": proccode(self.name, self.inputs),
+            "proccode": proccode(
+                self.name, {i: gArgument(i) for i in self.inputs.keys()}
+            ),
             "argumentids": json.dumps(list(self.inputs.keys())),
             "warp": self.warp,
         }
