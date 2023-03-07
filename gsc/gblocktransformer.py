@@ -291,18 +291,21 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             {"VARIABLE": gVariable(self.prototype.name + "." + args[0])},
         )
 
-    def varset(self, args: tuple[Token, gInputType]):
-        variable = gVariable(args[0])
+    def getvar(self, name: str) -> gVariable:
         if self.prototype:
-            if args[0] in self.prototype.locals:
-                variable = gVariable(self.prototype.name + "." + args[0])
-        return gBlock("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": variable})
+            if name in self.prototype.locals:
+                return gVariable(self.prototype.name + "." + name)
+        return gVariable(name)
+
+    def varset(self, args: tuple[Token, gInputType]):
+        return gBlock(
+            "data_setvariableto",
+            {"VALUE": args[1]},
+            {"VARIABLE": self.getvar(args[0])},
+        )
 
     def varOP(self, opcode: str, args: tuple[Token, gInputType]):
-        variable = gVariable(args[0])
-        if self.prototype:
-            if args[0] in self.prototype.locals:
-                variable = gVariable(self.prototype.name + "." + args[0])
+        variable = self.getvar(args[0])
         return gBlock(
             "data_setvariableto",
             {
@@ -346,7 +349,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock(
             "data_changevariableby",
             {"VALUE": args[1]},
-            {"VARIABLE": gVariable(args[0])},
+            {"VARIABLE": self.getvar(args[0])},
         )
 
     def varsub(self, args: tuple[Token, gInputType]):
@@ -358,7 +361,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                     reporter_prototypes["sub"], ["0", args[1]]
                 )
             },
-            {"VARIABLE": gVariable(args[0])},
+            {"VARIABLE": self.getvar(args[0])},
         )
 
     def var(self, args: tuple[Token]):
