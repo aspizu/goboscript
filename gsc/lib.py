@@ -40,7 +40,9 @@ def num_plural(num: int, word: str) -> str:
 
 
 def number(number: str) -> int | float:
+    if number[:2] == "0x":
+        return int(number[2:], 16)
     try:
         return int(number)
-    except:
+    except ValueError:
         return float(number)

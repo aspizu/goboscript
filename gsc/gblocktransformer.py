@@ -202,15 +202,23 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def add(self, args: list[gInputType]):
         if type(args[0]) is str and type(args[1]) is str:
-            return str(number(args[0]) + number(args[1]))
+            try:
+                return str(number(args[0]) + number(args[1]))
+            except ValueError:
+                pass
         return gBlock.from_prototype(reporter_prototypes["add"], args)
 
     def sub(self, args: list[gInputType]):
         if type(args[0]) is str and type(args[1]) is str:
-            return str(number(args[0]) - number(args[1]))
+            try:
+                return str(number(args[0]) - number(args[1]))
+            except ValueError:
+                pass
         return gBlock.from_prototype(reporter_prototypes["sub"], args)
 
     def minus(self, args: tuple[gInputType]):
+        if isinstance(args[0], str):
+            return "-" + args[0]
         return gBlock.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
 
     def mul(self, args: list[gInputType]):
@@ -377,7 +385,9 @@ class gBlockTransformer(Transformer[Token, gBlock]):
             or args[0] in self.gdefinitionvisitor.listglobals
         ):
             return gList(args[0])
-        matches = get_close_matches(args[0], self.sprite.variables + self.gdefinitionvisitor.globals)  # type: ignore
+        matches = get_close_matches(
+            args[0], self.sprite.variables + self.gdefinitionvisitor.globals
+        )  # type: ignore
         raise gTokenError(
             f"Undefined variable `{args[0]}`",
             args[0],

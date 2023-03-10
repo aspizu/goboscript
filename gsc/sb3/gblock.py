@@ -125,9 +125,11 @@ class gBlock:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, gHatBlock),
-            "x": self.x,
-            "y": self.y,
+            "shadow": type(self) is gProcProto,
         }
+        if blocks[self.id]["topLevel"]:
+            blocks[self.id]["x"] = self.x
+            blocks[self.id]["y"] = self.y
         if self.comment:
             blocks[self.id]["comment"] = self.comment
 
@@ -160,8 +162,14 @@ class gHatBlock(gBlock):
 
 
 class gArgument(gBlock):
-    def __init__(self, name: str):
+    def __init__(self, name: str, shadow: bool = False):
         super().__init__("argument_reporter_string_number", {}, {"VALUE": name})
+        self.shadow = shadow
+
+    def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
+        super().serialize(blocks, next, parent)
+        if self.shadow:
+            blocks[self.id]["shadow"] = True
 
 
 class gProcCall(gBlock):
@@ -189,7 +197,7 @@ class gProcProto(gBlock):
     def __init__(self, name: str, arguments: list[Token], warp: bool):
         super().__init__(
             "procedures_prototype",
-            {argument: gArgument(argument) for argument in arguments},
+            {argument: gArgument(argument, shadow=True) for argument in arguments},
             {},
         )
         self.name = name
