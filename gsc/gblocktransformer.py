@@ -398,10 +398,10 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock("data_deletealloflist", {}, {"LIST": gList(args[0])})
 
     def islist(self, token: Token):
-        if (
-            gList(token) not in self.sprite.lists
-            and token not in self.gdefinitionvisitor.listglobals
-        ):
+        for i in self.sprite.lists:
+            if i.name == token:
+                return
+        if token not in self.gdefinitionvisitor.listglobals:
             matches = get_close_matches(
                 token,
                 [i.name for i in self.sprite.lists]

@@ -125,7 +125,7 @@ class gBlock:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, gHatBlock),
-            "shadow": type(self) is gProcProto,
+            # "shadow": type(self) is gProcProto,
         }
         if blocks[self.id]["topLevel"]:
             blocks[self.id]["x"] = self.x

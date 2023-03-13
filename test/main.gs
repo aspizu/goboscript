@@ -1,11 +1,6 @@
 costumes "blank.svg";
 
-datalist data "data.txt";
-
-def foo {
-    localfoo = 1;
+onflag {
+  v[];
+  v.add 0;
 }
-
-def object_new class, sprite, x, y, z, direction {
-    
-} 
