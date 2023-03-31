@@ -76,6 +76,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
             pattern = literal(costume)
             if "*" in pattern:
                 paths = list(self.project.glob(pattern))
+                paths = [path for path in sorted(paths, key=lambda x: str(x))]
                 if len(paths) == 0:
                     raise gTokenError(
                         f"Glob does not match any files {pattern}", costume
