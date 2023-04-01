@@ -75,7 +75,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         for costume in cast(list[Token], tree.children):
             pattern = literal(costume)
             if "*" in pattern:
-                paths = list(self.project.glob(pattern))
+                paths = sorted(self.project.glob(pattern), key=lambda path: path.stem)
                 if len(paths) == 0:
                     raise gTokenError(
                         f"Glob does not match any files {pattern}", costume
