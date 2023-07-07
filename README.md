@@ -3,6 +3,8 @@ GoboScript
 
 GoboScript is a text-based programming language that transpiles 1:1 to Scratch.
 
+Join our [Discord](https://discord.gg/URTsYdZe5m) server for support and discussion for GoboScript.
+
 Overview
 --------
 
