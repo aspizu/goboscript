@@ -217,7 +217,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(reporter_prototypes["sub"], args)
 
     def minus(self, args: tuple[gInputType]):
-        if isinstance(args[0], str):
+        if type(args[0]) is str:
             return "-" + args[0]
         return gBlock.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
 
