@@ -218,6 +218,8 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def minus(self, args: tuple[gInputType]):
         if type(args[0]) is str:
+            if args[0].startswith("-"):
+                return args[0].removeprefix("-")
             return "-" + args[0]
         return gBlock.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
 
