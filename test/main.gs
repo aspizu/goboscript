@@ -1,4 +1,4 @@
-costumes "blank.svg";
+costumes "blank.svg", "notfound.png";
 
 onflag {
   v[];
