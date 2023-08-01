@@ -1,6 +1,8 @@
-costumes "blank.svg", "notfound.png";
+costumes "blank.svg";
+
+macro b -> 0;
+macro a -> !b();
 
 onflag {
-  v[];
-  v.add 0;
+  say !a();
 }

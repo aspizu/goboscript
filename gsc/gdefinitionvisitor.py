@@ -89,9 +89,11 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                     raise gTokenError(
                         f"Costume file not found {pattern}",
                         costume,
-                        f"Did you mean {matches[0].relative_to(self.project)}?"
-                        if matches
-                        else "",
+                        (
+                            f"Did you mean {matches[0].relative_to(self.project)}?"
+                            if matches
+                            else None
+                        ),
                     )
                 self.sprite.costumes.append(gCostume(path))
 
