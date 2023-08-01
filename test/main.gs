@@ -1,3 +1,7 @@
 costumes "blank.svg";
 
-imagelist texture "image.png";
+onflag {
+  // say "Comment me out!";
+  // say "Comment me out!";
+  say "Don't \"comment\" me out!";
+}

@@ -90,8 +90,10 @@ NUMBER: /-?[0-9]+/
 FLOAT: /-?[0-9]+\.[0-9]+/
 
 COMMENT: /\/\*(\*(?!\/)|[^*])*\*\//
+SCOMMENT: /\/\/.*/
 LCOMMENT: "(*" /(.|\n)+/ "*)"
 %ignore " "
 %ignore "\n"
 %ignore "\t"
 %ignore COMMENT
+%ignore SCOMMENT
