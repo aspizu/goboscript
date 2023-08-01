@@ -1,9 +1,11 @@
+from importlib.resources import files
 from pathlib import Path
 from typing import cast
 
 from gblocktransformer import gBlockTransformer
 from gdefinitionvisitor import gDefinitionVisitor
 from gerror import gFileError
+from gparser import gparser
 from gincluder import gIncluder
 from gmacrotransformer import gMacroTransformer
 from lark.lexer import Token
@@ -11,10 +13,14 @@ from lark.tree import Tree
 from lark.visitors import Interpreter
 from sb3 import gSprite
 from sb3.cleanup import cleanup
+import res
 
 
 class gSpriteInterpreter(Interpreter[Token, None]):
     def __init__(self, project: Path, name: str, tree: Tree[Token]):
+        tree.children.insert(
+            0, gparser.parse((files(res) / "standard_library.gs").read_text())
+        )
         tree = gIncluder(project).transform(tree)
         super().__init__()
         self.sprite = gSprite(name, [], [], [], [])
