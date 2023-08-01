@@ -100,6 +100,15 @@ class gDefinitionVisitor(Interpreter[Token, None]):
     def datalist(self, tree: Tree[Token]) -> None:
         name = cast(Token, tree.children[0])
         file: Path = self.project / literal(cast(Token, tree.children[1]))
+        if not file.is_file():
+            matches = file_suggest(file)
+            raise gTokenError(
+                "Data file not found.",
+                cast(Token, tree.children[1]),
+                f"Did you mean {matches[0].relative_to(self.project)}?"
+                if matches
+                else None,
+            )
         self.sprite.lists.append(gList(name, file.read_text().splitlines()))
 
     def declr_function(self, tree: Tree[Token], warp: bool = True):
