@@ -1,7 +1,7 @@
 costumes "blank.svg";
 
 macro b -> 0;
-macro a -> !b();
+macro a -> 1 + !b();
 
 onflag {
   say !a();

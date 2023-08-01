@@ -23,7 +23,7 @@ class gMacroTransformer(Transformer[Token, Tree[Token]]):
                 f"Did you mean `{matches[0]}`?" if matches else None,
             )
         arguments: list[Tree[Token] | Token] = args[1:]
-        return gMacroEvaluate(self.macros[name[1:]], arguments).get()
+        return gMacroEvaluate(self.macros[name[1:]], arguments).get(self)
 
 
 class gMacroEvaluate(Transformer[Token, Tree[Token]]):
@@ -32,8 +32,8 @@ class gMacroEvaluate(Transformer[Token, Tree[Token]]):
         self.macro = macro
         self.arguments = arguments
 
-    def get(self):
-        return self.transform(self.macro.body)
+    def get(self, macros: gMacroTransformer):
+        return self.transform(macros.transform(self.macro.body))
 
     def macrovar(self, args: tuple[Token]):
         return self.arguments[self.macro.arguments.index(str(args[0][1:]))]
