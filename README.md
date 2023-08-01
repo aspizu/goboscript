@@ -17,6 +17,18 @@ GoboScript code                            | Generated blocks
 Use GoboScript's sister project: [sb2gs](https://github.com/aspizu/sb2gs) to convert your existing Scratch projects into GoboScript projects,
 so you can continue working on it. sb2gs still requires some manual editing. ( See the project homepage for more information. ) 
 
+Whats New
+---------
+
+Image lists are an easy way to load image files as lists.
+
+```
+imagelist listName "imageFilePath.png";
+```
+
+this will dump the image file as bytes. If you don't want the Alpha channel, then remove
+it from the image file.
+
 Documentation
 -------------
 

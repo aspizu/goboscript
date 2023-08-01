@@ -111,6 +111,32 @@ class gDefinitionVisitor(Interpreter[Token, None]):
             )
         self.sprite.lists.append(gList(name, file.read_text().splitlines()))
 
+    def imagelist(self, tree: Tree[Token]) -> None:
+        from PIL import Image
+
+        name = cast(Token, tree.children[0])
+        file: Path = self.project / literal(cast(Token, tree.children[1]))
+        if not file.is_file():
+            matches = file_suggest(file)
+            raise gTokenError(
+                "Data file not found.",
+                cast(Token, tree.children[1]),
+                f"Did you mean {matches[0].relative_to(self.project)}?"
+                if matches
+                else None,
+            )
+        image = Image.open(file)
+        format = cast(Token | None, tree.children[2])
+        if format is None:
+            data = list(image.tobytes())  # type: ignore
+        else:
+            raise gTokenError(
+                "Invalid imagelist format.",
+                format,
+                "Formats are not implemented yet, open a issue at https://github/aspizu/goboscript/issues",
+            )
+        self.sprite.lists.append(gList(name, list(map(str, data))))
+
     def declr_function(self, tree: Tree[Token], warp: bool = True):
         name = cast(Token, tree.children[0])
         if name in self.functions:
