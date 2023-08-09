@@ -10,8 +10,8 @@ class gSprite:
     def __init__(
         self,
         name: str,
-        variables: list[gVariable],
-        lists: list[gList],
+        variables: dict[str, gVariable],
+        lists: dict[str, gList],
         blocks: list[gBlock],
         costumes: list[gCostume],
         comment: str | None = None,
@@ -50,8 +50,14 @@ class gSprite:
         return {
             "isStage": self.name == "Stage",
             "name": self.name,
-            "variables": {variable: [variable, 0] for variable in self.variables},
-            "lists": {lst.name: [lst.name, lst.data] for lst in self.lists},  # type: ignore
+            "variables": {qualname: [qualname, 0] for qualname in self.variables},
+            "lists": cast(
+                JSON,
+                {
+                    qualname: [qualname, list_.data]
+                    for qualname, list_ in self.lists.items()
+                },
+            ),
             "blocks": cast(JSON, blocks),
             "costumes": [costume.serialize() for costume in self.costumes],
             "comments": cast(JSON, comments),

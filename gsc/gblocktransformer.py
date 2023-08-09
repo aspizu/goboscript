@@ -289,6 +289,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock("control_forever", {"SUBSTACK": args[0]}, {})
 
     def localvar(self, args: tuple[Token, gInputType]):
+        variable = self.get_variable(args[0])
         if not self.prototype:
             raise gTokenError(
                 "local variables cannot be used outside of functions",
@@ -298,24 +299,23 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock(
             "data_setvariableto",
             {"VALUE": args[1]},
-            {"VARIABLE": gVariable(self.prototype.name + "." + args[0])},
+            {"VARIABLE": variable},
         )
 
-    def getvar(self, name: str) -> gVariable:
-        if self.prototype:
-            if name in self.prototype.locals:
-                return gVariable(self.prototype.name + "." + name)
-        return gVariable(name)
+    def var(self, args: tuple[Token]):
+        return self.get_identifier(args[0])
 
     def varset(self, args: tuple[Token, gInputType]):
+        variable = self.get_variable(args[0])
         return gBlock(
             "data_setvariableto",
             {"VALUE": args[1]},
-            {"VARIABLE": self.getvar(args[0])},
+            {"VARIABLE": variable},
         )
 
     def varOP(self, opcode: str, args: tuple[Token, gInputType]):
-        variable = self.getvar(args[0])
+        variable = self.get_variable(args[0])
+        variable = args[0]
         return gBlock(
             "data_setvariableto",
             {
@@ -338,32 +338,16 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def varjoin(self, args: Any):
         return self.varOP("join", args)
 
-    def isvariable(self, variable: Token):
-        if self.prototype and variable in self.prototype.locals:
-            return
-        if gVariable(variable) in self.sprite.variables:
-            return
-        if variable in self.gdefinitionvisitor.globals:
-            return
-        matches = get_close_matches(
-            variable, chain(self.sprite.variables, self.gdefinitionvisitor.globals)
-        )
-        raise gTokenError(
-            f"Undefined variable `{variable}`",
-            variable,
-            f"Did you mean `{matches[0]}`?" if matches else None,
-        )
-
     def varchange(self, args: tuple[Token, gInputType]):
-        self.isvariable(args[0])
+        variable = self.get_variable(args[0])  # type: ignore
         return gBlock(
             "data_changevariableby",
             {"VALUE": args[1]},
-            {"VARIABLE": self.getvar(args[0])},
+            {"VARIABLE": variable},
         )
 
     def varsub(self, args: tuple[Token, gInputType]):
-        self.isvariable(args[0])
+        variable = self.get_variable(args[0])  # type: ignore
         return gBlock(
             "data_changevariableby",
             {
@@ -371,76 +355,62 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                     reporter_prototypes["sub"], ["0", args[1]]
                 )
             },
-            {"VARIABLE": self.getvar(args[0])},
+            {"VARIABLE": variable},
         )
 
-    def var(self, args: tuple[Token]):
-        if self.prototype and args[0] in self.prototype.locals:
-            return gVariable(self.prototype.name + "." + args[0])
-        if (
-            gVariable(args[0]) in self.sprite.variables
-            or args[0] in self.gdefinitionvisitor.globals
-        ):
-            return gVariable(args[0])
-        if (
-            gList(args[0]) in self.sprite.lists
-            or args[0] in self.gdefinitionvisitor.listglobals
-        ):
-            return gList(args[0])
-        matches = get_close_matches(
-            args[0], self.sprite.variables + self.gdefinitionvisitor.globals
-        )  # type: ignore
-        raise gTokenError(
-            f"Undefined variable `{args[0]}`",
-            args[0],
-            f"Did you mean `{matches[0]}?`" if matches else None,
-        )
+    def get_identifier(self, token: Token):
+        name = str(token)
 
-    def listset(self, args: tuple[Token]):
-        return gBlock("data_deletealloflist", {}, {"LIST": gList(args[0])})
+        if name in self.sprite.variables:
+            return self.sprite.variables[name]
 
-    def islist(self, token: Token):
-        for i in self.sprite.lists:
-            if i.name == token:
-                return
-        if token not in self.gdefinitionvisitor.listglobals:
-            matches = get_close_matches(
-                token,
-                [i.name for i in self.sprite.lists]
-                + self.gdefinitionvisitor.listglobals,
-            )
-            raise gTokenError(
-                f"Undefined list `{token}`",
-                token,
-                f"Did you mean `{matches[0]}`?" if matches else None,
-            )
+        if name in self.sprite.lists:
+            return self.sprite.lists[name]
+
+        if self.prototype and name in self.prototype.locals:
+            return self.sprite.variables[f"{self.prototype.name}.{name}"]
+
+        help = None
+        if matches := get_close_matches(name, self.sprite.variables.keys()):
+            help = f"Did you mean the variable `{matches[0]}?`"
+        elif matches := get_close_matches(name, self.sprite.lists.keys()):
+            help = f"Did you mean the list `{matches[0]}?`"
+        elif self.prototype:
+            if matches := get_close_matches(name, self.prototype.locals):
+                help = f"Did you mean the local variable `{matches[0]}?`"
+
+        raise gTokenError(f"Undefined variable or list `{token}`", token, help)
+
+    def listset(self, args: tuple[Any]):
+        list_ = self.get_list(args[0])
+        return gBlock("data_deletealloflist", {}, {"LIST": list_})
 
     def listadd(self, args: tuple[Token, gInputType]):
-        self.islist(args[0])
-        return gBlock("data_addtolist", {"ITEM": args[1]}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_addtolist", {"ITEM": args[1]}, {"LIST": list_})
 
     def listdelete(self, args: tuple[Token, gInputType]):
-        self.islist(args[0])
-        return gBlock("data_deleteoflist", {"INDEX": args[1]}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_deleteoflist", {"INDEX": args[1]}, {"LIST": list_})
 
     def listinsert(self, args: tuple[Token, gInputType, gInputType]):
-        self.islist(args[0])
+        list_ = self.get_list(args[0])
         return gBlock(
             "data_insertatlist",
             {"INDEX": args[1], "ITEM": args[2]},
-            {"LIST": gList(args[0])},
+            {"LIST": list_},
         )
 
     def listreplace(self, args: tuple[Token, gInputType, gInputType]):
-        self.islist(args[0])
+        list_ = self.get_list(args[0])
         return gBlock(
             "data_replaceitemoflist",
             {"INDEX": args[1], "ITEM": args[2]},
-            {"LIST": gList(args[0])},
+            {"LIST": list_},
         )
 
     def listreplaceOP(self, opcode: str, args: tuple[Token, gInputType, gInputType]):
-        self.islist(args[0])
+        list_ = self.get_list(args[0])
         return gBlock(
             "data_replaceitemoflist",
             {
@@ -451,13 +421,13 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                         gBlock(
                             "data_itemoflist",
                             {"INDEX": args[1]},
-                            {"LIST": gList(args[0])},
+                            {"LIST": list_},
                         ),
                         args[2],
                     ],
                 ),
             },
-            {"LIST": gList(args[0])},
+            {"LIST": list_},
         )
 
     def listreplaceadd(self, args: Any):
@@ -479,30 +449,28 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return self.listreplaceOP("join", args)
 
     def listshow(self, args: tuple[Token]):
-        self.islist(args[0])
-        return gBlock("data_showlist", {}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_showlist", {}, {"LIST": list_})
 
     def listhide(self, args: tuple[Token]):
-        self.islist(args[0])
-        return gBlock("data_hidelist", {}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_hidelist", {}, {"LIST": list_})
 
     def listitem(self, args: tuple[Token, gInputType]):
-        self.islist(args[0])
-        return gBlock("data_itemoflist", {"INDEX": args[1]}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_itemoflist", {"INDEX": args[1]}, {"LIST": list_})
 
     def listindex(self, args: tuple[Token, gInputType]):
-        self.islist(args[0])
-        return gBlock("data_itemnumoflist", {"ITEM": args[1]}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_itemnumoflist", {"ITEM": args[1]}, {"LIST": list_})
 
     def listcontains(self, args: tuple[Token, gInputType]):
-        self.islist(args[0])
-        return gBlock(
-            "data_listcontainsitem", {"ITEM": args[1]}, {"LIST": gList(args[0])}
-        )
+        list_ = self.get_list(args[0])
+        return gBlock("data_listcontainsitem", {"ITEM": args[1]}, {"LIST": list_})
 
     def listlength(self, args: tuple[Token]):
-        self.islist(args[0])
-        return gBlock("data_lengthoflist", {}, {"LIST": gList(args[0])})
+        list_ = self.get_list(args[0])
+        return gBlock("data_lengthoflist", {}, {"LIST": list_})
 
     def declr_on(self, args: tuple[Token, gStack]):
         return gHatBlock(
@@ -552,3 +520,25 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def nop(self, args: tuple[()]):
         return gBlock("control_wait", {"DURATION": "0"}, {})
+
+    def get_variable(self, token: Token):
+        if isinstance(token, gVariable):
+            return token
+        if isinstance(token, gList):
+            raise gTokenError("Identifier is not a variable", token.token)
+
+        identifier = self.get_identifier(token)
+        if not isinstance(identifier, gVariable):
+            raise gTokenError("Identifier is not a variable", token)
+        return identifier
+
+    def get_list(self, token: Token):
+        if isinstance(token, gList):
+            return token
+        if isinstance(token, gVariable):
+            raise gTokenError("Identifier is not a list", token.token)
+
+        identifier = self.get_identifier(token)
+        if not isinstance(identifier, gList):
+            raise gTokenError("Identifier is not a list", token)
+        return identifier

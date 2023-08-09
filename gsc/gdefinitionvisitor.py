@@ -22,6 +22,11 @@ class gMacro(NamedTuple):
     body: Tree[Token]
 
 
+class BlockMacro(NamedTuple):
+    arguments: list[str]
+    body: Tree[Token]
+
+
 class LocalsCollector(Visitor[Token]):
     def __init__(
         self,
@@ -42,22 +47,37 @@ class LocalsCollector(Visitor[Token]):
     def localvar(self, tree: Tree[Token]):
         if not self.name:
             return
-        self.locals.append(str(tree.children[0]))
-        self.sprite.variables.append(gVariable(self.name + "." + str(tree.children[0])))
+        token = cast(Token, tree.children[0])
+        self.locals.append(str(token))
+        qualname = f"{self.name}.{token}"
+        self.sprite.variables[qualname] = gVariable(token)
 
     def varset(self, tree: Tree[Token]):
-        if tree.children[0] in self.locals:
+        token = cast(Token, tree.children[0])
+        qualname = str(token)
+
+        if qualname in self.locals:
             return
-        if tree.children[0] in self.globals:
+
+        if qualname in self.sprite.variables:
             return
-        if gVariable(tree.children[0]) not in self.sprite.variables:
-            self.sprite.variables.append(gVariable(tree.children[0]))
+
+        if qualname in self.sprite.lists:
+            return
+
+        self.sprite.variables[qualname] = gVariable(token)
 
     def listset(self, tree: Tree[Token]):
-        if tree.children[0] in self.listglobals:
+        token = cast(Token, tree.children[0])
+        qualname = str(token)
+
+        if qualname in self.sprite.lists:
             return
-        if gList(cast(Token, tree.children[0])) not in self.sprite.lists:
-            self.sprite.lists.append(gList(cast(Token, tree.children[0])))
+
+        if qualname in self.sprite.variables:
+            return
+
+        self.sprite.lists[qualname] = gList(token)
 
 
 class gDefinitionVisitor(Interpreter[Token, None]):
@@ -65,7 +85,8 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         super().__init__()
         self.project = project
         self.sprite = sprite
-        self.macros: dict[str, gMacro] = {}
+        self.macros: dict[Token, gMacro] = {}
+        self.block_macros: dict[Token, BlockMacro] = {}
         self.functions: dict[Token, gFunction] = {}
         self.globals: list[Token] = []
         self.listglobals: list[Token] = []
@@ -98,35 +119,41 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                 self.sprite.costumes.append(gCostume(path))
 
     def datalist(self, tree: Tree[Token]) -> None:
-        name = cast(Token, tree.children[0])
-        file: Path = self.project / literal(cast(Token, tree.children[1]))
+        token = cast(Token, tree.children[0])
+        qualname = str(token)
+        path = cast(Token, tree.children[1])
+        file: Path = self.project / literal(path)
         if not file.is_file():
             matches = file_suggest(file)
             raise gTokenError(
                 "Data file not found.",
-                cast(Token, tree.children[1]),
+                path,
                 f"Did you mean {matches[0].relative_to(self.project)}?"
                 if matches
                 else None,
             )
-        self.sprite.lists.append(gList(name, file.read_text().splitlines()))
+
+        self.sprite.lists[qualname] = gList(token, file.read_text().splitlines())
 
     def imagelist(self, tree: Tree[Token]) -> None:
         from PIL import Image
 
-        name = cast(Token, tree.children[0])
-        file: Path = self.project / literal(cast(Token, tree.children[1]))
+        token = cast(Token, tree.children[0])
+        qualname = str(token)
+        path = cast(Token, tree.children[1])
+        format = cast(Token | None, tree.children[2])
+        file: Path = self.project / literal(path)
         if not file.is_file():
             matches = file_suggest(file)
             raise gTokenError(
                 "Data file not found.",
-                cast(Token, tree.children[1]),
+                path,
                 f"Did you mean {matches[0].relative_to(self.project)}?"
                 if matches
                 else None,
             )
+
         image = Image.open(file)
-        format = cast(Token | None, tree.children[2])
         if format is None:
             data = list(image.tobytes())  # type: ignore
         else:
@@ -135,7 +162,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                 format,
                 "Formats are not implemented yet, open a issue at https://github/aspizu/goboscript/issues",
             )
-        self.sprite.lists.append(gList(name, list(map(str, data))))
+        self.sprite.lists[qualname] = gList(token, list(map(str, data)))
 
     def declr_function(self, tree: Tree[Token], warp: bool = True):
         name = cast(Token, tree.children[0])
@@ -188,31 +215,18 @@ class gDefinitionVisitor(Interpreter[Token, None]):
             [str(i) for i in arguments], cast(Tree[Token], tree.children[-1])
         )
 
+    def declr_block_macro(self, tree: Tree[Token]):
+        name = cast(Token, tree.children[0])
+        if name in self.block_macros:
+            raise gTokenError("Redeclaration of macro", name, "Rename this macro")
+        arguments = cast(list[Token], tree.children[1:-1])
+        body = cast(Tree[Token], tree.children[-1])
+
+        self.block_macros[name] = BlockMacro([str(i) for i in arguments], body)
+
     def declr_function_nowarp(self, tree: Tree[Token]):
         return self.declr_function(tree, False)
 
     def declr_comment(self, tree: Tree[Token]):
         comment: str = literal(cast(Token, tree.children[0]))
         self.sprite.comment = comment
-
-    def declr_globals(self, tree: Tree[Token]):
-        for variable in cast(list[Token], tree.children):
-            if variable in self.globals:
-                raise gTokenError(
-                    f"variable `{variable}` was repeated", variable, "Remove this"
-                )
-            self.globals.append(variable)
-            try:
-                self.sprite.variables.remove(gVariable(variable))
-            except ValueError:
-                pass
-
-    def declr_listglobals(self, tree: Tree[Token]):
-        for lst in cast(list[Token], tree.children):
-            if lst in self.listglobals:
-                raise gTokenError(f"list `{lst}` was repeated", lst, "Remove this")
-            self.listglobals.append(lst)
-            try:
-                self.sprite.lists.remove(gList(lst))
-            except ValueError:
-                pass

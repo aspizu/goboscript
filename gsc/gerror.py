@@ -102,9 +102,12 @@ def wrap_lark_errors(func: Callable[[], T], file: Path) -> T:
         )
     except lark.exceptions.UnexpectedCharacters as e:
         token = Token("NULL", "#", None, e.line, e.column)
+        help = ""
+        if "BANG" in e.allowed:
+            help = ", Macro syntax has changed, use the syntax macro foo!() -> bar;"
         raise gTokenError(
             "Unexpected characters",
             token,
-            "Expected one of: " + ", ".join(e.allowed),
+            "Expected one of: " + ", ".join(e.allowed) + help,
             file,
         )

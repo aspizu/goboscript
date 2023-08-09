@@ -7,7 +7,7 @@ from gdefinitionvisitor import gDefinitionVisitor
 from gerror import gFileError
 from gparser import gparser
 from gincluder import gIncluder
-from gmacrotransformer import gMacroTransformer
+from gmacrotransformer import BlockMacroVisitor, gMacroTransformer
 from lark.lexer import Token
 from lark.tree import Tree
 from lark.visitors import Interpreter
@@ -15,18 +15,25 @@ from sb3 import gSprite
 from sb3.cleanup import cleanup
 import res
 
+try:
+    from rich import print  # type: ignore
+except ImportError:
+    pass
+
 
 class gSpriteInterpreter(Interpreter[Token, None]):
     def __init__(self, project: Path, name: str, tree: Tree[Token]):
+        print(tree)
         tree.children.insert(
             0, gparser.parse((files(res) / "standard_library.gs").read_text())
         )
         tree = gIncluder(project).transform(tree)
         super().__init__()
-        self.sprite = gSprite(name, [], [], [], [])
+        self.sprite = gSprite(name, {}, {}, [], [])
         self.gdefinitionvisitor = gDefinitionVisitor(project, self.sprite, tree)
         if len(self.sprite.costumes) == 0:
             raise gFileError("No costumes defined", "Add a costumes statement")
+        BlockMacroVisitor(tree, self.gdefinitionvisitor.block_macros)
         tree = gMacroTransformer(self.gdefinitionvisitor.macros).transform(tree)
         self.visit(tree)
         cleanup(self.sprite.blocks)

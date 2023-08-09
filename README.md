@@ -13,6 +13,7 @@ GoboScript lets you create Scratch projects from text files.
 GoboScript code                            | Generated blocks
 -------------------------------------------|--------------------------------------------
 ![](/docs/img/example_helloworld_main.png) | ![](/docs/img/example_helloworld_main_blocks.png)
+![](https://cdn.discordapp.com/attachments/972556399928299661/1138803937391157319/image.png) | ![](https://cdn.discordapp.com/attachments/972556399928299661/1138803937772834836/image.png)
 
 Use GoboScript's sister project: [sb2gs](https://github.com/aspizu/sb2gs) to convert your existing Scratch projects into GoboScript projects,
 so you can continue working on it. sb2gs still requires some manual editing. ( See the project homepage for more information. ) 

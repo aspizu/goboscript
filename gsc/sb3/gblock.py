@@ -1,5 +1,5 @@
 import json
-from typing import Any, Union
+from typing import Any, NamedTuple, Union
 
 from lark.lexer import Token
 from lib import JSON, tripletwise
@@ -16,13 +16,13 @@ def proccode(name: str, inputs: dict[str, "gArgument"]):
     return name + " " + " ".join([f"{arg}: %s" for arg in args])
 
 
-class gVariable(str):
-    ...
+class gVariable(NamedTuple):
+    token: Token
 
 
 class gList:
-    def __init__(self, name: str, data: list[str] | None = None):
-        self.name = name
+    def __init__(self, token: Token, data: list[str] | None = None):
+        self.token = token
         self.data = data or []
 
 
@@ -81,9 +81,9 @@ class gBlock:
         if type(value) is str:
             return [1, [10, value]]
         elif type(value) is gVariable:
-            return [3, [12, value, value], [10, ""]]
+            return [3, [12, value.token, value.token], [10, ""]]
         elif type(value) is gList:
-            return [3, [13, value.name, ""], [10, ""]]
+            return [3, [13, value.token, ""], [10, ""]]
         elif isinstance(value, gStack):
             value.serialize(blocks, self.id)
             if len(value) == 0:
@@ -99,9 +99,9 @@ class gBlock:
 
     def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
         if isinstance(value, gVariable):
-            return [value, value]
+            return [value.token, value.token]
         if isinstance(value, gList):
-            return [value.name, value.name]
+            return [value.token, value.token]
         else:
             return [value, None]
 
@@ -209,7 +209,7 @@ class gProcProto(gBlock):
         blocks[self.id]["mutation"] = {
             "tagName": "mutation",
             "children": [],
-            "proccode": proccode(self.name, self.inputs),
+            "proccode": proccode(self.name, self.inputs),  # type: ignore
             "argumentids": argumentids,
             "argumentnames": argumentids,
             "argumentdefaults": json.dumps(["0"] * len(self.inputs)),
