@@ -23,7 +23,6 @@ except ImportError:
 
 class gSpriteInterpreter(Interpreter[Token, None]):
     def __init__(self, project: Path, name: str, tree: Tree[Token]):
-        print(tree)
         tree.children.insert(
             0, gparser.parse((files(res) / "standard_library.gs").read_text())
         )
