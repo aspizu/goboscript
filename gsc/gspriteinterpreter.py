@@ -2,18 +2,18 @@ from importlib.resources import files
 from pathlib import Path
 from typing import cast
 
+import res
 from gblocktransformer import gBlockTransformer
 from gdefinitionvisitor import gDefinitionVisitor
 from gerror import gFileError
-from gparser import gparser
 from gincluder import gIncluder
 from gmacrotransformer import BlockMacroVisitor, gMacroTransformer
+from gparser import gparser
 from lark.lexer import Token
 from lark.tree import Tree
 from lark.visitors import Interpreter
 from sb3 import gSprite
 from sb3.cleanup import cleanup
-import res
 
 try:
     from rich import print  # type: ignore

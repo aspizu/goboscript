@@ -25,6 +25,7 @@ class gCostume:
         return {
             "name": self.name,
             "assetId": self.hash,
+            "bitmapResolution": 1,
             "dataFormat": self.path.suffix[1:],
             "md5ext": self.md5ext,
         }

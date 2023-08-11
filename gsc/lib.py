@@ -3,6 +3,8 @@ from difflib import get_close_matches
 from pathlib import Path
 from typing import Iterable, TypeVar
 
+from lark import Token
+
 EXT = "gobo"
 JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 
@@ -46,3 +48,7 @@ def number(number: str) -> int | float:
         return int(number)
     except ValueError:
         return float(number)
+
+
+def tok(string: str) -> Token:
+    return Token("tok", value=string)

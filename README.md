@@ -1,72 +1,41 @@
-GoboScript
-==========
+# goboscript
 
-GoboScript is a text-based programming language that transpiles 1:1 to Scratch.
+Tired of the laggy Scratch editor? goboscript is a text-based programming language that
+compiles into Scratch projects.
 
-Join our [Discord](https://discord.gg/URTsYdZe5m) server for support and discussion for GoboScript.
+### Examples
+| goboscript code | Scratch blocks |
+| --------------- | -------------- |
+|![](https://media.discordapp.net/attachments/972556399928299661/1139621537725558816/image.png)|![](https://media.discordapp.net/attachments/972556399928299661/1139621589248397404/image.png)|
+### Constant Folding
+| goboscript code | Scratch blocks |
+| --------------- | -------------- |
+|![](https://media.discordapp.net/attachments/972556399928299661/1139624060196761730/image.png)|![](https://media.discordapp.net/attachments/972556399928299661/1139624096427167874/image.png)|
+### Comments
+| goboscript code | Scratch blocks |
+| --------------- | -------------- |
+|![](https://media.discordapp.net/attachments/972556399928299661/1139634581033721906/image.png)|![](https://media.discordapp.net/attachments/972556399928299661/1139634682728816662/image.png)|
+### Standard Library
+| goboscript code | Scratch blocks |
+| --------------- | -------------- |
+|![](https://media.discordapp.net/attachments/972556399928299661/1139635745313804418/image.png)|![](https://media.discordapp.net/attachments/972556399928299661/1139635766214008932/image.png)|
+### Load images as lists
+![](https://media.discordapp.net/attachments/972556399928299661/1139636837581856925/image.png)
+![](https://media.discordapp.net/attachments/972556399928299661/1139637985890029568/image.png)
 
-Overview
---------
+### VS Code extension and Language Server
 
-GoboScript lets you create Scratch projects from text files.
+![](https://media.discordapp.net/attachments/972556399928299661/1139561598256689253/image.png)
 
-GoboScript code                            | Generated blocks
--------------------------------------------|--------------------------------------------
-![](/docs/img/example_helloworld_main.png) | ![](/docs/img/example_helloworld_main_blocks.png)
-![](https://cdn.discordapp.com/attachments/972556399928299661/1138803937391157319/image.png) | ![](https://cdn.discordapp.com/attachments/972556399928299661/1138803937772834836/image.png)
+Use [goboscript-lsp](https://github.com/aspizu/goboscript-lsp) to get features such as Autocompletion, Go to definition, Documentation preview for your code editor.
 
-Use GoboScript's sister project: [sb2gs](https://github.com/aspizu/sb2gs) to convert your existing Scratch projects into GoboScript projects,
-so you can continue working on it. sb2gs still requires some manual editing. ( See the project homepage for more information. ) 
+### Convert Scratch projects into goboscript projects
 
-Whats New
----------
+Use [sb2gs](https://github.com/aspizu/sb2gs) to convert your Scratch projects into
+goboscript projects to continue developing them with goboscript.
 
-Image lists are an easy way to load image files as lists.
+# Installation
 
-```
-imagelist listName "imageFilePath.png";
-```
+# Documentation
 
-this will dump the image file as bytes. If you don't want the Alpha channel, then remove
-it from the image file.
-
-Documentation
--------------
-
-See [DOCS.md](/docs/DOCS.md)
-
-
-Installation
-------------
-
-**Dependencies**
- - [Python](https://www.python.org)
- - [Lark](https://github.com/lark-parser/lark)
-
-
-**Steps**
-1. Install Python
-2. Use [pip](https://github.com/pypa/pip) to install Lark
-3. Clone this repository
-4. Add a alias or create a shell script to run gsc with Python
-
-**Commands**
- - `cd ~/Downloads/SRC`
- - `pip install lark`
- - `git clone https://github.com/aspizu/goboscript`
- - `cd goboscript`
- - `echo -e "#\!/bin/bash\nset -e\npython $(pwd)/gsc \"\$@\"" > ~/.local/bin/gsc`
- - `chmod +x ~/.local/bin/gsc`
-
-Contributing
-------------
-
-Pull requests are appreciated.
-
-Before creating a pull request make sure to run black and pyright.
-
-```sh
-# in repository root
-pyright . # this should not fail!
-black .
-```
+[Documentation Index](docs/DOCS.md)

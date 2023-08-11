@@ -151,6 +151,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
                 dict(zip(prototype.arguments, arguments)),
                 prototype.warp,
                 comment,
+                prototype.proccode,
             )
         else:
             matches = get_close_matches(

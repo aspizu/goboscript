@@ -6,7 +6,7 @@ from gparser import literal
 from lark.lexer import Token
 from lark.tree import Tree
 from lark.visitors import Interpreter, Visitor
-from lib import file_suggest
+from lib import file_suggest, tok
 from sb3 import gCostume, gList, gSprite, gVariable
 
 
@@ -15,6 +15,7 @@ class gFunction(NamedTuple):
     warp: bool
     arguments: list[Token]
     locals: list[str]
+    proccode: str | None = None
 
 
 class gMacro(NamedTuple):
@@ -87,7 +88,37 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         self.sprite = sprite
         self.macros: dict[Token, gMacro] = {}
         self.block_macros: dict[Token, BlockMacro] = {}
-        self.functions: dict[Token, gFunction] = {}
+        self.functions: dict[str, gFunction] = {
+            # Scratch Addons Debugger blocks
+            "breakpoint": gFunction(
+                tok("breakpoint"),
+                False,
+                [],
+                [],
+                proccode="\u200B\u200Bbreakpoint\u200B\u200B",
+            ),
+            "log": gFunction(
+                tok("log"),
+                False,
+                [tok("message")],
+                [],
+                proccode="\u200B\u200Blog\u200B\u200B %s",
+            ),
+            "warn": gFunction(
+                tok("warn"),
+                False,
+                [tok("message")],
+                [],
+                proccode="\u200B\u200Bwarn\u200B\u200B %s",
+            ),
+            "error": gFunction(
+                tok("error"),
+                False,
+                [tok("message")],
+                [],
+                proccode="\u200B\u200Berror\u200B\u200B %s",
+            ),
+        }
         self.globals: list[Token] = []
         self.listglobals: list[Token] = []
         self.visit(tree)

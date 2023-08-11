@@ -94,6 +94,10 @@ class gBlock:
             value.serialize(blocks, None, self.id)
             if "CONDITION" in name:
                 return [2, value.id]
+            elif name == "custom_block" or (
+                isinstance(value, gArgument) and value.shadow
+            ):
+                return [1, value.id]
             return [3, value.id, [10, ""]]
         raise ValueError(self, value)
 
@@ -125,7 +129,7 @@ class gBlock:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, gHatBlock),
-            # "shadow": type(self) is gProcProto,
+            "shadow": False,
         }
         if blocks[self.id]["topLevel"]:
             blocks[self.id]["x"] = self.x
@@ -174,11 +178,17 @@ class gArgument(gBlock):
 
 class gProcCall(gBlock):
     def __init__(
-        self, name: str, inputs: dict[str, gInputType], warp: bool, comment: str | None
+        self,
+        name: str,
+        inputs: dict[str, gInputType],
+        warp: bool,
+        comment: str | None,
+        proccode: str | None,
     ):
         super().__init__("procedures_call", inputs, {}, comment)
         self.name = name
         self.warp = warp
+        self.proccode = proccode
 
     def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
@@ -187,7 +197,9 @@ class gProcCall(gBlock):
             "children": [],
             "proccode": proccode(
                 self.name, {i: gArgument(i) for i in self.inputs.keys()}
-            ),
+            )
+            if not self.proccode
+            else self.proccode,
             "argumentids": json.dumps(list(self.inputs.keys())),
             "warp": self.warp,
         }
@@ -206,7 +218,9 @@ class gProcProto(gBlock):
     def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
         argumentids = json.dumps(list(self.inputs.keys()))
-        blocks[self.id]["mutation"] = {
+        serialized = blocks[self.id]
+        serialized["shadow"] = True
+        serialized["mutation"] = {
             "tagName": "mutation",
             "children": [],
             "proccode": proccode(self.name, self.inputs),  # type: ignore

@@ -1,146 +1,24 @@
-costumes "blank.svg";
+costumes "square.png";
+imagelist texture "texture.png";
 
-datalist faces "faces.txt";
-/* x1, y1, z1, x2, y2, z2, x3, y3, z3, u1, v1, u2, v2, u3, v3 */
-datalist texture "texture.txt";
-/* R, G, B */
+macro renderSquare! x, y, w {
+  goto x! + w!/2, y! + w!/2;
+  setsize w!;
+  stamp;
+}
 
-macro dot!(a, b, c) -> 1;
-macro randomMacro! a, b, c {
-  a! = b! + c!;
+def renderRectangle x, y, w, h {
+  if 0 < $w and 0 < $h {
+    if $w < $h {
+      renderSquare! $x, $y, $w;
+      renderRectangle $x, $y + $w, $w, $h - $w;
+    } else {
+      renderSquare! $x, $y, $h;
+      renderRectangle $x + $h, $y, $w - $h, $h;
+    }
+  }
 }
 
 onflag {
-  say "Hello, render World!";
-  TEXTURE_WIDTH = 440;
-  TEXTURE_HEIGHT = 440;
-  camera_x = 0;
-  camera_y = 0;
-  camera_z = 3;
-  camera_angle_x = 90;
-  camera_angle_y = 0;
-  camera_distance = 200;
-  camera_clipping_distance = 1;
-
-  forever {
-    clear;
-    controls 10;
-    render;
-  }
-}
-
-def controls speed {
-  
-}
-
-def render {
-  local i = 1;
-  repeat faces.length / 15 {
-    
-    camera faces[i], faces[i+1], faces[i+2];
-    x1 = x; y1 = y; z1 = z;
-    camera faces[i+3], faces[i+4], faces[i+5];
-    x2 = x; y2 = y; z2 = z;
-    camera faces[i+6], faces[i+7], faces[i+8];
-    x3 = x; y3 = y; z3 = z;
-    if z1 > camera_clipping_distance and
-      z2 > camera_clipping_distance and 
-      z3 > camera_clipping_distance
-    {
-      renderTriangle
-        x1, y1, x2, y2, x3, y3,
-        faces[i+9], faces[i+10], faces[i+11], faces[i+12], faces[i+13], faces[i+14];
-    }
-    i += 15;
-  }
-}
-
-def p x, y, z { x = $x; y = $y; y = $y; z = $z; }
-
-def rotate_x angle {
-  p x, y * sin($angle) + z * cos($angle), y * cos($angle) - z * sin($angle);
-}
-
-def rotate_y angle {
-  p x * sin($angle) + z * cos($angle), y, x * cos($angle) - z * sin($angle);
-}
-
-def camera x, y, z {
-  p $x, $y, $z;
-  rotate_y camera_angle_y;
-  rotate_x camera_angle_x;
-  p x + camera_x, y + camera_y, z + camera_z;
-  p x / z * camera_distance, y / z * camera_distance, z;
-}
-
-/* Renders a triangle */
-def renderTriangle x1, y1, x2, y2, x3, y3, u1, v1, u2, v2, u3, v3 {
-  if $y1 < $y2 {
-    if $y2 < $y3 {
-      _renderTriangle $x1, $y1, $x2, $y2, $x3, $y3, $u1, $v1, $u2, $v2, $u3, $v3;
-    } elif $y1 < $y3 {      
-      _renderTriangle $x1, $y1, $x3, $y3, $x2, $y2, $u1, $v1, $u3, $v3, $u2, $v2;
-    } else {
-      _renderTriangle $x3, $y3, $x1, $y1, $x2, $y2, $u3, $v3, $u1, $v1, $u2, $v2;
-    }
-  } else {
-    if $y1 < $y3 {
-      _renderTriangle $x2, $y2, $x1, $y1, $x3, $y3, $u2, $v2, $u1, $v1, $u3, $v3;
-    } elif $y2 < $y3 {
-      _renderTriangle $x2, $y2, $x3, $y3, $x1, $y1, $u2, $v2, $u3, $v3, $u1, $v1;
-    } else {
-      _renderTriangle $x3, $y3, $x2, $y2, $x1, $y1, $u3, $v3, $u2, $v2, $u1, $v1;
-    }
-  }
-}
-
-def _renderTriangle x1, y1, x2, y2, x3, y3, u1, v1, u2, v2, u3, v3 {
-  local d00 = dot!($x2 - $x1, $y2 - $y1, $x2 - $x1, $y2 - $y1);
-  local d01 = dot!($x2 - $x1, $y2 - $y1, $x3 - $x1, $y3 - $y1);
-  local d11 = dot!($x3 - $x1, $y3 - $y1, $x3 - $x1, $y3 - $y1);
-  local denom = d00 * d11 - d01 * d01;
-  local dx1 = ($x2 - $x1) / ($y2 - $y1);
-  local dx2 = ($x3 - $x1) / ($y3 - $y1);
-  local x1 = $x1;
-  local x2 = $x1;
-  sety $y1;
-  repeat $y2 - $y1 {
-    setx x1;
-    repeat abs(x2 - x1) {
-      local d20 = dot!(x() - $x1, y() - $y1, $x2 - $x1, $y2 - $y1);
-      local d21 = dot!(x() - $x1, y() - $y1, $x3 - $x1, $y3 - $y1);
-      local v = (d11 * d20 - d01 * d21) / denom;
-      local w = (d00 * d21 - d01 * d20) / denom;
-      local u = 1 - v - w;
-      setpencolor
-        textureColor!(
-          floor((u * $u1 + v * $u2 + w * $u3) * TEXTURE_WIDTH),
-          floor((u * $v1 + v * $v2 + w * $v3) * TEXTURE_HEIGHT)
-        );
-      pendown; penup;
-      if x1 < x2 { changex 1; } else { changex -1; }
-    }
-    x1 += dx1; x2 += dx2;
-    changey 1;
-  }
-  dx1 = ($x3 - $x2) / ($y3 - $y2);
-  repeat $y3 - $y2 {
-    setx x1;
-    repeat abs(x2 - x1) {
-      local d20 = dot!(x() - $x1, y() - $y1, $x2 - $x1, $y2 - $y1);
-      local d21 = dot!(x() - $x1, y() - $y1, $x3 - $x1, $y3 - $y1);
-      local v = (d11 * d20 - d01 * d21) / denom;
-      local w = (d00 * d21 - d01 * d20) / denom;
-      local u = 1 - v - w;
-      setpencolor
-        textureColor!(
-          floor((u * $u1 + v * $u2 + w * $u3) * TEXTURE_WIDTH),
-          floor((u * $v1 + v * $v2 + w * $v3) * TEXTURE_HEIGHT)
-        );
-      pendown; penup;
-      if x1 < x2 { changex 1; } else { changex -1; }
-    }
-    x1 += dx1; x2 += dx2;
-    changey 1;
-  }
+  say "Standard Library of useful macros: " & stdParseBinary!("11111");
 }
