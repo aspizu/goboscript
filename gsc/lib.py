@@ -3,7 +3,7 @@ from difflib import get_close_matches
 from pathlib import Path
 from typing import Iterable, TypeVar
 
-EXT = "gs"
+EXT = "gobo"
 JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 
 T = TypeVar("T")
