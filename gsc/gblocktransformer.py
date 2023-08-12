@@ -316,7 +316,6 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def varOP(self, opcode: str, args: tuple[Token, gInputType]):
         variable = self.get_variable(args[0])
-        variable = args[0]
         return gBlock(
             "data_setvariableto",
             {

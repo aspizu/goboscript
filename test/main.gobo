@@ -20,5 +20,7 @@ def renderRectangle x, y, w, h {
 }
 
 onflag {
-  say "Standard Library of useful macros: " & stdParseBinary!("11111");
+  message = "Standard Libary Macro: ";
+  say message & stdParseBinary!("11111");
+  say texture[0];
 }
