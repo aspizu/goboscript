@@ -17,6 +17,7 @@ def proccode(name: str, inputs: dict[str, "gArgument"]):
 
 
 class gVariable(NamedTuple):
+    name: str
     token: Token
 
 
@@ -81,7 +82,7 @@ class gBlock:
         if type(value) is str:
             return [1, [10, value]]
         elif type(value) is gVariable:
-            return [3, [12, value.token, value.token], [10, ""]]
+            return [3, [12, value.name, value.name], [10, ""]]
         elif type(value) is gList:
             return [3, [13, value.token, ""], [10, ""]]
         elif isinstance(value, gStack):
@@ -103,7 +104,7 @@ class gBlock:
 
     def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
         if isinstance(value, gVariable):
-            return [value.token, value.token]
+            return [value.name, value.name]
         if isinstance(value, gList):
             return [value.token, value.token]
         else:

@@ -476,20 +476,23 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gHatBlock(
             "event_whenbroadcastreceived",
             {},
-            {"BROADCAST_OPTION": gVariable(args[0])},
+            {"BROADCAST_OPTION": gVariable(str(args[0]), args[0])},
             args[1],
         )
 
     def declr_onkey(self, args: tuple[Token, gStack]):
         return gHatBlock(
-            "event_whenkeypressed", {}, {"KEY_OPTION": gVariable(args[0])}, args[1]
+            "event_whenkeypressed",
+            {},
+            {"KEY_OPTION": gVariable(str(args[0]), args[0])},
+            args[1],
         )
 
     def declr_onbackdrop(self, args: tuple[Token, gStack]):
         return gHatBlock(
             "event_whenbackdropswitchesto",
             {},
-            {"BACKDROP_OPTION": gVariable(args[0])},
+            {"BACKDROP_OPTION": gVariable(str(args[0]), args[0])},
             args[1],
         )
 

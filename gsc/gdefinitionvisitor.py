@@ -51,7 +51,7 @@ class LocalsCollector(Visitor[Token]):
         token = cast(Token, tree.children[0])
         self.locals.append(str(token))
         qualname = f"{self.name}.{token}"
-        self.sprite.variables[qualname] = gVariable(token)
+        self.sprite.variables[qualname] = gVariable(qualname, token)
 
     def varset(self, tree: Tree[Token]):
         token = cast(Token, tree.children[0])
@@ -66,7 +66,7 @@ class LocalsCollector(Visitor[Token]):
         if qualname in self.sprite.lists:
             return
 
-        self.sprite.variables[qualname] = gVariable(token)
+        self.sprite.variables[qualname] = gVariable(qualname, token)
 
     def listset(self, tree: Tree[Token]):
         token = cast(Token, tree.children[0])
