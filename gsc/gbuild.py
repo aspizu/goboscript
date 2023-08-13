@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from multiprocessing import Pool
 from gerror import gError, gFileError, wrap_lark_errors
 from gparser import gparser
 from gspriteinterpreter import gSpriteInterpreter
@@ -32,9 +32,12 @@ def build_gproject(project: Path):
     stage = project / f"stage.{EXT}"
     if not stage.is_file():
         raise gError(f"File does not exist {stage}", f"Create the file {stage}")
-    sprites = [
-        build_gsprite(sprite)
-        for sprite in project.glob(f"*.{EXT}")
-        if sprite.name != f"stage.{EXT}" and not sprite.name.endswith(f".h.{EXT}")
-    ]
+    sprites = Pool().map(
+        build_gsprite,
+        (
+            sprite
+            for sprite in project.glob(f"*.{EXT}")
+            if sprite.name != f"stage.{EXT}" and not sprite.name.endswith(f".h.{EXT}")
+        ),
+    )
     return gProject(build_gsprite(stage), sprites)
