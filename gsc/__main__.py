@@ -54,7 +54,7 @@ if init_cmd:
         argparser.error("Working directory already contains a goboscript project.")
     (path / f"stage.{EXT}").open("w").write('costumes "blank.svg";\n')
     (path / f"main.{EXT}").open("w").write(
-        'costumes "blank.svg";\n' + "onflag {\n\n" '  say "Hello, World!";\n' "}\n"
+        'costumes "blank.svg";\n\n' + "onflag {\n" '  say "Hello, World!";\n' "}\n"
     )
     (path / "blank.svg").open("w").write(
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'
