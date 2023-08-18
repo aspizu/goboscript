@@ -1,26 +1,5 @@
-costumes "square.png";
-imagelist texture "texture.png";
-
-macro renderSquare! x, y, w {
-  goto x! + w!/2, y! + w!/2;
-  setsize w!;
-  stamp;
-}
-
-def renderRectangle x, y, w, h {
-  if 0 < $w and 0 < $h {
-    if $w < $h {
-      renderSquare! $x, $y, $w;
-      renderRectangle $x, $y + $w, $w, $h - $w;
-    } else {
-      renderSquare! $x, $y, $h;
-      renderRectangle $x + $h, $y, $w - $h, $h;
-    }
-  }
-}
+costumes "blank.svg";
 
 onflag {
-  message = "Standard Libary Macro: ";
-  say message & stdParseBinary!("11111");
-  say texture[0];
+  say "Hello, World!";
 }

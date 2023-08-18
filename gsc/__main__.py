@@ -1,72 +1,79 @@
-import sys
+import argparse
 from pathlib import Path
-
 from gbuild import build_gproject
-from gerror import gError
-from sb3.gblockfactory import reporter_prototypes, statement_prototypes
+from lib import EXT
 
 
-def print_table(table: list[str], width: int) -> None:
-    maxwidth = 1 + max(map(len, table))
-    columns = 1 + width // maxwidth
-    table_iter = iter(table)
-    while True:
-        try:
-            row: list[str] = []
-            for _ in range(columns):
-                row.append(next(table_iter))
-            print("".join(i.ljust(maxwidth) for i in row))
-        except StopIteration:
-            break
+argparser = argparse.ArgumentParser(
+    "gsc",
+    description="goboscript compiler",
+    epilog="https://github.com/aspizu/goboscript",
+)
 
 
-def doc_statements() -> None:
-    table: list[str] = []
-    for prototype in statement_prototypes.values():
-        table.append(
-            prototype.name
-            + (" " if prototype.arguments else "")
-            + ", ".join(prototype.arguments)
-            + ";"
+def inputT(argument: str) -> Path:
+    path = Path(argument)
+    if not path.is_dir():
+        raise argparse.ArgumentTypeError(f"{path} is not a directory.")
+    if not (path / f"stage.{EXT}").is_file():
+        raise argparse.ArgumentTypeError(
+            f"{path}/stage.{EXT} not found. Is this a goboscript project?"
         )
-    print_table(table, width=80)
+    return path
 
 
-def doc_reporters() -> None:
-    table: list[str] = []
-    for prototype in reporter_prototypes.values():
-        table.append(prototype.name + "(" + ", ".join(prototype.arguments) + ")")
-    print_table(table, width=80)
+def outputT(argument: str) -> Path:
+    path = Path(argument)
+    if path.is_dir():
+        raise argparse.ArgumentTypeError(f"{path} is a directory.")
+    return path
 
 
-def parse_args():
-    if len(sys.argv) != 3:
-        raise gError(
-            "Expected 2 arguments",
-            "gsc <project dir path> <output sb3 path>\nOr --doc statements/reporters to view documentation",
+argparser.add_argument(
+    "--init",
+    action="store_true",
+    help="Create a new goboscript project. (Exits after writing the template.)",
+)
+argparser.add_argument(
+    "-input",
+    type=inputT,
+    help="Project directory. (If not given, working directory is chosen.)",
+    default=None,
+)
+argparser.add_argument(
+    "-output",
+    type=outputT,
+    help="Path to output (.sb3) file. (If not given, output file will be inside input directory with same name.)",
+    default=None,
+)
+args = argparser.parse_args()
+init_cmd = args.init
+if init_cmd:
+    path = Path(".").absolute()
+    if (path / f"stage.{EXT}").is_file():
+        argparser.error("Working directory already contains a goboscript project.")
+    (path / f"stage.{EXT}").open("w").write('costumes "blank.svg";\n')
+    (path / f"main.{EXT}").open("w").write(
+        'costumes "blank.svg";\n' + "onflag {\n\n" '  say "Hello, World!";\n' "}\n"
+    )
+    (path / "blank.svg").open("w").write(
+        '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'
+    )
+    exit()
+input: Path | None = args.input
+if input is None:
+    input = Path(".")
+    if not (input / f"stage.{EXT}").is_file():
+        argparser.error(
+            "Working directory is not a goboscript project, "
+            "please provide an --input argument."
         )
-    if sys.argv[1] == "--doc":
-        if sys.argv[2] == "statements":
-            doc_statements()
-        elif sys.argv[2] == "reporters":
-            doc_reporters()
-        else:
-            raise gError(
-                f"Invalid argument {sys.argv[2]}", "gsc --doc statements/reporters"
-            )
-        return
-    project = Path(sys.argv[1])
-    output = Path(sys.argv[2])
-    build_gproject(project).package(output)
+output: Path | None = args.output
+if output is None:
+    output = input / f"{input.absolute().stem}.sb3"
+    if output.is_dir():
+        argparser.error(
+            f"{output} is a directory, please provide a different --output argument."
+        )
 
-
-def main():
-    try:
-        parse_args()
-    except gError as e:
-        e.print()
-        exit(1)
-
-
-if __name__ == "__main__":
-    main()
+build_gproject(input).package(output)
