@@ -36,9 +36,9 @@ block: _lvalue "=" expr ";" -> varset
      | "forever" stack -> forever
      | "repeat" expr stack -> repeat
      | _lvalue "[" "]" ";" -> listset
-     | _lvalue ".add" expr ";" -> listadd
-     | _lvalue ".delete" expr ";" -> listdelete
-     | _lvalue ".insert" expr "," expr ";" -> listinsert
+     | _lvalue ":add" expr ";" -> listadd
+     | _lvalue ":delete" expr ";" -> listdelete
+     | _lvalue ":insert" expr "," expr ";" -> listinsert
      | _lvalue "[" expr "]" "=" expr ";" -> listreplace
      | _lvalue "[" expr "]" "+=" expr ";" -> listreplaceadd
      | _lvalue "[" expr "]" "-=" expr ";" -> listreplacesub
@@ -77,9 +77,9 @@ expr: "(" expr ")"
     | expr "&" expr -> join
     | "-" expr -> minus
     | NAME "[" expr "]" -> listitem
-    | NAME ".index" "(" expr ")" -> listindex
-    | NAME ".contains" "(" expr ")" -> listcontains
-    | NAME ".length" -> listlength
+    | NAME ":index" "(" expr ")" -> listindex
+    | NAME ":contains" "(" expr ")" -> listcontains
+    | NAME ":length" -> listlength
 
 _exprlist: [expr ("," expr)*]
 _stringlist: [STRING ("," STRING)*]
