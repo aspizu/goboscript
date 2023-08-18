@@ -23,6 +23,50 @@ from sb3 import (
 from sb3.gblockfactory import reporter_prototypes, statement_prototypes
 
 
+def coerce_condition(input: gInputType) -> gBlock:
+    if isinstance(input, gBlock) and input.opcode in (
+        "operator_equals",
+        "operator_lt",
+        "operator_gt",
+        "operator_and",
+        "operator_or",
+        "operator_contains",
+        "sensing_touchingcolor",
+        "sensing_coloristouchingcolor",
+        "sensing_keypressed",
+        "data_listcontainsitem",
+    ):
+        return input
+    elif isinstance(input, gList):
+        return gBlock(
+            "operator_not",
+            {
+                "OPERAND": gBlock(
+                    "operator_equals",
+                    {
+                        "OPERAND1": "0",
+                        "OPERAND2": gBlock("data_lengthoflist", {}, {"LIST": input}),
+                    },
+                    {},
+                )
+            },
+            {},
+        )
+    else:
+        return gBlock(
+            "operator_not",
+            {
+                "OPERAND": gBlock(
+                    "operator_equals",
+                    {"OPERAND1": "0", "OPERAND2": input},
+                    {},
+                    comment="auto-generated",
+                )
+            },
+            {},
+        )
+
+
 def mkelif(
     rest: Iterator[tuple[gInputType, gStack]],
     this: tuple[gInputType, gStack] | None = None,
@@ -34,18 +78,29 @@ def mkelif(
         nxt = next(rest)
     except StopIteration:
         if _else is None:
-            return gBlock("control_if", {"CONDITION": this[0], "SUBSTACK": this[1]}, {})
+            return gBlock(
+                "control_if",
+                {
+                    "CONDITION": coerce_condition(this[0]),
+                    "SUBSTACK": coerce_condition(this[1]),
+                },
+                {},
+            )
         else:
             return gBlock(
                 "control_if_else",
-                {"CONDITION": this[0], "SUBSTACK": this[1], "SUBSTACK2": _else},
+                {
+                    "CONDITION": coerce_condition(this[0]),
+                    "SUBSTACK": coerce_condition(this[1]),
+                    "SUBSTACK2": _else,
+                },
                 {},
             )
     return gBlock(
         "control_if_else",
         {
-            "CONDITION": this[0],
-            "SUBSTACK": this[1],
+            "CONDITION": coerce_condition(this[0]),
+            "SUBSTACK": coerce_condition(this[1]),
             "SUBSTACK2": gStack([mkelif(rest, nxt, _else)]),
         },
         {},
@@ -263,12 +318,20 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(reporter_prototypes["NOT"], args)
 
     def block_if(self, args: tuple[gInputType, gStack]):
-        return gBlock("control_if", {"CONDITION": args[0], "SUBSTACK": args[1]}, {})
+        return gBlock(
+            "control_if",
+            {"CONDITION": coerce_condition(args[0]), "SUBSTACK": args[1]},
+            {},
+        )
 
     def block_if_else(self, args: tuple[gInputType, gStack, gStack]):
         return gBlock(
             "control_if_else",
-            {"CONDITION": args[0], "SUBSTACK": args[1], "SUBSTACK2": args[2]},
+            {
+                "CONDITION": coerce_condition(args[0]),
+                "SUBSTACK": args[1],
+                "SUBSTACK2": args[2],
+            },
             {},
         )
 
@@ -280,7 +343,9 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def until(self, args: tuple[gInputType, gStack]):
         return gBlock(
-            "control_repeat_until", {"CONDITION": args[0], "SUBSTACK": args[1]}, {}
+            "control_repeat_until",
+            {"CONDITION": coerce_condition(args[0]), "SUBSTACK": args[1]},
+            {},
         )
 
     def repeat(self, args: tuple[gInputType, gStack]):
