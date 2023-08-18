@@ -426,14 +426,14 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def get_identifier(self, token: Token):
         name = str(token)
 
+        if self.prototype and name in self.prototype.locals:
+            return self.sprite.variables[f"{self.prototype.name}.{name}"]
+
         if name in self.sprite.variables:
             return self.sprite.variables[name]
 
         if name in self.sprite.lists:
             return self.sprite.lists[name]
-
-        if self.prototype and name in self.prototype.locals:
-            return self.sprite.variables[f"{self.prototype.name}.{name}"]
 
         help = None
         if matches := get_close_matches(name, self.sprite.variables.keys()):

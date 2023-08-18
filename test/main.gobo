@@ -1,8 +1,14 @@
 costumes "blank.svg";
 
 onflag {
-  list[];
-  if list {
-    ...
-  }
+}
+
+def foo1 {
+  local var = 2;
+  var = 1;
+}
+
+def foo2 {
+  local var = 2;
+  var = 1;
 }
