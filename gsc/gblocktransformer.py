@@ -30,6 +30,7 @@ def coerce_condition(input: gInputType) -> gBlock:
         "operator_gt",
         "operator_and",
         "operator_or",
+        "operator_not",
         "operator_contains",
         "sensing_touchingcolor",
         "sensing_coloristouchingcolor",
