@@ -1,14 +1,11 @@
 costumes "blank.svg";
 
+macro b!() -> "Hello, World!";
+
+macro a! {
+  say b!();
+}
+
 onflag {
-}
-
-def foo1 {
-  local var = 2;
-  var = 1;
-}
-
-def foo2 {
-  local var = 2;
-  var = 1;
+  a!;
 }

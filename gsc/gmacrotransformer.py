@@ -67,12 +67,12 @@ class gMacroEvaluate(Transformer[Token, Tree[Token]]):
         self, macro: gMacro | BlockMacro, arguments: list[Tree[Token] | Token]
     ):
         super().__init__()
-        self.macro = macro
+        self.macro__ = macro
         self.arguments = arguments
 
     def get(self, macros: gMacroTransformer):
-        return self.transform(macros.transform(self.macro.body))
+        return self.transform(macros.transform(self.macro__.body))
 
     def macrovar(self, args: Any):
         token: Token = args[0]
-        return self.arguments[self.macro.arguments.index(token[:-1])]
+        return self.arguments[self.macro__.arguments.index(token[:-1])]
