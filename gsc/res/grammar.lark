@@ -46,8 +46,8 @@ block: _lvalue "=" expr ";" -> varset
      | _lvalue "[" expr "]" "/=" expr ";" -> listreplacediv
      | _lvalue "[" expr "]" "%=" expr ";" -> listreplacemod
      | _lvalue "[" expr "]" "&=" expr ";" -> listreplacejoin
-     | _lvalue ".show" ";" -> listshow
-     | _lvalue ".hide" ";" -> listhide
+     | _lvalue ":show" ";" -> listshow
+     | _lvalue ":hide" ";" -> listhide
      | "..." -> nop
      | MACROVAR _exprlist ";" -> block_macro
      | NAME _exprlist ";" [LCOMMENT]
