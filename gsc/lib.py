@@ -1,5 +1,6 @@
 import itertools
 from difflib import get_close_matches
+import os
 from pathlib import Path
 from typing import Iterable, TypeVar
 
@@ -52,3 +53,27 @@ def number(number: str) -> int | float:
 
 def tok(string: str) -> Token:
     return Token("tok", value=string)
+
+
+class Watcher:
+    def __init__(self, files: list[Path]):
+        self._files = files
+        self._mtimes = [0.0] * len(self._files)
+
+    def watch(self):
+        try:
+            self._watch()
+        except KeyboardInterrupt:
+            print("Bye...")
+            exit(0)
+
+    def _watch(self):
+        while True:
+            for i, file in enumerate(self._files):
+                mtime = os.stat(file).st_mtime
+                if mtime != self._mtimes[i]:
+                    self.on_change(file)
+                self._mtimes[i] = mtime
+
+    def on_change(self, file: Path) -> None:
+        raise NotImplementedError
