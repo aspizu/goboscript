@@ -54,7 +54,7 @@ args = argparser.parse_args()
 init_cmd = args.init
 watch = args.watch
 if init_cmd:
-    path = Path(".").absolute()
+    path = Path().absolute()
     if (path / f"stage.{EXT}").is_file():
         argparser.error("Working directory already contains a goboscript project.")
     (path / f"stage.{EXT}").open("w").write('costumes "blank.svg";\n')
@@ -67,7 +67,7 @@ if init_cmd:
     exit()
 input: Path | None = args.input
 if input is None:
-    input = Path(".")
+    input = Path()
     if not (input / f"stage.{EXT}").is_file():
         argparser.error(
             "Working directory is not a goboscript project, "

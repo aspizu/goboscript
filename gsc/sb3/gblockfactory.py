@@ -14,11 +14,11 @@ def load_prototypes(file: str):
     for line in i:
         if line.strip().startswith("#") or line.strip() == "":
             continue
-        name, arguments, opcode = [i.strip() for i in line.strip(" \n").split("|")]
+        name, arguments, opcode = (i.strip() for i in line.strip(" \n").split("|"))
         arguments = [i.strip() for i in arguments.split(",")]
         if arguments[0] == "":
             arguments = []
-        prototypes[name] = gPrototype(name, arguments, opcode)
+        prototypes[name.removesuffix("?")] = gPrototype(name, arguments, opcode)
     return prototypes
 
 

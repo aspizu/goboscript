@@ -1,75 +1,71 @@
-# Built-in Operators
-add           | NUM1, NUM2         | operator_add
-sub           | NUM1, NUM2         | operator_subtract
-mul           | NUM1, NUM2         | operator_multiply
-div           | NUM1, NUM2         | operator_divide
-join          | STRING1, STRING2   | operator_join
-mod           | NUM1, NUM2         | operator_mod
-eq            | OPERAND1, OPERAND2 | operator_equals
-gt            | OPERAND1, OPERAND2 | operator_gt
-lt            | OPERAND1, OPERAND2 | operator_lt
-abs           | NUM                | operator_mathop.OPERATOR=abs
-AND           | OPERAND1, OPERAND2 | operator_and
-OR            | OPERAND1, OPERAND2 | operator_or
-NOT           | OPERAND            | operator_not
-
-# Motion
-x             |                    | motion_xposition
-y             |                    | motion_yposition
-direction     |                    | motion_direction
-
-# Looks
-costume       |                    | looks_costumenumbername.NUMBER_NAME=number
-costumename   |                    | looks_costumenumbername.NUMBER_NAME=name
-backdrop      |                    | looks_backdropnumbername.NUMBER_NAME=number
-backdropname  |                    | looks_backdropnumbername.NUMBER_NAME=name
-size          |                    | looks_size
-
-# Sound
-VOLUME || sound_volume
-
-# Sensing
-touching | TOUCHINGOBJECTMENU | sensing_touchingobject
-touchingmouse || sensing_touchingobject!TOUCHINGOBJECTMENU=_mouse_
-touchingedge || sensing_touchingobject!TOUCHINGOBJECTMENU=_edge_
-touchingcolor | COLOR | sensing_touchingcolor
-colortouchingcolor | COLOR, COLOR2 | sensing_coloristouchingcolor
-distance | DISTANCETOMENU | sensing_distanceto
-distancetomouse || sensing_distanceto!DISTANCETOMENU=_mouse_
-answer || sensing_answer
-keydown | KEY_OPTION | sensing_keypressed
-mousedown || sensing_mousedown
-mousex || sensing_mousex
-mousey || sensing_mousey
-loudness || sensing_loudness
-timer || sensing_timer
-year || sensing_current.CURRENTMENU=YEAR
-month || sensing_current.CURRENTMENU=MONTH
-date || sensing_current.CURRENTMENU=DATE
-dayofweek || sensing_current.CURRENTMENU=DAYOFWEEK
-hour || sensing_current.CURRENTMENU=HOUR
-minute || sensing_current.CURRENTMENU=MINUTE
-second || sensing_current.CURRENTMENU=SECOND
-dayssince2000 || sensing_dayssince2000
-username || sensing_username
-
-# Operators
-random | FROM, TO | operator_random
-letter | LETTER, STRING | operator_letter_of
-length | STRING | operator_length
-contains | STRING1, STRING2 | operator_contains
-round | NUM | operator_round
-abs|NUM|operator_mathop.OPERATOR=abs
-floor|NUM|operator_mathop.OPERATOR=floor
-ceil|NUM|operator_mathop.OPERATOR=ceiling
-sqrt|NUM|operator_mathop.OPERATOR=sqrt
-sin|NUM|operator_mathop.OPERATOR=sin
-cos|NUM|operator_mathop.OPERATOR=cos
-tan|NUM|operator_mathop.OPERATOR=tan
-asin|NUM|operator_mathop.OPERATOR=asin
-acos|NUM|operator_mathop.OPERATOR=acos
-atan|NUM|operator_mathop.OPERATOR=atan
-ln|NUM|operator_mathop.OPERATOR=ln
-log|NUM|operator_mathop.OPERATOR=log
-antiln|NUM|operator_mathop.OPERATOR=e ^
-antilog|NUM|operator_mathop.OPERATOR=10 ^
+#-------------------------------------------------------------------------------------#
+add                | NUM1, NUM2         | operator_add
+sub                | NUM1, NUM2         | operator_subtract
+mul                | NUM1, NUM2         | operator_multiply
+div                | NUM1, NUM2         | operator_divide
+join               | STRING1, STRING2   | operator_join
+mod                | NUM1, NUM2         | operator_mod
+eq?                | OPERAND1, OPERAND2 | operator_equals
+gt?                | OPERAND1, OPERAND2 | operator_gt
+lt?                | OPERAND1, OPERAND2 | operator_lt
+abs                | NUM                | operator_mathop.OPERATOR=abs
+AND?               | OPERAND1, OPERAND2 | operator_and
+OR?                | OPERAND1, OPERAND2 | operator_or
+NOT?               | OPERAND            | operator_not
+#-------------------------------------------------------------------------------------#
+x                  |                    | motion_xposition
+y                  |                    | motion_yposition
+direction          |                    | motion_direction
+#-------------------------------------------------------------------------------------#
+costume            |                    | looks_costumenumbername.NUMBER_NAME=number
+costumename        |                    | looks_costumenumbername.NUMBER_NAME=name
+backdrop           |                    | looks_backdropnumbername.NUMBER_NAME=number
+backdropname       |                    | looks_backdropnumbername.NUMBER_NAME=name
+size               |                    | looks_size
+#-------------------------------------------------------------------------------------#
+VOLUME             |                    | sound_volume
+#-------------------------------------------------------------------------------------#
+touching?          | TOUCHINGOBJECTMENU | sensing_touchingobject
+touchingmouse?     |                    | sensing_touchingobject!TOUCHINGOBJECTMENU=_mouse_
+touchingedge?      |                    | sensing_touchingobject!TOUCHINGOBJECTMENU=_edge_
+touchingcolor?     | COLOR              | sensing_touchingcolor
+colortouchingcolor?| COLOR, COLOR2      | sensing_coloristouchingcolor
+distance           | DISTANCETOMENU     | sensing_distanceto
+distancetomouse    |                    | sensing_distanceto!DISTANCETOMENU=_mouse_
+answer             |                    | sensing_answer
+keydown            | KEY_OPTION         | sensing_keypressed
+mousedown          |                    | sensing_mousedown
+mousex             |                    | sensing_mousex
+mousey             |                    | sensing_mousey
+loudness           |                    | sensing_loudness
+timer              |                    | sensing_timer
+year               |                    | sensing_current.CURRENTMENU=YEAR
+month              |                    | sensing_current.CURRENTMENU=MONTH
+date               |                    | sensing_current.CURRENTMENU=DATE
+dayofweek          |                    | sensing_current.CURRENTMENU=DAYOFWEEK
+hour               |                    | sensing_current.CURRENTMENU=HOUR
+minute             |                    | sensing_current.CURRENTMENU=MINUTE
+second             |                    | sensing_current.CURRENTMENU=SECOND
+dayssince2000      |                    | sensing_dayssince2000
+username           |                    | sensing_username
+#-------------------------------------------------------------------------------------#
+random             | FROM, TO           | operator_random
+letter             | LETTER, STRING     | operator_letter_of
+length             | STRING             | operator_length
+contains?          | STRING1, STRING2   | operator_contains
+round              | NUM                | operator_round
+abs                | NUM                | operator_mathop.OPERATOR=abs
+floor              | NUM                | operator_mathop.OPERATOR=floor
+ceil               | NUM                | operator_mathop.OPERATOR=ceiling
+sqrt               | NUM                | operator_mathop.OPERATOR=sqrt
+sin                | NUM                | operator_mathop.OPERATOR=sin
+cos                | NUM                | operator_mathop.OPERATOR=cos
+tan                | NUM                | operator_mathop.OPERATOR=tan
+asin               | NUM                | operator_mathop.OPERATOR=asin
+acos               | NUM                | operator_mathop.OPERATOR=acos
+atan               | NUM                | operator_mathop.OPERATOR=atan
+ln                 | NUM                | operator_mathop.OPERATOR=ln
+log                | NUM                | operator_mathop.OPERATOR=log
+antiln             | NUM                | operator_mathop.OPERATOR=e ^
+antilog            | NUM                | operator_mathop.OPERATOR=10 ^
+#-------------------------------------------------------------------------------------#

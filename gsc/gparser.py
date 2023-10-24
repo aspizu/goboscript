@@ -17,4 +17,6 @@ def literal(literal: Token) -> str:
         return str(literal)[1:]
     if literal.type == "LCOMMENT":
         return str(literal)[2:-2]
+    if literal.type == "CONST":
+        return {"true": "1", "false": "0"}[str(literal)]
     raise ValueError(literal.type, literal)

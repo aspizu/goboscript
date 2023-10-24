@@ -2,13 +2,13 @@ import math
 from difflib import get_close_matches
 from itertools import chain
 from typing import Any, Iterator, cast
-
 from gdefinitionvisitor import gDefinitionVisitor, gFunction
 from gerror import gFileError, gTokenError
 from gparser import literal
 from lark.lexer import Token
 from lark.visitors import Transformer
-from lib import num_plural, number
+from sb3.gblock import gCondition
+from lib import num_plural, number, tok
 from sb3 import (
     gArgument,
     gBlock,
@@ -23,49 +23,32 @@ from sb3 import (
 from sb3.gblockfactory import reporter_prototypes, statement_prototypes
 
 
-def coerce_condition(input: gInputType) -> gBlock:
-    if isinstance(input, gBlock) and input.opcode in (
-        "operator_equals",
-        "operator_lt",
-        "operator_gt",
-        "operator_and",
-        "operator_or",
-        "operator_not",
-        "operator_contains",
-        "sensing_touchingcolor",
-        "sensing_coloristouchingcolor",
-        "sensing_keypressed",
-        "data_listcontainsitem",
-    ):
+def coerce_condition(input: gInputType, *, negate: bool = False) -> gBlock:
+    if isinstance(input, gCondition):
+        if negate:
+            return gCondition("operator_not", {"OPERAND": input}, {})
         return input
-    elif isinstance(input, gList):
-        return gBlock(
-            "operator_not",
+    if isinstance(input, gList):
+        block = gCondition(
+            "operator_equals",
             {
-                "OPERAND": gBlock(
-                    "operator_equals",
-                    {
-                        "OPERAND1": "0",
-                        "OPERAND2": gBlock("data_lengthoflist", {}, {"LIST": input}),
-                    },
-                    {},
-                )
+                "OPERAND1": "0",
+                "OPERAND2": gBlock("data_lengthoflist", {}, {"LIST": input}),
             },
             {},
         )
-    else:
-        return gBlock(
-            "operator_not",
-            {
-                "OPERAND": gBlock(
-                    "operator_equals",
-                    {"OPERAND1": "0", "OPERAND2": input},
-                    {},
-                    comment="auto-generated",
-                )
-            },
-            {},
-        )
+        if negate:
+            return block
+        return gCondition("operator_not", {"OPERAND": block}, {})
+    block = gCondition(
+        "operator_equals",
+        {"OPERAND1": "0", "OPERAND2": input},
+        {},
+        comment="auto-generated",
+    )
+    if negate:
+        return block
+    return gCondition("operator_not", {"OPERAND": block}, {})
 
 
 def mkelif(
@@ -124,6 +107,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     NUMBER = STRING
     FLOAT = STRING
+    CONST = STRING
 
     def start(self, args: tuple[gBlock]):
         return args[0]
@@ -159,12 +143,11 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return self.declr_function(args, False)
 
     def stack(self, args: list[gBlock]) -> gStack:
-        stack = gStack(args)
+        stack = gStack.new(args)
         for i, block in enumerate(stack):
             if block.opcode == "control_forever" and (i + 1) != len(stack):
-                raise gFileError(
-                    "forever cannot be precceded by any statements"
-                )  # FIXME: switch to gTokenError but cannot because
+                msg = "forever cannot be precceded by any statements"
+                raise gFileError(msg)  # FIXME: switch to gTokenError but cannot because
         return stack
 
     def block(self, args: list[Any]) -> gBlock:
@@ -301,22 +284,76 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return gBlock.from_prototype(reporter_prototypes["join"], args)
 
     def eq(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["eq"], args)
+        return gCondition.from_prototype(reporter_prototypes["eq"], args)
+
+    def neq(self, args: list[gInputType]):
+        return gCondition.from_prototype(
+            reporter_prototypes["NOT"],
+            [gCondition.from_prototype(reporter_prototypes["eq"], args)],
+        )
 
     def gt(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["gt"], args)
+        return gCondition.from_prototype(reporter_prototypes["gt"], args)
 
     def lt(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["lt"], args)
+        return gCondition.from_prototype(reporter_prototypes["lt"], args)
 
-    def andop(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["AND"], args)
+    def ge(self, args: list[gInputType]):
+        return gCondition.from_prototype(
+            reporter_prototypes["NOT"],
+            [gCondition.from_prototype(reporter_prototypes["lt"], args)],
+        )
 
-    def orop(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["OR"], args)
+    def le(self, args: list[gInputType]):
+        return gCondition.from_prototype(
+            reporter_prototypes["NOT"],
+            [gCondition.from_prototype(reporter_prototypes["gt"], args)],
+        )
 
-    def notop(self, args: list[gInputType]):
-        return gBlock.from_prototype(reporter_prototypes["NOT"], args)
+    def andop(self, args: tuple[gInputType, gInputType]):
+        left = coerce_condition(args[0])
+        right = coerce_condition(args[1])
+        if left.opcode == "operator_not" and right.opcode == "operator_not":
+            return gCondition.from_prototype(
+                reporter_prototypes["NOT"],
+                [
+                    gCondition.from_prototype(
+                        reporter_prototypes["OR"],
+                        [left.inputs["OPERAND"], right.inputs["OPERAND"]],
+                    )
+                ],
+            )
+        return gCondition.from_prototype(reporter_prototypes["AND"], [left, right])
+
+    def orop(self, args: tuple[gInputType, gInputType]):
+        left = coerce_condition(args[0])
+        right = coerce_condition(args[1])
+        if left.opcode == "operator_not" and right.opcode == "operator_not":
+            return gCondition.from_prototype(
+                reporter_prototypes["NOT"],
+                [
+                    gCondition.from_prototype(
+                        reporter_prototypes["AND"],
+                        [left.inputs["OPERAND"], right.inputs["OPERAND"]],
+                    )
+                ],
+            )
+        return gBlock.from_prototype(reporter_prototypes["OR"], [left, right])
+
+    def notop(self, args: tuple[gInputType]):
+        operand = coerce_condition(args[0])
+        if operand.opcode == "operator_not":
+            return operand.inputs["OPERAND"]
+        return gCondition.from_prototype(reporter_prototypes["NOT"], [operand])
+
+    def inop(self, args: tuple[gInputType, gInputType]):
+        if isinstance(args[1], gList):
+            return gCondition(
+                "data_listcontainsitem", {"ITEM": args[0]}, {"LIST": args[1]}
+            )
+        return gBlock.from_prototype(
+            reporter_prototypes["contains"], [args[1], args[0]]
+        )
 
     def block_if(self, args: tuple[gInputType, gStack]):
         return gBlock(
@@ -358,27 +395,16 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def localvar(self, args: tuple[Token, gInputType]):
         variable = self.get_variable(args[0])
         if not self.prototype:
-            raise gTokenError(
-                "local variables cannot be used outside of functions",
-                args[0],
-                help="switch to a non-local variable",
-            )
-        return gBlock(
-            "data_setvariableto",
-            {"VALUE": args[1]},
-            {"VARIABLE": variable},
-        )
+            msg = "local variables cannot be used outside of functions"
+            raise gTokenError(msg, args[0], help="switch to a non-local variable")
+        return gBlock("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": variable})
 
     def var(self, args: tuple[Token]):
         return self.get_identifier(args[0])
 
     def varset(self, args: tuple[Token, gInputType]):
         variable = self.get_variable(args[0])
-        return gBlock(
-            "data_setvariableto",
-            {"VALUE": args[1]},
-            {"VARIABLE": variable},
-        )
+        return gBlock("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": variable})
 
     def varOP(self, opcode: str, args: tuple[Token, gInputType]):
         variable = self.get_variable(args[0])
@@ -405,15 +431,17 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         return self.varOP("join", args)
 
     def varchange(self, args: tuple[Token, gInputType]):
-        variable = self.get_variable(args[0])  # type: ignore
+        variable = self.get_variable(args[0])
         return gBlock(
-            "data_changevariableby",
-            {"VALUE": args[1]},
-            {"VARIABLE": variable},
+            "data_changevariableby", {"VALUE": args[1]}, {"VARIABLE": variable}
         )
 
+    def varinc(self, args: tuple[Token]):
+        variable = self.get_variable(args[0])
+        return gBlock("data_changevariableby", {"VALUE": "1"}, {"VARIABLE": variable})
+
     def varsub(self, args: tuple[Token, gInputType]):
-        variable = self.get_variable(args[0])  # type: ignore
+        variable = self.get_variable(args[0])
         return gBlock(
             "data_changevariableby",
             {
@@ -436,20 +464,34 @@ class gBlockTransformer(Transformer[Token, gBlock]):
         if name in self.sprite.lists:
             return self.sprite.lists[name]
 
+        if name in self.gdefinitionvisitor.globals:
+            return gVariable(name, tok(name))
+
+        if name in self.gdefinitionvisitor.listglobals:
+            return gList(tok(name), None)
+
         help = None
         if matches := get_close_matches(name, self.sprite.variables.keys()):
             help = f"Did you mean the variable `{matches[0]}?`"
         elif matches := get_close_matches(name, self.sprite.lists.keys()):
             help = f"Did you mean the list `{matches[0]}?`"
-        elif self.prototype:
-            if matches := get_close_matches(name, self.prototype.locals):
-                help = f"Did you mean the local variable `{matches[0]}?`"
+        elif self.prototype and (
+            matches := get_close_matches(name, self.prototype.locals)
+        ):
+            help = f"Did you mean the local variable `{matches[0]}?`"
 
-        raise gTokenError(f"Undefined variable or list `{token}`", token, help)
+        msg = f"Undefined variable or list `{token}`"
+        raise gTokenError(msg, token, help)
 
-    def listset(self, args: tuple[Any]):
+    def listset(self, args: list[Any]):
         list_ = self.get_list(args[0])
-        return gBlock("data_deletealloflist", {}, {"LIST": list_})
+        block = gBlock("data_deletealloflist", {}, {"LIST": list_})
+        if args[1] is None:
+            return block
+        return [
+            block,
+            *(gBlock("data_addtolist", {"ITEM": i}, {"LIST": list_}) for i in args[1:]),
+        ]
 
     def listadd(self, args: tuple[Token, gInputType]):
         list_ = self.get_list(args[0])
@@ -532,7 +574,7 @@ class gBlockTransformer(Transformer[Token, gBlock]):
 
     def listcontains(self, args: tuple[Token, gInputType]):
         list_ = self.get_list(args[0])
-        return gBlock("data_listcontainsitem", {"ITEM": args[1]}, {"LIST": list_})
+        return gCondition("data_listcontainsitem", {"ITEM": args[1]}, {"LIST": list_})
 
     def listlength(self, args: tuple[Token]):
         list_ = self.get_list(args[0])
@@ -587,26 +629,27 @@ class gBlockTransformer(Transformer[Token, gBlock]):
     def declr_onclone(self, args: tuple[gStack]):
         return gHatBlock("control_start_as_clone", {}, {}, args[0])
 
-    def nop(self, args: tuple[()]):
+    def nop(self, _):
         return gBlock("control_wait", {"DURATION": "0"}, {})
 
-    def get_variable(self, token: Token):
+    def get_variable(self, token: Token | gVariable | gList):
         if isinstance(token, gVariable):
             return token
         if isinstance(token, gList):
-            raise gTokenError("Identifier is not a variable", token.token)
+            msg = "Identifier is not a variable"
+            raise gTokenError(msg, token.token)
 
         identifier = self.get_identifier(token)
         if not isinstance(identifier, gVariable):
             raise gTokenError("Identifier is not a variable", token)
         return identifier
 
-    def get_list(self, token: Token):
+    def get_list(self, token: Token | gList | gVariable):
         if isinstance(token, gList):
             return token
         if isinstance(token, gVariable):
-            raise gTokenError("Identifier is not a list", token.token)
-
+            msg = "Identifier is not a list"
+            raise gTokenError(msg, token.token)
         identifier = self.get_identifier(token)
         if not isinstance(identifier, gList):
             raise gTokenError("Identifier is not a list", token)

@@ -33,8 +33,8 @@ class LocalsCollector(Visitor[Token]):
         self,
         tree: Tree[Token],
         sprite: gSprite,
-        globals: list[Token],
-        listglobals: list[Token],
+        globals: list[str],
+        listglobals: list[str],
         name: str | None = None,
     ):
         super().__init__()
@@ -82,7 +82,14 @@ class LocalsCollector(Visitor[Token]):
 
 
 class gDefinitionVisitor(Interpreter[Token, None]):
-    def __init__(self, project: Path, sprite: gSprite, tree: Tree[Token]):
+    def __init__(
+        self,
+        project: Path,
+        sprite: gSprite,
+        tree: Tree[Token],
+        globals: list[str],
+        listglobals: list[str],
+    ):
         super().__init__()
         self.project = project
         self.sprite = sprite
@@ -119,8 +126,8 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                 proccode="\u200B\u200Berror\u200B\u200B %s",
             ),
         }
-        self.globals: list[Token] = []
-        self.listglobals: list[Token] = []
+        self.globals: list[str] = globals
+        self.listglobals: list[str] = listglobals
         self.visit(tree)
 
     def declr_costumes(self, tree: Tree[Token]):
@@ -129,17 +136,17 @@ class gDefinitionVisitor(Interpreter[Token, None]):
             if "*" in pattern:
                 paths = sorted(self.project.glob(pattern), key=lambda path: path.stem)
                 if len(paths) == 0:
-                    raise gTokenError(
-                        f"Glob does not match any files {pattern}", costume
-                    )
+                    msg = f"Glob does not match any files {pattern}"
+                    raise gTokenError(msg, costume)
                 for pattern in paths:
                     self.sprite.costumes.append(gCostume(pattern))
             else:
                 path = self.project / pattern
                 if not path.is_file():
                     matches = file_suggest(path)
+                    msg = f"Costume file not found {pattern}"
                     raise gTokenError(
-                        f"Costume file not found {pattern}",
+                        msg,
                         costume,
                         (
                             f"Did you mean {matches[0].relative_to(self.project)}?"
@@ -156,8 +163,9 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         file: Path = self.project / literal(path)
         if not file.is_file():
             matches = file_suggest(file)
+            msg = "Data file not found."
             raise gTokenError(
-                "Data file not found.",
+                msg,
                 path,
                 f"Did you mean {matches[0].relative_to(self.project)}?"
                 if matches
@@ -176,8 +184,9 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         file: Path = self.project / literal(path)
         if not file.is_file():
             matches = file_suggest(file)
+            msg = "Data file not found."
             raise gTokenError(
-                "Data file not found.",
+                msg,
                 path,
                 f"Did you mean {matches[0].relative_to(self.project)}?"
                 if matches
@@ -186,26 +195,29 @@ class gDefinitionVisitor(Interpreter[Token, None]):
 
         image = Image.open(file)
         if format is None:
-            data = list(image.tobytes())  # type: ignore
+            data = list(image.tobytes())  # pyright: ignore[reportUnknownMemberType]
         else:
+            msg = "Invalid imagelist format."
             raise gTokenError(
-                "Invalid imagelist format.",
+                msg,
                 format,
                 "Formats are not implemented yet, open a issue at https://github/aspizu/goboscript/issues",
             )
         self.sprite.lists[qualname] = gList(token, list(map(str, data)))
 
-    def declr_function(self, tree: Tree[Token], warp: bool = True):
+    def declr_function(self, tree: Tree[Token], *, warp: bool = True):
         name = cast(Token, tree.children[0])
         if name in self.functions:
-            raise gTokenError("Redeclaration of function", name, "Rename this function")
+            msg = "Redeclaration of function"
+            raise gTokenError(msg, name, "Rename this function")
         arguments: list[Token] = []
         for argument in cast(list[Token | None], tree.children[1:-1]):
             if argument is None:
                 break
             if argument in arguments:
+                msg = f"Argument `{argument}` was repeated"
                 raise gTokenError(
-                    f"Argument `{argument}` was repeated",
+                    msg,
                     argument,
                     "Rename this argument",
                 )
@@ -238,7 +250,8 @@ class gDefinitionVisitor(Interpreter[Token, None]):
     def declr_macro(self, tree: Tree[Token]):
         name = cast(Token, tree.children[0])
         if name in self.macros:
-            raise gTokenError("Redeclaration of macro", name, "Rename this macro")
+            msg = "Redeclaration of macro"
+            raise gTokenError(msg, name, "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
         if arguments == [None]:
             arguments = []
@@ -249,14 +262,15 @@ class gDefinitionVisitor(Interpreter[Token, None]):
     def declr_block_macro(self, tree: Tree[Token]):
         name = cast(Token, tree.children[0])
         if name in self.block_macros:
-            raise gTokenError("Redeclaration of macro", name, "Rename this macro")
+            msg = "Redeclaration of macro"
+            raise gTokenError(msg, name, "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
         body = cast(Tree[Token], tree.children[-1])
 
         self.block_macros[name] = BlockMacro([str(i) for i in arguments], body)
 
     def declr_function_nowarp(self, tree: Tree[Token]):
-        return self.declr_function(tree, False)
+        return self.declr_function(tree, warp=False)
 
     def declr_comment(self, tree: Tree[Token]):
         comment: str = literal(cast(Token, tree.children[0]))

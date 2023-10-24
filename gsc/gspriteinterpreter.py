@@ -15,21 +15,25 @@ from lark.visitors import Interpreter
 from sb3 import gSprite
 from sb3.cleanup import cleanup
 
-try:
-    from rich import print  # type: ignore
-except ImportError:
-    pass
-
 
 class gSpriteInterpreter(Interpreter[Token, None]):
-    def __init__(self, project: Path, name: str, tree: Tree[Token]):
+    def __init__(
+        self,
+        project: Path,
+        name: str,
+        tree: Tree[Token],
+        globals: list[str],
+        listglobals: list[str],
+    ):
         tree.children.insert(
             0, gparser.parse((files(res) / "standard_library.gs").read_text())
         )
         tree = gIncluder(project).transform(tree)
         super().__init__()
         self.sprite = gSprite(name, {}, {}, [], [])
-        self.gdefinitionvisitor = gDefinitionVisitor(project, self.sprite, tree)
+        self.gdefinitionvisitor = gDefinitionVisitor(
+            project, self.sprite, tree, globals, listglobals
+        )
         if len(self.sprite.costumes) == 0:
             raise gFileError("No costumes defined", "Add a costumes statement")
         BlockMacroVisitor(tree, self.gdefinitionvisitor.block_macros)

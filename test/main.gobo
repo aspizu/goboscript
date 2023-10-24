@@ -1,11 +1,7 @@
 costumes "blank.svg";
 
-macro b!() -> "Hello, World!";
-
-macro a! {
-  say b!();
-}
-
 onflag {
-  a!;
+  list = [1, 2, 3];
+  list.add 1;
+  eraseall;
 }

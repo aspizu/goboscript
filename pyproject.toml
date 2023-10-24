@@ -1,3 +1,8 @@
 [tool.pyright]
 typeCheckingMode = "strict"
 reportIncompatibleMethodOverride = false
+
+[tool.ruff]
+line-length = 88
+select = ["ALL"]
+ignore = ["D", "ANN", "COM", "A003", "TD001", "TD002", "S108", "I001", "F403", "A002", "SLF001", "T201", "F841", "E402", "PLR0913", "S603", "S607", "S101", "A001"]

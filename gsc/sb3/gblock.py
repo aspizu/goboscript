@@ -1,5 +1,5 @@
 import json
-from typing import Any, NamedTuple, Union
+from typing import Any, Iterable, Mapping, NamedTuple, Sequence, Union
 
 from lark.lexer import Token
 from lib import JSON, tripletwise
@@ -31,8 +31,8 @@ class gBlock:
     def __init__(
         self,
         opcode: str,
-        inputs: dict[str, gInputType],
-        fields: dict[str, gFieldType],
+        inputs: Mapping[str, gInputType],
+        fields: Mapping[str, gFieldType],
         comment: str | None = None,
     ):
         self.opcode = opcode
@@ -47,20 +47,20 @@ class gBlock:
     def from_prototype(
         cls,
         prototype: gPrototype,
-        arguments: list[gInputType],
+        arguments: Iterable[gInputType],
         comment: str | None = None,
     ):
         opcode = prototype.opcode
-        fields: dict[str, gFieldType] = {}
-        inputs: dict[str, gInputType] = {}
+        fields: Mapping[str, gFieldType] = {}
+        inputs: Mapping[str, gInputType] = {}
         if "." in prototype.opcode:
-            opcode, fields = prototype.opcode.split(".")  # type: ignore
-            fields = (i.split("=") for i in fields.split(","))  # type: ignore
-            fields = {k: v for k, v in fields}
+            opcode, fieldnamess = prototype.opcode.split(".")
+            fields = dict(i.split("=") for i in fieldnamess.split(","))
         elif "!" in prototype.opcode:
-            opcode, inputs = prototype.opcode.split("!")  # type: ignore
-            inputs = (i.split("=") for i in inputs.split(","))  # type: ignore
-            inputs = {k: v for k, v in inputs}
+            opcode, inputnames = prototype.opcode.split("!")
+            inputs = dict(i.split("=") for i in inputnames.split(","))
+        if prototype.name[-1] == "?":
+            cls = gCondition
         return cls(
             opcode,
             {**dict(zip(prototype.arguments, arguments)), **inputs},
@@ -93,9 +93,9 @@ class gBlock:
                 return [2, value[0].id]
         elif isinstance(value, gBlock):
             value.serialize(blocks, None, self.id)
-            if "CONDITION" in name:
+            if isinstance(value, gCondition):
                 return [2, value.id]
-            elif name == "custom_block" or (
+            if name == "custom_block" or (
                 isinstance(value, gArgument) and value.shadow
             ):
                 return [1, value.id]
@@ -139,7 +139,21 @@ class gBlock:
             blocks[self.id]["comment"] = self.comment
 
 
+class gCondition(gBlock):
+    ...
+
+
 class gStack(list[gBlock]):
+    @classmethod
+    def new(cls, stack: Sequence[gBlock | Sequence[gBlock]]):
+        new = cls()
+        for i in stack:
+            if isinstance(i, list):
+                new.extend(i)
+            else:
+                new.append(i)
+        return new
+
     def serialize(self, blocks: gBlockListType, parent: str):
         for prev, this, next in tripletwise(self):
             this.serialize(blocks, next and next.id, prev.id if prev else parent)
