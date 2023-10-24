@@ -1,12 +1,13 @@
+from __future__ import annotations
+from typing import TypeVar
+from typing import Callable
 from pathlib import Path
-from typing import Callable, TypeVar
-
-import lark.exceptions
 import term as t
+import lark.exceptions
 from lark.lexer import Token
 
 
-class gError(Exception):
+class Error(Exception):
     def __init__(self, description: str, help: str | None = None):
         self.description = description
         self.help = help
@@ -23,7 +24,7 @@ class gError(Exception):
         t.w("\n")
 
 
-class gFileError(gError):
+class FileError(Error):
     def __init__(
         self, description: str, help: str | None = None, file: Path | None = None
     ):
@@ -47,7 +48,7 @@ class gFileError(gError):
         t.w("\n")
 
 
-class gTokenError(gError):
+class TokenError(Error):
     def __init__(
         self,
         description: str,
@@ -83,31 +84,31 @@ def wrap_lark_errors(func: Callable[[], T], file: Path) -> T:
     try:
         return func()
     except lark.exceptions.VisitError as e:
-        if isinstance(e.orig_exc, gTokenError | gFileError):
+        if isinstance(e.orig_exc, TokenError | FileError):
             e.orig_exc.file = file
-            raise e.orig_exc
-        raise e.orig_exc
-    except gTokenError as e:
+            raise e.orig_exc from e
+        raise e.orig_exc from e
+    except TokenError as e:
         e.file = file
-        raise e
-    except gFileError as e:
+        raise e from e
+    except FileError as e:
         e.file = file
-        raise e
+        raise e from e
     except lark.exceptions.UnexpectedToken as e:
-        raise gTokenError(
+        raise TokenError(
             "Unexpected token",
             e.token,
             "Expected one of: " + ", ".join(e.expected),
             file,
-        )
+        ) from e
     except lark.exceptions.UnexpectedCharacters as e:
         token = Token("NULL", "#", None, e.line, e.column)
         help = ""
         if "BANG" in e.allowed:
             help = ", Macro syntax has changed, use the syntax macro foo!() -> bar;"
-        raise gTokenError(
+        raise TokenError(
             "Unexpected characters",
             token,
             "Expected one of: " + ", ".join(e.allowed) + help,
             file,
-        )
+        ) from e

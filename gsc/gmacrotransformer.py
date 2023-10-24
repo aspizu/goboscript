@@ -1,15 +1,18 @@
+from __future__ import annotations
 from copy import deepcopy
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import cast
 from difflib import get_close_matches
-from typing import Any, cast
-
 from lark import Visitor
-
-
-from gdefinitionvisitor import BlockMacro, gMacro
-from gerror import gTokenError
-from lark.lexer import Token
+from gerror import TokenError
 from lark.tree import Tree
+from lark.lexer import Token
 from lark.visitors import Transformer
+
+if TYPE_CHECKING:
+    from gdefinitionvisitor import Macro
+    from gdefinitionvisitor import BlockMacro
 
 
 class BlockMacroVisitor(Visitor[Token]):
@@ -30,7 +33,7 @@ class BlockMacroVisitor(Visitor[Token]):
             arguments = usage.children[1:]
             if name not in self.macros:
                 matches = get_close_matches(name, self.macros.keys())
-                raise gTokenError(
+                raise TokenError(
                     f"Undefined macro `{name}`",
                     name,
                     f"Did you mean `{matches[0]}`?" if matches else None,
@@ -38,14 +41,14 @@ class BlockMacroVisitor(Visitor[Token]):
             macro = self.macros[name]
             body = deepcopy(macro.body)
             self.visit(body)
-            stack = gMacroEvaluate(macro, arguments).transform(body)
+            stack = MacroEvaluate(macro, arguments).transform(body)
             node.children.pop(i)
             for child in reversed(stack.children):
                 node.children.insert(i, child)
 
 
-class gMacroTransformer(Transformer[Token, Tree[Token]]):
-    def __init__(self, macros: dict[Token, gMacro]):
+class MacroTransformer(Transformer[Token, Tree[Token]]):
+    def __init__(self, macros: dict[Token, Macro]):
         super().__init__()
         self.macros = macros
 
@@ -53,24 +56,22 @@ class gMacroTransformer(Transformer[Token, Tree[Token]]):
         name = cast(Token, args[0])
         if name not in self.macros:
             matches = get_close_matches(name, self.macros.keys())
-            raise gTokenError(
+            raise TokenError(
                 f"Undefined macro `{name}`",
                 name,
                 f"Did you mean `{matches[0]}`?" if matches else None,
             )
         arguments: list[Tree[Token] | Token] = args[1:]
-        return gMacroEvaluate(self.macros[name], arguments).get(self)
+        return MacroEvaluate(self.macros[name], arguments).get(self)
 
 
-class gMacroEvaluate(Transformer[Token, Tree[Token]]):
-    def __init__(
-        self, macro: gMacro | BlockMacro, arguments: list[Tree[Token] | Token]
-    ):
+class MacroEvaluate(Transformer[Token, Tree[Token]]):
+    def __init__(self, macro: Macro | BlockMacro, arguments: list[Tree[Token] | Token]):
         super().__init__()
         self.macro__ = macro
         self.arguments = arguments
 
-    def get(self, macros: gMacroTransformer):
+    def get(self, macros: MacroTransformer):
         return self.transform(macros.transform(self.macro__.body))
 
     def macrovar(self, args: Any):

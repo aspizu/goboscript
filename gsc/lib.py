@@ -1,13 +1,19 @@
+from __future__ import annotations
+import sys
 import itertools
+from typing import TYPE_CHECKING
+from typing import Mapping
+from typing import TypeVar
+from typing import Iterable
+from typing import Sequence
 from difflib import get_close_matches
-import os
-from pathlib import Path
-from typing import Iterable, TypeVar
-
 from lark import Token
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 EXT = "gobo"
-JSON = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+JSON = Mapping[str, "JSON"] | Sequence["JSON"] | str | int | float | bool | None
 
 T = TypeVar("T")
 
@@ -65,12 +71,12 @@ class Watcher:
             self._watch()
         except KeyboardInterrupt:
             print("Bye...")
-            exit(0)
+            sys.exit(0)
 
     def _watch(self):
         while True:
             for i, file in enumerate(self._files):
-                mtime = os.stat(file).st_mtime
+                mtime = file.stat().st_mtime
                 if mtime != self._mtimes[i]:
                     self.on_change(file)
                 self._mtimes[i] = mtime

@@ -1,7 +1,10 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from hashlib import md5
-from pathlib import Path
 
-from lib import JSON
+if TYPE_CHECKING:
+    from pathlib import Path
+    from lib import JSON
 
 
 def md5_hexdigest(path: Path):
@@ -12,7 +15,7 @@ def md5_hexdigest(path: Path):
     return file_hash.hexdigest()
 
 
-class gCostume:
+class Costume:
     def __init__(self, path: Path):
         self.path = path
         self.hash = md5_hexdigest(self.path)

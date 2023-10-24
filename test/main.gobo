@@ -1,7 +1,11 @@
 costumes "blank.svg";
 
 onflag {
-  list = [1, 2, 3];
-  list.add 1;
-  eraseall;
+  foo = 100;
+  main;
+  // say main:foo;
+}
+
+def main {
+  local foo = 200;
 }

@@ -1,19 +1,24 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from typing import cast
-
 from lib import JSON
 
-from .gblock import gBlock, gBlockListType, gList, gVariable
-from .gcostume import gCostume
+if TYPE_CHECKING:
+    from .gblock import List
+    from .gblock import Block
+    from .gblock import Variable
+    from .gblock import BlockListType
+    from .gcostume import Costume
 
 
-class gSprite:
+class Sprite:
     def __init__(
         self,
         name: str,
-        variables: dict[str, gVariable],
-        lists: dict[str, gList],
-        blocks: list[gBlock],
-        costumes: list[gCostume],
+        variables: dict[str, Variable],
+        lists: dict[str, List],
+        blocks: list[Block],
+        costumes: list[Costume],
         comment: str | None = None,
     ):
         self.name = name
@@ -23,9 +28,9 @@ class gSprite:
         self.costumes = costumes
         self.comment = comment
 
-    def serialize(self) -> dict[str, JSON]:
+    def serialize(self) -> JSON:
         assert len(self.costumes) > 0
-        blocks: gBlockListType = {}
+        blocks: BlockListType = {}
         for block in self.blocks:
             block.serialize(blocks, None, None)
         comments: dict[str, dict[str, JSON]] = {}

@@ -1,16 +1,25 @@
-from pathlib import Path
-from typing import NamedTuple, cast
-
-from gerror import gTokenError
+from __future__ import annotations
+from typing import TYPE_CHECKING
+from typing import NamedTuple
+from typing import cast
+from lib import tok
+from lib import file_suggest
+from sb3 import List
+from sb3 import Sprite
+from sb3 import Costume
+from sb3 import Variable
+from gerror import TokenError
 from gparser import literal
-from lark.lexer import Token
 from lark.tree import Tree
-from lark.visitors import Interpreter, Visitor
-from lib import file_suggest, tok
-from sb3 import gCostume, gList, gSprite, gVariable
+from lark.lexer import Token
+from lark.visitors import Visitor
+from lark.visitors import Interpreter
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-class gFunction(NamedTuple):
+class Function(NamedTuple):
     name: Token
     warp: bool
     arguments: list[Token]
@@ -18,7 +27,7 @@ class gFunction(NamedTuple):
     proccode: str | None = None
 
 
-class gMacro(NamedTuple):
+class Macro(NamedTuple):
     arguments: list[str]
     body: Tree[Token]
 
@@ -32,7 +41,7 @@ class LocalsCollector(Visitor[Token]):
     def __init__(
         self,
         tree: Tree[Token],
-        sprite: gSprite,
+        sprite: Sprite,
         globals: list[str],
         listglobals: list[str],
         name: str | None = None,
@@ -46,12 +55,12 @@ class LocalsCollector(Visitor[Token]):
         self.visit(tree)
 
     def localvar(self, tree: Tree[Token]):
-        if not self.name:
+        if self.name is None:
             return
         token = cast(Token, tree.children[0])
         self.locals.append(str(token))
-        qualname = f"{self.name}.{token}"
-        self.sprite.variables[qualname] = gVariable(qualname, token)
+        qualname = f"{self.name}:{token}"
+        self.sprite.variables[qualname] = Variable(qualname, token)
 
     def varset(self, tree: Tree[Token]):
         token = cast(Token, tree.children[0])
@@ -66,7 +75,7 @@ class LocalsCollector(Visitor[Token]):
         if qualname in self.sprite.lists:
             return
 
-        self.sprite.variables[qualname] = gVariable(qualname, token)
+        self.sprite.variables[qualname] = Variable(qualname, token)
 
     def listset(self, tree: Tree[Token]):
         token = cast(Token, tree.children[0])
@@ -78,14 +87,14 @@ class LocalsCollector(Visitor[Token]):
         if qualname in self.sprite.variables:
             return
 
-        self.sprite.lists[qualname] = gList(token)
+        self.sprite.lists[qualname] = List(token)
 
 
-class gDefinitionVisitor(Interpreter[Token, None]):
+class DefinitionVisitor(Interpreter[Token, None]):
     def __init__(
         self,
         project: Path,
-        sprite: gSprite,
+        sprite: Sprite,
         tree: Tree[Token],
         globals: list[str],
         listglobals: list[str],
@@ -93,32 +102,32 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         super().__init__()
         self.project = project
         self.sprite = sprite
-        self.macros: dict[Token, gMacro] = {}
+        self.macros: dict[Token, Macro] = {}
         self.block_macros: dict[Token, BlockMacro] = {}
-        self.functions: dict[str, gFunction] = {
+        self.functions: dict[str, Function] = {
             # Scratch Addons Debugger blocks
-            "breakpoint": gFunction(
+            "breakpoint": Function(
                 tok("breakpoint"),
                 False,
                 [],
                 [],
                 proccode="\u200B\u200Bbreakpoint\u200B\u200B",
             ),
-            "log": gFunction(
+            "log": Function(
                 tok("log"),
                 False,
                 [tok("message")],
                 [],
                 proccode="\u200B\u200Blog\u200B\u200B %s",
             ),
-            "warn": gFunction(
+            "warn": Function(
                 tok("warn"),
                 False,
                 [tok("message")],
                 [],
                 proccode="\u200B\u200Bwarn\u200B\u200B %s",
             ),
-            "error": gFunction(
+            "error": Function(
                 tok("error"),
                 False,
                 [tok("message")],
@@ -137,15 +146,15 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                 paths = sorted(self.project.glob(pattern), key=lambda path: path.stem)
                 if len(paths) == 0:
                     msg = f"Glob does not match any files {pattern}"
-                    raise gTokenError(msg, costume)
+                    raise TokenError(msg, costume)
                 for pattern in paths:
-                    self.sprite.costumes.append(gCostume(pattern))
+                    self.sprite.costumes.append(Costume(pattern))
             else:
                 path = self.project / pattern
                 if not path.is_file():
                     matches = file_suggest(path)
                     msg = f"Costume file not found {pattern}"
-                    raise gTokenError(
+                    raise TokenError(
                         msg,
                         costume,
                         (
@@ -154,7 +163,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                             else None
                         ),
                     )
-                self.sprite.costumes.append(gCostume(path))
+                self.sprite.costumes.append(Costume(path))
 
     def datalist(self, tree: Tree[Token]) -> None:
         token = cast(Token, tree.children[0])
@@ -164,7 +173,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         if not file.is_file():
             matches = file_suggest(file)
             msg = "Data file not found."
-            raise gTokenError(
+            raise TokenError(
                 msg,
                 path,
                 f"Did you mean {matches[0].relative_to(self.project)}?"
@@ -172,7 +181,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
                 else None,
             )
 
-        self.sprite.lists[qualname] = gList(token, file.read_text().splitlines())
+        self.sprite.lists[qualname] = List(token, file.read_text().splitlines())
 
     def imagelist(self, tree: Tree[Token]) -> None:
         from PIL import Image
@@ -185,7 +194,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         if not file.is_file():
             matches = file_suggest(file)
             msg = "Data file not found."
-            raise gTokenError(
+            raise TokenError(
                 msg,
                 path,
                 f"Did you mean {matches[0].relative_to(self.project)}?"
@@ -198,25 +207,25 @@ class gDefinitionVisitor(Interpreter[Token, None]):
             data = list(image.tobytes())  # pyright: ignore[reportUnknownMemberType]
         else:
             msg = "Invalid imagelist format."
-            raise gTokenError(
+            raise TokenError(
                 msg,
                 format,
                 "Formats are not implemented yet, open a issue at https://github/aspizu/goboscript/issues",
             )
-        self.sprite.lists[qualname] = gList(token, list(map(str, data)))
+        self.sprite.lists[qualname] = List(token, list(map(str, data)))
 
     def declr_function(self, tree: Tree[Token], *, warp: bool = True):
         name = cast(Token, tree.children[0])
         if name in self.functions:
             msg = "Redeclaration of function"
-            raise gTokenError(msg, name, "Rename this function")
+            raise TokenError(msg, name, "Rename this function")
         arguments: list[Token] = []
         for argument in cast(list[Token | None], tree.children[1:-1]):
             if argument is None:
                 break
             if argument in arguments:
                 msg = f"Argument `{argument}` was repeated"
-                raise gTokenError(
+                raise TokenError(
                     msg,
                     argument,
                     "Rename this argument",
@@ -229,7 +238,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
             self.listglobals,
             name,
         ).locals
-        self.functions[name] = gFunction(name, warp, arguments, locals)
+        self.functions[name] = Function(name, warp, arguments, locals)
 
     def declr_on(self, tree: Tree[Token]):
         LocalsCollector(
@@ -251,11 +260,11 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         name = cast(Token, tree.children[0])
         if name in self.macros:
             msg = "Redeclaration of macro"
-            raise gTokenError(msg, name, "Rename this macro")
+            raise TokenError(msg, name, "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
         if arguments == [None]:
             arguments = []
-        self.macros[name] = gMacro(
+        self.macros[name] = Macro(
             [str(i) for i in arguments], cast(Tree[Token], tree.children[-1])
         )
 
@@ -263,7 +272,7 @@ class gDefinitionVisitor(Interpreter[Token, None]):
         name = cast(Token, tree.children[0])
         if name in self.block_macros:
             msg = "Redeclaration of macro"
-            raise gTokenError(msg, name, "Rename this macro")
+            raise TokenError(msg, name, "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
         body = cast(Tree[Token], tree.children[-1])
 

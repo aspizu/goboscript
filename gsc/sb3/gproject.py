@@ -1,16 +1,18 @@
+from __future__ import annotations
 import json
 from io import TextIOWrapper
-from itertools import chain
-from pathlib import Path
+from typing import TYPE_CHECKING
 from zipfile import ZipFile
+from itertools import chain
 
-from lib import JSON
+if TYPE_CHECKING:
+    from pathlib import Path
+    from lib import JSON
+    from .gsprite import Sprite
 
-from .gsprite import gSprite
 
-
-class gProject:
-    def __init__(self, stage: gSprite, sprites: list[gSprite]):
+class Project:
+    def __init__(self, stage: Sprite, sprites: list[Sprite]):
         self.stage = stage
         self.sprites = sprites
 

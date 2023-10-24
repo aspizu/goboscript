@@ -1,38 +1,48 @@
+from __future__ import annotations
 import json
-from typing import Any, Iterable, Mapping, NamedTuple, Sequence, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Union
+from typing import Mapping
+from typing import Iterable
+from typing import Sequence
+from typing import NamedTuple
+from typing import cast
+from lib import JSON
+from lib import tripletwise
 
-from lark.lexer import Token
-from lib import JSON, tripletwise
+if TYPE_CHECKING:
+    from lark.lexer import Token
+    from .gblockfactory import Prototype
 
-from .gblockfactory import gPrototype
-
-gInputType = Union[str, "gBlock", "gStack", "gVariable", "gList"]
-gFieldType = Union[str, "gVariable", "gList"]
-gBlockListType = dict[str, dict[str, JSON]]
-
-
-def proccode(name: str, inputs: dict[str, "gArgument"]):
-    args = [i.fields["VALUE"] for i in inputs.values()]
-    return name + " " + " ".join([f"{arg}: %s" for arg in args])
+Input = Union[str, "Block", "Stack", "Variable", "List"]
+Field = Union[str, "Variable", "List"]
+BlockListType = dict[str, dict[str, JSON]]
 
 
-class gVariable(NamedTuple):
+def proccode(name: str, inputs_: Mapping[str, Input]):
+    inputs = cast(dict[str, Argument], inputs_)
+    args = (i.fields["VALUE"] for i in inputs.values())
+    return name + " " + " ".join(f"{arg}: %s" for arg in args)
+
+
+class Variable(NamedTuple):
     name: str
     token: Token
 
 
-class gList:
+class List:
     def __init__(self, token: Token, data: list[str] | None = None):
         self.token = token
         self.data = data or []
 
 
-class gBlock:
+class Block:
     def __init__(
         self,
         opcode: str,
-        inputs: Mapping[str, gInputType],
-        fields: Mapping[str, gFieldType],
+        inputs: Mapping[str, Input],
+        fields: Mapping[str, Field],
         comment: str | None = None,
     ):
         self.opcode = opcode
@@ -46,13 +56,13 @@ class gBlock:
     @classmethod
     def from_prototype(
         cls,
-        prototype: gPrototype,
-        arguments: Iterable[gInputType],
+        prototype: Prototype,
+        arguments: Iterable[Input],
         comment: str | None = None,
     ):
         opcode = prototype.opcode
-        fields: Mapping[str, gFieldType] = {}
-        inputs: Mapping[str, gInputType] = {}
+        fields: Mapping[str, Field] = {}
+        inputs: Mapping[str, Input] = {}
         if "." in prototype.opcode:
             opcode, fieldnamess = prototype.opcode.split(".")
             fields = dict(i.split("=") for i in fieldnamess.split(","))
@@ -60,7 +70,7 @@ class gBlock:
             opcode, inputnames = prototype.opcode.split("!")
             inputs = dict(i.split("=") for i in inputnames.split(","))
         if prototype.name[-1] == "?":
-            cls = gCondition
+            cls = ConditionBlock
         return cls(
             opcode,
             {**dict(zip(prototype.arguments, arguments)), **inputs},
@@ -76,60 +86,54 @@ class gBlock:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.opcode}, {self.inputs}, {self.fields})"
 
-    def serialize_input(
-        self, blocks: gBlockListType, value: gInputType, name: str
-    ) -> JSON:
-        if type(value) is str:
-            return [1, [10, value]]
-        elif type(value) is gVariable:
+    def serialize_input(self, blocks: BlockListType, value: Input, name: str) -> JSON:
+        if type(value) is Variable:
             return [3, [12, value.name, value.name], [10, ""]]
-        elif type(value) is gList:
+        if type(value) is List:
             return [3, [13, value.token, ""], [10, ""]]
-        elif isinstance(value, gStack):
+        if isinstance(value, Stack):
             value.serialize(blocks, self.id)
             if len(value) == 0:
                 return []
-            else:
-                return [2, value[0].id]
-        elif isinstance(value, gBlock):
+            return [2, value[0].id]
+        if isinstance(value, Block):
             value.serialize(blocks, None, self.id)
-            if isinstance(value, gCondition):
+            if isinstance(value, ConditionBlock):
                 return [2, value.id]
-            if name == "custom_block" or (
-                isinstance(value, gArgument) and value.shadow
-            ):
+            if name == "custom_block" or (isinstance(value, Argument) and value.shadow):
                 return [1, value.id]
             return [3, value.id, [10, ""]]
+        if type(value) is str:
+            return [1, [10, value]]
         raise ValueError(self, value)
 
-    def serialize_field(self, blocks: gBlockListType, value: gFieldType) -> JSON:
-        if isinstance(value, gVariable):
+    def serialize_field(self, blocks: BlockListType, value: Field) -> JSON:
+        if isinstance(value, Variable):
             return [value.name, value.name]
-        if isinstance(value, gList):
+        if isinstance(value, List):
             return [value.token, value.token]
-        else:
-            return [value, None]
+        return [value, None]
 
-    def serialize_inputs(self, blocks: gBlockListType):
+    def serialize_inputs(self, blocks: BlockListType):
         return {
             name: self.serialize_input(blocks, value, name)
             for name, value in self.inputs.items()
         }
 
-    def serialize_fields(self, blocks: gBlockListType):
+    def serialize_fields(self, blocks: BlockListType):
         return {
             name: self.serialize_field(blocks, value)
             for name, value in self.fields.items()
         }
 
-    def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
+    def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
         blocks[self.id] = {
             "opcode": self.opcode,
             "next": next,
             "parent": parent,
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
-            "topLevel": isinstance(self, gHatBlock),
+            "topLevel": isinstance(self, HatBlock),
             "shadow": False,
         }
         if blocks[self.id]["topLevel"]:
@@ -139,98 +143,93 @@ class gBlock:
             blocks[self.id]["comment"] = self.comment
 
 
-class gCondition(gBlock):
+class ConditionBlock(Block):
     ...
 
 
-class gStack(list[gBlock]):
+class Stack(list[Block]):
     @classmethod
-    def new(cls, stack: Sequence[gBlock | Sequence[gBlock]]):
+    def new(cls, stack: Sequence[Block | Sequence[Block]]):
         new = cls()
         for i in stack:
-            if isinstance(i, list):
+            if isinstance(i, Sequence):
                 new.extend(i)
             else:
                 new.append(i)
         return new
 
-    def serialize(self, blocks: gBlockListType, parent: str):
+    def serialize(self, blocks: BlockListType, parent: str):
         for prev, this, next in tripletwise(self):
             this.serialize(blocks, next and next.id, prev.id if prev else parent)
 
 
-class gHatBlock(gBlock):
+class HatBlock(Block):
     def __init__(
         self,
         opcode: str,
-        inputs: dict[str, gInputType],
-        fields: dict[str, gFieldType],
-        stack: gStack,
+        inputs: dict[str, Input],
+        fields: dict[str, Field],
+        stack: Stack,
     ):
         super().__init__(opcode, inputs, fields)
         self.stack = stack
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.opcode}, {self.inputs}, {self.fields}, {self.stack})"
-
-    def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
+    def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
         super().serialize(
             blocks, self.stack[0].id if len(self.stack) > 0 else None, parent
         )
         self.stack.serialize(blocks, self.id)
 
 
-class gArgument(gBlock):
-    def __init__(self, name: str, shadow: bool = False):
+class Argument(Block):
+    def __init__(self, name: str, *, shadow: bool = False):
         super().__init__("argument_reporter_string_number", {}, {"VALUE": name})
         self.shadow = shadow
 
-    def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
+    def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
         if self.shadow:
             blocks[self.id]["shadow"] = True
 
 
-class gProcCall(gBlock):
+class ProcCall(Block):
     def __init__(
         self,
         name: str,
-        inputs: dict[str, gInputType],
-        warp: bool,
+        inputs: dict[str, Input],
         comment: str | None,
         proccode: str | None,
+        *,
+        warp: bool,
     ):
         super().__init__("procedures_call", inputs, {}, comment)
         self.name = name
         self.warp = warp
         self.proccode = proccode
 
-    def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
+    def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
         blocks[self.id]["mutation"] = {
             "tagName": "mutation",
             "children": [],
-            "proccode": proccode(
-                self.name, {i: gArgument(i) for i in self.inputs.keys()}
-            )
-            if not self.proccode
-            else self.proccode,
+            "proccode": self.proccode
+            or proccode(self.name, {i: Argument(i) for i in self.inputs}),
             "argumentids": json.dumps(list(self.inputs.keys())),
             "warp": self.warp,
         }
 
 
-class gProcProto(gBlock):
-    def __init__(self, name: str, arguments: list[Token], warp: bool):
+class ProcProto(Block):
+    def __init__(self, name: str, arguments: list[Token], *, warp: bool):
         super().__init__(
             "procedures_prototype",
-            {argument: gArgument(argument, shadow=True) for argument in arguments},
+            {argument: Argument(argument, shadow=True) for argument in arguments},
             {},
         )
         self.name = name
         self.warp = warp
 
-    def serialize(self, blocks: gBlockListType, next: str | None, parent: str | None):
+    def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
         super().serialize(blocks, next, parent)
         argumentids = json.dumps(list(self.inputs.keys()))
         serialized = blocks[self.id]
@@ -238,7 +237,7 @@ class gProcProto(gBlock):
         serialized["mutation"] = {
             "tagName": "mutation",
             "children": [],
-            "proccode": proccode(self.name, self.inputs),  # type: ignore
+            "proccode": proccode(self.name, self.inputs),
             "argumentids": argumentids,
             "argumentnames": argumentids,
             "argumentdefaults": json.dumps(["0"] * len(self.inputs)),
@@ -246,17 +245,11 @@ class gProcProto(gBlock):
         }
 
 
-class gProcDef(gHatBlock):
-    def __init__(
-        self,
-        name: str,
-        arguments: list[Token],
-        warp: bool,
-        stack: gStack,
-    ):
+class ProcDef(HatBlock):
+    def __init__(self, name: str, arguments: list[Token], stack: Stack, *, warp: bool):
         super().__init__(
             "procedures_definition",
-            {"custom_block": gProcProto(name, arguments, warp)},
+            {"custom_block": ProcProto(name, arguments, warp=warp)},
             {},
             stack,
         )

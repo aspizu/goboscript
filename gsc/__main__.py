@@ -1,9 +1,10 @@
+from __future__ import annotations
 import argparse
 from pathlib import Path
+from lib import EXT
+from lib import Watcher
 from gbuild import build_gproject
-from gerror import gError
-from lib import EXT, Watcher
-
+from gerror import Error
 
 argparser = argparse.ArgumentParser(
     "gsc",
@@ -89,7 +90,7 @@ class gWatcher(Watcher):
     def on_change(self, file: Path) -> None:
         try:
             build_gproject(self.input).package(self.output)
-        except gError as err:
+        except Error as err:
             err.print()
 
 
@@ -101,5 +102,5 @@ if watch:
 else:
     try:
         build_gproject(input).package(output)
-    except gError as err:
+    except Error as err:
         err.print()

@@ -2,14 +2,14 @@ import importlib.resources
 from typing import NamedTuple
 
 
-class gPrototype(NamedTuple):
+class Prototype(NamedTuple):
     name: str
     arguments: list[str]
     opcode: str
 
 
 def load_prototypes(file: str):
-    prototypes: dict[str, gPrototype] = {}
+    prototypes: dict[str, Prototype] = {}
     i = importlib.resources.open_text("res", file)
     for line in i:
         if line.strip().startswith("#") or line.strip() == "":
@@ -18,7 +18,7 @@ def load_prototypes(file: str):
         arguments = [i.strip() for i in arguments.split(",")]
         if arguments[0] == "":
             arguments = []
-        prototypes[name.removesuffix("?")] = gPrototype(name, arguments, opcode)
+        prototypes[name.removesuffix("?")] = Prototype(name, arguments, opcode)
     return prototypes
 
 
