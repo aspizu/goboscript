@@ -1,35 +1,29 @@
 from __future__ import annotations
 import math
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Iterator
-from typing import cast
+from typing import TYPE_CHECKING, Any, Iterator, cast
 from difflib import get_close_matches
 from itertools import chain
-from lib import tok
-from lib import number
-from lib import num_plural
-from sb3 import List
-from sb3 import Block
-from sb3 import Input
-from sb3 import Stack
-from sb3 import ProcDef
-from sb3 import Argument
-from sb3 import HatBlock
-from sb3 import ProcCall
-from sb3 import Variable
-from gerror import FileError
-from gerror import TokenError
-from gparser import literal
 from lark.lexer import Token
-from sb3.gblock import ConditionBlock
 from lark.visitors import Transformer
-from sb3.gblockfactory import reporter_prototypes
-from sb3.gblockfactory import statement_prototypes
+from .lib import tok, number, num_plural
+from .sb3 import (
+    List,
+    Block,
+    Input,
+    Stack,
+    ProcDef,
+    Argument,
+    HatBlock,
+    ProcCall,
+    Variable,
+)
+from .error import FileError, TokenError
+from .parser import literal
+from .sb3.block import ConditionBlock
+from .sb3.blockfactory import reporter_prototypes, statement_prototypes
 
 if TYPE_CHECKING:
-    from gdefinitionvisitor import Function
-    from gdefinitionvisitor import DefinitionVisitor
+    from definitionvisitor import Function, DefinitionVisitor
 
 
 def coerce_condition(input: Input, *, negate: bool = False) -> Block:

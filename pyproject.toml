@@ -1,3 +1,16 @@
+[project]
+name = "goboscript"
+version = "0.1.0"
+description = "The goboscript compiler."
+license = { file = "LICENSE" }
+authors = [{ name = "aspizu", email = "aspizu@protonmail.com" }]
+dependencies = ["lark"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
 [tool.pyright]
 typeCheckingMode = "strict"
 reportIncompatibleMethodOverride = false
@@ -5,7 +18,42 @@ reportIncompatibleMethodOverride = false
 [tool.ruff]
 line-length = 88
 select = ["ALL"]
-ignore = ["D", "ANN", "COM", "A003", "TD001", "TD002", "S108", "I001", "F403", "A002", "SLF001", "T201", "F841", "E402", "PLR0913", "S603", "S607", "S101", "A001", "EM101", "TRY003", "EM102", "E721", "FBT003", "S324"]
+ignore = [
+  "D",
+  "ANN",
+  "COM",
+  "A003",
+  "TD001",
+  "TD002",
+  "S108",
+  "I001",
+  "F403",
+  "A002",
+  "SLF001",
+  "T201",
+  "F841",
+  "E402",
+  "PLR0913",
+  "S603",
+  "S607",
+  "S101",
+  "A001",
+  "EM101",
+  "TRY003",
+  "EM102",
+  "E721",
+  "FBT003",
+  "S324",
+  "TID252",
+  'E501',
+  'ISC001',
+  'Q000',
+  'Q001',
+  'Q002',
+  'Q003',
+  'W191',    # ruff format
+  "INP001",
+]
 
 [tool.isort]
 skip_gitignore = true
@@ -13,7 +61,7 @@ line_length = 128
 length_sort = true
 # string annotations allow using things not defined yet.
 add_imports = ["from __future__ import annotations"]
-force_single_line = true
+#force_single_line = true
 atomic = true
 # makes import statements tight.
 lines_between_sections = 0

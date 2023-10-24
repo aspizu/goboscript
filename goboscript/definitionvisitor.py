@@ -1,19 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing import NamedTuple
-from typing import cast
-from lib import tok
-from lib import file_suggest
-from sb3 import List
-from sb3 import Sprite
-from sb3 import Costume
-from sb3 import Variable
-from gerror import TokenError
-from gparser import literal
+from typing import TYPE_CHECKING, NamedTuple, cast
 from lark.tree import Tree
 from lark.lexer import Token
-from lark.visitors import Visitor
-from lark.visitors import Interpreter
+from lark.visitors import Visitor, Interpreter
+from .lib import tok, file_suggest
+from .sb3 import List, Sprite, Costume, Variable
+from .error import TokenError
+from .parser import literal
 
 if TYPE_CHECKING:
     from pathlib import Path

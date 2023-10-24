@@ -1,18 +1,15 @@
 from __future__ import annotations
 from copy import deepcopy
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import cast
+from typing import TYPE_CHECKING, Any, cast
 from difflib import get_close_matches
 from lark import Visitor
-from gerror import TokenError
 from lark.tree import Tree
 from lark.lexer import Token
 from lark.visitors import Transformer
+from .error import TokenError
 
 if TYPE_CHECKING:
-    from gdefinitionvisitor import Macro
-    from gdefinitionvisitor import BlockMacro
+    from .definitionvisitor import Macro, BlockMacro
 
 
 class BlockMacroVisitor(Visitor[Token]):

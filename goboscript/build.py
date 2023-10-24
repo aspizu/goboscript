@@ -1,13 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from lib import EXT
-from lib import dir_suggest
-from sb3 import Project
-from gerror import Error
-from gerror import FileError
-from gerror import wrap_lark_errors
-from gparser import parser
-from gspriteinterpreter import SpriteInterpreter
+from .lib import EXT, dir_suggest
+from .sb3 import Project
+from .error import Error, FileError, wrap_lark_errors
+from .parser import parser
+from .spriteinterpreter import SpriteInterpreter
 
 if TYPE_CHECKING:
     from pathlib import Path

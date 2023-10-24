@@ -1,5 +1,7 @@
-import importlib.resources
+from __future__ import annotations
 from typing import NamedTuple
+from importlib.resources import files
+from .. import res
 
 
 class Prototype(NamedTuple):
@@ -10,7 +12,7 @@ class Prototype(NamedTuple):
 
 def load_prototypes(file: str):
     prototypes: dict[str, Prototype] = {}
-    i = importlib.resources.open_text("res", file)
+    i = (files(res) / file).open()
     for line in i:
         if line.strip().startswith("#") or line.strip() == "":
             continue

@@ -1,10 +1,9 @@
 from __future__ import annotations
-from typing import TypeVar
-from typing import Callable
+from typing import TypeVar, Callable
 from pathlib import Path
-import term as t
 import lark.exceptions
 from lark.lexer import Token
+from . import term as t
 
 
 class Error(Exception):

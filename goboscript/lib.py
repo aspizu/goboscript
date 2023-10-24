@@ -1,11 +1,7 @@
 from __future__ import annotations
 import sys
 import itertools
-from typing import TYPE_CHECKING
-from typing import Mapping
-from typing import TypeVar
-from typing import Iterable
-from typing import Sequence
+from typing import TYPE_CHECKING, Mapping, TypeVar, Iterable, Sequence
 from difflib import get_close_matches
 from lark import Token
 

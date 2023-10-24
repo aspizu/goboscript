@@ -1,14 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing import cast
-from lib import JSON
+from typing import TYPE_CHECKING, cast
+from ..lib import JSON
 
 if TYPE_CHECKING:
-    from .gblock import List
-    from .gblock import Block
-    from .gblock import Variable
-    from .gblock import BlockListType
-    from .gcostume import Costume
+    from .block import List, Block, Variable, BlockListType
+    from .costume import Costume
 
 
 class Sprite:

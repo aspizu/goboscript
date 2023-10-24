@@ -1,11 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from lib import EXT
-from gparser import parser
-from gparser import literal
 from lark.tree import Tree
 from lark.lexer import Token
 from lark.visitors import Transformer
+from .lib import EXT
+from .parser import parser, literal
 
 if TYPE_CHECKING:
     from pathlib import Path

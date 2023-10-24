@@ -1,19 +1,20 @@
 from __future__ import annotations
 import json
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Union
-from typing import Mapping
-from typing import Iterable
-from typing import Sequence
-from typing import NamedTuple
-from typing import cast
-from lib import JSON
-from lib import tripletwise
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Union,
+    Mapping,
+    Iterable,
+    Sequence,
+    NamedTuple,
+    cast,
+)
+from ..lib import JSON, tripletwise
 
 if TYPE_CHECKING:
     from lark.lexer import Token
-    from .gblockfactory import Prototype
+    from .blockfactory import Prototype
 
 Input = Union[str, "Block", "Stack", "Variable", "List"]
 Field = Union[str, "Variable", "List"]

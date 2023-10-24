@@ -1,8 +1,0 @@
-# Events
-onflag || event_whenflagclicked
-onkey | KEY_OPTION | event_whenkeypressed
-onclick || event_whenthisspriteclicked
-onbackdrop || event_whenbackdropswitchesto
-onloudness | VALUE | event_whengreaterthan.WHENGREATERTHANMENU=LOUDNESS
-ontimer | VALUE | event_whengreaterthan.WHENGREATERTHANMENU=TIMER
-onclone || control_start_as_clone 

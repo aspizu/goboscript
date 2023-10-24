@@ -1,7 +1,5 @@
 from __future__ import annotations
-from .gblock import Block
-from .gblock import Input
-from .gblock import HatBlock
+from .block import Block, Input, HatBlock
 
 PADDING = 30
 HAT_BLOCK_HEIGHT = 65

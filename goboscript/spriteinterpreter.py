@@ -1,19 +1,17 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from importlib.resources import files
-import res
-from sb3 import Sprite
-from gerror import FileError
-from gparser import parser
-from gincluder import Includer
 from lark.lexer import Token
-from sb3.cleanup import cleanup
 from lark.visitors import Interpreter
-from gblocktransformer import BlockTransformer
-from gmacrotransformer import MacroTransformer
-from gmacrotransformer import BlockMacroVisitor
-from gdefinitionvisitor import DefinitionVisitor
+from . import res
+from .sb3 import Sprite
+from .error import FileError
+from .parser import parser
+from .includer import Includer
+from .sb3.cleanup import cleanup
+from .blocktransformer import BlockTransformer
+from .macrotransformer import MacroTransformer, BlockMacroVisitor
+from .definitionvisitor import DefinitionVisitor
 
 if TYPE_CHECKING:
     from pathlib import Path

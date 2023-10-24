@@ -1,10 +1,10 @@
 from __future__ import annotations
+import sys
 import argparse
 from pathlib import Path
-from lib import EXT
-from lib import Watcher
-from gbuild import build_gproject
-from gerror import Error
+from .lib import EXT, Watcher
+from .build import build_gproject
+from .error import Error
 
 argparser = argparse.ArgumentParser(
     "gsc",
@@ -13,7 +13,7 @@ argparser = argparse.ArgumentParser(
 )
 
 
-def inputT(argument: str) -> Path:
+def input_t(argument: str) -> Path:
     path = Path(argument)
     if not path.is_dir():
         raise argparse.ArgumentTypeError(f"{path} is not a directory.")
@@ -24,7 +24,7 @@ def inputT(argument: str) -> Path:
     return path
 
 
-def outputT(argument: str) -> Path:
+def output_t(argument: str) -> Path:
     path = Path(argument)
     if path.is_dir():
         raise argparse.ArgumentTypeError(f"{path} is a directory.")
@@ -41,13 +41,13 @@ argparser.add_argument(
 )
 argparser.add_argument(
     "-input",
-    type=inputT,
+    type=input_t,
     help="Project directory. (If not given, working directory is chosen.)",
     default=None,
 )
 argparser.add_argument(
     "-output",
-    type=outputT,
+    type=output_t,
     help="Path to output (.sb3) file. (If not given, output file will be inside input directory with same name.)",
     default=None,
 )
@@ -65,7 +65,7 @@ if init_cmd:
     (path / "blank.svg").open("w").write(
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'
     )
-    exit()
+    sys.exit()
 input: Path | None = args.input
 if input is None:
     input = Path()
@@ -83,11 +83,11 @@ if output is None:
         )
 
 
-class gWatcher(Watcher):
+class ProjectWatcher(Watcher):
     input: Path
     output: Path
 
-    def on_change(self, file: Path) -> None:
+    def on_change(self, _file: Path) -> None:
         try:
             build_gproject(self.input).package(self.output)
         except Error as err:
@@ -95,7 +95,7 @@ class gWatcher(Watcher):
 
 
 if watch:
-    watcher = gWatcher(list(input.glob(f"*.{EXT}")))
+    watcher = ProjectWatcher(list(input.glob(f"*.{EXT}")))
     watcher.input = input
     watcher.output = output
     watcher.watch()
