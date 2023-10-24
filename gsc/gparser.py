@@ -1,9 +1,12 @@
+from __future__ import annotations
 import importlib.resources
-
+from typing import TYPE_CHECKING
 from lark.lark import Lark
-from lark.lexer import Token
 
-gparser = Lark(importlib.resources.open_text("res", "grammar.lark"))
+if TYPE_CHECKING:
+    from lark.lexer import Token
+
+parser = Lark(importlib.resources.open_text("res", "grammar.lark"))
 
 
 def literal(literal: Token) -> str:

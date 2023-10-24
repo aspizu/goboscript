@@ -5,8 +5,8 @@ from importlib.resources import files
 import res
 from sb3 import Sprite
 from gerror import FileError
-from gparser import gparser
-from gincluder import gIncluder
+from gparser import parser
+from gincluder import Includer
 from lark.lexer import Token
 from sb3.cleanup import cleanup
 from lark.visitors import Interpreter
@@ -30,9 +30,9 @@ class SpriteInterpreter(Interpreter[Token, None]):
         listglobals: list[str],
     ):
         tree.children.insert(
-            0, gparser.parse((files(res) / "standard_library.gs").read_text())
+            0, parser.parse((files(res) / "standard_library.gs").read_text())
         )
-        tree = gIncluder(project).transform(tree)
+        tree = Includer(project).transform(tree)
         super().__init__()
         self.sprite = Sprite(name, {}, {}, [], [])
         self.gdefinitionvisitor = DefinitionVisitor(

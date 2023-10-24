@@ -6,7 +6,7 @@ from sb3 import Project
 from gerror import Error
 from gerror import FileError
 from gerror import wrap_lark_errors
-from gparser import gparser
+from gparser import parser
 from gspriteinterpreter import SpriteInterpreter
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ def build_gsprite(sprite: Path, globals: list[str], listglobals: list[str]):
             file=sprite,
         )
     name = "Stage" if name == "stage" else name
-    ast = wrap_lark_errors(lambda: gparser.parse(sprite.read_text()), sprite)
+    ast = wrap_lark_errors(lambda: parser.parse(sprite.read_text()), sprite)
     return wrap_lark_errors(
         lambda: SpriteInterpreter(sprite.parent, name, ast, globals, listglobals),
         sprite,
