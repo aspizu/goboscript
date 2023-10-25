@@ -39,7 +39,7 @@ get_command_pip() {
   fi
   if ! test -z "$PIP"; then
     set +e
-    $PIP install --break-system-packages 2&>1 /dev/null
+    $PIP install --break-system-packages &> /dev/null
     if test "$?" -eq 1; then
       PIP_INSTALL="$PIP install --break-system-packages"
     else
@@ -70,7 +70,7 @@ get_command_python() {
 }
 
 has_python_package() {
-  echo "import $1" | $PYTHON 2&>1 /dev/null
+  echo "import $1" | $PYTHON &> /dev/null
 }
 
 install_package() {
