@@ -38,11 +38,14 @@ get_command_pip() {
     fi
   fi
   if ! test -z "$PIP"; then
-    if $PIP install --break-system-packages 2&>1 /dev/null; then
+    set +e
+    $PIP install --break-system-packages 2&>1 /dev/null
+    if test "$?" -eq 1; then
       $PIP_INSTALL="$PIP install --break-system-packages"
     else
       $PIP_INSTALL="$PIP install"
     fi
+    set -e
   fi
 }
 
