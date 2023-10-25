@@ -41,9 +41,9 @@ get_command_pip() {
     set +e
     $PIP install --break-system-packages 2&>1 /dev/null
     if test "$?" -eq 1; then
-      $PIP_INSTALL="$PIP install --break-system-packages"
+      PIP_INSTALL="$PIP install --break-system-packages"
     else
-      $PIP_INSTALL="$PIP install"
+      PIP_INSTALL="$PIP install"
     fi
     set -e
   fi
