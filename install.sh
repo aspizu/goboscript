@@ -167,6 +167,10 @@ if test -f /etc/os-release; then
       archlinux
       exit
       ;;
+    ("Void Linux")
+      voidlinux
+      exit
+      ;;
     ("Ubuntu" | "Debian")
       debian
       exit
@@ -200,6 +204,11 @@ fi
 
 if has_command pacman; then
   archlinux
+  exit
+fi
+
+if has_command xbps-install; then
+  voidlinux
   exit
 fi
 
