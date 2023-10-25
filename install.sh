@@ -37,6 +37,14 @@ get_command_pip() {
       PIP="$PYTHON -m pip"
     fi
   fi
+  if ! test -z "$PIP"; then
+    $PIP install --break-system-packages 2&>1 /dev/null
+    if test "$?" -eq 1; then
+      $PIP_INSTALL="$PIP install --break-system-packages"
+    else
+      $PIP_INSTALL="$PIP install"
+    fi
+  fi
 }
 
 get_command_python() {
@@ -64,7 +72,7 @@ has_python_package() {
 }
 
 install_package() {
-  $PIP install --break-system-packages --editable .
+  $PIP_INSTALL --editable .
 }
 
 install_command() {
@@ -84,7 +92,7 @@ archlinux() {
 voidlinux() {
   sudo xbps-install -y python3 python3-pip python3-setuptools
   get_command_pip
-  $PIP install lark
+  $PIP_INSTALL lark
   install_package
   get_bindir
   install_command
@@ -114,7 +122,7 @@ haiku() {
     echo "Re-run this script after rebooting."
     exit
   fi
-  $PIP install lark
+  $PIP_INSTALL lark
   install_package
   BINDIR=~/config/non-packaged/bin
   install_command
@@ -159,7 +167,7 @@ if test -f /etc/os-release; then
       debian
       exit
       ;;
-    ("Fedora" | "RHEL")
+    ("Fedora" | "Red Hat"*)
       fedora
       exit
       ;;
@@ -180,6 +188,21 @@ case "$OSTYPE" in
   (*)
     ;;
 esac
+
+if has_command apt; then
+  debian
+  exit
+fi
+
+if has_command pacman; then
+  archlinux
+  exit
+fi
+
+if has_command dnf; then
+  fedora
+  exit
+fi
 
 unknown_os
 exit
