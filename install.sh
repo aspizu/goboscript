@@ -101,7 +101,7 @@ voidlinux() {
 }
 
 fedora() {
-  sudo dnf install -y python3 python3-pip python3-setuptools python3-lark
+  sudo dnf install -y python3 python3-pip python3-setuptools python3-lark*
   get_command_pip
   install_package
   get_bindir
