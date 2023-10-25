@@ -36,6 +36,19 @@ goboscript projects to continue developing them with goboscript.
 
 # Installation
 
+Clone the repo `git clone https://github.com/aspizu/goboscript && cd goboscript`
+Run [`bash install.sh`](./install.sh) to automatically install goboscript.
+
+#### OSes supported by the install script:
+ - Arch Linux
+ - Void Linux
+ - Debian based distros (Ubuntu **LTS** is not supported)
+ - Fedora based distros
+ - Haiku OS
+
+If your OS is not supported, try running the script anyway as it can try the
+installation if you have python and pip installed.
+
 # Documentation
 
 [Documentation Index](docs/DOCS.md)
