@@ -79,7 +79,8 @@ install_package() {
 
 install_command() {
   mkdir -p $BINDIR
-  echo -e '#!/bin/sh\nexec python -m goboscript "$@"' > $BINDIR/gsc
+  get_command_python
+  echo -e '#!/bin/sh\nexec '$PYTHON' -m goboscript "$@"' > $BINDIR/gsc
   chmod +x $BINDIR/gsc
   echo "Goboscript is installed, Use the gsc command to run it."
 }
