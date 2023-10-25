@@ -178,7 +178,7 @@ class BlockTransformer(Transformer[Token, Block]):
                 raise TokenError(
                     "Too many arguments for function",
                     opcode,
-                    f"Expected {num_plural(len(prototype), ' argument')}",
+                    f"Expected {num_plural(len(prototype.arguments), ' argument')}",
                 )
             if len(arguments) < len(prototype.arguments):
                 raise TokenError(

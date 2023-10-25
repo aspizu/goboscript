@@ -197,7 +197,7 @@ class DefinitionVisitor(Interpreter[Token, None]):
 
         image = Image.open(file)
         if format is None:
-            data = list(image.tobytes())  # pyright: ignore[reportUnknownMemberType]
+            data = list(image.tobytes())
         else:
             msg = "Invalid imagelist format."
             raise TokenError(

@@ -7,7 +7,10 @@ from . import res
 if TYPE_CHECKING:
     from lark.lexer import Token
 
-parser = Lark((files(res) / "grammar.lark").open())
+
+def get_parser(*, semi: bool):
+    file = "grammar_semi.lark" if semi else "grammar_nosemi.lark"
+    return Lark((files(res) / file).open())
 
 
 def literal(literal: Token) -> str:

@@ -1,11 +1,32 @@
-costumes "blank.svg";
+costumes "blank.svg"
 
-onflag {
-  foo = 100;
-  main;
-  // say main:foo;
+macro render_square! x, y, w {
+  goto x! + w! / 2, y! + w! / 2
+  setsize w!
+  stamp
 }
 
-def main {
-  local foo = 200;
+def render_rectangle x, y, w, h {
+  if 0 < $w and 0 < $h {
+    return
+  }
+  if $w < $h {
+    render_square! $x, $y, $w
+    render_rectangle $x, $y + $w, $w, $h - $w
+  } else {
+    render_square! $x, $y, $h
+    render_rectangle $x + $h, $y, $w - $h, $h
+  }
+}
+
+onflag {
+  x = 100
+  render_rectangle (
+    0),
+    0,
+    125,
+    98
+  if 0 < x < 100 {
+
+  }
 }

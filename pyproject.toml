@@ -10,11 +10,23 @@ dependencies = ["lark"]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-
 [tool.pyright]
 typeCheckingMode = "strict"
-reportIncompatibleMethodOverride = false
-
+# If a library doesn't provide type-stubs, this disables type-checking.
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportMissingModuleSource = false
+# Some libraries just don't provide type-stubs.
+reportMissingTypeStubs = false
+reportWildcardImportFromLibrary = false
+enableTypeIgnoreComments = false
+# A "type: ignore" comment should not be used, instead use a "pyright: ignore[rule1, ...]" comment
+# to ignore specific rules.
+reportUnnecessaryTypeIgnoreComment = true
+strictParameterNoneValue = true
+# "x: int | None = None" should not be "x: int = None"
+ 
 [tool.ruff]
 line-length = 88
 select = ["ALL"]

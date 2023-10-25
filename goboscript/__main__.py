@@ -5,6 +5,7 @@ from pathlib import Path
 from .lib import EXT, Watcher
 from .build import build_gproject
 from .error import Error
+from .parser import get_parser
 
 argparser = argparse.ArgumentParser(
     "gsc",
@@ -40,6 +41,9 @@ argparser.add_argument(
     "--watch", action="store_true", help="Watch for file changes and recompile."
 )
 argparser.add_argument(
+    "--semi", action="store_true", help="Use old semi-colon based syntax."
+)
+argparser.add_argument(
     "-input",
     type=input_t,
     help="Project directory. (If not given, working directory is chosen.)",
@@ -54,6 +58,11 @@ argparser.add_argument(
 args = argparser.parse_args()
 init_cmd = args.init
 watch = args.watch
+semi = args.semi
+if semi:
+    parser = get_parser(semi=True)
+else:
+    parser = get_parser(semi=False)
 if init_cmd:
     path = Path().absolute()
     if (path / f"stage.{EXT}").is_file():
@@ -87,9 +96,9 @@ class ProjectWatcher(Watcher):
     input: Path
     output: Path
 
-    def on_change(self, _file: Path) -> None:
+    def on_change(self, file: Path) -> None:  # noqa: ARG002
         try:
-            build_gproject(self.input).package(self.output)
+            build_gproject(self.input, parser).package(self.output)
         except Error as err:
             err.print()
 
@@ -101,6 +110,6 @@ if watch:
     watcher.watch()
 else:
     try:
-        build_gproject(input).package(output)
+        build_gproject(input, parser).package(output)
     except Error as err:
         err.print()

@@ -102,12 +102,16 @@ def wrap_lark_errors(func: Callable[[], T], file: Path) -> T:
         ) from e
     except lark.exceptions.UnexpectedCharacters as e:
         token = Token("NULL", "#", None, e.line, e.column)
-        help = ""
-        if "BANG" in e.allowed:
-            help = ", Macro syntax has changed, use the syntax macro foo!() -> bar;"
+        if e.char == ";":
+            raise TokenError(
+                "Use of semicolons",
+                token,
+                "Use the command-line argument --semi to enable old syntax.",
+                file,
+            ) from e
         raise TokenError(
             "Unexpected characters",
             token,
-            "Expected one of: " + ", ".join(e.allowed) + help,
+            "Expected one of: " + ", ".join(e.allowed),
             file,
         ) from e

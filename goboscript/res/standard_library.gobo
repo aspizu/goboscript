@@ -23,7 +23,6 @@ macro stdMax!(a, b)
 macro stdDot!(x1, y1, x2, y2)
   -> !x1 * !x2 + !y1 * !y2;
 
-*/
-
-
 macro stdParseBinary!(value) -> 0 + join("0b", value!);
+
+*/

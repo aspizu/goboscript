@@ -1,9 +1,9 @@
 start: declr*
 
-declr: "costumes" _stringlist ";" -> declr_costumes
-     | "use" STRING ";" -> declr_use
-     | "datalist" NAME STRING ";" -> datalist
-     | "imagelist" NAME STRING [STRING] ";" -> imagelist
+declr: "costumes" _stringlist "\n" -> declr_costumes
+     | "use" STRING "\n" -> declr_use
+     | "datalist" NAME STRING "\n" -> datalist
+     | "imagelist" NAME STRING [STRING] "\n" -> imagelist
      | "def" NAME _namelist stack -> declr_function
      | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
      | "on" STRING stack -> declr_on
@@ -15,20 +15,20 @@ declr: "costumes" _stringlist ";" -> declr_costumes
      | "ontimer" expr stack -> declr_ontimer
      | "onclone" stack -> declr_onclone
      | "macro" MACROVAR _macrovarlist stack -> declr_block_macro
-     | "macro" MACROVAR "(" _macrovarlist ")" "->" expr ";" -> declr_macro
+     | "macro" MACROVAR "(" _macrovarlist ")" "->" expr "\n" -> declr_macro
      | LCOMMENT -> declr_comment
 
 stack: "{" block* "}"
 
-block: _lvalue "=" expr ";" -> varset
-     | "local" _lvalue "=" expr ";" -> localvar
-     | _lvalue "++" ";"      -> varinc
-     | _lvalue "+=" expr ";" -> varchange
-     | _lvalue "-=" expr ";" -> varsub
-     | _lvalue "*=" expr ";" -> varmul
-     | _lvalue "/=" expr ";" -> vardiv
-     | _lvalue "%=" expr ";" -> varmod
-     | _lvalue "&=" expr ";" -> varjoin
+block: _lvalue "=" expr "\n" -> varset
+     | "local" _lvalue "=" expr "\n" -> localvar
+     | _lvalue "++" "\n"      -> varinc
+     | _lvalue "+=" expr "\n" -> varchange
+     | _lvalue "-=" expr "\n" -> varsub
+     | _lvalue "*=" expr "\n" -> varmul
+     | _lvalue "/=" expr "\n" -> vardiv
+     | _lvalue "%=" expr "\n" -> varmod
+     | _lvalue "&=" expr "\n" -> varjoin
      | "if" expr stack -> block_if
      | "if" expr stack "else" stack -> block_if_else
      | "if" expr stack ("elif" expr stack)+ -> block_if_elif
@@ -36,22 +36,22 @@ block: _lvalue "=" expr ";" -> varset
      | "until" expr stack -> until
      | "forever" stack -> forever
      | "repeat" expr stack -> repeat
-     | _lvalue "=" "[" _exprlist "]" ";" -> listset
-     | _lvalue ".add" expr ";" -> listadd
-     | _lvalue ".delete" expr ";" -> listdelete
-     | _lvalue ".insert" expr "," expr ";" -> listinsert
-     | _lvalue "[" expr "]" "=" expr ";" -> listreplace
-     | _lvalue "[" expr "]" "+=" expr ";" -> listreplaceadd
-     | _lvalue "[" expr "]" "-=" expr ";" -> listreplacesub
-     | _lvalue "[" expr "]" "*=" expr ";" -> listreplacemul
-     | _lvalue "[" expr "]" "/=" expr ";" -> listreplacediv
-     | _lvalue "[" expr "]" "%=" expr ";" -> listreplacemod
-     | _lvalue "[" expr "]" "&=" expr ";" -> listreplacejoin
-     | _lvalue ".show" ";" -> listshow
-     | _lvalue ".hide" ";" -> listhide
+     | _lvalue "=" "[" _exprlist "]" "\n" -> listset
+     | _lvalue ".add" expr "\n" -> listadd
+     | _lvalue ".delete" expr "\n" -> listdelete
+     | _lvalue ".insert" expr "," expr "\n" -> listinsert
+     | _lvalue "[" expr "]"  "=" expr "\n" -> listreplace
+     | _lvalue "[" expr "]" "+=" expr "\n" -> listreplaceadd
+     | _lvalue "[" expr "]" "-=" expr "\n" -> listreplacesub
+     | _lvalue "[" expr "]" "*=" expr "\n" -> listreplacemul
+     | _lvalue "[" expr "]" "/=" expr "\n" -> listreplacediv
+     | _lvalue "[" expr "]" "%=" expr "\n" -> listreplacemod
+     | _lvalue "[" expr "]" "&=" expr "\n" -> listreplacejoin
+     | _lvalue ".show" "\n" -> listshow
+     | _lvalue ".hide" "\n" -> listhide
      | "..." -> nop
-     | MACROVAR _exprlist ";" -> block_macro
-     | NAME _exprlist ";" [LCOMMENT]
+     | MACROVAR _exprlist "\n" -> block_macro
+     | NAME _exprlist "\n" [LCOMMENT]
 
 _lvalue: (IDENTIFIER|macrovar)
 

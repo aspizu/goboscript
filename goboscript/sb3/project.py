@@ -8,7 +8,7 @@ from itertools import chain
 if TYPE_CHECKING:
     from pathlib import Path
     from lib import JSON
-    from .gsprite import Sprite
+    from .sprite import Sprite
 
 
 class Project:
