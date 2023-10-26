@@ -1,32 +1,10 @@
-costumes "blank.svg"
+costumes "*.svg"
 
-macro render_square! x, y, w {
-  goto x! + w! / 2, y! + w! / 2
-  setsize w!
-  stamp
-}
-
-def render_rectangle x, y, w, h {
-  if 0 < $w and 0 < $h {
-    return
+onflag
+{
+  forever
+  {
+    say "Hello"
   }
-  if $w < $h {
-    render_square! $x, $y, $w
-    render_rectangle $x, $y + $w, $w, $h - $w
-  } else {
-    render_square! $x, $y, $h
-    render_rectangle $x + $h, $y, $w - $h, $h
-  }
-}
-
-onflag {
-  x = 100
-  render_rectangle (
-    0),
-    0,
-    125,
-    98
-  if 0 < x < 100 {
-
-  }
+  say "Unreachable code"
 }

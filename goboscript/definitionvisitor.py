@@ -59,6 +59,9 @@ class LocalsCollector(Visitor[Token]):
         token = cast(Token, tree.children[0])
         qualname = str(token)
 
+        if qualname in self.globals:
+            return
+
         if qualname in self.locals:
             return
 
@@ -73,6 +76,9 @@ class LocalsCollector(Visitor[Token]):
     def listset(self, tree: Tree[Token]):
         token = cast(Token, tree.children[0])
         qualname = str(token)
+
+        if qualname in self.listglobals:
+            return
 
         if qualname in self.sprite.lists:
             return
@@ -135,7 +141,15 @@ class DefinitionVisitor(Interpreter[Token, None]):
     def declr_costumes(self, tree: Tree[Token]):
         for costume in cast(list[Token], tree.children):
             pattern = literal(costume)
-            if "*" in pattern:
+            if pattern == "*machine:ASCII":
+                for i in range(33, 127):
+                    self.sprite.costumes.append(
+                        Costume(
+                            self.project / "blank.svg",
+                            alias=chr(i),
+                        )
+                    )
+            elif "*" in pattern:
                 paths = sorted(self.project.glob(pattern), key=lambda path: path.stem)
                 if len(paths) == 0:
                     msg = f"Glob does not match any files {pattern}"

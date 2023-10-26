@@ -43,12 +43,7 @@ def coerce_condition(input: Input, *, negate: bool = False) -> Block:
         if negate:
             return block
         return ConditionBlock("operator_not", {"OPERAND": block}, {})
-    block = ConditionBlock(
-        "operator_equals",
-        {"OPERAND1": "0", "OPERAND2": input},
-        {},
-        comment="auto-generated",
-    )
+    block = ConditionBlock("operator_equals", {"OPERAND1": "0", "OPERAND2": input}, {})
     if negate:
         return block
     return ConditionBlock("operator_not", {"OPERAND": block}, {})
@@ -69,7 +64,7 @@ def mkelif(
                 "control_if",
                 {
                     "CONDITION": coerce_condition(this[0]),
-                    "SUBSTACK": coerce_condition(this[1]),
+                    "SUBSTACK": this[1],
                 },
                 {},
             )
@@ -77,7 +72,7 @@ def mkelif(
             "control_if_else",
             {
                 "CONDITION": coerce_condition(this[0]),
-                "SUBSTACK": coerce_condition(this[1]),
+                "SUBSTACK": this[1],
                 "SUBSTACK2": _else,
             },
             {},
@@ -86,7 +81,7 @@ def mkelif(
         "control_if_else",
         {
             "CONDITION": coerce_condition(this[0]),
-            "SUBSTACK": coerce_condition(this[1]),
+            "SUBSTACK": this[1],
             "SUBSTACK2": Stack([mkelif(rest, nxt, _else)]),
         },
         {},
@@ -293,9 +288,29 @@ class BlockTransformer(Transformer[Token, Block]):
         )
 
     def gt(self, args: list[Input]):
+        # if isinstance(args[0], Block) and args[0].opcode == "operator_gt":
+        #     return Block.from_prototype(
+        #         reporter_prototypes["AND"],
+        #         [
+        #             args[0],
+        #             Block.from_prototype(
+        #                 reporter_prototypes["gt"], [args[0].inputs["OPERAND2"], args[1]]
+        #             ),
+        #         ],
+        #     )
         return ConditionBlock.from_prototype(reporter_prototypes["gt"], args)
 
     def lt(self, args: list[Input]):
+        # if isinstance(args[0], Block) and args[0].opcode == "operator_lt":
+        #     return Block.from_prototype(
+        #         reporter_prototypes["AND"],
+        #         [
+        #             args[0],
+        #             Block.from_prototype(
+        #                 reporter_prototypes["lt"], [args[0].inputs["OPERAND2"], args[1]]
+        #             ),
+        #         ],
+        #     )
         return ConditionBlock.from_prototype(reporter_prototypes["lt"], args)
 
     def ge(self, args: list[Input]):

@@ -44,12 +44,14 @@ class Block:
         opcode: str,
         inputs: Mapping[str, Input],
         fields: Mapping[str, Field],
+        token: Token,
         comment: str | None = None,
     ):
         self.opcode = opcode
         self.inputs = inputs
         self.fields = fields
         self.comment: str | None = comment
+        self.token = token
         self.x = 0
         self.y = 0
         self.id = str(id(self))
@@ -59,6 +61,7 @@ class Block:
         cls,
         prototype: Prototype,
         arguments: Iterable[Input],
+        token: Token,
         comment: str | None = None,
     ):
         opcode = prototype.opcode
@@ -73,10 +76,11 @@ class Block:
         if prototype.name[-1] == "?":
             cls = ConditionBlock
         return cls(
-            opcode,
-            {**dict(zip(prototype.arguments, arguments)), **inputs},
-            fields,
-            comment,
+            opcode=opcode,
+            inputs={**dict(zip(prototype.arguments, arguments)), **inputs},
+            fields=fields,
+            token=token,
+            comment=comment,
         )
 
     def __rich_repr__(self) -> Any:
@@ -171,8 +175,9 @@ class HatBlock(Block):
         inputs: dict[str, Input],
         fields: dict[str, Field],
         stack: Stack,
+        token: Token,
     ):
-        super().__init__(opcode, inputs, fields)
+        super().__init__(opcode, inputs, fields, token)
         self.stack = stack
 
     def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
@@ -183,8 +188,8 @@ class HatBlock(Block):
 
 
 class Argument(Block):
-    def __init__(self, name: str, *, shadow: bool = False):
-        super().__init__("argument_reporter_string_number", {}, {"VALUE": name})
+    def __init__(self, name: str, token: Token, *, shadow: bool = False):
+        super().__init__("argument_reporter_string_number", {}, {"VALUE": name}, token)
         self.shadow = shadow
 
     def serialize(self, blocks: BlockListType, next: str | None, parent: str | None):
@@ -200,10 +205,11 @@ class ProcCall(Block):
         inputs: dict[str, Input],
         comment: str | None,
         proccode: str | None,
+        token: Token,
         *,
         warp: bool,
     ):
-        super().__init__("procedures_call", inputs, {}, comment)
+        super().__init__("procedures_call", inputs, {}, token, comment)
         self.name = name
         self.warp = warp
         self.proccode = proccode
@@ -214,18 +220,19 @@ class ProcCall(Block):
             "tagName": "mutation",
             "children": [],
             "proccode": self.proccode
-            or proccode(self.name, {i: Argument(i) for i in self.inputs}),
+            or proccode(self.name, {i: Argument(i, None) for i in self.inputs}),
             "argumentids": json.dumps(list(self.inputs.keys())),
             "warp": self.warp,
         }
 
 
 class ProcProto(Block):
-    def __init__(self, name: str, arguments: list[Token], *, warp: bool):
+    def __init__(self, name: str, arguments: list[Token], token: Token, *, warp: bool):
         super().__init__(
             "procedures_prototype",
-            {argument: Argument(argument, shadow=True) for argument in arguments},
+            {argument: Argument(argument, None, shadow=True) for argument in arguments},
             {},
+            token,
         )
         self.name = name
         self.warp = warp
@@ -247,10 +254,19 @@ class ProcProto(Block):
 
 
 class ProcDef(HatBlock):
-    def __init__(self, name: str, arguments: list[Token], stack: Stack, *, warp: bool):
+    def __init__(
+        self,
+        name: str,
+        arguments: list[Token],
+        stack: Stack,
+        token: Token,
+        *,
+        warp: bool,
+    ):
         super().__init__(
             "procedures_definition",
             {"custom_block": ProcProto(name, arguments, warp=warp)},
             {},
             stack,
+            token,
         )

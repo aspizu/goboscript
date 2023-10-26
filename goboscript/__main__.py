@@ -59,10 +59,7 @@ args = argparser.parse_args()
 init_cmd = args.init
 watch = args.watch
 semi = args.semi
-if semi:
-    parser = get_parser(semi=True)
-else:
-    parser = get_parser(semi=False)
+parser = get_parser(semi=semi)
 if init_cmd:
     path = Path().absolute()
     if (path / f"stage.{EXT}").is_file():

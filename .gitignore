@@ -134,3 +134,5 @@ dmypy.json
 
 *.sb3
 *project.json
+
+tree-sitter-goboscript/

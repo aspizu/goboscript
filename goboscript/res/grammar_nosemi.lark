@@ -1,90 +1,95 @@
 start: declr*
 
-declr: "costumes" _stringlist "\n" -> declr_costumes
-     | "use" STRING "\n" -> declr_use
-     | "datalist" NAME STRING "\n" -> datalist
-     | "imagelist" NAME STRING [STRING] "\n" -> imagelist
-     | "def" NAME _namelist stack -> declr_function
-     | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
-     | "on" STRING stack -> declr_on
-     | "onflag" stack -> declr_onflag
-     | "onkey" STRING stack -> declr_onkey
-     | "onclick" stack -> declr_onclick
-     | "onbackdrop" STRING stack -> declr_onbackdrop
-     | "onloudness" expr stack -> declr_onloudness
-     | "ontimer" expr stack -> declr_ontimer
-     | "onclone" stack -> declr_onclone
-     | "macro" MACROVAR _macrovarlist stack -> declr_block_macro
-     | "macro" MACROVAR "(" _macrovarlist ")" "->" expr "\n" -> declr_macro
-     | LCOMMENT -> declr_comment
+?declr: "costumes" _stringlist _NL -> declr_costumes
+  | "use" STRING _NL -> declr_use
+  | "datalist" NAME STRING _NL -> datalist
+  | "imagelist" NAME STRING [STRING] _NL -> imagelist
+  | "def" NAME _namelist stack -> declr_function
+  | "nowarp" "def" NAME _namelist stack -> declr_function_nowarp
+  | "on" STRING stack -> declr_on
+  | "onflag" stack -> declr_onflag
+  | "onkey" STRING stack -> declr_onkey
+  | "onclick" stack -> declr_onclick
+  | "onbackdrop" STRING stack -> declr_onbackdrop
+  | "onloudness" expr stack -> declr_onloudness
+  | "ontimer" expr stack -> declr_ontimer
+  | "onclone" stack -> declr_onclone
+  | "macro" MACROVAR _macrovarlist stack -> declr_block_macro
+  | "macro" MACROVAR "(" _macrovarlist ")" "->" expr _NL -> declr_macro
+  | LCOMMENT -> declr_comment
 
 stack: "{" block* "}"
 
-block: _lvalue "=" expr "\n" -> varset
-     | "local" _lvalue "=" expr "\n" -> localvar
-     | _lvalue "++" "\n"      -> varinc
-     | _lvalue "+=" expr "\n" -> varchange
-     | _lvalue "-=" expr "\n" -> varsub
-     | _lvalue "*=" expr "\n" -> varmul
-     | _lvalue "/=" expr "\n" -> vardiv
-     | _lvalue "%=" expr "\n" -> varmod
-     | _lvalue "&=" expr "\n" -> varjoin
-     | "if" expr stack -> block_if
-     | "if" expr stack "else" stack -> block_if_else
-     | "if" expr stack ("elif" expr stack)+ -> block_if_elif
-     | "if" expr stack ("elif" expr stack)+ "else" stack -> block_if_elif_else
-     | "until" expr stack -> until
-     | "forever" stack -> forever
-     | "repeat" expr stack -> repeat
-     | _lvalue "=" "[" _exprlist "]" "\n" -> listset
-     | _lvalue ".add" expr "\n" -> listadd
-     | _lvalue ".delete" expr "\n" -> listdelete
-     | _lvalue ".insert" expr "," expr "\n" -> listinsert
-     | _lvalue "[" expr "]"  "=" expr "\n" -> listreplace
-     | _lvalue "[" expr "]" "+=" expr "\n" -> listreplaceadd
-     | _lvalue "[" expr "]" "-=" expr "\n" -> listreplacesub
-     | _lvalue "[" expr "]" "*=" expr "\n" -> listreplacemul
-     | _lvalue "[" expr "]" "/=" expr "\n" -> listreplacediv
-     | _lvalue "[" expr "]" "%=" expr "\n" -> listreplacemod
-     | _lvalue "[" expr "]" "&=" expr "\n" -> listreplacejoin
-     | _lvalue ".show" "\n" -> listshow
-     | _lvalue ".hide" "\n" -> listhide
-     | "..." -> nop
-     | MACROVAR _exprlist "\n" -> block_macro
-     | NAME _exprlist "\n" [LCOMMENT]
+?block: _lvalue "=" expr _NL -> varset
+  | "local" _lvalue "=" expr _NL -> localvar
+  | _lvalue "++" _NL      -> varinc
+  | _lvalue "+=" expr _NL -> varchange
+  | _lvalue "-=" expr _NL -> varsub
+  | _lvalue "*=" expr _NL -> varmul
+  | _lvalue "/=" expr _NL -> vardiv
+  | _lvalue "%=" expr _NL -> varmod
+  | _lvalue "&=" expr _NL -> varjoin
+  | "if" expr stack -> block_if
+  | "if" expr stack "else" stack -> block_if_else
+  | "if" expr stack ("elif" expr stack)+ -> block_if_elif
+  | "if" expr stack ("elif" expr stack)+ "else" stack -> block_if_elif_else
+  | "until" expr stack -> until
+  | "forever" stack -> forever
+  | "repeat" expr stack -> repeat
+  | _lvalue "=" "[" _exprlist "]" _NL -> listset
+  | _lvalue ".add" expr _NL -> listadd
+  | _lvalue ".delete" expr _NL -> listdelete
+  | _lvalue ".insert" expr "," expr _NL -> listinsert
+  | _lvalue "[" expr "]"  "=" expr _NL -> listreplace
+  | _lvalue "[" expr "]" "+=" expr _NL -> listreplaceadd
+  | _lvalue "[" expr "]" "-=" expr _NL -> listreplacesub
+  | _lvalue "[" expr "]" "*=" expr _NL -> listreplacemul
+  | _lvalue "[" expr "]" "/=" expr _NL -> listreplacediv
+  | _lvalue "[" expr "]" "%=" expr _NL -> listreplacemod
+  | _lvalue "[" expr "]" "&=" expr _NL -> listreplacejoin
+  | _lvalue ".show" _NL -> listshow
+  | _lvalue ".hide" _NL -> listhide
+  | MACROVAR _exprlist _NL -> block_macro
+  | NAME _exprlist [LCOMMENT] ";"? _NL
 
-_lvalue: (IDENTIFIER|macrovar)
-
+_lvalue: IDENTIFIER|macrovar
 macrovar: MACROVAR
 
-expr: "(" expr ")"
-    | STRING | NUMBER | FLOAT | CONST
-    | IDENTIFIER -> var
-    | ARGUMENT -> argument
-    | macrovar
-    | NAME "(" _exprlist ")" -> reporter
-    | MACROVAR "(" _exprlist ")" -> macro
-    | expr "and" expr -> andop
-    | expr "or" expr -> orop
-    | "not" expr -> notop
-    | expr "in" expr -> inop
-    | expr "=" expr -> eq
-    | expr "!=" expr -> neq
-    | expr ">" expr -> gt
-    | expr "<" expr -> lt
-    | expr ">=" expr -> ge
-    | expr "<=" expr -> le
-    | expr "+" expr -> add
-    | expr "-" expr -> sub
-    | expr "*" expr -> mul
-    | expr "/" expr -> div
-    | expr "%" expr -> mod
-    | expr "&" expr -> join
-    | "-" expr -> minus
-    | NAME "[" expr "]" -> listitem
-    | NAME ".index" "(" expr ")" -> listindex
-    | NAME ".contains" "(" expr ")" -> listcontains
-    | NAME ".length" -> listlength
+?expr: cmp
+  | expr "and" cmp  -> andop
+  | expr "or" cmp   -> orop
+
+?cmp: sum
+  | "not" cmp       -> notop
+  | cmp "in" sum    -> inop
+  | cmp "=" sum     -> eq
+  | cmp "!=" sum    -> neq
+  | cmp "<" sum     -> lt
+  | cmp ">" sum     -> gt
+  | cmp "<=" sum    -> le
+  | cmp ">=" sum    -> ge
+
+?sum: product
+  | sum "+" product  -> add
+  | sum "-" product  -> sub
+
+?product: atom
+  | product "*" atom  -> mul
+  | product "/" atom  -> div
+  | product "%" atom  -> mod
+  | product "&" atom  -> join
+
+?atom: NUMBER | STRING | FLOAT | CONST
+  | "-" atom                    -> minus
+  | IDENTIFIER                  -> var
+  | ARGUMENT                    -> argument
+  | macrovar
+  | NAME "(" _exprlist ")"      -> reporter
+  | MACROVAR "(" _exprlist ")"  -> macro
+  | NAME "[" expr "]"           -> listitem
+  | NAME ".index" "(" expr ")"  -> listindex
+  | NAME ".length"              -> listlength
+  | "(" expr ")"
 
 _exprlist: [expr ("," expr)*]
 _stringlist: [STRING ("," STRING)*]
@@ -99,7 +104,7 @@ STRING: /"([^"\\]|\\.)*"/
 NUMBER: /-?[0-9]+/
 FLOAT: /-?[0-9]+\.[0-9]+/
 CONST: "true" | "false"
-
+_NL: "\n"
 COMMENT: /\/\*(\*(?!\/)|[^*])*\*\//
 SCOMMENT: /\/\/.*/
 LCOMMENT: "(*" /(.|\n)+/ "*)"

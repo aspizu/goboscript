@@ -33,8 +33,8 @@ colortouchingcolor?| COLOR, COLOR2      | sensing_coloristouchingcolor
 distance           | DISTANCETOMENU     | sensing_distanceto
 distancetomouse    |                    | sensing_distanceto!DISTANCETOMENU=_mouse_
 answer             |                    | sensing_answer
-keydown            | KEY_OPTION         | sensing_keypressed
-mousedown          |                    | sensing_mousedown
+keydown?           | KEY_OPTION         | sensing_keypressed
+mousedown?         |                    | sensing_mousedown
 mousex             |                    | sensing_mousex
 mousey             |                    | sensing_mousey
 loudness           |                    | sensing_loudness
