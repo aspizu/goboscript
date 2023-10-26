@@ -44,7 +44,7 @@ class Block:
         opcode: str,
         inputs: Mapping[str, Input],
         fields: Mapping[str, Field],
-        token: Token,
+        token: Token | None = None,
         comment: str | None = None,
     ):
         self.opcode = opcode
@@ -61,7 +61,7 @@ class Block:
         cls,
         prototype: Prototype,
         arguments: Iterable[Input],
-        token: Token,
+        token: Token | None = None,
         comment: str | None = None,
     ):
         opcode = prototype.opcode
@@ -175,7 +175,7 @@ class HatBlock(Block):
         inputs: dict[str, Input],
         fields: dict[str, Field],
         stack: Stack,
-        token: Token,
+        token: Token | None = None,
     ):
         super().__init__(opcode, inputs, fields, token)
         self.stack = stack
@@ -188,7 +188,7 @@ class HatBlock(Block):
 
 
 class Argument(Block):
-    def __init__(self, name: str, token: Token, *, shadow: bool = False):
+    def __init__(self, name: str, token: Token | None = None, *, shadow: bool = False):
         super().__init__("argument_reporter_string_number", {}, {"VALUE": name}, token)
         self.shadow = shadow
 
@@ -205,7 +205,7 @@ class ProcCall(Block):
         inputs: dict[str, Input],
         comment: str | None,
         proccode: str | None,
-        token: Token,
+        token: Token | None = None,
         *,
         warp: bool,
     ):
@@ -227,7 +227,14 @@ class ProcCall(Block):
 
 
 class ProcProto(Block):
-    def __init__(self, name: str, arguments: list[Token], token: Token, *, warp: bool):
+    def __init__(
+        self,
+        name: str,
+        arguments: list[Token],
+        token: Token | None = None,
+        *,
+        warp: bool,
+    ):
         super().__init__(
             "procedures_prototype",
             {argument: Argument(argument, None, shadow=True) for argument in arguments},
@@ -259,13 +266,13 @@ class ProcDef(HatBlock):
         name: str,
         arguments: list[Token],
         stack: Stack,
-        token: Token,
+        token: Token | None = None,
         *,
         warp: bool,
     ):
         super().__init__(
             "procedures_definition",
-            {"custom_block": ProcProto(name, arguments, warp=warp)},
+            {"custom_block": ProcProto(name, arguments, token, warp=warp)},
             {},
             stack,
             token,

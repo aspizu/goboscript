@@ -141,7 +141,9 @@ class BlockTransformer(Transformer[Token, Block]):
         for i, block in enumerate(stack):
             if block.opcode == "control_forever" and (i + 1) != len(stack):
                 msg = "forever cannot be precceded by any statements"
-                raise FileError(msg)  # FIXME: switch to gTokenError but cannot because
+                if block.token is not None:
+                    raise TokenError(msg, block.token)
+                raise FileError(msg)
         return stack
 
     def block(self, args: list[Any]) -> Block:
@@ -166,7 +168,7 @@ class BlockTransformer(Transformer[Token, Block]):
                     opcode,
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
-            return Block.from_prototype(prototype, arguments, comment)
+            return Block.from_prototype(prototype, arguments, opcode, comment)
         if opcode in self.gdefinitionvisitor.functions:
             prototype = self.gdefinitionvisitor.functions[opcode]
             if len(arguments) > len(prototype.arguments):
@@ -187,6 +189,7 @@ class BlockTransformer(Transformer[Token, Block]):
                 comment,
                 prototype.proccode,
                 warp=prototype.warp,
+                token=opcode,
             )
         matches = get_close_matches(
             args[0],
@@ -233,7 +236,7 @@ class BlockTransformer(Transformer[Token, Block]):
             and type(arguments[0]) is str
         ):
             return str(math.sqrt(number(arguments[0])))
-        return Block.from_prototype(prototype, arguments)
+        return Block.from_prototype(prototype, arguments, opcode)
 
     def add(self, args: list[Input]):
         if type(args[0]) is str and type(args[1]) is str:
@@ -402,8 +405,8 @@ class BlockTransformer(Transformer[Token, Block]):
     def repeat(self, args: tuple[Input, Stack]):
         return Block("control_repeat", {"TIMES": args[0], "SUBSTACK": args[1]}, {})
 
-    def forever(self, args: tuple[Stack]):
-        return Block("control_forever", {"SUBSTACK": args[0]}, {})
+    def forever(self, args: tuple[Token, Stack]):
+        return Block("control_forever", {"SUBSTACK": args[1]}, {}, token=args[0])
 
     def localvar(self, args: tuple[Token, Input]):
         variable = self.get_variable(args[0])
@@ -573,9 +576,15 @@ class BlockTransformer(Transformer[Token, Block]):
         list_ = self.get_list(args[0])
         return Block("data_hidelist", {}, {"LIST": list_})
 
-    def listitem(self, args: tuple[Token, Input]):
-        list_ = self.get_list(args[0])
-        return Block("data_itemoflist", {"INDEX": args[1]}, {"LIST": list_})
+    def getitem(self, args: tuple[Input, Input]):
+        if (
+            isinstance(args[0], Token)
+            and args[0].type == "IDENTIFIER"
+            or isinstance(args[0], List)
+        ):
+            list_ = self.get_list(args[0])
+            return Block("data_itemoflist", {"INDEX": args[1]}, {"LIST": list_})
+        return Block.from_prototype(reporter_prototypes["letter"], [args[1], args[0]])
 
     def listindex(self, args: tuple[Token, Input]):
         list_ = self.get_list(args[0])

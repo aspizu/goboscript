@@ -2,9 +2,8 @@ costumes "*.svg"
 
 onflag
 {
-  forever
-  {
-    say "Hello"
-  }
-  say "Unreachable code"
+  variable = "Hello"
+  say variable[1]
+  list = []
+  say list[1][1]
 }

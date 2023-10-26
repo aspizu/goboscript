@@ -34,7 +34,7 @@ stack: "{" block* "}"
   | "if" expr stack ("elif" expr stack)+ -> block_if_elif
   | "if" expr stack ("elif" expr stack)+ "else" stack -> block_if_elif_else
   | "until" expr stack -> until
-  | "forever" stack -> forever
+  | /forever/ stack -> forever
   | "repeat" expr stack -> repeat
   | _lvalue "=" "[" _exprlist "]" _NL -> listset
   | _lvalue ".add" expr _NL -> listadd
@@ -86,7 +86,7 @@ macrovar: MACROVAR
   | macrovar
   | NAME "(" _exprlist ")"      -> reporter
   | MACROVAR "(" _exprlist ")"  -> macro
-  | NAME "[" expr "]"           -> listitem
+  | atom "[" expr "]"           -> getitem
   | NAME ".index" "(" expr ")"  -> listindex
   | NAME ".length"              -> listlength
   | "(" expr ")"
