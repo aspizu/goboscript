@@ -26,9 +26,7 @@ def build_gsprite(
     paste = PasteBuilder(relative=sprite.parent).include(sprite).paste
     ast = wrap_lark_errors(lambda: parser.parse("".join(paste.lines)), paste, sprite)
     return wrap_lark_errors(
-        lambda: SpriteInterpreter(
-            sprite.parent, name, ast, globals, listglobals, parser
-        ),
+        lambda: SpriteInterpreter(sprite.parent, name, ast, globals, listglobals),
         paste,
         sprite,
     ).sprite

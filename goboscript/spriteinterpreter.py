@@ -1,13 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, cast
-from importlib.resources import files
 from lark.lexer import Token
 from lark.visitors import Interpreter
-from . import res
-from .lib import EXT
 from .sb3 import Sprite
 from .error import FileError
-from .includer import Includer
 from .sb3.cleanup import cleanup
 from .blocktransformer import BlockTransformer
 from .macrotransformer import MacroTransformer, BlockMacroVisitor
@@ -15,7 +11,6 @@ from .definitionvisitor import DefinitionVisitor
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from lark import Lark
     from lark.tree import Tree
 
 
@@ -27,12 +22,7 @@ class SpriteInterpreter(Interpreter[Token, None]):
         tree: Tree[Token],
         globals: list[str],
         listglobals: list[str],
-        parser: Lark,
     ):
-        tree.children.insert(
-            0, parser.parse((files(res) / f"standard_library.{EXT}").read_text())
-        )
-        tree = Includer(project, parser).transform(tree)
         super().__init__()
         self.sprite = Sprite(name, {}, {}, [], [])
         self.gdefinitionvisitor = DefinitionVisitor(

@@ -1,7 +1,6 @@
 start: declr*
 
 ?declr: "costumes" _stringlist _NL -> declr_costumes
-  | "use" STRING _NL -> declr_use
   | "datalist" NAME STRING _NL -> datalist
   | "imagelist" NAME STRING [STRING] _NL -> imagelist
   | "def" NAME _namelist stack -> declr_function

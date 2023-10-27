@@ -67,7 +67,7 @@ class RangeError(Error):
         file: Path | None = None,
     ):
         super().__init__(description, help)
-        self.range = Range(token.line, token.column, len(token))
+        self.range = Range(token.line, token.column, len(token))  # pyright: ignore[reportGeneralTypeIssues]
         self.file = file
 
     def print(self):

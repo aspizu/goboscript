@@ -1,7 +1,6 @@
 costumes "*.svg"
-%use "mod.h.gobo"
+
 onflag
 {
-  variable = "Hello"
-  say variable
+  say std_min!(1, 2, 3)
 }
