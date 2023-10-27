@@ -1,6 +1,6 @@
 costumes "*.svg"
-
+%use "foo.h.gobo"
 onflag
 {
-  say std_min!(1, 2, 3)
+  say std_min!(1, 2)
 }
