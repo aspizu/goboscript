@@ -1,28 +1,26 @@
-/* Goboscript Standard Library 
+macro std_dist!(x1, y1, x2, y2)
+  -> sqrt((x2! - x1!) * (x2! - x1!) + (y2! - y1!) * (y2! - y1!))
 
-The code in this file is added into every sprite. 
+macro std_mag!(x, y)
+  -> sqrt(x! * x! + y! * y!)
 
-macro stdDistance!(x1, y1, x2, y2)
-  -> sqrt((!x2 - !x1) * (!x2 - !x1) + (!y2 - !y1) * (!y2 - !y1));
+macro std_RGB!(R, G, B)
+  -> 65536 * R! + 256 * G! + B!
 
-macro stdMagnitude!(x, y)
-  -> sqrt(x! * x! + y! * y!);
+macro std_RGBA!(R, G, B)
+  -> 16777216 * A! + std_RGB!(R!, G!, B!)
 
-macro stdRGB!(R, G, B)
-  -> 65536 * R! + 256 * G! + B!;
+macro std_min!(a, b)
+  -> a! - (a! - b!) * (a! > b!)
 
-macro stdRGBA!(R, G, B)
-  -> 16777216 * A! + stdRGB!(R!, G!, B!);
+macro std_max!(a, b)
+  -> a! + (b! - a!) * (b! > a!)
 
-macro stdMin!(a, b)
-  -> !a - (!a - !b) * (!a > !b);
+macro std_lerp!(a, b, c)
+  -> a + (b - a) * c
 
-macro stdMax!(a, b)
-  -> !a + (!b - !a) * (!b > !a);
+macro std_dot!(x1, y1, x2, y2)
+  -> x1! * x2! + y1! * y2!
 
-macro stdDot!(x1, y1, x2, y2)
-  -> !x1 * !x2 + !y1 * !y2;
-
-macro stdParseBinary!(value) -> 0 + join("0b", value!);
-
-*/
+macro std_parse_binary!(value)
+  -> 0 + "0b" & value!

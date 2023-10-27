@@ -1,14 +1,18 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from importlib.resources import files
+from . import res
 from .lib import EXT, dir_suggest
 from .sb3 import Project
-from .error import Error, FileError, wrap_lark_errors
+from .error import Error, FileError, wrap_lark_errors, wrap_and_resolve_errors_in_paste
 from .paste import PasteBuilder
 from .spriteinterpreter import SpriteInterpreter
 
 if TYPE_CHECKING:
     from pathlib import Path
     from lark import Lark
+
+std = files(res) / "standard_library.gobo"
 
 
 def build_gsprite(
@@ -23,10 +27,17 @@ def build_gsprite(
             file=sprite,
         )
     name = "Stage" if name == "stage" else name
-    paste = PasteBuilder(relative=sprite.parent).include(sprite).paste
-    ast = wrap_lark_errors(lambda: parser.parse("".join(paste.lines)), paste, sprite)
-    return wrap_lark_errors(
-        lambda: SpriteInterpreter(sprite.parent, name, ast, globals, listglobals),
+    paste = PasteBuilder(relative=sprite.parent).include(std).include(sprite).paste
+    ast = wrap_and_resolve_errors_in_paste(
+        lambda: wrap_lark_errors(lambda: parser.parse("".join(paste.lines)), sprite),
+        paste,
+        sprite,
+    )
+    return wrap_and_resolve_errors_in_paste(
+        lambda: wrap_lark_errors(
+            lambda: SpriteInterpreter(sprite.parent, name, ast, globals, listglobals),
+            sprite,
+        ),
         paste,
         sprite,
     ).sprite

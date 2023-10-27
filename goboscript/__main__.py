@@ -1,11 +1,51 @@
 from __future__ import annotations
 import sys
 import argparse
+from time import sleep
 from pathlib import Path
-from .lib import EXT, Watcher
+from threading import Thread
+from . import term as t
+from .lib import EXT
 from .build import build_gproject
-from .error import Error
 from .parser import get_parser
+
+
+class Spinner(Thread):
+    def __init__(self):
+        super().__init__()
+        self.running = True
+
+    def run(self):
+        self.frame = 0
+        while self.running:
+            i = 0
+            while self.running and i < 5:
+                sleep(0.01)
+                i += 1
+            self.render()
+        t.wf("\n")
+
+    def stop(self):
+        self.running = False
+
+    def render(self):
+        prompt = " Compiling..."
+        t.ml(len(prompt) + 1)
+        match self.frame:
+            case 0:
+                t.w("|")
+            case 1:
+                t.w("/")
+            case 2:
+                t.w("-")
+            case 3:
+                t.w("\\")
+            case _:
+                pass
+        self.frame = (self.frame + 1) % 4
+        t.w(prompt)
+        t.f()
+
 
 argparser = argparse.ArgumentParser(
     "gsc",
@@ -59,14 +99,13 @@ args = argparser.parse_args()
 init_cmd = args.init
 watch = args.watch
 semi = args.semi
-parser = get_parser(semi=semi)
 if init_cmd:
     path = Path().absolute()
     if (path / f"stage.{EXT}").is_file():
         argparser.error("Working directory already contains a goboscript project.")
-    (path / f"stage.{EXT}").open("w").write('costumes "blank.svg";\n')
+    (path / f"stage.{EXT}").open("w").write('costumes "blank.svg"\n')
     (path / f"main.{EXT}").open("w").write(
-        'costumes "blank.svg";\n\n' + "onflag {\n" '  say "Hello, World!";\n' "}\n"
+        'costumes "blank.svg"\n\n' + "onflag {\n" '  say "Hello, World!"\n' "}\n"
     )
     (path / "blank.svg").open("w").write(
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'
@@ -89,24 +128,8 @@ if output is None:
         )
 
 
-class ProjectWatcher(Watcher):
-    input: Path
-    output: Path
-
-    def on_change(self, file: Path) -> None:  # noqa: ARG002
-        try:
-            build_gproject(self.input, parser).package(self.output)
-        except Error as err:
-            err.print()
-
-
-if watch:
-    watcher = ProjectWatcher(list(input.glob(f"*.{EXT}")))
-    watcher.input = input
-    watcher.output = output
-    watcher.watch()
-else:
-    try:
-        build_gproject(input, parser).package(output)
-    except Error as err:
-        err.print()
+spinner = Spinner()
+spinner.start()
+parser = get_parser(semi=semi)
+build_gproject(input, parser).package(output)
+spinner.stop()

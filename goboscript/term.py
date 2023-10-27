@@ -62,6 +62,22 @@ def m(x: int, y: int):
     w(f"\u001b[{y+1};{x+1}H")
 
 
+def ml(c: int):
+    w(f"\033[{c}D")
+
+
+def mr(c: int):
+    w(f"\033[{c}C")
+
+
+def mu(c: int):
+    w(f"\033[{c}A")
+
+
+def md(c: int):
+    w(f"\033[{c}B")
+
+
 def h():
     m(0, 0)
 

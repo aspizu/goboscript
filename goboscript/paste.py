@@ -2,9 +2,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 from lark import Lark, Token
+from . import error
+from .error import RangeError, wrap_lark_errors
 
 if TYPE_CHECKING:
     from pathlib import Path
+    from importlib.abc import Traversable
 
 
 def literal(literal: Token) -> str:
@@ -36,7 +39,9 @@ class Range:
     pasted_start: int
     file_start: int
     length: int
-    file: Path
+    file: Path | Traversable
+    includepath: Path | Traversable | None
+    includerange: error.Range | None
 
     def get_file_line(self, line: int):
         return self.file_start + line - self.pasted_start
@@ -61,26 +66,47 @@ class PasteBuilder:
         self.start = 0
         self.i = 0
 
-    def include(self, file: Path):
+    def include(
+        self,
+        file: Path | Traversable,
+        includepath: Path | Traversable | None = None,
+        includerange: error.Range | None = None,
+    ):
         file_start = 0
         for file_i, line in enumerate(file.open()):
             if line.startswith("%"):
                 self.paste.ranges.append(
-                    Range(self.start, file_start, self.i - self.start, file)
+                    Range(
+                        self.start,
+                        file_start,
+                        self.i - self.start,
+                        file,
+                        includepath,
+                        includerange,
+                    )
                 )
                 self.start = self.i
-                tree = preproc.parse(line)
+                tree = wrap_lark_errors(lambda: preproc.parse(line), file)  # noqa: B023
                 match tree.data:
                     case "import_stmt":
                         token = tree.children[0]
                         assert isinstance(token, Token)
+                        range = error.Range.new(token)
+                        range.line = file_i
                         path = literal(token)
                         if "*" in path:
                             for ifile in self.relative.glob(path):
-                                self.include(ifile)
+                                self.include(ifile, file, range)
                         else:
                             ifile = self.relative / path
-                            self.include(ifile)
+                            if not ifile.is_file():
+                                raise RangeError(
+                                    error.Range(file_i, token.column - 1, len(token)),
+                                    "File not found",
+                                    file=file,
+                                )
+
+                            self.include(ifile, file, range)
                         file_start = file_i + 1
                     case _:
                         raise ValueError(tree)
@@ -88,7 +114,14 @@ class PasteBuilder:
                 self.paste.lines.append(line)
                 self.i += 1
         self.paste.ranges.append(
-            Range(self.start, file_start, self.i - self.start, file)
+            Range(
+                self.start,
+                file_start,
+                self.i - self.start,
+                file,
+                includepath,
+                includerange,
+            )
         )
         self.start = self.i
         return self

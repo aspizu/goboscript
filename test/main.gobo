@@ -1,6 +1,10 @@
 costumes "*.svg"
-%use "foo.h.gobo"
+macro d!(D) -> D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D!
+macro c!(C) -> d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!)
+macro b!(b) -> c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!)
+macro a!(A) -> b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!)
 onflag
 {
-  say std_min!(1, 2)
+  variable = ""
+  say d!(a!(variable))
 }

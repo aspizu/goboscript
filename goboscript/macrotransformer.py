@@ -58,8 +58,21 @@ class MacroTransformer(Transformer[Token, Tree[Token]]):
                 f"Undefined macro `{name}`",
                 f"Did you mean `{matches[0]}`?" if matches else None,
             )
+        macro = self.macros[name]
         arguments: list[Tree[Token] | Token] = args[1:]
-        return MacroEvaluate(self.macros[name], arguments).get(self)
+        if len(arguments) < len(macro.arguments):
+            raise RangeError(
+                name,
+                "Missing arguments for macro.",
+                help="Missing " + ", ".join(macro.arguments[len(arguments) :]),
+            )
+        if len(arguments) > len(macro.arguments):
+            raise RangeError(
+                name,
+                "Too many arguments for macro.",
+                help="Expected " + ", ".join(macro.arguments),
+            )
+        return MacroEvaluate(macro, arguments).get(self)
 
 
 class MacroEvaluate(Transformer[Token, Tree[Token]]):
