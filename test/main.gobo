@@ -1,9 +1,7 @@
 costumes "*.svg"
-
+%use "mod.h.gobo"
 onflag
 {
   variable = "Hello"
-  say variable[1]
-  list = []
-  say list[1][1]
+  say variable
 }

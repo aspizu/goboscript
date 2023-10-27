@@ -5,7 +5,7 @@ from lark.lexer import Token
 from lark.visitors import Visitor, Interpreter
 from .lib import tok, file_suggest
 from .sb3 import List, Sprite, Costume, Variable
-from .error import TokenError
+from .error import RangeError
 from .parser import literal
 
 if TYPE_CHECKING:
@@ -152,18 +152,18 @@ class DefinitionVisitor(Interpreter[Token, None]):
             elif "*" in pattern:
                 paths = sorted(self.project.glob(pattern), key=lambda path: path.stem)
                 if len(paths) == 0:
-                    msg = f"Glob does not match any files {pattern}"
-                    raise TokenError(msg, costume)
+                    raise RangeError(
+                        costume, f"Glob does not match any files {pattern}"
+                    )
                 for pattern in paths:
                     self.sprite.costumes.append(Costume(pattern))
             else:
                 path = self.project / pattern
                 if not path.is_file():
                     matches = file_suggest(path)
-                    msg = f"Costume file not found {pattern}"
-                    raise TokenError(
-                        msg,
+                    raise RangeError(
                         costume,
+                        f"Costume file not found {pattern}",
                         (
                             f"Did you mean {matches[0].relative_to(self.project)}?"
                             if matches
@@ -179,10 +179,9 @@ class DefinitionVisitor(Interpreter[Token, None]):
         file: Path = self.project / literal(path)
         if not file.is_file():
             matches = file_suggest(file)
-            msg = "Data file not found."
-            raise TokenError(
-                msg,
+            raise RangeError(
                 path,
+                "Data file not found.",
                 f"Did you mean {matches[0].relative_to(self.project)}?"
                 if matches
                 else None,
@@ -200,10 +199,9 @@ class DefinitionVisitor(Interpreter[Token, None]):
         file: Path = self.project / literal(path)
         if not file.is_file():
             matches = file_suggest(file)
-            msg = "Data file not found."
-            raise TokenError(
-                msg,
+            raise RangeError(
                 path,
+                "Data file not found.",
                 f"Did you mean {matches[0].relative_to(self.project)}?"
                 if matches
                 else None,
@@ -213,10 +211,9 @@ class DefinitionVisitor(Interpreter[Token, None]):
         if format is None:
             data = list(image.tobytes())
         else:
-            msg = "Invalid imagelist format."
-            raise TokenError(
-                msg,
+            raise RangeError(
                 format,
+                "Invalid imagelist format.",
                 "Formats are not implemented yet, open a issue at https://github/aspizu/goboscript/issues",
             )
         self.sprite.lists[qualname] = List(token, list(map(str, data)))
@@ -224,17 +221,15 @@ class DefinitionVisitor(Interpreter[Token, None]):
     def declr_function(self, tree: Tree[Token], *, warp: bool = True):
         name = cast(Token, tree.children[0])
         if name in self.functions:
-            msg = "Redeclaration of function"
-            raise TokenError(msg, name, "Rename this function")
+            raise RangeError(name, "Redeclaration of function", "Rename this function")
         arguments: list[Token] = []
         for argument in cast(list[Token | None], tree.children[1:-1]):
             if argument is None:
                 break
             if argument in arguments:
-                msg = f"Argument `{argument}` was repeated"
-                raise TokenError(
-                    msg,
+                raise RangeError(
                     argument,
+                    f"Argument `{argument}` was repeated",
                     "Rename this argument",
                 )
             arguments.append(argument)
@@ -266,8 +261,7 @@ class DefinitionVisitor(Interpreter[Token, None]):
     def declr_macro(self, tree: Tree[Token]):
         name = cast(Token, tree.children[0])
         if name in self.macros:
-            msg = "Redeclaration of macro"
-            raise TokenError(msg, name, "Rename this macro")
+            raise RangeError(name, "Redeclaration of macro", "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
         if arguments == [None]:
             arguments = []
@@ -278,8 +272,7 @@ class DefinitionVisitor(Interpreter[Token, None]):
     def declr_block_macro(self, tree: Tree[Token]):
         name = cast(Token, tree.children[0])
         if name in self.block_macros:
-            msg = "Redeclaration of macro"
-            raise TokenError(msg, name, "Rename this macro")
+            raise RangeError(name, "Redeclaration of macro", "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
         body = cast(Tree[Token], tree.children[-1])
 

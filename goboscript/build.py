@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from .lib import EXT, dir_suggest
 from .sb3 import Project
 from .error import Error, FileError, wrap_lark_errors
+from .paste import PasteBuilder
 from .spriteinterpreter import SpriteInterpreter
 
 if TYPE_CHECKING:
@@ -22,11 +23,13 @@ def build_gsprite(
             file=sprite,
         )
     name = "Stage" if name == "stage" else name
-    ast = wrap_lark_errors(lambda: parser.parse(sprite.read_text()), sprite)
+    paste = PasteBuilder(relative=sprite.parent).include(sprite).paste
+    ast = wrap_lark_errors(lambda: parser.parse("".join(paste.lines)), paste, sprite)
     return wrap_lark_errors(
         lambda: SpriteInterpreter(
             sprite.parent, name, ast, globals, listglobals, parser
         ),
+        paste,
         sprite,
     ).sprite
 

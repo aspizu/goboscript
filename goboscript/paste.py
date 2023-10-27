@@ -49,7 +49,7 @@ class Paste:
 
     def get_range_from_line(self, line: int):
         for range in self.ranges:
-            if range.pasted_start < line < range.pasted_start + range.length:
+            if range.pasted_start <= line < range.pasted_start + range.length:
                 return range
         return None
 

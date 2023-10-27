@@ -6,7 +6,7 @@ from lark import Visitor
 from lark.tree import Tree
 from lark.lexer import Token
 from lark.visitors import Transformer
-from .error import TokenError
+from .error import RangeError
 
 if TYPE_CHECKING:
     from .definitionvisitor import Macro, BlockMacro
@@ -30,9 +30,9 @@ class BlockMacroVisitor(Visitor[Token]):
             arguments = usage.children[1:]
             if name not in self.macros:
                 matches = get_close_matches(name, self.macros.keys())
-                raise TokenError(
-                    f"Undefined macro `{name}`",
+                raise RangeError(
                     name,
+                    f"Undefined macro `{name}`",
                     f"Did you mean `{matches[0]}`?" if matches else None,
                 )
             macro = self.macros[name]
@@ -53,9 +53,9 @@ class MacroTransformer(Transformer[Token, Tree[Token]]):
         name = cast(Token, args[0])
         if name not in self.macros:
             matches = get_close_matches(name, self.macros.keys())
-            raise TokenError(
-                f"Undefined macro `{name}`",
+            raise RangeError(
                 name,
+                f"Undefined macro `{name}`",
                 f"Did you mean `{matches[0]}`?" if matches else None,
             )
         arguments: list[Tree[Token] | Token] = args[1:]

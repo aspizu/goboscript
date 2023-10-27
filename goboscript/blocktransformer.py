@@ -17,7 +17,7 @@ from .sb3 import (
     ProcCall,
     Variable,
 )
-from .error import FileError, TokenError
+from .error import FileError, RangeError
 from .parser import literal
 from .sb3.block import ConditionBlock
 from .sb3.blockfactory import reporter_prototypes, statement_prototypes
@@ -114,14 +114,16 @@ class BlockTransformer(Transformer[Token, Block]):
 
     def argument(self, args: tuple[Token]):
         if not self.prototype:
-            msg = "Argument reporter used outsite function declaration"
-            raise TokenError(msg, args[0])
+            raise RangeError(
+                args[0], "Argument reporter used outsite function declaration"
+            )
         argument = literal(args[0])
         if argument not in self.prototype.arguments:
             matches = get_close_matches(argument, self.prototype.arguments)
-            msg = "Undefined function argument"
-            raise TokenError(
-                msg, args[0], f"Did you mean `${matches[0]}`?" if matches else None
+            raise RangeError(
+                args[0],
+                "Undefined function argument",
+                f"Did you mean `${matches[0]}`?" if matches else None,
             )
         return Argument(argument)
 
@@ -142,7 +144,7 @@ class BlockTransformer(Transformer[Token, Block]):
             if block.opcode == "control_forever" and (i + 1) != len(stack):
                 msg = "forever cannot be precceded by any statements"
                 if block.token is not None:
-                    raise TokenError(msg, block.token)
+                    raise RangeError(block.token, msg)
                 raise FileError(msg)
         return stack
 
@@ -155,32 +157,30 @@ class BlockTransformer(Transformer[Token, Block]):
         if opcode in statement_prototypes:
             prototype = statement_prototypes[opcode]
             if len(arguments) > len(prototype.arguments):
-                msg = "Too many arguments for statement"
-                raise TokenError(
-                    msg,
+                raise RangeError(
                     opcode,
+                    "Too many arguments for statement",
                     f"Expected {num_plural(len(prototype.arguments), ' argument')}",
                 )
             if len(arguments) < len(prototype.arguments):
-                msg = "Missing arguments for statement"
-                raise TokenError(
-                    msg,
+                raise RangeError(
                     opcode,
+                    "Missing arguments for statement",
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
             return Block.from_prototype(prototype, arguments, opcode, comment)
         if opcode in self.gdefinitionvisitor.functions:
             prototype = self.gdefinitionvisitor.functions[opcode]
             if len(arguments) > len(prototype.arguments):
-                raise TokenError(
-                    "Too many arguments for function",
+                raise RangeError(
                     opcode,
+                    "Too many arguments for function",
                     f"Expected {num_plural(len(prototype.arguments), ' argument')}",
                 )
             if len(arguments) < len(prototype.arguments):
-                raise TokenError(
-                    "Missing arguments for function",
+                raise RangeError(
                     opcode,
+                    "Missing arguments for function",
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
             return ProcCall(
@@ -198,9 +198,9 @@ class BlockTransformer(Transformer[Token, Block]):
                 self.gdefinitionvisitor.functions.keys(),
             ),
         )
-        raise TokenError(
-            f"Undefined statement or function `{opcode}`",
+        raise RangeError(
             args[0],
+            f"Undefined statement or function `{opcode}`",
             (f"Did you mean `{matches[0]}`?\n" if matches else "")
             + "Read --doc statements for available statements",
         )
@@ -212,23 +212,23 @@ class BlockTransformer(Transformer[Token, Block]):
             arguments = []
         if opcode not in reporter_prototypes:
             matches = get_close_matches(str(args[0]), reporter_prototypes.keys())
-            raise TokenError(
-                f"Undefined reporter `{opcode}`",
+            raise RangeError(
                 args[0],
+                f"Undefined reporter `{opcode}`",
                 (f"Did you mean `{matches[0]}`?\n" if matches else "")
                 + "Read --doc reporters for available reporters",
             )
         prototype = reporter_prototypes[opcode]
         if len(arguments) > len(prototype.arguments):
-            raise TokenError(
-                "Too many arguments for reporter",
+            raise RangeError(
                 opcode,
+                "Too many arguments for reporter",
                 f"Expected {num_plural(len(prototype.arguments), ' argument')}",
             )
         if len(arguments) < len(prototype.arguments):
-            raise TokenError(
-                "Missing arguments for reporter",
+            raise RangeError(
                 opcode,
+                "Missing arguments for reporter",
                 f"Missing {', '.join(prototype.arguments[len(arguments):])}",
             )
         if (
@@ -411,8 +411,11 @@ class BlockTransformer(Transformer[Token, Block]):
     def localvar(self, args: tuple[Token, Input]):
         variable = self.get_variable(args[0])
         if not self.prototype:
-            msg = "local variables cannot be used outside of functions"
-            raise TokenError(msg, args[0], help="switch to a non-local variable")
+            raise RangeError(
+                args[0],
+                "local variables cannot be used outside of functions",
+                help="switch to a non-local variable",
+            )
         return Block("data_setvariableto", {"VALUE": args[1]}, {"VARIABLE": variable})
 
     def var(self, args: tuple[Token]):
@@ -492,8 +495,7 @@ class BlockTransformer(Transformer[Token, Block]):
         ):
             help = f"Did you mean the local variable `{matches[0]}?`"
 
-        msg = f"Undefined variable or list `{token}`"
-        raise TokenError(msg, token, help)
+        raise RangeError(token, f"Undefined variable or list `{token}`", help)
 
     def listset(self, args: list[Any]):
         list_ = self.get_list(args[0])
@@ -656,21 +658,19 @@ class BlockTransformer(Transformer[Token, Block]):
         if isinstance(token, Variable):
             return token
         if isinstance(token, List):
-            msg = "Identifier is not a variable"
-            raise TokenError(msg, token.token)
+            raise RangeError(token.token, "Identifier is not a variable")
 
         identifier = self.get_identifier(token)
         if not isinstance(identifier, Variable):
-            raise TokenError("Identifier is not a variable", token)
+            raise RangeError(token, "Identifier is not a variable")
         return identifier
 
     def get_list(self, token: Token | List | Variable):
         if isinstance(token, List):
             return token
         if isinstance(token, Variable):
-            msg = "Identifier is not a list"
-            raise TokenError(msg, token.token)
+            raise RangeError(token.token, "Identifier is not a list")
         identifier = self.get_identifier(token)
         if not isinstance(identifier, List):
-            raise TokenError("Identifier is not a list", token)
+            raise RangeError(token, "Identifier is not a list")
         return identifier

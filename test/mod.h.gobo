@@ -1,0 +1,5 @@
+onflag
+{
+  variable = "Hello"
+  say foo
+}
