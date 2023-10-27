@@ -99,7 +99,7 @@ MACROVAR: /[_a-zA-Z][_a-zA-Z0-9]*\!/
 ARGUMENT: /\$[_a-zA-Z][_a-zA-Z0-9]*/
 IDENTIFIER: (NAME ":" NAME) | NAME
 NAME: /[_a-zA-Z][_a-zA-Z0-9]*/
-STRING: /"([^"\\]|\\.)*"/
+STRING: /'([^'\\]|\\.)*'/ | /"([^"\\]|\\.)*"/
 NUMBER: /-?[0-9]+/
 FLOAT: /-?[0-9]+\.[0-9]+/
 CONST: "true" | "false"

@@ -1,51 +1,11 @@
 from __future__ import annotations
 import sys
 import argparse
-from time import sleep
 from pathlib import Path
-from threading import Thread
-from . import term as t
 from .lib import EXT
 from .build import build_gproject
+from .error import Error
 from .parser import get_parser
-
-
-class Spinner(Thread):
-    def __init__(self):
-        super().__init__()
-        self.running = True
-
-    def run(self):
-        self.frame = 0
-        while self.running:
-            i = 0
-            while self.running and i < 5:
-                sleep(0.01)
-                i += 1
-            self.render()
-        t.wf("\n")
-
-    def stop(self):
-        self.running = False
-
-    def render(self):
-        prompt = " Compiling..."
-        t.ml(len(prompt) + 1)
-        match self.frame:
-            case 0:
-                t.w("|")
-            case 1:
-                t.w("/")
-            case 2:
-                t.w("-")
-            case 3:
-                t.w("\\")
-            case _:
-                pass
-        self.frame = (self.frame + 1) % 4
-        t.w(prompt)
-        t.f()
-
 
 argparser = argparse.ArgumentParser(
     "gsc",
@@ -128,8 +88,8 @@ if output is None:
         )
 
 
-spinner = Spinner()
-spinner.start()
 parser = get_parser(semi=semi)
-build_gproject(input, parser).package(output)
-spinner.stop()
+try:
+    build_gproject(input, parser).package(output)
+except Error as e:
+    e.print()

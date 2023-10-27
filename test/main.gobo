@@ -1,10 +1,5 @@
 costumes "*.svg"
-macro d!(D) -> D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D! + D!
-macro c!(C) -> d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!) + d!(C!)
-macro b!(b) -> c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!) + c!(b!)
-macro a!(A) -> b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!) + b!(A!)
 onflag
 {
-  variable = ""
-  say d!(a!(variable))
+  say foo
 }
