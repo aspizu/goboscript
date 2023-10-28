@@ -28,6 +28,8 @@ class BlockMacroVisitor(Visitor[Token]):
             usage = cast(Tree[Token], node.children[i])
             name = cast(Token, usage.children[0])
             arguments = usage.children[1:]
+            if arguments == [None]:
+                arguments = []
             if name not in self.macros:
                 matches = get_close_matches(name, self.macros.keys())
                 raise RangeError(
@@ -36,6 +38,18 @@ class BlockMacroVisitor(Visitor[Token]):
                     f"Did you mean `{matches[0]}`?" if matches else None,
                 )
             macro = self.macros[name]
+            if len(arguments) < len(macro.arguments):
+                raise RangeError(
+                    name,
+                    "Missing arguments for block macro",
+                    help="Missing " + ", ".join(macro.arguments[len(arguments) :]),
+                )
+            if len(arguments) > len(macro.arguments):
+                raise RangeError(
+                    name,
+                    "Too many arguments for block macro",
+                    help="Expected " + ", ".join(macro.arguments),
+                )
             body = deepcopy(macro.body)
             self.visit(body)
             stack = MacroEvaluate(macro, arguments).transform(body)

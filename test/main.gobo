@@ -1,7 +1,9 @@
 costumes "*.svg"
 
-macro f!(x) -> "Foo"
+macro v! a, b {
+    
+}
 
 onflag {
-    say f!(1)
+    v! 1
 }

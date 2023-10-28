@@ -274,6 +274,8 @@ class DefinitionVisitor(Interpreter[Token, None]):
         if name in self.block_macros:
             raise RangeError(name, "Redeclaration of macro", "Rename this macro")
         arguments = cast(list[Token], tree.children[1:-1])
+        if arguments == [None]:
+            arguments = []
         body = cast(Tree[Token], tree.children[-1])
 
         self.block_macros[name] = BlockMacro([str(i) for i in arguments], body)
