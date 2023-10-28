@@ -1,5 +1,7 @@
 costumes "*.svg"
-onflag
-{
-  say foo
+
+macro f!() -> 0
+
+onflag {
+    say f!()
 }

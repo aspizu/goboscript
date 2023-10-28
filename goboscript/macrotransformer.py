@@ -60,6 +60,8 @@ class MacroTransformer(Transformer[Token, Tree[Token]]):
             )
         macro = self.macros[name]
         arguments: list[Tree[Token] | Token] = args[1:]
+        if arguments == [None]:
+            arguments = []
         if len(arguments) < len(macro.arguments):
             raise RangeError(
                 name,
