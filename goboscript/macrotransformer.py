@@ -83,7 +83,9 @@ class MacroEvaluate(Transformer[Token, Tree[Token]]):
         self.macro__ = macro
         self.arguments = arguments
 
-    def get(self, macros: MacroTransformer):
+    def get(self, macros: MacroTransformer) -> Tree[Token] | Token:
+        if isinstance(self.macro__.body, Token):
+            return self.macro__.body
         return self.transform(macros.transform(self.macro__.body))
 
     def macrovar(self, args: Any):
