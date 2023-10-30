@@ -1,8 +1,11 @@
 #!/bin/bash
-exec 3>&1 4>&2
-trap 'exec 2>&4 1>&3' 0 1 2 3
-exec 1>log.out 2>&1
 set -e
+
+echo "PATH=$PATH" >> log.out
+echo "OSTYPE=$OSTYPE" > log.out
+echo "--- /etc/os-release" >> log.out
+cat /etc/os-release >> log.out
+echo "---" >> log.out
 
 get_bindir() {
   IFS=":" read -ra path_dirs <<< "$PATH"
@@ -19,6 +22,7 @@ get_bindir() {
     echo "export PATH=~/.local/bin:\"$PATH\""
     exit 1
   fi
+  echo "BINDIR=$BINDIR" >> log.out
 }
 
 has_command() {
@@ -49,6 +53,8 @@ get_command_pip() {
       PIP_INSTALL="$PIP install"
     fi
     set -e
+    echo "PIP_INSTALL=$PIP" >> log.out
+    echo "PIP=$PIP" >> log.out
   fi
 }
 

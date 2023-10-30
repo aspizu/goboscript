@@ -6,6 +6,9 @@ license = { file = "LICENSE" }
 authors = [{ name = "aspizu", email = "aspizu@protonmail.com" }]
 dependencies = ["lark"]
 
+[tool.setuptools]
+py-modules = []
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
