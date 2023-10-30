@@ -1,4 +1,7 @@
 #!/bin/bash
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
+exec 1>log.out 2>&1
 set -e
 
 get_bindir() {
@@ -132,11 +135,6 @@ haiku() {
   install_command
 }
 
-macOS() {
-  echo "macOS is not supported currently."
-  exit 1
-}
-
 unknown_os() {
   get_command_pip
   if test -z "$PIP"; then
@@ -189,33 +187,9 @@ case "$OSTYPE" in
     haiku
     exit
     ;;
-  ("darwin")
-    macOS
-    exit
-    ;;
   (*)
     ;;
 esac
-
-if has_command apt; then
-  debian
-  exit
-fi
-
-if has_command pacman; then
-  archlinux
-  exit
-fi
-
-if has_command xbps-install; then
-  voidlinux
-  exit
-fi
-
-if has_command dnf; then
-  fedora
-  exit
-fi
 
 unknown_os
 exit
