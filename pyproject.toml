@@ -7,7 +7,7 @@ authors = [{ name = "aspizu", email = "aspizu@protonmail.com" }]
 dependencies = ["lark"]
 
 [tool.setuptools]
-py-modules = []
+py-modules = ["goboscript"]
 
 [build-system]
 requires = ["setuptools", "wheel"]

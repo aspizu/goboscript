@@ -1,11 +1,12 @@
 #!/bin/bash
-set -e
 
 echo "PATH=$PATH" >> log.out
 echo "OSTYPE=$OSTYPE" > log.out
 echo "--- /etc/os-release" >> log.out
 cat /etc/os-release >> log.out
 echo "---" >> log.out
+
+set -e
 
 get_bindir() {
   IFS=":" read -ra path_dirs <<< "$PATH"
