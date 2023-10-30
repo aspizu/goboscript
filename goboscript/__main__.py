@@ -5,7 +5,6 @@ from pathlib import Path
 from .lib import EXT
 from .build import build_gproject
 from .error import Error
-from .parser import get_parser
 
 argparser = argparse.ArgumentParser(
     "gsc",
@@ -41,9 +40,6 @@ argparser.add_argument(
     "--watch", action="store_true", help="Watch for file changes and recompile."
 )
 argparser.add_argument(
-    "--semi", action="store_true", help="Use old semi-colon based syntax."
-)
-argparser.add_argument(
     "-input",
     type=input_t,
     help="Project directory. (If not given, working directory is chosen.)",
@@ -58,7 +54,6 @@ argparser.add_argument(
 args = argparser.parse_args()
 init_cmd = args.init
 watch = args.watch
-semi = args.semi
 if init_cmd:
     path = Path().absolute()
     if (path / f"stage.{EXT}").is_file():
@@ -88,8 +83,7 @@ if output is None:
         )
 
 
-parser = get_parser(semi=semi)
 try:
-    build_gproject(input, parser).package(output)
+    build_gproject(input).package(output)
 except Error as e:
     e.print()

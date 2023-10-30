@@ -1,6 +1,8 @@
 start: declr*
 
 ?declr: "costumes" _stringlist _NL -> declr_costumes
+  | "variables" _namelist _NL -> declr_variables
+  | "lists" _namelist _NL -> declr_lists
   | "datalist" NAME STRING _NL -> datalist
   | "imagelist" NAME STRING [STRING] _NL -> imagelist
   | "def" NAME _namelist stack -> declr_function
@@ -49,7 +51,8 @@ stack: "{" block* "}"
   | _lvalue ".show" _NL -> listshow
   | _lvalue ".hide" _NL -> listhide
   | MACROVAR _exprlist _NL -> block_macro
-  | NAME _exprlist [LCOMMENT] ";"? _NL
+  | "%" macrovar _exprlist _NL -> macrofunc
+  | NAME _exprlist [LCOMMENT] _NL
 
 _lvalue: IDENTIFIER|macrovar
 macrovar: MACROVAR
@@ -58,8 +61,8 @@ macrovar: MACROVAR
   | expr "and" cmp  -> andop
   | expr "or" cmp   -> orop
 
-?cmp: sum
-  | "not" cmp       -> notop
+?cmp: "not" cmp       -> notop
+  | sum
   | cmp "in" sum    -> inop
   | cmp "=" sum     -> eq
   | cmp "!=" sum    -> neq
@@ -69,6 +72,7 @@ macrovar: MACROVAR
   | cmp ">=" sum    -> ge
 
 ?sum: product
+  | sum "&" product  -> join
   | sum "+" product  -> add
   | sum "-" product  -> sub
 
@@ -76,7 +80,6 @@ macrovar: MACROVAR
   | product "*" atom  -> mul
   | product "/" atom  -> div
   | product "%" atom  -> mod
-  | product "&" atom  -> join
 
 ?atom: NUMBER | STRING | FLOAT | CONST
   | "-" atom                    -> minus
@@ -103,7 +106,7 @@ STRING: /'([^'\\]|\\.)*'/ | /"([^"\\]|\\.)*"/
 NUMBER: /-?[0-9]+/
 FLOAT: /-?[0-9]+\.[0-9]+/
 CONST: "true" | "false"
-_NL: "\n"
+_NL: ";"
 COMMENT: /\/\*(\*(?!\/)|[^*])*\*\//
 SCOMMENT: /\/\/.*/
 LCOMMENT: "(*" /(.|\n)+/ "*)"

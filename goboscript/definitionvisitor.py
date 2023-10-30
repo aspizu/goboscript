@@ -55,38 +55,43 @@ class LocalsCollector(Visitor[Token]):
         qualname = f"{self.name}:{token}"
         self.sprite.variables[qualname] = Variable(qualname, token)
 
-    def varset(self, tree: Tree[Token]):
-        token = cast(Token, tree.children[0])
+    def add_variable(self, token: Token):
         qualname = str(token)
-
         if qualname in self.globals:
             return
-
         if qualname in self.locals:
             return
-
         if qualname in self.sprite.variables:
             return
-
         if qualname in self.sprite.lists:
             return
-
         self.sprite.variables[qualname] = Variable(qualname, token)
+
+    def add_list(self, token: Token):
+        qualname = str(token)
+        if qualname in self.listglobals:
+            return
+        if qualname in self.sprite.lists:
+            return
+        if qualname in self.sprite.variables:
+            return
+        self.sprite.lists[qualname] = List(token)
+
+    def varset(self, tree: Tree[Token]):
+        token = cast(Token, tree.children[0])
+        self.add_variable(token)
 
     def listset(self, tree: Tree[Token]):
         token = cast(Token, tree.children[0])
-        qualname = str(token)
+        self.add_list(token)
 
-        if qualname in self.listglobals:
-            return
+    def declr_variables(self, tree: Tree[Token]):
+        for token in tree.children:
+            self.add_variable(cast(Token, token))
 
-        if qualname in self.sprite.lists:
-            return
-
-        if qualname in self.sprite.variables:
-            return
-
-        self.sprite.lists[qualname] = List(token)
+    def declr_lists(self, tree: Tree[Token]):
+        for token in tree.children:
+            self.add_list(cast(Token, token))
 
 
 class DefinitionVisitor(Interpreter[Token, None]):
@@ -241,6 +246,12 @@ class DefinitionVisitor(Interpreter[Token, None]):
             name,
         ).locals
         self.functions[name] = Function(name, warp, arguments, locals)
+
+    def declr_variables(self, tree: Tree[Token]):
+        LocalsCollector(tree, self.sprite, self.globals, self.listglobals)
+
+    def declr_lists(self, tree: Tree[Token]):
+        LocalsCollector(tree, self.sprite, self.globals, self.listglobals)
 
     def declr_on(self, tree: Tree[Token]):
         LocalsCollector(

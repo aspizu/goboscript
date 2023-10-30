@@ -1,9 +1,7 @@
 costumes "*.svg"
 
-macro v! a, b {
-    
-}
+
 
 onflag {
-    v! 1
+
 }

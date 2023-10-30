@@ -105,3 +105,13 @@ class MacroEvaluate(Transformer[Token, Tree[Token]]):
     def macrovar(self, args: Any):
         token: Token = args[0]
         return self.arguments[self.macro__.arguments.index(token[:-1])]
+
+    def macrofunc(self, args: Any):
+        if (
+            isinstance(args[0], Tree)
+            and args[0].data == "var"
+            and isinstance(args[0].children[0], Token)
+            and args[0].children[0].type == "IDENTIFIER"
+        ):
+            args[0] = args[0].children[0]
+        return Tree("block", args)

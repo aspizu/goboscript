@@ -8,9 +8,7 @@ if TYPE_CHECKING:
     from lark.lexer import Token
 
 
-def get_parser(*, semi: bool):
-    file = "grammar_semi.lark" if semi else "grammar_nosemi.lark"
-    return Lark((files(res) / file).open())
+parser = Lark((files(res) / "grammar.lark").open())
 
 
 def literal(literal: Token) -> str:

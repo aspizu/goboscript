@@ -152,10 +152,10 @@ class BlockTransformer(Transformer[Token, Block]):
         opcode: Token = args[0]
         arguments: list[Input] = args[1:-1]
         comment: str | None = literal(args[-1]) if args[-1] else None
+        qualname = str(opcode)
         if arguments == [None]:
             arguments = []
-        if opcode in statement_prototypes:
-            prototype = statement_prototypes[opcode]
+        if prototype := statement_prototypes.get(qualname):
             if len(arguments) > len(prototype.arguments):
                 raise RangeError(
                     opcode,
@@ -169,8 +169,7 @@ class BlockTransformer(Transformer[Token, Block]):
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
             return Block.from_prototype(prototype, arguments, opcode, comment)
-        if opcode in self.gdefinitionvisitor.functions:
-            prototype = self.gdefinitionvisitor.functions[opcode]
+        if prototype := self.gdefinitionvisitor.functions.get(qualname):
             if len(arguments) > len(prototype.arguments):
                 raise RangeError(
                     opcode,
@@ -184,7 +183,7 @@ class BlockTransformer(Transformer[Token, Block]):
                     f"Missing {', '.join(prototype.arguments[len(arguments):])}",
                 )
             return ProcCall(
-                opcode,
+                qualname,
                 dict(zip(prototype.arguments, arguments)),
                 comment,
                 prototype.proccode,
@@ -268,7 +267,10 @@ class BlockTransformer(Transformer[Token, Block]):
 
     def div(self, args: list[Input]):
         if type(args[0]) is str and type(args[1]) is str:
-            return str(number(args[0]) / number(args[1]))
+            try:
+                return str(number(args[0]) / number(args[1]))
+            except ZeroDivisionError:
+                pass
         return Block.from_prototype(reporter_prototypes["div"], args)
 
     def mod(self, args: list[Input]):
