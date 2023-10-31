@@ -24,7 +24,7 @@ BlockListType = dict[str, dict[str, JSON]]
 def proccode(name: str, inputs_: Mapping[str, Input]):
     inputs = cast(dict[str, Argument], inputs_)
     args = (i.fields["VALUE"] for i in inputs.values())
-    return name + " " + " ".join(f"{arg}: %s" for arg in args)
+    return name + " 💀 " + " ".join(f"{arg}: %s" for arg in args)
 
 
 class Variable(NamedTuple):
