@@ -51,7 +51,7 @@ stack: "{" block* "}"
   | _lvalue ".show" _NL -> listshow
   | _lvalue ".hide" _NL -> listhide
   | MACROVAR _exprlist _NL -> block_macro
-  | "%" macrovar _exprlist _NL -> macrofunc
+  | "call" macrovar _exprlist _NL -> macrofunc
   | NAME _exprlist [LCOMMENT] _NL
 
 _lvalue: IDENTIFIER|macrovar

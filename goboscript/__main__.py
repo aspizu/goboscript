@@ -8,8 +8,8 @@ from .error import Error
 
 argparser = argparse.ArgumentParser(
     "gsc",
-    description="goboscript compiler",
-    epilog="https://github.com/aspizu/goboscript",
+    description="goboscript is the Scratch compiler.",
+    epilog="documentation: https://aspizu.github.io/goboscript-docs",
 )
 
 
@@ -58,9 +58,9 @@ if init_cmd:
     path = Path().absolute()
     if (path / f"stage.{EXT}").is_file():
         argparser.error("Working directory already contains a goboscript project.")
-    (path / f"stage.{EXT}").open("w").write('costumes "blank.svg"\n')
+    (path / f"stage.{EXT}").open("w").write('costumes "blank.svg";\n')
     (path / f"main.{EXT}").open("w").write(
-        'costumes "blank.svg"\n\n' + "onflag {\n" '  say "Hello, World!"\n' "}\n"
+        'costumes "blank.svg";\n\n' + "onflag {\n" '  say "Hello, World!";\n' "}\n"
     )
     (path / "blank.svg").open("w").write(
         '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'

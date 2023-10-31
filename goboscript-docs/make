@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -e 
+
+mdbook build
+rm -r ~/projects/aspizu.github.io/goboscript-docs
+cp -r book ~/projects/aspizu.github.io/goboscript-docs
+

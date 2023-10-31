@@ -1,0 +1,4 @@
+costumes "blank.svg";
+
+variables length, old_length;
+lists xs, ys;

@@ -201,7 +201,7 @@ class BlockTransformer(Transformer[Token, Block]):
             args[0],
             f"Undefined statement or function `{opcode}`",
             (f"Did you mean `{matches[0]}`?\n" if matches else "")
-            + "Read --doc statements for available statements",
+            + "For a list of all scratch blocks, see: https://aspizu.github.io/goboscript-docs/statement-blocks",
         )
 
     def reporter(self, args: list[Any]) -> Input:
@@ -215,7 +215,7 @@ class BlockTransformer(Transformer[Token, Block]):
                 args[0],
                 f"Undefined reporter `{opcode}`",
                 (f"Did you mean `{matches[0]}`?\n" if matches else "")
-                + "Read --doc reporters for available reporters",
+                + "For a list of all scratch blocks, see https://aspizu.github.io/goboscript-docs/reporter-blocks",
             )
         prototype = reporter_prototypes[opcode]
         if len(arguments) > len(prototype.arguments):
@@ -463,6 +463,15 @@ class BlockTransformer(Transformer[Token, Block]):
 
     def varsub(self, args: tuple[Token, Input]):
         variable = self.get_variable(args[0])
+        if isinstance(args[1], str):
+            try:
+                return Block(
+                    "data_changevariableby",
+                    {"VALUE": str(-number(args[1]))},
+                    {"VARIABLE": variable},
+                )
+            except ValueError:
+                pass
         return Block(
             "data_changevariableby",
             {"VALUE": Block.from_prototype(reporter_prototypes["sub"], ["0", args[1]])},

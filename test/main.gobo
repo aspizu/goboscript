@@ -1,7 +1,6 @@
-costumes "*.svg"
-
-
+costumes "*.svg";
 
 onflag {
-
+  v = 0;
+  v -= 2;
 }
