@@ -1,6 +1,21 @@
 costumes "*.svg";
 
 onflag {
-  v = 0;
-  v -= 2;
+  a = 1;
+  b = 1;
+  c = 1;
+  
+  a -= 5;
+}
+
+def foo a, b, c {
+
+}
+
+def bar c {
+
+}
+
+def bruh {
+
 }
