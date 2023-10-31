@@ -26,6 +26,53 @@ if TYPE_CHECKING:
     from definitionvisitor import Function, DefinitionVisitor
 
 
+def negate(input: Input) -> tuple[Input, bool]:
+    if isinstance(input, str):
+        try:
+            return str(-number(input)), True
+        except ValueError:
+            pass
+
+    if isinstance(input, Block):
+        if input.opcode == "operator_subtract":
+            return Block(
+                "operator_subtract",
+                {"NUM1": input.inputs["NUM2"], "NUM2": input.inputs["NUM1"]},
+                {},
+            ), True
+        if input.opcode == "operator_multiply":
+            left, left_was_optimized = negate(input.inputs["NUM1"])
+            if left_was_optimized:
+                return Block(
+                    "operator_multiply",
+                    {"NUM1": left, "NUM2": input.inputs["NUM2"]},
+                    {},
+                ), True
+            right, right_was_optimized = negate(input.inputs["NUM2"])
+            if right_was_optimized:
+                return Block(
+                    "operator_multiply",
+                    {"NUM1": input.inputs["NUM1"], "NUM2": right},
+                    {},
+                ), True
+        if input.opcode == "operator_divide":
+            left, left_was_optimized = negate(input.inputs["NUM1"])
+            if left_was_optimized:
+                return Block(
+                    "operator_divide",
+                    {"NUM1": left, "NUM2": input.inputs["NUM2"]},
+                    {},
+                ), True
+            right, right_was_optimized = negate(input.inputs["NUM2"])
+            if right_was_optimized:
+                return Block(
+                    "operator_divide",
+                    {"NUM1": input.inputs["NUM1"], "NUM2": right},
+                    {},
+                ), True
+    return Block("operator_subtract", {"NUM1": "0", "NUM2": input}, {}), False
+
+
 def coerce_condition(input: Input, *, negate: bool = False) -> Block:
     if isinstance(input, ConditionBlock):
         if negate:
@@ -254,11 +301,7 @@ class BlockTransformer(Transformer[Token, Block]):
         return Block.from_prototype(reporter_prototypes["sub"], args)
 
     def minus(self, args: tuple[Input]):
-        if type(args[0]) is str:
-            if args[0].startswith("-"):
-                return args[0].removeprefix("-")
-            return "-" + args[0]
-        return Block.from_prototype(reporter_prototypes["sub"], ["0", args[0]])
+        return negate(args[0])[0]
 
     def mul(self, args: list[Input]):
         if type(args[0]) is str and type(args[1]) is str:
@@ -439,7 +482,18 @@ class BlockTransformer(Transformer[Token, Block]):
             {"VARIABLE": variable},
         )
 
-    def varmul(self, args: Any):
+    def varmul(self, args: tuple[Token, Input]):
+        if isinstance(args[1], str):
+            try:
+                if number(args[1]) == 2:  # noqa: PLR2004
+                    variable = self.get_variable(args[0])
+                    return Block(
+                        "data_changevariableby",
+                        {"VALUE": variable},
+                        {"VARIABLE": variable},
+                    )
+            except ValueError:
+                pass
         return self.var_binop("mul", args)
 
     def vardiv(self, args: Any):
@@ -463,18 +517,9 @@ class BlockTransformer(Transformer[Token, Block]):
 
     def varsub(self, args: tuple[Token, Input]):
         variable = self.get_variable(args[0])
-        if isinstance(args[1], str):
-            try:
-                return Block(
-                    "data_changevariableby",
-                    {"VALUE": str(-number(args[1]))},
-                    {"VARIABLE": variable},
-                )
-            except ValueError:
-                pass
         return Block(
             "data_changevariableby",
-            {"VALUE": Block.from_prototype(reporter_prototypes["sub"], ["0", args[1]])},
+            {"VALUE": negate(args[1])[0]},
             {"VARIABLE": variable},
         )
 
