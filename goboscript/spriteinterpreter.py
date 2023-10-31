@@ -2,8 +2,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 from lark.lexer import Token
 from lark.visitors import Interpreter
+from .lib import tok
 from .sb3 import Sprite
 from .error import FileError
+from .sb3.block import Variable
 from .sb3.cleanup import cleanup
 from .blocktransformer import BlockTransformer
 from .macrotransformer import MacroTransformer, BlockMacroVisitor
@@ -33,6 +35,8 @@ class SpriteInterpreter(Interpreter[Token, None]):
         BlockMacroVisitor(tree, self.gdefinitionvisitor.block_macros)
         tree = MacroTransformer(self.gdefinitionvisitor.macros).transform(tree)
         self.visit(tree)
+        if self.sprite.name == "Stage":
+            self.sprite.variables["( ͡° ͜ʖ ͡°)"] = Variable("( ͡° ͜ʖ ͡°)", tok(""))
         cleanup(self.sprite.blocks)
 
     def declr_on(self, tree: Tree[Token]):
