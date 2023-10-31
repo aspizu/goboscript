@@ -23,7 +23,7 @@ backdrop           |                    | looks_backdropnumbername.NUMBER_NAME=n
 backdropname       |                    | looks_backdropnumbername.NUMBER_NAME=name
 size               |                    | looks_size
 #-------------------------------------------------------------------------------------#
-VOLUME             |                    | sound_volume
+volume             |                    | sound_volume
 #-------------------------------------------------------------------------------------#
 touching?          | TOUCHINGOBJECTMENU | sensing_touchingobject
 touchingmouse?     |                    | sensing_touchingobject!TOUCHINGOBJECTMENU=_mouse_
