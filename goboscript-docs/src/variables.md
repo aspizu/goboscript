@@ -59,3 +59,11 @@ onflag {
   global_variable = 0;
 }
 ```
+
+## Cloud Variables
+
+To define a cloud variable declare them in the stage.
+
+```goboscript
+cloud my_cloud_variable1, my_cloud_variable2;
+```

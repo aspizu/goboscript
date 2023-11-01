@@ -51,7 +51,10 @@ class Sprite:
         return {
             "isStage": self.name == "Stage",
             "name": self.name,
-            "variables": {qualname: [qualname, 0] for qualname in self.variables},
+            "variables": {
+                qualname: [qualname, 0, True] if variable.is_cloud else [qualname, 0]
+                for qualname, variable in self.variables.items()
+            },
             "lists": cast(
                 JSON,
                 {

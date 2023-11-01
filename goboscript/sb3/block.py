@@ -30,6 +30,7 @@ def proccode(name: str, inputs_: Mapping[str, Input]):
 class Variable(NamedTuple):
     name: str
     token: Token
+    is_cloud: bool = False
 
 
 class List:

@@ -2,6 +2,7 @@ start: declr*
 
 ?declr: "costumes" _stringlist _NL -> declr_costumes
   | "variables" _namelist _NL -> declr_variables
+  | /cloud/ _namelist _NL -> declr_cloud
   | "lists" _namelist _NL -> declr_lists
   | "datalist" NAME STRING _NL -> datalist
   | "imagelist" NAME STRING [STRING] _NL -> imagelist

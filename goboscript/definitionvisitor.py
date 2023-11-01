@@ -55,7 +55,7 @@ class LocalsCollector(Visitor[Token]):
         qualname = f"{self.name}:{token}"
         self.sprite.variables[qualname] = Variable(qualname, token)
 
-    def add_variable(self, token: Token):
+    def add_variable(self, token: Token, *, is_cloud: bool = False):
         qualname = str(token)
         if qualname in self.globals:
             return
@@ -65,7 +65,7 @@ class LocalsCollector(Visitor[Token]):
             return
         if qualname in self.sprite.lists:
             return
-        self.sprite.variables[qualname] = Variable(qualname, token)
+        self.sprite.variables[qualname] = Variable(qualname, token, is_cloud)
 
     def add_list(self, token: Token):
         qualname = str(token)
@@ -88,6 +88,17 @@ class LocalsCollector(Visitor[Token]):
     def declr_variables(self, tree: Tree[Token]):
         for token in tree.children:
             self.add_variable(cast(Token, token))
+
+    def declr_cloud(self, tree: Tree[Token]):
+        if self.sprite.name != "Stage":
+            raise RangeError(
+                cast(Token, tree.children[0]),
+                "Cloud variables must be declared in the stage.",
+                "Move this into stage.gobo",
+            )
+
+        for token in tree.children[1:]:
+            self.add_variable(cast(Token, token), is_cloud=True)
 
     def declr_lists(self, tree: Tree[Token]):
         for token in tree.children:
@@ -250,8 +261,8 @@ class DefinitionVisitor(Interpreter[Token, None]):
     def declr_variables(self, tree: Tree[Token]):
         LocalsCollector(tree, self.sprite, self.globals, self.listglobals)
 
-    def declr_lists(self, tree: Tree[Token]):
-        LocalsCollector(tree, self.sprite, self.globals, self.listglobals)
+    declr_lists = declr_variables
+    declr_cloud = declr_variables
 
     def declr_on(self, tree: Tree[Token]):
         LocalsCollector(
