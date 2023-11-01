@@ -14,7 +14,7 @@ rules:
   - special: "\\$[a-zA-Z0-9_]+\\b"
   - statement: "\\b(costumes|datalist|imagelist|def|nowarp|on|onflag|onkey|onclick)\\b"
   - statement: "\\b(onbackdrop|onloudness|ontimer|onclone|macro|use|local|if|elif)\\b"
-  - statement: "\\b(else|until|forever|repeat|variables|lists)\\b"
+  - statement: "\\b(else|until|forever|repeat|variables|lists|cloud)\\b"
   - symbol.operator: "\\b(and|or|not|in)\\b|=|!=|<|>|<=|>=|\\+|-|\\*|\\/|%|&"
   - symbol.brackets: "[(){}]|\\[|\\]"
   - constant.number: "\\b[0-9]+(\\.[0-9]+)?\\b"
