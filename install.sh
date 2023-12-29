@@ -168,7 +168,7 @@ unknown_os() {
 if test -f /etc/os-release; then
   source /etc/os-release
   case "$NAME" in
-    ("Arch Linux")
+    ("Arch Linux"|"CachyOS Linux")
       archlinux
       exit
       ;;
