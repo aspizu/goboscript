@@ -106,7 +106,11 @@ class Block:
             value.serialize(blocks, None, self.id)
             if isinstance(value, ConditionBlock):
                 return [2, value.id]
-            if name == "custom_block" or (isinstance(value, Argument) and value.shadow):
+            if (
+                value.opcode == "sensing_of_object_menu"
+                or name == "custom_block"
+                or (isinstance(value, Argument) and value.shadow)
+            ):
                 return [1, value.id]
             return [3, value.id, [10, ""]]
         if type(value) is str:
@@ -140,7 +144,7 @@ class Block:
             "inputs": self.serialize_inputs(blocks),
             "fields": self.serialize_fields(blocks),
             "topLevel": isinstance(self, HatBlock),
-            "shadow": False,
+            "shadow": self.opcode == "sensing_of_object_menu",
         }
         if blocks[self.id]["topLevel"]:
             blocks[self.id]["x"] = self.x
