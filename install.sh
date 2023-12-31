@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "PATH=$PATH" >> log.out
-echo "OSTYPE=$OSTYPE" > log.out
+echo "OSTYPE=$OSTYPE" >> log.out
 echo "--- /etc/os-release" >> log.out
 cat /etc/os-release >> log.out
 echo "---" >> log.out
@@ -20,7 +20,7 @@ get_bindir() {
     echo "Could not find a directory inside \$PATH which is inside your home directory."
     echo
     echo "Consider adding this to ~/.bash_profile or ~/.zshenv"
-    echo "export PATH=~/.local/bin:\"$PATH\""
+    echo "export PATH=~/.local/bin:\"\$PATH\""
     exit 1
   fi
   echo "BINDIR=$BINDIR" >> log.out
@@ -88,10 +88,10 @@ install_package() {
 }
 
 install_command() {
-  mkdir -p $BINDIR
+  mkdir -p "$BINDIR"
   get_command_python
-  echo -e '#!/bin/sh\nexec '$PYTHON' -m goboscript "$@"' > $BINDIR/gsc
-  chmod +x $BINDIR/gsc
+  echo -e '#!/bin/sh\nexec '"$PYTHON"' -m goboscript "$@"' > "$BINDIR"/gsc
+  chmod +x "$BINDIR/gsc"
   echo "Goboscript is installed, Use the gsc command to run it."
 }
 
