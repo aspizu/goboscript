@@ -199,8 +199,8 @@ variable of stage
 ```
 
 ```goboscript
-x position of "sprite"
-y position of "sprite"
+x pos of "sprite"
+y pos of "sprite"
 direction of "sprite"
 cosume num of "sprite"
 cosume name of "sprite"
