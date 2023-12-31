@@ -185,6 +185,42 @@ timer()
 ```
 
 ```goboscript
+backdrop num of stage
+backdrop name of stage
+volume of stage
+variable of stage
+```
+
+```blocks
+([backdrop num v] of (stage v))
+([backdrop name v] of (stage v))
+([volume v] of (stage v))
+([variable v] of (stage v))
+```
+
+```goboscript
+x position of "sprite"
+y position of "sprite"
+direction of "sprite"
+cosume num of "sprite"
+cosume name of "sprite"
+size of "sprite"
+volume of "sprite"
+variable of "sprite"
+```
+
+```blocks
+([x position v] of (sprite v))
+([y position v] of (sprite v))
+([direction v] of (sprite v))
+([cosume num v] of (sprite v))
+([cosume name v] of (sprite v))
+([size v] of (sprite v))
+([volume v] of (sprite v))
+([variable v] of (sprite v))
+```
+
+```goboscript
 year()
 ```
 
