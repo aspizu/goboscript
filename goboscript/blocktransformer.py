@@ -769,6 +769,19 @@ class BlockTransformer(Transformer[Token, Block]):
             },
             fields={"PROPERTY": "volume"},
         )
+    
+    def var_of_stage(self, args: tuple[Token]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": "_stage_"},
+                )
+            },
+            fields={"PROPERTY": args[0]},
+        )
 
     def costume_num_of(self, args: tuple[str]):
         return Block(
@@ -820,6 +833,45 @@ class BlockTransformer(Transformer[Token, Block]):
                 )
             },
             fields={"PROPERTY": "y position"},
+        )
+    
+    def direction_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "direction"},
+        )
+    
+    def size_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "size"},
+        )
+    
+    def volume_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "volume"},
         )
 
     def var_of(self, args: tuple[Token, str]):

@@ -95,10 +95,14 @@ macrovar: MACROVAR
   | "backdrop" "num" "of" "stage" -> backdrop_num_of_stage
   | "backdrop" "name" "of" "stage" -> backdrop_name_of_stage
   | "volume" "of" "stage" -> volume_of_stage
+  | NAME "of" "stage" -> var_of_stage
   | "costume" "num" "of" STRING -> costume_num_of
   | "costume" "name" "of" STRING -> costume_name_of
   | "x" "pos" "of" STRING -> x_pos_of
   | "y" "pos" "of" STRING -> y_pos_of
+  | "direction" "of" STRING -> direction_of
+  | "size" "of" STRING -> size_of
+  | "volume" "of" STRING -> volume_of
   | NAME "of" STRING -> var_of
   | "(" expr ")"
 
