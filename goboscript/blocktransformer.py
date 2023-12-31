@@ -730,3 +730,107 @@ class BlockTransformer(Transformer[Token, Block]):
         if not isinstance(identifier, List):
             raise RangeError(token, "Identifier is not a list")
         return identifier
+
+    def backdrop_num_of_stage(self, _args: Any):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": "_stage_"},
+                )
+            },
+            fields={"PROPERTY": "backdrop #"},
+        )
+
+    def backdrop_name_of_stage(self, _args: Any):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": "_stage_"},
+                )
+            },
+            fields={"PROPERTY": "backdrop name"},
+        )
+
+    def volume_of_stage(self, _args: Any):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": "_stage_"},
+                )
+            },
+            fields={"PROPERTY": "volume"},
+        )
+
+    def costume_num_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "costume #"},
+        )
+
+    def costume_name_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "costume name"},
+        )
+
+    def x_pos_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "x position"},
+        )
+
+    def y_pos_of(self, args: tuple[str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[0]},
+                )
+            },
+            fields={"PROPERTY": "y position"},
+        )
+
+    def var_of(self, args: tuple[Token, str]):
+        return Block(
+            opcode="sensing_of",
+            inputs={
+                "OBJECT": Block(
+                    opcode="sensing_of_object_menu",
+                    inputs={},
+                    fields={"OBJECT": args[1]},
+                )
+            },
+            fields={"PROPERTY": args[0]},
+        )
