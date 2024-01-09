@@ -12,7 +12,6 @@ argparser = argparse.ArgumentParser(
     epilog="documentation: https://aspizu.github.io/goboscript-docs",
 )
 
-
 def input_t(argument: str) -> Path:
     path = Path(argument)
     if not path.is_dir():
@@ -23,13 +22,11 @@ def input_t(argument: str) -> Path:
         )
     return path
 
-
 def output_t(argument: str) -> Path:
     path = Path(argument)
     if path.is_dir():
         raise argparse.ArgumentTypeError(f"{path} is a directory.")
     return path
-
 
 argparser.add_argument(
     "--init",
@@ -56,15 +53,14 @@ init_cmd = args.init
 watch = args.watch
 if init_cmd:
     path = Path().absolute()
+    file_data = [
+        (path / f"stage.{EXT}", 'costumes "blank.svg";\n'),
+        (path / f"main.{EXT}", 'costumes "blank.svg";\n\nonflag {\n  say "Hello, World!";\n}\n'),
+        (path / "blank.svg", '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'),
+    ]
     if (path / f"stage.{EXT}").is_file():
         argparser.error("Working directory already contains a goboscript project.")
-    (path / f"stage.{EXT}").open("w").write('costumes "blank.svg";\n')
-    (path / f"main.{EXT}").open("w").write(
-        'costumes "blank.svg";\n\n' + "onflag {\n" '  say "Hello, World!";\n' "}\n"
-    )
-    (path / "blank.svg").open("w").write(
-        '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg><!--rotationCenter:0:0-->'
-    )
+    ([file_path.open("w").write(content) for file_path, content in file_data])
     sys.exit()
 input: Path | None = args.input
 if input is None:
@@ -72,7 +68,7 @@ if input is None:
     if not (input / f"stage.{EXT}").is_file():
         argparser.error(
             "Working directory is not a goboscript project, "
-            "please provide an --input argument."
+            "Please provide proper directory using --input argument."
         )
 output: Path | None = args.output
 if output is None:
@@ -81,8 +77,6 @@ if output is None:
         argparser.error(
             f"{output} is a directory, please provide a different --output argument."
         )
-
-
 try:
     build_gproject(input).package(output)
 except Error as e:
