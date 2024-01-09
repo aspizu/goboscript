@@ -1,5 +1,5 @@
- - [Automatic Installation](#automatic-installation)
- - [Manual Installation](#manual-installation)
+- [Automatic Installation](#automatic-installation)
+- [Manual Installation](#manual-installation)
 
 # Automatic Installation
 
@@ -37,7 +37,6 @@ If everything goes well, goboscript will be installed.
 Verify that goboscript is installed and is working.
 
 ```sh
-cd test/
 gsc
 ```
 
@@ -46,10 +45,11 @@ gsc
 If the automatic install fails, continue with these instructions.
 
 goboscript depends on the following dependencies:
- - [Python](https://www.python.org/)
- - [pip](https://pip.pypa.io/en/stable/)
- - [setuptools](https://setuptools.pypa.io/en/latest/)
- - [Lark parser](https://github.com/lark-parser/lark/)
+
+- [Python](https://www.python.org/)
+- [pip](https://pip.pypa.io/en/stable/)
+- [setuptools](https://setuptools.pypa.io/en/latest/)
+- [Lark parser](https://github.com/lark-parser/lark/)
 
 Try to install these dependencies using your operating system's built-in package
 manager. If any python module is not available, try to install it using pip.
