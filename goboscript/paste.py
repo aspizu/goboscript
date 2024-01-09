@@ -98,15 +98,16 @@ class PasteBuilder:
                             for ifile in self.relative.glob(path):
                                 self.include(ifile, file, range)
                         else:
-                            ifile = self.relative / path
-                            if not ifile.is_file():
-                                raise RangeError(
-                                    error.Range(file_i, token.column - 1, len(token)),
-                                    "File not found",
-                                    file=file,
+                            if token.column is not None:
+                                ifile = self.relative / path
+                                if not ifile.is_file():
+                                    raise RangeError(
+                                        error.Range(file_i, token.column - 1, len(token)),
+                                        "File not found",
+                                        file=file,
                                 )
 
-                            self.include(ifile, file, range)
+                                self.include(ifile, file, range)
                         file_start = file_i + 1
                     case _:
                         raise ValueError(tree)
