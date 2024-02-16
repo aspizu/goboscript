@@ -52,6 +52,7 @@ class SpriteInterpreter(Interpreter[Token, None]):
 
     declr_function_nowarp = declr_function
     declr_onflag = declr_on
+    declr_onclick = declr_on
     declr_onclone = declr_on
     declr_ontimer = declr_on
     declr_onloudness = declr_on
