@@ -1,7 +1,15 @@
 [package]
-name    = "goboscript"
-version = "0.1.0"
-edition = "2021"
+name          = "goboscript"
+description   = "goboscript is the Scratch compiler."
+version       = "0.1.0"
+license       = "MIT"
+keywords      = ["scratch", "compiler"]
+categories    = ["compilers"]
+documentation = "https://aspizu.github.io/goboscript"
+homepage      = "https://github.com/aspizu/goboscript"
+repository    = "https://github.com/aspizu/goboscript"
+edition       = "2021"
+exclude       = ["/tools"]
 
 [dependencies]
 clap          = "4.5.2"
