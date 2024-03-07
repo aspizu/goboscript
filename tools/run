@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+case $1 in
+  "compile")
+    cargo run -- build -i playground
+    unzip -o playground/playground.sb3 project.json -d playground
+    node tools/sb3.js playground/project.json
+    ;;
+  "uncompile")
+    unzip -o test/test.sb3 project.json -d playground
+    node tools/sb3.js playground/project.json
+    ;;
+  "patch")
+    node tools/sb3.js playground/project.json
+    zip -ur test/test.sb3 playground/project.json
+    ;;
+  "check")
+    zip -ur "$2" TMP
+    node tools/sb3.js TMP
+    rm TMP
+    ;;
+  *)
+    echo "Usage: tools/run {compile|uncompile|patch|check}"
+    exit 1
+    ;;
+esac

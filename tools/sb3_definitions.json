@@ -1,0 +1,446 @@
+{
+    "$id": "https://scratch.mit.edu/sb3_definitions.json",
+    "$schema": "http://json-schema.org/schema#",
+    "description": "Scratch 3.0 Project and Sprite Schema Definitions",
+    "definitions": {
+        "optionalString": {
+            "oneOf": [
+                {"type": "string"},
+                {"type": "null"}
+            ]
+        },
+        "optionalNumber": {
+            "oneOf": [
+                {"type": "number"},
+                {"type": "null"}
+            ]
+        },
+        "boolOrOptBoolString": {
+            "oneOf": [
+                {"type": "string",
+                 "enum": ["true", "false", "null"]},
+                {"type": "boolean"},
+                {"type": "null"}
+            ]
+        },
+        "stringOrNumber": {
+            "oneOf": [
+                {"type": "string"},
+                {"type": "number"}
+            ]
+        },
+        "scalarVal": {
+            "oneOf": [
+                {"$ref":"#/definitions/stringOrNumber"},
+                {"type": "boolean"}
+            ]
+        },
+        "assetId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{32}$"
+        },
+        "costume": {
+            "type": "object",
+            "properties": {
+                "assetId": { "$ref": "#/definitions/assetId"},
+                "bitmapResolution": {
+                    "type": "integer"
+                },
+                "dataFormat": {
+                    "type": "string",
+                    "enum": ["png", "svg", "jpeg", "jpg", "bmp", "gif"]
+                },
+                "md5ext": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{32}\\.[a-zA-Z]+$"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rotationCenterX": {
+                    "type": "number",
+                    "description": "This property is not required, but is highly recommended."
+                },
+                "rotationCenterY": {
+                    "type": "number",
+                    "description": "This property is not required, but is highly recommended."
+                }
+            },
+            "required": [
+                "assetId",
+                "dataFormat",
+                "name"
+            ]
+        },
+        "sound": {
+            "type": "object",
+            "properties": {
+                "assetId": { "$ref": "#/definitions/assetId"},
+                "dataFormat": {
+                    "type": "string",
+                    "enum": ["wav", "wave", "mp3"]
+                },
+                "md5ext": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{32}\\.[a-zA-Z0-9]+$"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rate": {
+                    "type": "integer"
+                },
+                "sampleCount": {
+                    "type": "integer"
+                }
+            },
+            "required": [
+                "assetId",
+                "dataFormat",
+                "name"
+            ]
+        },
+        "scalar_variable": {
+            "type": "array",
+            "items": [
+                {"type": "string", "description": "name of the variable"},
+                {"$ref":"#/definitions/scalarVal", "description": "value of the variable"}
+            ],
+            "additionalItems": {"type": "boolean", "enum": [true], "description": "Whether this is a cloud variable"},
+            "maxItems": 3
+        },
+        "list": {
+            "type": "array",
+            "items": [
+                {"type":"string", "description": "name of the list"},
+                {
+                    "type": "array",
+                    "description": "contents of the list",
+                    "items": {"$ref":"#/definitions/scalarVal"}
+                }
+            ],
+            "additionalItems": false
+        },
+        "broadcast_message": {
+            "type": "string",
+            "description": "the message being broadcasted"
+        },
+        "num_primitive": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "number",
+                    "enum": [4,5,6,7,8]
+                },
+                {"$ref":"#/definitions/stringOrNumber"}
+            ],
+            "additionalItems": false
+        },
+        "color_primitive": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "number",
+                    "enum": [9]
+                },
+                {
+                    "type": "string",
+                    "pattern": "^#[a-fA-F0-9]{6}$"
+                }
+            ],
+            "additionalItems": false
+        },
+        "text_primitive": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "number",
+                    "enum": [10]
+                },
+                {"$ref":"#/definitions/stringOrNumber"}
+            ],
+            "additionalItems": false
+        },
+        "broadcast_primitive": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "number",
+                    "enum": [11]
+                },
+                {"type": "string", "description": "broadcast message"},
+                {"type": "string", "description": "broadcast message id"}
+            ],
+            "additionalItems": false
+        },
+        "variable_primitive": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "number",
+                    "enum": [12]
+                },
+                {"type": "string", "description": "variable name"},
+                {"type": "string", "description": "variable id"}
+            ],
+            "additionalItems": {
+                "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 5
+        },
+        "list_primitive": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "number",
+                    "enum": [13]
+                },
+                {"type": "string", "description": "list name"},
+                {"type": "string", "description": "list id"}
+            ],
+            "additionalItems": {
+                "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 5
+        },
+        "topLevelPrimitive": {
+            "oneOf": [
+                {"$ref":"#/definitions/variable_primitive"},
+                {"$ref":"#/definitions/list_primitive"}
+            ]
+        },
+        "inputPrimitive": {
+            "oneOf": [
+                {"$ref":"#/definitions/num_primitive"},
+                {"$ref":"#/definitions/color_primitive"},
+                {"$ref":"#/definitions/text_primitive"},
+                {"$ref":"#/definitions/broadcast_primitive"},
+                {"$ref":"#/definitions/variable_primitive"},
+                {"$ref":"#/definitions/list_primitive"}
+            ]
+        },
+        "block": {
+            "type": "object",
+            "properties": {
+                "opcode": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": [
+                            {
+                                "type":"number",
+                                "enum":[1,2,3],
+                                "description": "1 = unobscured shadow, 2 = no shadow, 3 = obscured shadow"
+                            }
+                        ],
+                        "additionalItems": {
+                            "oneOf": [
+                                {"$ref":"#/definitions/optionalString"},
+                                {"$ref":"#/definitions/inputPrimitive"}
+                            ]
+                        }
+                    }
+                },
+                "fields": {
+                    "type": "object"
+                },
+                "next": {"$ref":"#/definitions/optionalString"},
+                "topLevel": {
+                    "type": "boolean"
+                },
+                "parent": {"$ref":"#/definitions/optionalString"},
+                "shadow": {
+                    "type": "boolean"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "mutation": {
+                    "type": "object",
+                    "properties": {
+                        "tagName": {
+                            "type": "string",
+                            "enum": ["mutation"]
+                        },
+                        "children": {
+                            "type": "array"
+                        },
+                        "proccode": {
+                            "type": "string"
+                        },
+                        "argumentids": {
+                            "type": "string"
+                        },
+                        "warp": {"$ref":"#/definitions/boolOrOptBoolString"},
+                        "hasnext": {"$ref":"#/definitions/boolOrOptBoolString"}
+                    }
+                }
+            },
+            "required": [
+                "opcode"
+            ]
+        },
+        "comment": {
+            "type": "object",
+            "properties": {
+                "blockId": {"$ref": "#/definitions/optionalString"},
+                "text": {
+                    "type": "string",
+                    "maxLength": 8000
+                },
+                "minimized": {"type": "boolean"},
+                "x": {"$ref": "#/definitions/optionalNumber"},
+                "y": {"$ref": "#/definitions/optionalNumber"},
+                "width": {"type": "number"},
+                "height": {"type": "number"}
+            },
+            "required": [
+                "text"
+            ]
+        },
+        "stage": {
+            "type": "object",
+            "description": "Description of property (and/or property/value pairs) that are unique to the stage.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "enum": ["Stage"]
+                },
+                "isStage": {
+                    "type": "boolean",
+                    "enum": [true]
+                },
+                "tempo": {
+                    "type": "number"
+                },
+                "videoTransparency": {
+                    "type": "number"
+                },
+                "videoState": {
+                    "type": "string",
+                    "enum": ["on", "off", "on-flipped"]
+                },
+                "layerOrder": {
+                    "type": "integer",
+                    "enum": [0],
+                    "description": "The layer order of the stage should be 0, if specified."
+                }
+            },
+            "required": [
+                "name",
+                "isStage"
+            ]
+        },
+        "sprite": {
+            "type": "object",
+            "description": "Description of property (and/or property/value pairs) for sprites.",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "not": {"enum": ["_stage_"]}
+                },
+                "isStage": {
+                    "type": "boolean",
+                    "enum": [false]
+                },
+                "visible": {
+                    "type": "boolean"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                },
+                "size": {
+                    "type": "number"
+                },
+                "direction": {
+                    "type": "number"
+                },
+                "draggable": {
+                    "type": "boolean"
+                },
+                "rotationStyle": {
+                    "type": "string",
+                    "enum": ["all around", "don't rotate", "left-right"]
+                },
+                "layerOrder": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "The layer order of a sprite should be a positive number, if specified."
+                }
+            },
+            "required": [
+                "name",
+                "isStage"
+            ]
+        },
+        "target": {
+            "type": "object",
+            "description" : "Properties common to both Scratch 3.0 Stage and Sprite",
+            "properties": {
+                "currentCostume": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "blocks": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "oneOf": [
+                            {"$ref":"#/definitions/block"},
+                            {"$ref":"#/definitions/topLevelPrimitive"}
+                        ]
+                    }
+                },
+                "variables": {
+                    "type": "object",
+                    "additionalProperties": {"$ref":"#/definitions/scalar_variable"}
+                },
+                "lists": {
+                    "type": "object",
+                    "additionalProperties": {"$ref":"#/definitions/list"}
+                },
+                "broadcasts": {
+                    "type": "object",
+                    "additionalProperties": {"$ref":"#/definitions/broadcast_message"}
+                },
+                "comments": {
+                    "type": "object",
+                    "additionalProperties": {"$ref": "#/definitions/comment"}
+                },
+                "costumes": {
+                    "type": "array",
+                    "items": {"$ref":"#/definitions/costume"},
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "sounds": {
+                    "type": "array",
+                    "items": {"$ref":"#/definitions/sound"},
+                    "uniqueItems": true
+                },
+                "volume": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "variables",
+                "costumes",
+                "sounds",
+                "blocks"
+            ]
+        }
+    }
+}
