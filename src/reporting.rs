@@ -181,8 +181,8 @@ impl<'src> Report<'src> {
                 }
             }
             Report::TooFewArgsForReporter {
-                reporter,
-                given,
+                reporter: _,
+                given: _,
                 span,
             } => display_error(
                 path,
@@ -193,8 +193,8 @@ impl<'src> Report<'src> {
                 "",
             ),
             Report::TooManyArgsForReporter {
-                reporter,
-                given,
+                reporter: _,
+                given: _,
                 span,
             } => display_error(
                 path,
@@ -204,7 +204,7 @@ impl<'src> Report<'src> {
                 span.clone(),
                 "",
             ),
-            Report::TooFewArgsForBlock { block, given, span } => display_error(
+            Report::TooFewArgsForBlock { block: _, given: _, span } => display_error(
                 path,
                 src,
                 self.level(),
@@ -212,7 +212,7 @@ impl<'src> Report<'src> {
                 span.clone(),
                 "",
             ),
-            Report::TooManyArgsForBlock { block, given, span } => display_error(
+            Report::TooManyArgsForBlock { block: _, given: _, span } => display_error(
                 path,
                 src,
                 self.level(),
@@ -221,8 +221,8 @@ impl<'src> Report<'src> {
                 "",
             ),
             Report::TooFewArgsForFunction {
-                function,
-                given,
+                function: _,
+                given: _,
                 span,
             } => display_error(
                 path,
@@ -233,8 +233,8 @@ impl<'src> Report<'src> {
                 "",
             ),
             Report::TooManyArgsForFunction {
-                function,
-                given,
+                function: _,
+                given: _,
                 span,
             } => display_error(
                 path,

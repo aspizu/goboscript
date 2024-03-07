@@ -36,30 +36,30 @@ impl<'src, 'b> Visitor<'src, 'b> {
                     },
                 );
             }
-            Declr::OnFlag(body, span) => {
+            Declr::OnFlag(body, _span) => {
                 self.visit_stmts(body);
             }
-            Declr::OnKey(key, body, span) => {
+            Declr::OnKey(_key, body, _span) => {
                 self.visit_stmts(body);
             }
-            Declr::OnClick(body, span) => {
+            Declr::OnClick(body, _span) => {
                 self.visit_stmts(body);
             }
-            Declr::OnBackdrop(backdrop, body, span) => {
+            Declr::OnBackdrop(_backdrop, body, _span) => {
                 self.visit_stmts(body);
             }
-            Declr::OnLoudnessGreaterThan(loudness, body, span) => {
+            Declr::OnLoudnessGreaterThan(loudness, body, _span) => {
                 self.visit_expr(loudness);
                 self.visit_stmts(body);
             }
-            Declr::OnTimerGreaterThan(timer, body, span) => {
+            Declr::OnTimerGreaterThan(timer, body, _span) => {
                 self.visit_expr(timer);
                 self.visit_stmts(body);
             }
-            Declr::OnMessage(message, body, span) => {
+            Declr::OnMessage(_message, body, _span) => {
                 self.visit_stmts(body);
             }
-            Declr::OnClone(body, span) => {
+            Declr::OnClone(body, _span) => {
                 self.visit_stmts(body);
             }
         }
@@ -73,58 +73,58 @@ impl<'src, 'b> Visitor<'src, 'b> {
 
     fn visit_stmt(&mut self, stmt: &mut Rrc<Stmt<'src>>) {
         match &mut *stmt.borrow_mut() {
-            Stmt::Repeat(times, body, span) => {
+            Stmt::Repeat(times, body, _span) => {
                 self.visit_expr(times);
                 self.visit_stmts(body);
             }
-            Stmt::Forever(body, span) => {
+            Stmt::Forever(body, _span) => {
                 self.visit_stmts(body);
             }
-            Stmt::Branch(condition, if_body, else_body, span) => {
+            Stmt::Branch(condition, if_body, else_body, _span) => {
                 self.visit_expr(condition);
                 self.visit_stmts(if_body);
                 self.visit_stmts(else_body);
             }
-            Stmt::Until(condition, body, span) => {
+            Stmt::Until(condition, body, _span) => {
                 self.visit_expr(condition);
                 self.visit_stmts(body);
             }
-            Stmt::SetVariable(name, value, span) => {
+            Stmt::SetVariable(name, value, _span) => {
                 self.variables.insert(name);
                 self.visit_expr(value);
             }
-            Stmt::ChangeVariable(name, value, span) => {
+            Stmt::ChangeVariable(_name, value, _span) => {
                 self.visit_expr(value);
             }
-            Stmt::Show(name, span) => todo!(),
-            Stmt::Hide(name, span) => todo!(),
-            Stmt::ListAdd(name, value, span) => {
+            Stmt::Show(_name, _span) => todo!(),
+            Stmt::Hide(_name, _span) => todo!(),
+            Stmt::ListAdd(name, value, _span) => {
                 self.lists.insert(name);
                 self.visit_expr(value);
             }
-            Stmt::ListDelete(name, index, span) => {
+            Stmt::ListDelete(name, index, _span) => {
                 self.lists.insert(name);
                 self.visit_expr(index);
             }
-            Stmt::ListDeleteAll(name, span) => {
+            Stmt::ListDeleteAll(name, _span) => {
                 self.lists.insert(name);
             }
-            Stmt::ListInsert(name, index, value, span) => {
-                self.lists.insert(name);
-                self.visit_expr(index);
-                self.visit_expr(value);
-            }
-            Stmt::ListReplace(name, index, value, span) => {
+            Stmt::ListInsert(name, index, value, _span) => {
                 self.lists.insert(name);
                 self.visit_expr(index);
                 self.visit_expr(value);
             }
-            Stmt::Block(name, args, span) => {
+            Stmt::ListReplace(name, index, value, _span) => {
+                self.lists.insert(name);
+                self.visit_expr(index);
+                self.visit_expr(value);
+            }
+            Stmt::Block(_name, args, _span) => {
                 for arg in args {
                     self.visit_expr(arg);
                 }
             }
-            Stmt::Call(name, args, span) => {
+            Stmt::Call(_name, args, _span) => {
                 for arg in args {
                     self.visit_expr(arg);
                 }
@@ -135,12 +135,12 @@ impl<'src, 'b> Visitor<'src, 'b> {
     fn visit_expr(&mut self, expr: &mut Rrc<Expr<'src>>) {
         let mut replace = None;
         match &mut *expr.borrow_mut() {
-            Expr::Int(value, span) => {}
-            Expr::Float(value, span) => {}
-            Expr::String(value, span) => {}
-            Expr::Name(name, span) => {}
-            Expr::Arg(name, span) => {}
-            Expr::Reporter(reporter, args, span) => {
+            Expr::Int(_value, _span) => {}
+            Expr::Float(_value, _span) => {}
+            Expr::String(_value, _span) => {}
+            Expr::Name(_name, _span) => {}
+            Expr::Arg(_name, _span) => {}
+            Expr::Reporter(_reporter, args, _span) => {
                 for arg in args {
                     self.visit_expr(arg);
                 }
@@ -169,7 +169,7 @@ impl<'src, 'b> Visitor<'src, 'b> {
                     _ => {}
                 }
             }
-            Expr::BinaryOp(op, left, right, span) => {
+            Expr::BinaryOp(_op, left, right, _span) => {
                 self.visit_expr(left);
                 self.visit_expr(right);
             }

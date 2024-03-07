@@ -341,11 +341,11 @@ where
 
     fn sounds(
         &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        sounds: &[(String, Span)],
-        span: &Span,
-        comma: bool,
+        _r: R<'src, '_>,
+        _sc: Sc<'src, '_>,
+        _sounds: &[(String, Span)],
+        _span: &Span,
+        _comma: bool,
     ) -> io::Result<()> {
         todo!()
     }
