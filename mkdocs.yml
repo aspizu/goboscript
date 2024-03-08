@@ -58,3 +58,9 @@ plugins:
     - search
 extra_css:
     - stylesheets/extra.css
+extra:
+    social:
+        - icon: fontawesome/brands/github
+          link: https://github.com/aspizu
+        - icon: fontawesome/brands/discord
+          link: https://discord.gg/UAwVrejtwz
