@@ -1,0 +1,80 @@
+{
+    "name": "goboscript",
+    "displayName": "goboscript",
+    "version": "0.1.0",
+    "description": "goboscript language support for Visual Studio Code.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aspizu/goboscript.git"
+    },
+    "homepage": "https://github.com/aspizu/goboscript",
+    "license": "MIT",
+    "keywords": [
+        "goboscript"
+    ],
+    "categories": [
+        "Formatters",
+        "Programming Languages"
+    ],
+    "engines": {
+        "vscode": "^1.87.0"
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run build-base -- --minify",
+        "package": "vsce package -o goboscript.vsix",
+        "build-base": "(npx js-yaml snippets/snippets.yml > snippets/snippets.json) && (npx js-yaml syntaxes/goboscript.tmGrammar.yml > syntaxes/goboscript.tmGrammar.json) && esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16",
+        "build": "npm run build-base -- --sourcemap",
+        "watch": "npm run build-base -- --sourcemap --watch",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "lint": "eslint -c .eslintrc.js --ext ts ./src",
+        "lint:fix": "npm run lint -- --fix",
+        "typecheck": "tsc"
+    },
+    "main": "./out/main",
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@tsconfig/strictest": "^2.0.3",
+        "@types/node": "^20.11.25",
+        "@types/vscode": "^1.87.0",
+        "@typescript-eslint/eslint-plugin": "^7.1.1",
+        "@typescript-eslint/parser": "^7.1.1",
+        "@vscode/vsce": "^2.24.0",
+        "esbuild": "^0.20.1",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "js-yaml": "^4.1.0",
+        "prettier": "^3.2.5",
+        "tslib": "^2.6.2",
+        "typescript": "^5.4.2"
+    },
+    "activationEvents": [
+        "workspaceContains:stage.gs"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "goboscript",
+                "extensions": [
+                    ".gs"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "goboscript",
+                "scopeName": "source.goboscript",
+                "path": "./syntaxes/goboscript.tmGrammar.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "goboscript",
+                "path": "./snippets/snippets.json"
+            }
+        ]
+    }
+}

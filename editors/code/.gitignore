@@ -1,0 +1,9 @@
+out
+node_modules
+server
+.vscode-test/
+*.vsix
+bundle
+vscode.proposed.d.ts
+syntaxes/*.json
+snippets/*.json
