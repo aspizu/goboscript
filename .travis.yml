@@ -1,0 +1,4 @@
+language: rust
+cache: cargo
+notifications:
+    email: false

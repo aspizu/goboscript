@@ -4,14 +4,21 @@ theme:
     features:
         - navigation.instant
         - navigation.instant.prefetch
+        - navigation.instant.progress
+        - navigation.instant.preview
         - navigation.tracking
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - navigation.expand
         - content.code.annotate
-        - toc.integrate
         - toc.follow
         - navigation.path
         - navigation.top
         - content.code.copy
         - content.tabs.link
+    font:
+        text: Inter Tight
+        code: PT Mono
     palette:
         # Note: Using the system theme works with the insiders version
         # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode

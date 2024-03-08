@@ -22,6 +22,10 @@
     --crater: #f0dfdf;
 }
 
+[data-md-color-scheme="astral-dark"] .md-top:not(:hover) {
+    background-color: var(--md-primary-fg-color);
+}
+
 [data-md-color-scheme="astral-light"] {
     --md-default-bg-color--dark: var(--black);
     --md-primary-fg-color: var(--galaxy);
