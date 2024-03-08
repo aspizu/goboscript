@@ -1,0 +1,60 @@
+site_name: goboscript
+theme:
+    name: material
+    features:
+        - navigation.instant
+        - navigation.instant.prefetch
+        - navigation.tracking
+        - content.code.annotate
+        - toc.integrate
+        - toc.follow
+        - navigation.path
+        - navigation.top
+        - content.code.copy
+        - content.tabs.link
+    palette:
+        # Note: Using the system theme works with the insiders version
+        # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
+        - media: "(prefers-color-scheme)"
+          toggle:
+              icon: material/brightness-auto
+              name: Switch to light mode
+        - media: "(prefers-color-scheme: light)"
+          scheme: astral-light
+          toggle:
+              icon: material/brightness-7
+              name: Switch to dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: astral-dark
+          toggle:
+              icon: material/brightness-4
+              name: Switch to system preference
+repo_url: https://github.com/aspizu/goboscript
+repo_name: goboscript
+site_author: Priyanshu Dangare
+site_url: https://aspizu.github.io/goboscript
+markdown_extensions:
+    - admonition
+    - pymdownx.details
+    - toc:
+          permalink: "#"
+    - pymdownx.snippets
+    - pymdownx.magiclink
+    - attr_list
+    - md_in_html
+    - pymdownx.highlight:
+          anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.superfences
+    - markdown.extensions.attr_list
+    - pymdownx.keys
+    - pymdownx.tasklist:
+          custom_checkbox: true
+    - pymdownx.highlight:
+          anchor_linenums: true
+    - pymdownx.tabbed:
+          alternate_style: true
+plugins:
+    - search
+extra_css:
+    - stylesheets/extra.css
