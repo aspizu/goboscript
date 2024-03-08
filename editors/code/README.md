@@ -18,7 +18,7 @@ Code.
 ```sh
 cd editors/code
 npm install
-npm run build
+npm run package
 ```
 
 Then in Visual Studio Code, press `Ctrl` + `Shift` + `P` and run the
