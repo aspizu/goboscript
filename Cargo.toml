@@ -13,6 +13,7 @@ exclude       = ["/tools"]
 
 [dependencies]
 clap          = "4.5.2"
+clap_complete_command = "0.5.1"
 clap_derive   = "4.5.0"
 colored       = "2.1.0"
 crc32fast     = "1.4.0"

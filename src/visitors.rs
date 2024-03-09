@@ -169,9 +169,108 @@ impl<'src, 'b> Visitor<'src, 'b> {
                     _ => {}
                 }
             }
-            Expr::BinaryOp(_op, left, right, _span) => {
+            Expr::BinaryOp(op, left, right, _span) => {
                 self.visit_expr(left);
                 self.visit_expr(right);
+                match op {
+                    BinaryOp::Add => {
+                        match (&mut *left.borrow_mut(), &mut *right.borrow_mut()) {
+                            (Expr::Int(l, _), Expr::Int(r, _)) => {
+                                *l += *r;
+                                replace = Some(left.clone());
+                            }
+                            (
+                                Expr::Int(l, _),
+                                Expr::BinaryOp(
+                                    BinaryOp::Add,
+                                    right_left,
+                                    right_right,
+                                    _,
+                                ),
+                            ) => {
+                                if let Expr::Int(rl, _) = &mut *right_left.borrow_mut()
+                                {
+                                    *rl += *l;
+                                    replace = Some(right.clone());
+                                } else if let Expr::Int(rr, _) =
+                                    &mut *right_right.borrow_mut()
+                                {
+                                    *rr += *l;
+                                    replace = Some(right.clone());
+                                }
+                            }
+                            (Expr::Float(l, _), Expr::Float(r, _)) => {
+                                *l += *r;
+                                replace = Some(left.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+                    BinaryOp::Sub => {
+                        match (&mut *left.borrow_mut(), &mut *right.borrow_mut()) {
+                            (Expr::Int(l, _), Expr::Int(r, _)) => {
+                                *l -= *r;
+                                replace = Some(left.clone());
+                            }
+                            (Expr::Float(l, _), Expr::Float(r, _)) => {
+                                *l -= *r;
+                                replace = Some(left.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+                    BinaryOp::Mul => {
+                        match (&mut *left.borrow_mut(), &mut *right.borrow_mut()) {
+                            (Expr::Int(l, _), Expr::Int(r, _)) => {
+                                *l *= *r;
+                                replace = Some(left.clone());
+                            }
+                            (
+                                Expr::Int(l, _),
+                                Expr::BinaryOp(
+                                    BinaryOp::Mul,
+                                    right_left,
+                                    right_right,
+                                    _,
+                                ),
+                            ) => {
+                                if let Expr::Int(rl, _) = &mut *right_left.borrow_mut()
+                                {
+                                    *rl *= *l;
+                                    replace = Some(right.clone());
+                                } else if let Expr::Int(rr, _) =
+                                    &mut *right_right.borrow_mut()
+                                {
+                                    *rr *= *l;
+                                    replace = Some(right.clone());
+                                }
+                            }
+                            (Expr::Float(l, _), Expr::Float(r, _)) => {
+                                *l *= *r;
+                                replace = Some(left.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+                    BinaryOp::Div => {
+                        match (&mut *left.borrow_mut(), &mut *right.borrow_mut()) {
+                            (Expr::Int(l, _), Expr::Int(r, _)) => {
+                                if *r != 0 {
+                                    *l /= *r;
+                                    replace = Some(left.clone());
+                                }
+                            }
+                            (Expr::Float(l, _), Expr::Float(r, _)) => {
+                                if *r != 0.0 {
+                                    *l /= *r;
+                                    replace = Some(left.clone());
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
         if let Some(replace) = replace {

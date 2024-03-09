@@ -27,7 +27,26 @@ Declr: Rrc<Declr<'input>> = {
 
 Stmts: Stmts<'input> = "{" <Stmt*> "}";
 
+If: Rrc<Stmt<'input>> = {
+    <l:@L> "if" <r:@R> <c:Expr> <i:Stmts>
+        => rrc(Stmt::Branch(c, i, vec![], l..r)),
+    <l:@L> "if" <r:@R> <c:Expr> <i:Stmts> "else" <e:Stmts>
+        => rrc(Stmt::Branch(c, i, e, l..r)),
+    <l:@L> "if" <r:@R> <c:Expr> <i:Stmts> <e:Elif>
+        => rrc(Stmt::Branch(c, i, vec![e], l..r)),
+}
+
+Elif: Rrc<Stmt<'input>> = {
+    <l:@L> "elif" <r:@R> <c:Expr> <i:Stmts>
+        => rrc(Stmt::Branch(c, i, vec![], l..r)),
+    <l:@L> "elif" <r:@R> <c:Expr> <i:Stmts> "else" <e:Stmts>
+        => rrc(Stmt::Branch(c, i, e, l..r)),
+    <l:@L> "elif" <r:@R> <c:Expr> <i:Stmts> <e:Elif>
+        => rrc(Stmt::Branch(c, i, vec![e], l..r)),
+}
+
 Stmt: Rrc<Stmt<'input>> = {
+    <If>,
     <l:@L> "repeat" <r:@R> <e:Expr> <b:Stmts> => rrc(Stmt::Repeat(e, b, l..r)),
     <l:@L> "forever" <r:@R> <b:Stmts> => rrc(Stmt::Forever(b, l..r)),
     <l:@L> "until" <r:@R> <e:Expr> <b:Stmts> => rrc(Stmt::Until(e, b, l..r)),

@@ -13,7 +13,7 @@ mod zipfile;
 use std::io;
 
 use build::build;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use cli::{Cli, Commands};
 use lalrpop_util::lalrpop_mod;
 
@@ -22,6 +22,9 @@ lalrpop_mod!(pub grammar);
 fn main() -> io::Result<()> {
     match Cli::parse().command {
         Commands::Build { input, output } => build(input, output)?,
+        Commands::Completions { shell } => {
+            shell.generate(&mut Cli::command(), &mut std::io::stdout());
+        }
     }
     Ok(())
 }
