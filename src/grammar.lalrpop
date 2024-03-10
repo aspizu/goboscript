@@ -58,6 +58,7 @@ Stmt: Rrc<Stmt<'input>> = {
     "hide" <l:@L> <n:Name> <r:@R> ";" => rrc(Stmt::Hide(n, l..r)),
     "add" <e:Expr> "to" <l:@L> <n:Name> <r:@R> ";" => rrc(Stmt::ListAdd(n, e, l..r)),
     "delete" <l:@L> <n:Name> <r:@R> "[" <e:Expr> "]" ";" => rrc(Stmt::ListDelete(n, e, l..r)),
+    <l:@L> "log" <r:@R> <a:Exprs> ";" => rrc(Stmt::Block(Block::Log, a, l..r)),
     "delete" <l:@L> <n:Name> <r:@R> ";" => rrc(Stmt::ListDeleteAll(n, l..r)),
     "insert" <e:Expr> "at" <i:Expr> "of" <l:@L> <n:Name> <r:@R> ";"
         => rrc(Stmt::ListInsert(n, i, e, l..r)),

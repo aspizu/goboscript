@@ -505,7 +505,7 @@ where
         }
     }
 
-    fn argument_stuff(&mut self, args: &Names<'src>) -> io::Result<()> {
+    fn argument_stuff(&mut self, args: &Names) -> io::Result<()> {
         for each in ["argumentids", "argumentnames"] {
             write!(self.zip, r#","{}":"["#, each)?;
             let mut comma = false;
@@ -1458,6 +1458,22 @@ where
                 return self
                     .clone(r, sc, block, args, this_id, next_id, parent_id, comma)
             }
+            | Block::SetPenHue
+            | Block::SetPenSaturation
+            | Block::SetPenBrightness
+            | Block::SetPenTransparency
+            | Block::ChangePenHue
+            | Block::ChangePenSaturation
+            | Block::ChangePenBrightness
+            | Block::ChangePenTransparency => {
+                return self
+                    .pen_param(r, sc, block, args, this_id, next_id, parent_id, comma)
+            }
+            Block::Breakpoint | Block::Log | Block::Warn | Block::Error => {
+                return self.sa_debugger(
+                    r, sc, block, args, this_id, next_id, parent_id, comma,
+                )
+            }
             _ => {}
         }
         let (opcode, arg_names, fields) = block_details(*block);
@@ -1515,6 +1531,7 @@ where
         Ok(())
     }
 
+    // TODO: add errors for non-existant sprite references
     fn goto_sprite_or_point_towards(
         &mut self,
         r: R<'src, '_>,
@@ -1587,6 +1604,7 @@ where
         )
     }
 
+    // TODO: add errors for non-existant sprite references
     fn glide_to_sprite(
         &mut self,
         r: R<'src, '_>,
@@ -1644,6 +1662,7 @@ where
         self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)
     }
 
+    // TODO: add errors for non-existant sprite references
     fn clone(
         &mut self,
         r: R<'src, '_>,
@@ -1688,6 +1707,66 @@ where
             "control_create_clone_of_menu",
             "CLONE_OPTION",
             if let Some(literal) = literal { literal } else { "_myself_" },
+            menu_id,
+            this_id,
+        )
+    }
+
+    // TODO: Add a way to put a expr in the menu.
+    fn pen_param(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> io::Result<()> {
+        let is_change = matches!(
+            block,
+            Block::ChangePenHue
+                | Block::ChangePenSaturation
+                | Block::ChangePenBrightness
+                | Block::ChangePenTransparency
+        );
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        self.begin_node(
+            Node::new(
+                if is_change {
+                    "pen_setPenColorParamTo"
+                } else {
+                    "pen_changePenColorParamBy"
+                },
+                this_id,
+                comma,
+            )
+            .some_next_id(next_id)
+            .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        self.key("COLOR_PARAM")?;
+        write!(self, r#"[1,{menu_id}]"#)?;
+        self.input("VALUE", &args[0].borrow(), arg_id, true)?;
+        self.end_object()?;
+        self.end_object()?;
+        self.expr(r, sc, &args[0].borrow(), this_id, this_id, true)?;
+        self.menu(
+            "pen_menu_colorParam",
+            "colorParam",
+            match block {
+                Block::SetPenHue | Block::ChangePenHue => "color",
+                Block::SetPenSaturation | Block::ChangePenSaturation => "saturation",
+                Block::SetPenBrightness | Block::ChangePenBrightness => "brightness",
+                Block::SetPenTransparency | Block::ChangePenTransparency => {
+                    "transparency"
+                }
+                _ => unreachable!(),
+            },
             menu_id,
             this_id,
         )
@@ -1861,6 +1940,57 @@ where
         Ok(())
     }
 
+    fn sa_debugger(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> io::Result<()> {
+        let is_breakpoint = matches!(block, Block::Breakpoint);
+        let arg_id = self.id.create_id();
+        self.begin_node(
+            Node::new("procedures_call", this_id, comma)
+                .some_next_id(next_id)
+                .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if !is_breakpoint {
+            self.input("arg0", &args[0].borrow(), arg_id, false)?;
+        }
+        self.end_object()?;
+        self.begin_mutation_object()?;
+        self.proccode(
+            match block {
+                Block::Breakpoint => "\\u200b\\u200bbreakpoint\\u200b\\u200b",
+                Block::Warn => "\\u200b\\u200bwarn\\u200b\\u200b",
+                Block::Error => "\\u200b\\u200berror\\u200b\\u200b",
+                Block::Log => "\\u200b\\u200blog\\u200b\\u200b",
+                _ => unreachable!(),
+            },
+            if is_breakpoint { 0 } else { 1 },
+        )?;
+        if is_breakpoint {
+            self.argument_stuff(&vec![])?;
+        } else {
+            self.argument_stuff(&vec![("arg0", 0..0)])?;
+        }
+
+        self.warp(false)?;
+        self.end_object()?;
+        self.end_object()?;
+        if !is_breakpoint {
+            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)?;
+        }
+        Ok(())
+    }
+
     fn expr(
         &mut self,
         r: R<'src, '_>,
@@ -1936,6 +2066,21 @@ where
         parent_id: BlockID,
         comma: bool,
     ) -> io::Result<()> {
+        match reporter {
+            | Reporter::TouchingMousePointer
+            | Reporter::TouchingEdge
+            | Reporter::Touching => {
+                return self.touching_object(
+                    r, sc, reporter, args, span, this_id, parent_id, comma,
+                )
+            }
+            Reporter::DistanceToMousePointer | Reporter::DistanceTo => {
+                return self.distance_to_object(
+                    r, sc, reporter, args, span, this_id, parent_id, comma,
+                )
+            }
+            _ => {}
+        }
         let (opcode, arg_names, fields) = reporter_details(*reporter);
         match args.len().cmp(&arg_names.len()) {
             Ordering::Less => {
@@ -1981,6 +2126,107 @@ where
         Ok(())
     }
 
+    fn touching_object(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        reporter: &Reporter,
+        args: &Exprs<'src>,
+        span: &Span,
+        this_id: BlockID,
+        parent_id: BlockID,
+        comma: bool,
+    ) -> io::Result<()> {
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new("sensing_touchingobject", this_id, comma).parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() && args.len() == 1 {
+            self.input_with_shadow(
+                "TOUCHINGOBJECTMENU",
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
+        } else {
+            self.key("TOUCHINGOBJECTMENU")?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+        }
+        self.end_object()?;
+        self.end_object()?;
+        self.menu(
+            "sensing_touchingobjectmenu",
+            "TOUCHINGOBJECTMENU",
+            match reporter {
+                Reporter::TouchingMousePointer => "_mouse_",
+                Reporter::TouchingEdge => "_edge_",
+                Reporter::Touching => literal.map_or("_mouse_", |it| it.as_str()),
+                _ => unreachable!(),
+            },
+            menu_id,
+            this_id,
+        )
+    }
+
+    fn distance_to_object(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        reporter: &Reporter,
+        args: &Exprs<'src>,
+        span: &Span,
+        this_id: BlockID,
+        parent_id: BlockID,
+        comma: bool,
+    ) -> io::Result<()> {
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new("sensing_distanceto", this_id, comma).parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() && args.len() == 1 {
+            self.input_with_shadow(
+                "DISTANCETOMENU",
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
+        } else {
+            self.key("DISTANCETOMENU")?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+        }
+        self.end_object()?;
+        self.end_object()?;
+        self.menu(
+            "sensing_distancetomenu",
+            "DISTANCETOMENU",
+            match reporter {
+                Reporter::DistanceToMousePointer => "_mouse_",
+                Reporter::DistanceTo => literal.map_or("_mouse_", |it| it.as_str()),
+                _ => unreachable!(),
+            },
+            menu_id,
+            this_id,
+        )?;
+        if args.len() == 1 {
+            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)?;
+        }
+        Ok(())
+    }
+
     fn unary_op(
         &mut self,
         r: R<'src, '_>,
@@ -2001,7 +2247,7 @@ where
                     U::Not => "operator_not",
                     U::Length => "operator_length",
                     U::Round => "operator_round",
-                    U::Abs
+                    | U::Abs
                     | U::Floor
                     | U::Ceil
                     | U::Sqrt

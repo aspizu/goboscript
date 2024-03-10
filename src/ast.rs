@@ -144,11 +144,11 @@ pub enum Reporter {
     // Sensing
     TouchingMousePointer,
     TouchingEdge,
-    TouchingSprite,
+    Touching,
     TouchingColor,
     ColorIsTouchingColor,
     DistanceToMousePointer,
-    DistanceToSprite,
+    DistanceTo,
     Answer,
     MouseDown,
     MouseX,
