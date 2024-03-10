@@ -1,181 +1,181 @@
 for:
-    description: Iterate over a list with a repeat loop and index variable
-    prefix:
-        - for
-    body:
-        - "${1:index} = 1;"
-        - "repeat length ${2:list} {"
-        - "\t$0"
-        - "\t$1++;"
-        - "}"
+  description: Iterate over a list with a repeat loop and index variable
+  prefix:
+    - for
+  body:
+    - "${1:index} = 1;"
+    - "repeat length ${2:list} {"
+    - "\t$0"
+    - "\t$1++;"
+    - "}"
 item:
-    description: Get item from list at index
-    prefix:
-        - item of
-    body:
-        - "${1:list}[${2:index}]"
+  description: Get item from list at index
+  prefix:
+    - item of
+  body:
+    - "${1:list}[${2:index}]"
 letter:
-    description: Get letter from string at index
-    prefix:
-        - letter of
-    body:
-        - "${1:string}[${2:index}]"
+  description: Get letter from string at index
+  prefix:
+    - letter of
+  body:
+    - "${1:string}[${2:index}]"
 contains:
-    description: List contains item?, or string contains substring?
-    prefix:
-        - contains
-        - has
-    body:
-        - "${2:item} in ${1:list}"
+  description: List contains item?, or string contains substring?
+  prefix:
+    - contains
+    - has
+  body:
+    - "${2:item} in ${1:list}"
 add:
-    description: Add item to list
-    prefix:
-        - add
-        - append
-        - push
-    body:
-        - "add ${2:value} to ${1:list};"
+  description: Add item to list
+  prefix:
+    - add
+    - append
+    - push
+  body:
+    - "add ${2:value} to ${1:list};"
 delete:
-    description: Delete item at indx from list
-    prefix:
-        - delete
-        - del
-    body:
-        - "delete ${1:list}[${2:index}];"
+  description: Delete item at indx from list
+  prefix:
+    - delete
+    - del
+  body:
+    - "delete ${1:list}[${2:index}];"
 delete_all:
-    description: Delete all items from list
-    prefix:
-        - delete all
-        - delall
-    body:
-        - "delete ${1:list};"
+  description: Delete all items from list
+  prefix:
+    - delete all
+    - delall
+  body:
+    - "delete ${1:list};"
 insert:
-    description: Insert item into list at index
-    prefix:
-        - insert
-        - ins
-    body:
-        - "insert ${3:value} at ${2:index} of ${1:list};"
+  description: Insert item into list at index
+  prefix:
+    - insert
+    - ins
+  body:
+    - "insert ${3:value} at ${2:index} of ${1:list};"
 replace:
-    description: Replace item in list at index
-    prefix:
-        - replace
-    body:
-        - "${1:list}[${2:index}] = ${3:value};"
+  description: Replace item in list at index
+  prefix:
+    - replace
+  body:
+    - "${1:list}[${2:index}] = ${3:value};"
 change:
-    description: Change variable by
-    prefix:
-        - change
-    body:
-        - "${1:variable} += ${2:value};"
+  description: Change variable by
+  prefix:
+    - change
+  body:
+    - "${1:variable} += ${2:value};"
 onflag:
-    description: When green flag clicked
-    prefix:
-        - when green flag clicked
-        - onflag
-    body:
-        - "onflag {"
-        - "\t$0"
-        - "}"
+  description: When green flag clicked
+  prefix:
+    - when green flag clicked
+    - onflag
+  body:
+    - "onflag {"
+    - "\t$0"
+    - "}"
 onkey:
-    description: When key pressed
-    prefix:
-        - when key pressed
-        - onkey
-    body:
-        - 'onkey "${1:key}" {'
-        - "\t$0"
-        - "}"
+  description: When key pressed
+  prefix:
+    - when key pressed
+    - onkey
+  body:
+    - 'onkey "${1:key}" {'
+    - "\t$0"
+    - "}"
 onclick:
-    description: When this sprite clicked
-    prefix:
-        - when this sprite clicked
-        - onclick
-    body:
-        - "onclick {"
-        - "\t$0"
-        - "}"
+  description: When this sprite clicked
+  prefix:
+    - when this sprite clicked
+    - onclick
+  body:
+    - "onclick {"
+    - "\t$0"
+    - "}"
 onbackdrop:
-    description: When backdrop switches to
-    prefix:
-        - when backdrop switches to
-        - onbackdrop
-    body:
-        - 'onbackdrop "${1:backdrop}" {'
-        - "\t$0"
-        - "}"
+  description: When backdrop switches to
+  prefix:
+    - when backdrop switches to
+    - onbackdrop
+  body:
+    - 'onbackdrop "${1:backdrop}" {'
+    - "\t$0"
+    - "}"
 onloudness:
-    description: When loudness > value
-    prefix:
-        - when loudness >
-        - onloudness
-    body:
-        - "onloudness > $1 {"
-        - "\t$0"
-        - "}"
+  description: When loudness > value
+  prefix:
+    - when loudness >
+    - onloudness
+  body:
+    - "onloudness > $1 {"
+    - "\t$0"
+    - "}"
 ontimer:
-    description: When timer > value
-    prefix:
-        - when timer >
-        - ontimer
-    body:
-        - "ontimer > $1 {"
-        - "\t$0"
-        - "}"
+  description: When timer > value
+  prefix:
+    - when timer >
+    - ontimer
+  body:
+    - "ontimer > $1 {"
+    - "\t$0"
+    - "}"
 "on":
-    description: When I receive message
-    prefix:
-        - when I receive
-        - "on"
-    body:
-        - 'on "${1:message}" {'
-        - "\t$0"
-        - "}"
+  description: When I receive message
+  prefix:
+    - when I receive
+    - "on"
+  body:
+    - 'on "${1:message}" {'
+    - "\t$0"
+    - "}"
 onclone:
-    description: When I start as a clone
-    prefix:
-        - when I start as a clone
-        - onclone
-    body:
-        - "onclone {"
-        - "\t$0"
-        - "}"
+  description: When I start as a clone
+  prefix:
+    - when I start as a clone
+    - onclone
+  body:
+    - "onclone {"
+    - "\t$0"
+    - "}"
 until:
-    description: Repeat until condition
-    prefix:
-        - repeat until
-        - until
-    body:
-        - "until $1 {"
-        - "\t$0"
-        - "}"
+  description: Repeat until condition
+  prefix:
+    - repeat until
+    - until
+  body:
+    - "until $1 {"
+    - "\t$0"
+    - "}"
 set_draggable:
-    description: Set drag mode to draggable
-    prefix:
-        - set drag mode draggable
-    body:
-        - "set_draggable;"
+  description: Set drag mode to draggable
+  prefix:
+    - set drag mode draggable
+  body:
+    - "set_draggable;"
 set_not_draggable:
-    description: Set drag mode to not draggable
-    prefix:
-        - set drag mode not draggable
-    body:
-        - "set_not_draggable;"
+  description: Set drag mode to not draggable
+  prefix:
+    - set drag mode not draggable
+  body:
+    - "set_not_draggable;"
 random:
-    description: Pick random number
-    prefix:
-        - pick random
-    body:
-        - "random($1, $2)"
+  description: Pick random number
+  prefix:
+    - pick random
+  body:
+    - "random($1, $2)"
 join:
-    description: Join two strings
-    prefix:
-        - join
-    body:
-        - " ${1:left} & ${2:right}"
+  description: Join two strings
+  prefix:
+    - join
+  body:
+    - " ${1:left} & ${2:right}"
 mod:
-    description: Modulo
-    prefix:
-        - mod
-    body:
-        - " ${1:left} % ${2:right}"
+  description: Modulo
+  prefix:
+    - mod
+  body:
+    - " ${1:left} % ${2:right}"

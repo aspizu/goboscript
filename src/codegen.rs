@@ -18,6 +18,7 @@ use crate::{
     },
     blockid::{BlockID, BlockIDFactory},
     build::{FunctionPrototype, Program},
+    config::Config,
     details::{block_details, reporter_details},
     reporting::Report,
     zipfile::ZipFile,
@@ -88,6 +89,7 @@ where
     id: BlockIDFactory,
     costumes: HashMap<Rc<str>, String>,
     input: PathBuf,
+    pub config: Config,
 }
 
 type R<'src, 'b> = &'b mut Vec<Report<'src>>;
@@ -106,8 +108,14 @@ impl<'src, T> CodeGen<T>
 where
     T: Write + Seek,
 {
-    pub fn new(zip: ZipFile<T>, input: PathBuf) -> CodeGen<T> {
-        CodeGen { zip, id: Default::default(), costumes: Default::default(), input }
+    pub fn new(zip: ZipFile<T>, input: PathBuf, config: Config) -> CodeGen<T> {
+        CodeGen {
+            zip,
+            id: Default::default(),
+            costumes: Default::default(),
+            input,
+            config,
+        }
     }
 
     fn comma(&mut self, comma: bool) -> io::Result<()> {
@@ -208,6 +216,53 @@ where
         self.key("isStage")?;
         if name == "Stage" {
             self.write_all("true".as_bytes())?;
+            if !self.config.is_default() {
+                self.comma(true)?;
+                self.key("comments")?;
+                self.begin_object()?;
+                self.key("a")?;
+                self.begin_object()?;
+                self.key("blockId")?;
+                self.write_all(b"null")?;
+                self.comma(true)?;
+                self.key("x")?;
+                self.write_all(b"0")?;
+                self.comma(true)?;
+                self.key("y")?;
+                self.write_all(b"0")?;
+                self.comma(true)?;
+                self.key("width")?;
+                self.write_all(b"350")?;
+                self.comma(true)?;
+                self.key("height")?;
+                self.write_all(b"170")?;
+                self.comma(true)?;
+                self.key("minimized")?;
+                self.write_all(b"true")?;
+                self.comma(true)?;
+                self.key("text")?;
+                write!(
+                    self, // FIXME
+                    "{}",
+                    json!(format!(
+                        r#"{} // _twconfig_"#,
+                        json!({
+                            "framerate": self.config.frame_rate,
+                            "runtimeOptions": {
+                                "maxClones": self.config.max_clones,
+                                "miscLimits": self.config.miscellaneous_limits,
+                                "fencing": self.config.sprite_fencing,
+                            },
+                            "interpolation": self.config.frame_interpolation,
+                            "hq": self.config.high_quality_pen,
+                            "width": self.config.stage_width,
+                            "height": self.config.stage_height,
+                        })
+                    ))
+                )?;
+                self.end_object()?;
+                self.end_object()?;
+            }
         } else {
             self.write_all("false".as_bytes())?;
         }
@@ -686,16 +741,22 @@ where
         mut comma: bool,
     ) -> io::Result<()> {
         for (i, stmt) in stmts.iter().enumerate() {
-            let is_stop_this_script =
-                matches!(&*stmt.borrow(), Stmt::Block(Block::StopThisScript, ..));
-            if i == stmts.len() - 1 || is_stop_this_script {
+            let is_before_unreachable_code = matches!(
+                &*stmt.borrow(),
+                Stmt::Block(
+                    Block::StopThisScript | Block::StopAll | Block::DeleteThisClone,
+                    ..
+                )
+            );
+            if i == stmts.len() - 1 || is_before_unreachable_code {
                 self.stmt(r, sc, &stmt.borrow(), this_id, None, parent_id, comma)?;
-                if is_stop_this_script {
-                    match &*stmt.borrow() {
-                        Stmt::Block(_, _, span) => {
+                if is_before_unreachable_code {
+                    if i != stmts.len() - 1 {
+                        if let Stmt::Block(_, _, span) = &*stmt.borrow() {
                             r.push(Report::UnreachableCode(span.clone()));
+                        } else {
+                            unreachable!()
                         }
-                        _ => unreachable!(),
                     }
                     break;
                 }
@@ -1338,6 +1399,21 @@ where
         self.expr(r, sc, expr, expr_id, this_id, true)
     }
 
+    fn menu(
+        &mut self,
+        opcode: &'static str,
+        name: &str,
+        value: &str,
+        this_id: BlockID,
+        parent_id: BlockID,
+    ) -> io::Result<()> {
+        self.begin_node(
+            Node::new(opcode, this_id, true).parent_id(parent_id).shadow(),
+        )?;
+        write!(self, r#","fields":{{"{name}":["{value}",null]}}}}"#)?;
+        Ok(())
+    }
+
     fn block(
         &mut self,
         r: R<'src, '_>,
@@ -1350,6 +1426,40 @@ where
         parent_id: Option<BlockID>,
         comma: bool,
     ) -> io::Result<()> {
+        match block {
+            | Block::GotoRandomPosition
+            | Block::GotoMousePointer
+            | Block::GotoSprite
+            | Block::PointTowardsRandomDirection
+            | Block::PointTowardsMousePointer
+            | Block::PointTowards => {
+                return self.goto_sprite_or_point_towards(
+                    r, sc, block, args, this_id, next_id, parent_id, comma,
+                )
+            }
+            | Block::GlideToRandomPosition
+            | Block::GlideToMousePointer
+            | Block::GlideToSprite => {
+                return self.glide_to_sprite(
+                    r, sc, block, args, this_id, next_id, parent_id, comma,
+                )
+            }
+            Block::SwitchCostume | Block::SwitchBackdrop => {
+                return self.switch_costume_or_backdrop(
+                    r, sc, block, args, this_id, next_id, parent_id, comma,
+                )
+            }
+            Block::PlaySoundUntilDone | Block::StartSound => {
+                return self.play_sound_until_done_or_start_sound(
+                    r, sc, block, args, this_id, next_id, parent_id, comma,
+                )
+            }
+            Block::Clone | Block::CloneSprite => {
+                return self
+                    .clone(r, sc, block, args, this_id, next_id, parent_id, comma)
+            }
+            _ => {}
+        }
         let (opcode, arg_names, fields) = block_details(*block);
         match args.len().cmp(&arg_names.len()) {
             Ordering::Less => {
@@ -1392,11 +1502,301 @@ where
             self.write_all(fields.as_bytes())?;
             self.end_object()?;
         }
+        if matches!(block, Block::StopOtherScripts) {
+            write!(
+                self,
+                r#","mutation":{{"tagName":"mutation","children":[],"hasnext": "true"}}"#
+            )?;
+        }
         self.end_object()?;
         for (arg, id) in args.iter().zip(ids) {
             self.expr(r, sc, &arg.borrow(), id, this_id, true)?;
         }
         Ok(())
+    }
+
+    fn goto_sprite_or_point_towards(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> io::Result<()> {
+        let is_towards = matches!(
+            block,
+            Block::PointTowardsRandomDirection
+                | Block::PointTowardsMousePointer
+                | Block::PointTowards
+        );
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new(
+                if is_towards { "motion_pointtowards" } else { "motion_goto" },
+                this_id,
+                comma,
+            )
+            .some_next_id(next_id)
+            .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() && args.len() == 1 {
+            self.input_with_shadow(
+                if is_towards { "TOWARDS" } else { "TO" },
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
+            self.end_object()?;
+            self.end_object()?;
+            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, comma)?;
+        } else {
+            self.key(if is_towards { "TOWARDS" } else { "TO" })?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+            self.end_object()?;
+            self.end_object()?;
+        }
+        self.menu(
+            if is_towards { "motion_pointtowards_menu" } else { "motion_goto_menu" },
+            if is_towards { "TOWARDS" } else { "TO" },
+            match block {
+                Block::GotoRandomPosition | Block::PointTowardsRandomDirection => {
+                    "_random_"
+                }
+                Block::GotoMousePointer | Block::PointTowardsMousePointer => "_mouse_",
+                Block::GotoSprite | Block::PointTowards => {
+                    if let Some(literal) = literal {
+                        literal
+                    } else {
+                        "_random_"
+                    }
+                }
+                _ => unreachable!(),
+            },
+            menu_id,
+            this_id,
+        )
+    }
+
+    fn glide_to_sprite(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> Result<(), io::Error> {
+        let arg_id = self.id.create_id();
+        let secs_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new("motion_glideto", this_id, comma)
+                .some_next_id(next_id)
+                .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() && args.len() == 2 {
+            self.input_with_shadow("TO", &args[0].borrow(), arg_id, menu_id, false)?;
+        } else {
+            self.key("TO")?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+        }
+        self.input("SECS", &args.last().unwrap().borrow(), secs_id, true)?;
+        self.end_object()?;
+        self.end_object()?;
+        self.menu(
+            "motion_glideto_menu",
+            "TO",
+            match block {
+                Block::GlideToRandomPosition => "_random_",
+                Block::GlideToMousePointer => "_mouse_",
+                Block::GlideToSprite => {
+                    if let Some(literal) = literal {
+                        literal
+                    } else {
+                        "_random_"
+                    }
+                }
+                _ => unreachable!(),
+            },
+            menu_id,
+            this_id,
+        )?;
+        if args.len() == 2 {
+            self.expr(r, sc, &args[1].borrow(), secs_id, this_id, true)?;
+        }
+        self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)
+    }
+
+    fn clone(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> Result<(), io::Error> {
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new("control_create_clone_of", this_id, comma)
+                .some_next_id(next_id)
+                .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() && args.len() == 1 {
+            self.input_with_shadow(
+                "CLONE_OPTION",
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
+        } else {
+            self.key("CLONE_OPTION")?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+        }
+        self.end_object()?;
+        self.end_object()?;
+        if args.len() == 1 {
+            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)?;
+        }
+        self.menu(
+            "control_create_clone_of_menu",
+            "CLONE_OPTION",
+            if let Some(literal) = literal { literal } else { "_myself_" },
+            menu_id,
+            this_id,
+        )
+    }
+
+    fn switch_costume_or_backdrop(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> io::Result<()> {
+        let is_costume = matches!(block, Block::SwitchCostume);
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new(
+                if is_costume {
+                    "looks_switchcostumeto"
+                } else {
+                    "looks_switchbackdropto"
+                },
+                this_id,
+                comma,
+            )
+            .some_next_id(next_id)
+            .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() {
+            self.input_with_shadow(
+                if is_costume { "COSTUME" } else { "BACKDROP" },
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
+        } else {
+            self.key(if is_costume { "COSTUME" } else { "BACKDROP" })?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+        }
+        self.end_object()?;
+        self.end_object()?;
+        self.menu(
+            if is_costume { "looks_costume" } else { "looks_backdrops" },
+            if is_costume { "COSTUME" } else { "BACKDROP" },
+            literal.map_or("make gh issue if this bothers u", |it| it.as_str()),
+            menu_id,
+            this_id,
+        )
+    }
+
+    fn play_sound_until_done_or_start_sound(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        block: &Block,
+        args: &Exprs<'src>,
+        this_id: BlockID,
+        next_id: Option<BlockID>,
+        parent_id: Option<BlockID>,
+        comma: bool,
+    ) -> io::Result<()> {
+        let is_start_sound = matches!(block, Block::StartSound);
+        let arg_id = self.id.create_id();
+        let menu_id = self.id.create_id();
+        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
+        let literal = literal.as_ref();
+        self.begin_node(
+            Node::new(
+                if is_start_sound { "sound_play" } else { "sound_playuntildone" },
+                this_id,
+                comma,
+            )
+            .some_next_id(next_id)
+            .some_parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        if literal.is_none() {
+            self.input_with_shadow(
+                "SOUND_MENU",
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
+        } else {
+            self.key("SOUND_MENU")?;
+            write!(self, r#"[1,{}]"#, menu_id)?;
+        }
+        self.end_object()?;
+        self.end_object()?;
+        self.menu(
+            "sound_sounds_menu",
+            "SOUND_MENU",
+            literal.map_or("make gh issue if this bothers u", |it| it.as_str()),
+            menu_id,
+            this_id,
+        )
     }
 
     fn call(
@@ -1741,32 +2141,94 @@ where
     ) -> io::Result<()> {
         self.comma(comma)?;
         self.key(name)?;
+        self.input_literal(name, expr, id, None)
+    }
+
+    fn input_with_shadow(
+        &mut self,
+        name: &str,
+        expr: &Expr<'src>,
+        id: BlockID,
+        shadow_id: BlockID,
+        comma: bool,
+    ) -> io::Result<()> {
+        self.comma(comma)?;
+        self.key(name)?;
+        self.input_literal(name, expr, id, Some(shadow_id))
+    }
+
+    fn input_literal(
+        &mut self,
+        name: &str,
+        expr: &Expr,
+        id: BlockID,
+        shadow_id: Option<BlockID>,
+    ) -> io::Result<()> {
         match expr {
             Expr::Int(value, _span) => {
-                write!(self, r#"[1,[4,{}]]"#, json!(value))?;
+                write!(self, r#"[1,[4,{}]]"#, json!(value))
             }
             Expr::Float(value, _span) => {
-                write!(self, r#"[1,[4,{}]]"#, json!(value))?;
+                write!(self, r#"[1,[4,{}]]"#, json!(value))
             }
             Expr::String(value, _span) => {
-                if name == "COLOR" || name == "COLOR2" {
-                    write!(self, r#"[1,[9,{}]]"#, json!(value.as_ref()))?;
+                if name == "BROADCAST_INPUT" {
+                    write!(
+                        self,
+                        r#"[1,[11,{},{}]]"#,
+                        json!(value.as_ref()),
+                        json!(value.as_ref())
+                    )
+                } else if name == "COLOR" || name == "COLOR2" {
+                    write!(self, r#"[1,[9,{}]]"#, json!(value.as_ref()))
                 } else {
-                    write!(self, r#"[1,[10,{}]]"#, json!(value.as_ref()))?;
+                    write!(self, r#"[1,[10,{}]]"#, json!(value.as_ref()))
                 }
             }
-            Expr::Name(name, _span) => {
-                write!(self, r#"[3,[12,{},{}],[10,""]]"#, json!(name), json!(name))?;
+            _ => self.input_value(name, expr, id, shadow_id),
+        }
+    }
+
+    fn input_value(
+        &mut self,
+        name: &str,
+        expr: &Expr,
+        id: BlockID,
+        shadow_id: Option<BlockID>,
+    ) -> io::Result<()> {
+        match expr {
+            Expr::Name(variable_name, _span) => {
+                write!(
+                    self,
+                    r#"[3,[12,{},{}],"#,
+                    json!(variable_name),
+                    json!(variable_name)
+                )?;
+                if let Some(shadow_id) = shadow_id {
+                    write!(self, r#"{shadow_id}"#)?;
+                } else if name == "BROADCAST_INPUT" {
+                    write!(self, r#"[11,"message1","message1"]"#)?;
+                } else {
+                    write!(self, r#"[10,""]"#)?;
+                }
+                self.end_array()
             }
             _ => {
                 if name == "CONDITION" || name == "CONDITION2" {
-                    write!(self, r#"[2,{id}]"#)?;
+                    write!(self, r#"[2,{id}]"#)
                 } else {
-                    write!(self, r#"[3,{id},[10,""]]"#)?;
+                    write!(self, r#"[3,{id},"#)?;
+                    if name == "BROADCAST_INPUT" {
+                        write!(self, r#"[11,"message1","message1"]"#)?;
+                    } else if let Some(shadow_id) = shadow_id {
+                        write!(self, r#"{shadow_id}"#)?;
+                    } else {
+                        write!(self, r#"[10,""]"#)?;
+                    }
+                    self.end_array()
                 }
             }
         }
-        Ok(())
     }
 }
 

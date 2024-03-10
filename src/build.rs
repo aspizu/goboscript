@@ -13,6 +13,7 @@ use logos::Span;
 use crate::{
     ast::{Declrs, Names},
     codegen::CodeGen,
+    config::Config,
     grammar::DeclrsParser,
     logoslalrpop::Lexer,
     reporting::{Report, ReportLevel, Summary},
@@ -52,6 +53,16 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
         Some(output) => output,
         None => input.join(project_name).with_extension("sb3"),
     };
+    let config: Config = match fs::read_to_string(input.join("goboscript.toml")) {
+        Ok(config) => match toml::from_str(&config) {
+            Ok(config) => config,
+            Err(err) => {
+                eprintln!("{}: {}", "Error".red().bold(), err);
+                return Ok(());
+            }
+        },
+        Err(_) => Default::default(),
+    };
     let stage_path = input.join("stage").with_extension("gs");
     let stage_src = fs::read_to_string(&stage_path)?;
     let lexer = Lexer::new(&stage_src);
@@ -70,21 +81,13 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
             };
             visitor.visit_declrs(&mut declrs);
             Sprite {
-                program: Some(Program {
-                    declrs,
-                    variables,
-                    lists,
-                    functions,
-                }),
+                program: Some(Program { declrs, variables, lists, functions }),
                 reports,
             }
         }
         Err(err) => {
             let report = Report::ParserError(err);
-            Sprite {
-                program: None,
-                reports: vec![report],
-            }
+            Sprite { program: None, reports: vec![report] }
         }
     };
     let mut srcs: Vec<(PathBuf, String)> = Vec::new();
@@ -116,12 +119,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
                     reports: &mut reports,
                 };
                 visitor.visit_declrs(&mut declrs);
-                Some(Program {
-                    declrs,
-                    variables,
-                    lists,
-                    functions,
-                })
+                Some(Program { declrs, variables, lists, functions })
             }
             Err(err) => {
                 reports.push(Report::ParserError(err));
@@ -130,7 +128,11 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
         };
         sprites.push(Sprite { program, reports });
     }
-    let mut codegen = CodeGen::new(ZipFile::new(BufWriter::new(File::create(output)?)), input);
+    let mut codegen = CodeGen::new(
+        ZipFile::new(BufWriter::new(File::create(output)?)),
+        input,
+        config,
+    );
     codegen.begin_project()?;
     if let Some(program) = &stage.program {
         codegen.sprite("Stage", program, None, None, &mut stage.reports, false)?;
@@ -177,26 +179,18 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
         eprintln!(
             "{} {}",
             summary.warnings.to_string().bold(),
-            (if summary.warnings == 1 {
-                "warning found"
-            } else {
-                "warnings found"
-            })
-            .yellow()
-            .bold()
+            (if summary.warnings == 1 { "warning found" } else { "warnings found" })
+                .yellow()
+                .bold()
         );
     }
     if summary.errors > 0 {
         eprintln!(
             "{} {}",
             summary.errors.to_string().bold(),
-            (if summary.errors == 1 {
-                "error found"
-            } else {
-                "errors found"
-            })
-            .red()
-            .bold()
+            (if summary.errors == 1 { "error found" } else { "errors found" })
+                .red()
+                .bold()
         );
     }
     eprintln!("{} in {:#?}", "Finished".green().bold(), before.elapsed());

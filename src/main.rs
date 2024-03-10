@@ -3,6 +3,7 @@ mod blockid;
 mod build;
 mod cli;
 mod codegen;
+mod config;
 mod details;
 mod lexer;
 mod logoslalrpop;

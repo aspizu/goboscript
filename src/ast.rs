@@ -279,3 +279,14 @@ pub enum Expr<'src> {
     UnaryOp(UnaryOp, Rrc<Expr<'src>>, Span),
     BinaryOp(BinaryOp, Rrc<Expr<'src>>, Rrc<Expr<'src>>, Span),
 }
+
+impl<'src> Expr<'src> {
+    pub fn literal_as_string(&self) -> Option<String> {
+        match self {
+            Expr::Int(value, _) => Some(value.to_string()),
+            Expr::Float(value, _) => Some(value.to_string()),
+            Expr::String(value, _) => Some(value.to_string()),
+            _ => None,
+        }
+    }
+}

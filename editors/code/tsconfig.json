@@ -1,16 +1,16 @@
 {
-    "extends": "@tsconfig/strictest/tsconfig.json",
-    "compilerOptions": {
-        "esModuleInterop": false,
-        "module": "Node16",
-        "moduleResolution": "Node16",
-        "target": "ESNext",
-        "outDir": "out",
-        "lib": ["ESNext"],
-        "sourceMap": true,
-        "rootDir": ".",
-        "newLine": "lf"
-    },
-    "exclude": ["node_modules", ".vscode-test"],
-    "include": ["src", "tests"]
+  "extends": "@tsconfig/strictest/tsconfig.json",
+  "compilerOptions": {
+    "esModuleInterop": false,
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "target": "ESNext",
+    "outDir": "out",
+    "lib": ["ESNext"],
+    "sourceMap": true,
+    "rootDir": ".",
+    "newLine": "lf"
+  },
+  "exclude": ["node_modules", ".vscode-test"],
+  "include": ["src", "tests"]
 }
