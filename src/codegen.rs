@@ -640,7 +640,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("VALUE", loudness, loudness_id, false)?;
+        self.input(r, sc, "VALUE", loudness, loudness_id, false)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -673,7 +673,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("VALUE", timer, timer_id, false)?;
+        self.input(r, sc, "VALUE", timer, timer_id, false)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -947,7 +947,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("TIMES", times, times_id, false)?;
+        self.input(r, sc, "TIMES", times, times_id, false)?;
         self.substack(true, "SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_object()?;
         self.end_object()?;
@@ -1009,7 +1009,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("CONDITION", condition, condition_id, false)?;
+        self.input(r, sc, "CONDITION", condition, condition_id, false)?;
         self.substack(true, "SUBSTACK", (!if_body.is_empty()).then_some(if_id))?;
         self.substack(true, "SUBSTACK2", (!else_body.is_empty()).then_some(else_id))?;
         self.end_object()?;
@@ -1041,7 +1041,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("CONDITION", condition, condition_id, false)?;
+        self.input(r, sc, "CONDITION", condition, condition_id, false)?;
         self.substack(true, "SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_object()?;
         self.end_object()?;
@@ -1123,7 +1123,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("VALUE", expr, expr_id, false)?;
+        self.input(r, sc, "VALUE", expr, expr_id, false)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -1157,7 +1157,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("VALUE", expr, expr_id, false)?;
+        self.input(r, sc, "VALUE", expr, expr_id, false)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -1251,7 +1251,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("ITEM", expr, expr_id, false)?;
+        self.input(r, sc, "ITEM", expr, expr_id, false)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -1285,7 +1285,7 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("INDEX", index, index_id, false)?;
+        self.input(r, sc, "INDEX", index, index_id, false)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -1347,8 +1347,8 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("INDEX", index, index_id, false)?;
-        self.input("ITEM", expr, expr_id, true)?;
+        self.input(r, sc, "INDEX", index, index_id, false)?;
+        self.input(r, sc, "ITEM", expr, expr_id, true)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -1385,8 +1385,8 @@ where
         self.comma(true)?;
         self.key("inputs")?;
         self.begin_object()?;
-        self.input("INDEX", index, index_id, false)?;
-        self.input("ITEM", expr, expr_id, true)?;
+        self.input(r, sc, "INDEX", index, index_id, false)?;
+        self.input(r, sc, "ITEM", expr, expr_id, true)?;
         self.end_object()?;
         self.comma(true)?;
         self.key("fields")?;
@@ -1507,7 +1507,7 @@ where
         for (&name, arg) in arg_names.iter().zip(args) {
             let id = self.id.create_id();
             ids.push(id);
-            self.input(name, &arg.borrow(), id, comma)?;
+            self.input(r, sc, name, &arg.borrow(), id, comma)?;
             comma = true;
         }
         self.end_object()?;
@@ -1567,6 +1567,8 @@ where
         self.begin_object()?;
         if literal.is_none() && args.len() == 1 {
             self.input_with_shadow(
+                r,
+                sc,
                 if is_towards { "TOWARDS" } else { "TO" },
                 &args[0].borrow(),
                 arg_id,
@@ -1630,12 +1632,20 @@ where
         self.key("inputs")?;
         self.begin_object()?;
         if literal.is_none() && args.len() == 2 {
-            self.input_with_shadow("TO", &args[0].borrow(), arg_id, menu_id, false)?;
+            self.input_with_shadow(
+                r,
+                sc,
+                "TO",
+                &args[0].borrow(),
+                arg_id,
+                menu_id,
+                false,
+            )?;
         } else {
             self.key("TO")?;
             write!(self, r#"[1,{}]"#, menu_id)?;
         }
-        self.input("SECS", &args.last().unwrap().borrow(), secs_id, true)?;
+        self.input(r, sc, "SECS", &args.last().unwrap().borrow(), secs_id, true)?;
         self.end_object()?;
         self.end_object()?;
         self.menu(
@@ -1688,6 +1698,8 @@ where
         self.begin_object()?;
         if literal.is_none() && args.len() == 1 {
             self.input_with_shadow(
+                r,
+                sc,
                 "CLONE_OPTION",
                 &args[0].borrow(),
                 arg_id,
@@ -1751,7 +1763,7 @@ where
         self.begin_object()?;
         self.key("COLOR_PARAM")?;
         write!(self, r#"[1,{menu_id}]"#)?;
-        self.input("VALUE", &args[0].borrow(), arg_id, true)?;
+        self.input(r, sc, "VALUE", &args[0].borrow(), arg_id, true)?;
         self.end_object()?;
         self.end_object()?;
         self.expr(r, sc, &args[0].borrow(), this_id, this_id, true)?;
@@ -1806,6 +1818,8 @@ where
         self.begin_object()?;
         if literal.is_none() {
             self.input_with_shadow(
+                r,
+                sc,
                 if is_costume { "COSTUME" } else { "BACKDROP" },
                 &args[0].borrow(),
                 arg_id,
@@ -1857,6 +1871,8 @@ where
         self.begin_object()?;
         if literal.is_none() {
             self.input_with_shadow(
+                r,
+                sc,
                 "SOUND_MENU",
                 &args[0].borrow(),
                 arg_id,
@@ -1924,7 +1940,7 @@ where
         for ((name, _), arg) in function.args.iter().zip(args) {
             let id = self.id.create_id();
             ids.push(id);
-            self.input(name, &arg.borrow(), id, comma)?;
+            self.input(r, sc, name, &arg.borrow(), id, comma)?;
             comma = true;
         }
         self.end_object()?;
@@ -1962,7 +1978,7 @@ where
         self.key("inputs")?;
         self.begin_object()?;
         if !is_breakpoint {
-            self.input("arg0", &args[0].borrow(), arg_id, false)?;
+            self.input(r, sc, "arg0", &args[0].borrow(), arg_id, false)?;
         }
         self.end_object()?;
         self.begin_mutation_object()?;
@@ -2108,7 +2124,7 @@ where
         for (&name, arg) in arg_names.iter().zip(args) {
             let id = self.id.create_id();
             ids.push(id);
-            self.input(name, &arg.borrow(), id, comma)?;
+            self.input(r, sc, name, &arg.borrow(), id, comma)?;
             comma = true;
         }
         self.end_object()?;
@@ -2149,6 +2165,8 @@ where
         self.begin_object()?;
         if literal.is_none() && args.len() == 1 {
             self.input_with_shadow(
+                r,
+                sc,
                 "TOUCHINGOBJECTMENU",
                 &args[0].borrow(),
                 arg_id,
@@ -2198,6 +2216,8 @@ where
         self.begin_object()?;
         if literal.is_none() && args.len() == 1 {
             self.input_with_shadow(
+                r,
+                sc,
                 "DISTANCETOMENU",
                 &args[0].borrow(),
                 arg_id,
@@ -2238,8 +2258,18 @@ where
         parent_id: BlockID,
         comma: bool,
     ) -> io::Result<()> {
-        let expr_id = self.id.create_id();
         use UnaryOp as U;
+        if matches!(op, U::Length) {
+            if let Expr::Name(name, span) = expr {
+                if sc.lists.contains(name)
+                    || sc.global_lists.is_some_and(|it| it.contains(name))
+                {
+                    return self
+                        .list_length(r, sc, name, span, this_id, parent_id, comma);
+                }
+            }
+        }
+        let expr_id = self.id.create_id();
         self.begin_node(
             Node::new(
                 match op {
@@ -2271,6 +2301,8 @@ where
         self.key("inputs")?;
         self.begin_object()?;
         self.input(
+            r,
+            sc,
             match op {
                 U::Not => "OPERAND",
                 U::Length => "STRING",
@@ -2322,6 +2354,17 @@ where
         comma: bool,
     ) -> io::Result<()> {
         use BinaryOp as B;
+        if matches!(op, B::Of) {
+            if let Expr::Name(name, span) = left {
+                if sc.lists.contains(name)
+                    || sc.global_lists.is_some_and(|it| it.contains(name))
+                {
+                    return self.list_item(
+                        r, sc, name, right, span, this_id, parent_id, comma,
+                    );
+                }
+            }
+        }
         let left_id = self.id.create_id();
         let right_id = self.id.create_id();
         self.begin_node(
@@ -2351,6 +2394,8 @@ where
         self.key("inputs")?;
         self.begin_object()?;
         self.input(
+            r,
+            sc,
             match op {
                 B::Join | B::In => "STRING1",
                 B::Of => "STRING",
@@ -2362,6 +2407,8 @@ where
             false,
         )?;
         self.input(
+            r,
+            sc,
             match op {
                 B::Join | B::In => "STRING2",
                 B::Of => "LETTER",
@@ -2378,8 +2425,64 @@ where
         self.expr(r, sc, right, right_id, this_id, true)
     }
 
+    fn list_item(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        name: &'src str,
+        index: &Expr<'src>,
+        span: &Span,
+        this_id: BlockID,
+        parent_id: BlockID,
+        comma: bool,
+    ) -> io::Result<()> {
+        self.list(r, sc, name, span);
+        let index_id = self.id.create_id();
+        self.begin_node(
+            Node::new("data_itemoflist", this_id, comma).parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("inputs")?;
+        self.begin_object()?;
+        self.input(r, sc, "INDEX", index, index_id, false)?;
+        self.end_object()?;
+        self.comma(true)?;
+        self.key("fields")?;
+        self.begin_object()?;
+        self.key("LIST")?;
+        write!(self, r#"[{},null]"#, json!(name))?;
+        self.end_object()?;
+        self.end_object()?;
+        self.expr(r, sc, index, index_id, this_id, true)
+    }
+
+    fn list_length(
+        &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
+        name: &'src str,
+        span: &Span,
+        this_id: BlockID,
+        parent_id: BlockID,
+        comma: bool,
+    ) -> io::Result<()> {
+        self.list(r, sc, name, span);
+        self.begin_node(
+            Node::new("data_lengthoflist", this_id, comma).parent_id(parent_id),
+        )?;
+        self.comma(true)?;
+        self.key("fields")?;
+        self.begin_object()?;
+        self.key("LIST")?;
+        write!(self, r#"[{},null]"#, json!(name))?;
+        self.end_object()?;
+        self.end_object()
+    }
+
     fn input(
         &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
         name: &str,
         expr: &Expr<'src>,
         id: BlockID,
@@ -2387,11 +2490,13 @@ where
     ) -> io::Result<()> {
         self.comma(comma)?;
         self.key(name)?;
-        self.input_literal(name, expr, id, None)
+        self.input_literal(r, sc, name, expr, id, None)
     }
 
     fn input_with_shadow(
         &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
         name: &str,
         expr: &Expr<'src>,
         id: BlockID,
@@ -2400,13 +2505,15 @@ where
     ) -> io::Result<()> {
         self.comma(comma)?;
         self.key(name)?;
-        self.input_literal(name, expr, id, Some(shadow_id))
+        self.input_literal(r, sc, name, expr, id, Some(shadow_id))
     }
 
     fn input_literal(
         &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
         name: &str,
-        expr: &Expr,
+        expr: &Expr<'src>,
         id: BlockID,
         shadow_id: Option<BlockID>,
     ) -> io::Result<()> {
@@ -2431,25 +2538,42 @@ where
                     write!(self, r#"[1,[10,{}]]"#, json!(value.as_ref()))
                 }
             }
-            _ => self.input_value(name, expr, id, shadow_id),
+            _ => self.input_value(r, sc, name, expr, id, shadow_id),
         }
     }
 
     fn input_value(
         &mut self,
+        r: R<'src, '_>,
+        sc: Sc<'src, '_>,
         name: &str,
-        expr: &Expr,
+        expr: &Expr<'src>,
         id: BlockID,
         shadow_id: Option<BlockID>,
     ) -> io::Result<()> {
         match expr {
-            Expr::Name(variable_name, _span) => {
-                write!(
-                    self,
-                    r#"[3,[12,{},{}],"#,
-                    json!(variable_name),
-                    json!(variable_name)
-                )?;
+            Expr::Name(variable_name, span) => {
+                if sc.variables.contains(variable_name)
+                    || sc.global_variables.is_some_and(|it| it.contains(variable_name))
+                {
+                    write!(
+                        self,
+                        r#"[3,[12,{},{}],"#,
+                        json!(variable_name),
+                        json!(variable_name)
+                    )?;
+                } else if sc.lists.contains(variable_name)
+                    || sc.global_lists.is_some_and(|it| it.contains(variable_name))
+                {
+                    write!(
+                        self,
+                        r#"[3,[13,{},{}],"#,
+                        json!(variable_name),
+                        json!(variable_name)
+                    )?;
+                } else {
+                    r.push(Report::UndefinedVariable(variable_name, span.clone()));
+                }
                 if let Some(shadow_id) = shadow_id {
                     write!(self, r#"{shadow_id}"#)?;
                 } else if name == "BROADCAST_INPUT" {

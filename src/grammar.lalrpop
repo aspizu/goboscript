@@ -52,6 +52,11 @@ Stmt: Rrc<Stmt<'input>> = {
     <l:@L> "until" <r:@R> <e:Expr> <b:Stmts> => rrc(Stmt::Until(e, b, l..r)),
     <l:@L> <n:Name> <r:@R> "=" <e:Expr> ";" => rrc(Stmt::SetVariable(n, e, l..r)),
     <l:@L> <n:Name> <r:@R> "+=" <e:Expr> ";" => rrc(Stmt::ChangeVariable(n, e, l..r)),
+    <l:@L> <n:Name> <r:@R> "-=" <e:Expr> ";" => rrc(Stmt::ChangeVariable(n, rrc(Expr::BinaryOp(BinaryOp::Sub, rrc(Expr::Int(0, l..r)), e, l..r)), l..r)),
+    <l:@L> <n:Name> <r:@R> "*=" <e:Expr> ";" => rrc(Stmt::SetVariable(n, rrc(Expr::BinaryOp(BinaryOp::Mul, rrc(Expr::Name(n, l..r)), e, l..r)), l..r)),
+    <l:@L> <n:Name> <r:@R> "/=" <e:Expr> ";" => rrc(Stmt::SetVariable(n, rrc(Expr::BinaryOp(BinaryOp::Div, rrc(Expr::Name(n, l..r)), e, l..r)), l..r)),
+    <l:@L> <n:Name> <r:@R> "%=" <e:Expr> ";" => rrc(Stmt::SetVariable(n, rrc(Expr::BinaryOp(BinaryOp::Mod, rrc(Expr::Name(n, l..r)), e, l..r)), l..r)),
+    <l:@L> <n:Name> <r:@R> "&=" <e:Expr> ";" => rrc(Stmt::SetVariable(n, rrc(Expr::BinaryOp(BinaryOp::Join, rrc(Expr::Name(n, l..r)), e, l..r)), l..r)),
     <l:@L> "show" ";" <r:@R> => rrc(Stmt::Block(Block::Show, vec![], l..r)),
     <l:@L> "hide" ";" <r:@R> => rrc(Stmt::Block(Block::Hide, vec![], l..r)),
     "show" <l:@L> <n:Name> <r:@R> ";" => rrc(Stmt::Show(n, l..r)),
@@ -63,6 +68,8 @@ Stmt: Rrc<Stmt<'input>> = {
     "insert" <e:Expr> "at" <i:Expr> "of" <l:@L> <n:Name> <r:@R> ";"
         => rrc(Stmt::ListInsert(n, i, e, l..r)),
     <l:@L> <n:Name> <r:@R> "[" <i:Expr> "]" "=" <e:Expr> ";" => rrc(Stmt::ListReplace(n, i, e, l..r)),
+    <l:@L> <n:Name> <r:@R> "[" <i:Expr> "]" "+=" <e:Expr> ";"
+        => rrc(Stmt::ListReplace(n, i.clone(), rrc(Expr::BinaryOp(BinaryOp::Add, rrc(Expr::BinaryOp(BinaryOp::Of, rrc(Expr::Name(n, l..r)), i.clone(), l..r)), e, l..r)), l..r)),
     <l:@L> <n:Name> <r:@R> <a:Exprs> ";" => match Block::from_str(n) {
         Ok(mut b) => {
             match b {

@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::{
-    ast::{rrc, BinaryOp, Declr, Declrs, Expr, Rrc, Stmt, Stmts, UnaryOp},
+    ast::{rrc, BinaryOp, Declr, Declrs, Expr, Names, Rrc, Stmt, Stmts, UnaryOp},
     build::FunctionPrototype,
     reporting::Report,
 };
@@ -96,8 +96,8 @@ impl<'src, 'b> Visitor<'src, 'b> {
             Stmt::ChangeVariable(_name, value, _span) => {
                 self.visit_expr(value);
             }
-            Stmt::Show(_name, _span) => todo!(),
-            Stmt::Hide(_name, _span) => todo!(),
+            Stmt::Show(_name, _span) => {}
+            Stmt::Hide(_name, _span) => {}
             Stmt::ListAdd(name, value, _span) => {
                 self.lists.insert(name);
                 self.visit_expr(value);

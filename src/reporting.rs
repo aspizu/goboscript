@@ -101,10 +101,7 @@ impl<'src> Report<'src> {
                 ParseError::ExtraToken { token: (l, _, r) } => {
                     display_error(path, src, self.level(), "Extra token.", *l..*r, "")
                 }
-                ParseError::UnrecognizedToken {
-                    token: (l, _, r),
-                    expected,
-                } => {
+                ParseError::UnrecognizedToken { token: (l, _, r), expected } => {
                     let hint = format!("Expected one of: {}", expected.join(", "));
                     display_error(
                         path,
@@ -135,9 +132,14 @@ impl<'src> Report<'src> {
                     )
                 }
                 ParseError::User { error } => match error {
-                    ParserError::InvalidToken(span) => {
-                        display_error(path, src, self.level(), "Invalid token.", span.clone(), "")
-                    }
+                    ParserError::InvalidToken(span) => display_error(
+                        path,
+                        src,
+                        self.level(),
+                        "Invalid token.",
+                        span.clone(),
+                        "",
+                    ),
                     ParserError::UnknownReporter(name, span) => display_error(
                         path,
                         src,
@@ -177,33 +179,36 @@ impl<'src> Report<'src> {
                         format!("Did you mean `{}`?", matched).as_str(),
                     )
                 } else {
-                    display_error(path, src, self.level(), "Not a key", span.clone(), "")
+                    display_error(
+                        path,
+                        src,
+                        self.level(),
+                        "Not a key",
+                        span.clone(),
+                        "",
+                    )
                 }
             }
-            Report::TooFewArgsForReporter {
-                reporter: _,
-                given: _,
-                span,
-            } => display_error(
-                path,
-                src,
-                self.level(),
-                "Too few arguments for reporter",
-                span.clone(),
-                "",
-            ),
-            Report::TooManyArgsForReporter {
-                reporter: _,
-                given: _,
-                span,
-            } => display_error(
-                path,
-                src,
-                self.level(),
-                "Too many arguments for reporter",
-                span.clone(),
-                "",
-            ),
+            Report::TooFewArgsForReporter { reporter: _, given: _, span } => {
+                display_error(
+                    path,
+                    src,
+                    self.level(),
+                    "Too few arguments for reporter",
+                    span.clone(),
+                    "",
+                )
+            }
+            Report::TooManyArgsForReporter { reporter: _, given: _, span } => {
+                display_error(
+                    path,
+                    src,
+                    self.level(),
+                    "Too many arguments for reporter",
+                    span.clone(),
+                    "",
+                )
+            }
             Report::TooFewArgsForBlock { block: _, given: _, span } => display_error(
                 path,
                 src,
@@ -220,30 +225,26 @@ impl<'src> Report<'src> {
                 span.clone(),
                 "",
             ),
-            Report::TooFewArgsForFunction {
-                function: _,
-                given: _,
-                span,
-            } => display_error(
-                path,
-                src,
-                self.level(),
-                "Too few arguments for function",
-                span.clone(),
-                "",
-            ),
-            Report::TooManyArgsForFunction {
-                function: _,
-                given: _,
-                span,
-            } => display_error(
-                path,
-                src,
-                self.level(),
-                "Too many arguments for function",
-                span.clone(),
-                "",
-            ),
+            Report::TooFewArgsForFunction { function: _, given: _, span } => {
+                display_error(
+                    path,
+                    src,
+                    self.level(),
+                    "Too few arguments for function",
+                    span.clone(),
+                    "",
+                )
+            }
+            Report::TooManyArgsForFunction { function: _, given: _, span } => {
+                display_error(
+                    path,
+                    src,
+                    self.level(),
+                    "Too many arguments for function",
+                    span.clone(),
+                    "",
+                )
+            }
             Report::UndefinedVariable(name, span) => display_error(
                 path,
                 src,
@@ -315,13 +316,7 @@ pub fn display_error(
         },
         code.bold()
     );
-    eprintln!(
-        " {} {}:{}:{}",
-        "-->".blue().bold(),
-        path.bold(),
-        1 + line,
-        1 + column,
-    );
+    eprintln!(" {} {}:{}:{}", "-->".blue().bold(), path.bold(), 1 + line, 1 + column,);
     let mut i = 0;
     for (n, line) in src.lines().enumerate() {
         if i <= span.start && span.start <= i + line.len() {
@@ -346,10 +341,7 @@ pub struct Summary {
 
 impl Summary {
     pub fn new() -> Self {
-        Self {
-            warnings: 0,
-            errors: 0,
-        }
+        Self { warnings: 0, errors: 0 }
     }
 
     pub fn summarize(&mut self, reports: &Vec<Report>) {
