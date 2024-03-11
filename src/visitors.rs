@@ -1,15 +1,25 @@
 use std::collections::{HashMap, HashSet};
 
+use logos::Span;
+
 use crate::{
     ast::{rrc, BinaryOp, Declr, Declrs, Expr, Names, Rrc, Stmt, Stmts, UnaryOp},
-    build::FunctionPrototype,
     reporting::Report,
 };
+
+#[derive(Clone)]
+pub struct ProcedurePrototype<'src> {
+    pub name: &'src str,
+    pub args: Names<'src>,
+    pub args_set: HashSet<&'src str>,
+    pub warp: bool,
+    pub span: Span,
+}
 
 pub struct Visitor<'src, 'b> {
     pub variables: &'b mut HashSet<&'src str>,
     pub lists: &'b mut HashSet<&'src str>,
-    pub functions: &'b mut HashMap<&'src str, FunctionPrototype<'src>>,
+    pub procedures: &'b mut HashMap<&'src str, ProcedurePrototype<'src>>,
     pub reports: &'b mut Vec<Report<'src>>,
 }
 
@@ -24,15 +34,16 @@ impl<'src, 'b> Visitor<'src, 'b> {
         match &mut *declr.borrow_mut() {
             Declr::Costumes(_, _) => {}
             Declr::Sounds(_, _) => {}
-            Declr::Def(function) => {
-                self.visit_stmts(&mut function.body);
-                self.functions.insert(
-                    function.name,
-                    FunctionPrototype {
-                        args: function.args.clone(),
-                        args_set: function.args.iter().map(|(arg, _)| *arg).collect(),
-                        warp: function.warp,
-                        span: function.span.clone(),
+            Declr::Def(procedure) => {
+                self.visit_stmts(&mut procedure.body);
+                self.procedures.insert(
+                    procedure.name,
+                    ProcedurePrototype {
+                        name: procedure.name,
+                        args: procedure.args.clone(),
+                        args_set: procedure.args.iter().map(|(arg, _)| *arg).collect(),
+                        warp: procedure.warp,
+                        span: procedure.span.clone(),
                     },
                 );
             }
@@ -124,7 +135,7 @@ impl<'src, 'b> Visitor<'src, 'b> {
                     self.visit_expr(arg);
                 }
             }
-            Stmt::Call(_name, args, _span) => {
+            Stmt::ProcedureCall(_name, args, _span) => {
                 for arg in args {
                     self.visit_expr(arg);
                 }

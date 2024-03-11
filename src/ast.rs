@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use logos::Span;
+use strum::{AsRefStr, IntoStaticStr, VariantArray};
 use strum_macros::EnumString;
 
 pub type Rrc<T> = Rc<RefCell<T>>;
@@ -9,7 +10,7 @@ pub fn rrc<T>(t: T) -> Rrc<T> {
     Rc::new(RefCell::new(t))
 }
 
-#[derive(Debug, EnumString, Copy, Clone)]
+#[derive(Debug, EnumString, VariantArray, AsRefStr, IntoStaticStr, Copy, Clone)]
 #[strum(serialize_all = "snake_case")]
 pub enum Block {
     // Motion
@@ -126,7 +127,7 @@ pub enum Block {
     Error,
 }
 
-#[derive(Debug, EnumString, Copy, Clone)]
+#[derive(Debug, EnumString, VariantArray, AsRefStr, IntoStaticStr, Copy, Clone)]
 #[strum(serialize_all = "snake_case")]
 pub enum Reporter {
     // Motion
@@ -219,7 +220,7 @@ pub enum BinaryOp {
 pub type Declrs<'src> = Vec<Rrc<Declr<'src>>>;
 
 #[derive(Debug)]
-pub struct Function<'src> {
+pub struct Procedure<'src> {
     pub name: &'src str,
     pub args: Names<'src>,
     pub body: Stmts<'src>,
@@ -234,7 +235,7 @@ pub type Strings = Vec<(Rc<str>, Span)>;
 pub enum Declr<'src> {
     Costumes(Strings, Span),
     Sounds(Strings, Span),
-    Def(Function<'src>),
+    Def(Procedure<'src>),
     OnFlag(Stmts<'src>, Span),
     OnKey(Rc<str>, Stmts<'src>, Span),
     OnClick(Stmts<'src>, Span),
@@ -263,7 +264,7 @@ pub enum Stmt<'src> {
     ListInsert(&'src str, Rrc<Expr<'src>>, Rrc<Expr<'src>>, Span),
     ListReplace(&'src str, Rrc<Expr<'src>>, Rrc<Expr<'src>>, Span),
     Block(Block, Exprs<'src>, Span),
-    Call(&'src str, Exprs<'src>, Span),
+    ProcedureCall(&'src str, Exprs<'src>, Span),
 }
 
 pub type Exprs<'src> = Vec<Rrc<Expr<'src>>>;

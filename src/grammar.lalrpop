@@ -14,7 +14,7 @@ Declr: Rrc<Declr<'input>> = {
     <l:@L> "costumes" <r:@R> <p:Strings> ";" => rrc(Declr::Costumes(p, l..r)),
     <l:@L> "sounds" <r:@R> <p:Strings> ";" => rrc(Declr::Sounds(p, l..r)),
     <w:"nowarp"?> "def" <l:@L> <n:Name> <r:@R> <a:Names> <b:Stmts>
-        => rrc(Declr::Def(Function{name: n, args: a, body: b, warp: w.is_none(), span: l..r})),
+        => rrc(Declr::Def(Procedure{name: n, args: a, body: b, warp: w.is_none(), span: l..r})),
     <l:@L> "onflag" <r:@R> <b:Stmts> => rrc(Declr::OnFlag(b, l..r)),
     "onkey" <l:@L> <k:ParsedString> <r:@R> <b:Stmts> => rrc(Declr::OnKey(k, b, l..r)),
     <l:@L> "onclick" <r:@R> <b:Stmts> => rrc(Declr::OnClick(b, l..r)),
@@ -107,7 +107,7 @@ Stmt: Rrc<Stmt<'input>> = {
             }
             rrc(Stmt::Block(b, a, l..r))
         },
-        Err(_) => rrc(Stmt::Call(n, a, l..r)),
+        Err(_) => rrc(Stmt::ProcedureCall(n, a, l..r)),
     }
 }
 

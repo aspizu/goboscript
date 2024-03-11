@@ -8,32 +8,23 @@ use std::{
 };
 
 use colored::*;
-use logos::Span;
 
 use crate::{
-    ast::{Declrs, Names},
+    ast::Declrs,
     codegen::CodeGen,
     config::Config,
     grammar::DeclrsParser,
     logoslalrpop::Lexer,
-    reporting::{Report, ReportLevel, Summary},
-    visitors::Visitor,
+    reporting::{Report, ReportLevel, ReportScope, Summary},
+    visitors::{ProcedurePrototype, Visitor},
     zipfile::ZipFile,
 };
-
-#[derive(Clone)]
-pub struct FunctionPrototype<'src> {
-    pub args: Names<'src>,
-    pub args_set: HashSet<&'src str>,
-    pub warp: bool,
-    pub span: Span,
-}
 
 pub struct Program<'src> {
     pub declrs: Declrs<'src>,
     pub variables: HashSet<&'src str>,
     pub lists: HashSet<&'src str>,
-    pub functions: HashMap<&'src str, FunctionPrototype<'src>>,
+    pub procedures: HashMap<&'src str, ProcedurePrototype<'src>>,
 }
 
 pub struct Sprite<'src> {
@@ -71,17 +62,17 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
         Ok(mut declrs) => {
             let mut variables = HashSet::new();
             let mut lists = HashSet::new();
-            let mut functions = HashMap::new();
+            let mut procedures = HashMap::new();
             let mut reports = Vec::new();
             let mut visitor = Visitor {
                 variables: &mut variables,
                 lists: &mut lists,
-                functions: &mut functions,
+                procedures: &mut procedures,
                 reports: &mut reports,
             };
             visitor.visit_declrs(&mut declrs);
             Sprite {
-                program: Some(Program { declrs, variables, lists, functions }),
+                program: Some(Program { declrs, variables, lists, procedures }),
                 reports,
             }
         }
@@ -111,15 +102,15 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
             Ok(mut declrs) => {
                 let mut variables = HashSet::new();
                 let mut lists = HashSet::new();
-                let mut functions = HashMap::new();
+                let mut procedures = HashMap::new();
                 let mut visitor = Visitor {
                     variables: &mut variables,
                     lists: &mut lists,
-                    functions: &mut functions,
+                    procedures: &mut procedures,
                     reports: &mut reports,
                 };
                 visitor.visit_declrs(&mut declrs);
-                Some(Program { declrs, variables, lists, functions })
+                Some(Program { declrs, variables, lists, procedures })
             }
             Err(err) => {
                 reports.push(Report::ParserError(err));
@@ -150,28 +141,32 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
             )?;
         }
         for report in &sprite.reports {
-            if matches!(report.level(), ReportLevel::Warning) {
-                report.print(path.to_str().unwrap(), src);
-            }
+            report.eprint(
+                path.to_str().unwrap(),
+                src,
+                ReportScope {
+                    variables: sprite.program.as_ref().map(|it| &it.variables),
+                    lists: sprite.program.as_ref().map(|it| &it.lists),
+                    global_variables: stage.program.as_ref().map(|it| &it.variables),
+                    global_lists: stage.program.as_ref().map(|it| &it.lists),
+                    procedures: sprite.program.as_ref().map(|it| &it.procedures),
+                },
+            );
         }
         summary.summarize(&sprite.reports);
     }
     for report in &stage.reports {
-        if matches!(report.level(), ReportLevel::Warning) {
-            report.print(stage_path.to_str().unwrap(), &stage_src);
-        }
-    }
-    for ((path, src), sprite) in srcs.iter().zip(sprites) {
-        for report in &sprite.reports {
-            if matches!(report.level(), ReportLevel::Error) {
-                report.print(path.to_str().unwrap(), src);
-            }
-        }
-    }
-    for report in &stage.reports {
-        if matches!(report.level(), ReportLevel::Error) {
-            report.print(stage_path.to_str().unwrap(), &stage_src);
-        }
+        report.eprint(
+            stage_path.to_str().unwrap(),
+            &stage_src,
+            ReportScope {
+                variables: stage.program.as_ref().map(|it| &it.variables),
+                lists: stage.program.as_ref().map(|it| &it.lists),
+                global_variables: None,
+                global_lists: None,
+                procedures: stage.program.as_ref().map(|it| &it.procedures),
+            },
+        );
     }
     summary.summarize(&stage.reports);
     codegen.end_project()?;

@@ -1,15 +1,20 @@
-use std::rc::Rc;
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 use colored::*;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use lalrpop_util::ParseError;
 use logos::Span;
+use strum::VariantArray;
 
 use crate::{
     ast::{Block, Reporter},
-    build::FunctionPrototype,
     codegen::KEYS,
+    details::{block_details, reporter_details},
     lexer::Token,
+    visitors::ProcedurePrototype,
 };
 
 pub enum ParserError<'src> {
@@ -22,8 +27,19 @@ pub enum ReportLevel {
     Error,
 }
 
+impl ReportLevel {
+    fn colored(&self) -> ColoredString {
+        match self {
+            ReportLevel::Warning => "Warning".yellow().bold(),
+            ReportLevel::Error => "Error".red().bold(),
+        }
+    }
+}
+
 pub enum Report<'src> {
     ParserError(ParseError<usize, Token<'src>, ParserError<'src>>),
+    StageNotFound,
+    NoCostumes,
     FileNotFound(Rc<str>, Span),
     UnknownKey(Rc<str>, Span),
     TooFewArgsForReporter {
@@ -46,257 +62,262 @@ pub enum Report<'src> {
         given: usize,
         span: Span,
     },
-    TooFewArgsForFunction {
-        function: FunctionPrototype<'src>,
+    TooFewArgsForProcedure {
+        procedure: ProcedurePrototype<'src>,
         given: usize,
         span: Span,
     },
-    TooManyArgsForFunction {
-        function: FunctionPrototype<'src>,
+    TooManyArgsForProcedure {
+        procedure: ProcedurePrototype<'src>,
         given: usize,
         span: Span,
     },
     UndefinedVariable(&'src str, Span),
-    UndefinedArg(&'src str, Span),
+    UndefinedArg {
+        procedure: ProcedurePrototype<'src>,
+        name: &'src str,
+        span: Span,
+    },
     UndefinedList(&'src str, Span),
     UndefinedBlock(&'src str, Span),
     UnreachableCode(Span),
 }
 
+pub struct ReportScope<'a, 'b> {
+    pub variables: Option<&'a HashSet<&'b str>>,
+    pub global_variables: Option<&'a HashSet<&'b str>>,
+    pub lists: Option<&'a HashSet<&'b str>>,
+    pub global_lists: Option<&'a HashSet<&'b str>>,
+    pub procedures: Option<&'b HashMap<&'b str, ProcedurePrototype<'b>>>,
+}
+
 impl<'src> Report<'src> {
-    #[rustfmt::skip]
     pub fn level(&self) -> ReportLevel {
         match self {
-            | Report::ParserError(..)
-            | Report::FileNotFound(..)
-            | Report::TooFewArgsForReporter { .. }
-            | Report::TooManyArgsForReporter { .. }
-            | Report::TooFewArgsForBlock { .. }
-            | Report::TooManyArgsForBlock { .. }
-            | Report::TooFewArgsForFunction { .. }
-            | Report::TooManyArgsForFunction { .. }
-            | Report::UndefinedVariable(..)
-            | Report::UndefinedArg(..)
-            | Report::UndefinedList(..)
-            | Report::UndefinedBlock(..)
-            => ReportLevel::Error,
-
-            | Report::UnknownKey(..)
-            | Report::UnreachableCode(..)
-            => ReportLevel::Warning
+            Self::UnknownKey(..) | Self::UnreachableCode(..) => ReportLevel::Warning,
+            _ => ReportLevel::Error,
         }
     }
 
-    pub fn print(&self, path: &str, src: &str) {
+    fn description(&self) -> &str {
         match self {
-            Report::ParserError(error) => match error {
-                ParseError::InvalidToken { location } => display_error(
-                    path,
-                    src,
-                    self.level(),
-                    "Invalid token.",
-                    *location..location + 1,
-                    "",
-                ),
-                ParseError::ExtraToken { token: (l, _, r) } => {
-                    display_error(path, src, self.level(), "Extra token.", *l..*r, "")
-                }
-                ParseError::UnrecognizedToken { token: (l, _, r), expected } => {
-                    let hint = format!("Expected one of: {}", expected.join(", "));
-                    display_error(
-                        path,
-                        src,
-                        self.level(),
-                        "Unrecognized token.",
-                        *l..*r,
-                        if expected.is_empty() {
-                            "Expected nothing."
-                        } else {
-                            hint.as_str()
-                        },
-                    )
-                }
-                ParseError::UnrecognizedEof { location, expected } => {
-                    let hint = format!("Expected one of: {}", expected.join(", "));
-                    display_error(
-                        path,
-                        src,
-                        self.level(),
-                        "Unrecognized end of file.",
-                        *location..location + 1,
-                        if expected.is_empty() {
-                            "Expected nothing."
-                        } else {
-                            hint.as_str()
-                        },
-                    )
-                }
-                ParseError::User { error } => match error {
-                    ParserError::InvalidToken(span) => display_error(
-                        path,
-                        src,
-                        self.level(),
-                        "Invalid token.",
-                        span.clone(),
-                        "",
-                    ),
-                    ParserError::UnknownReporter(name, span) => display_error(
-                        path,
-                        src,
-                        self.level(),
-                        "Unknown reporter.",
-                        span.clone(),
-                        name,
-                    ),
-                },
+            Self::ParserError(ParseError::InvalidToken { .. }) => "Syntax error.",
+            Self::ParserError(ParseError::ExtraToken { .. }) => "Syntax error.",
+            Self::ParserError(ParseError::UnrecognizedToken { .. }) => "Syntax error.",
+            Self::ParserError(ParseError::UnrecognizedEof { .. }) => "Syntax error.",
+            Self::ParserError(ParseError::User { error }) => match error {
+                ParserError::InvalidToken(..) => "Syntax error.",
+                ParserError::UnknownReporter(..) => "Unknown reporter.",
             },
-            Report::FileNotFound(file, span) => display_error(
-                path,
-                src,
-                self.level(),
-                "File not found",
-                span.clone(),
-                file,
-            ),
+            Self::StageNotFound => "Stage not found.",
+            Self::NoCostumes => "No costumes defined.",
+            Self::FileNotFound(..) => "File not found.",
+            Self::UnknownKey(..) => "Unknown key.",
+            Self::TooFewArgsForReporter { .. } => "Missing arguments for reporter.",
+            Self::TooManyArgsForReporter { .. } => "Too many arguments for reporter.",
+            Self::TooFewArgsForBlock { .. } => "Missing arguments for block.",
+            Self::TooManyArgsForBlock { .. } => "Too many arguments for block.",
+            Self::TooFewArgsForProcedure { .. } => "Missing arguments for procedure.",
+            Self::TooManyArgsForProcedure { .. } => "Too many arguments for procedure.",
+            Self::UndefinedVariable(..) => "Undefined variable.",
+            Self::UndefinedArg { .. } => "Undefined argument.",
+            Self::UndefinedList(..) => "Undefined list.",
+            Self::UndefinedBlock(..) => "Unknown block or undefined procedure.",
+            Self::UnreachableCode(..) => "Unreachable code.",
+        }
+    }
+
+    pub fn eprint(&self, path: &str, src: &str, scope: ReportScope) {
+        self.eprint_header();
+        match self {
+            Report::ParserError(_) => todo!(),
+            Report::StageNotFound => {
+                eprintln!("All projects must have a `stage.gs` file with atleast one costume defined.");
+            }
+            Report::NoCostumes => {
+                eprint_path(path);
+                eprintln!(
+                    "All sprites and the stage must have atleast one costume defined."
+                );
+            }
+            Report::FileNotFound(file, span) => {
+                eprint_span(span.clone(), path, src, "");
+            }
             Report::UnknownKey(key, span) => {
-                let matcher = SkimMatcherV2::default().ignore_case();
-                let matched = KEYS
+                let mut matcher = SkimMatcherV2::default();
+                let mut matches = KEYS
                     .iter()
-                    .filter_map(|valid_key| {
-                        matcher
-                            .fuzzy_match(valid_key, key)
-                            .map(|score| (*valid_key, score))
+                    .filter_map(|choice| {
+                        matcher.fuzzy_match(choice, key).map(|score| (choice, score))
                     })
-                    .max_by_key(|item| item.1)
-                    .map(|item| item.0);
-                if let Some(matched) = matched {
-                    display_error(
+                    .collect::<Vec<_>>();
+                matches.sort_by_key(|(_, score)| *score);
+                if let Some((&m, _)) = matches.last() {
+                    eprint_span(
+                        span.clone(),
                         path,
                         src,
-                        self.level(),
-                        "Not a key",
-                        span.clone(),
-                        format!("Did you mean `{}`?", matched).as_str(),
-                    )
+                        &format!("Did you mean `{m}`?"),
+                    );
                 } else {
-                    display_error(
-                        path,
-                        src,
-                        self.level(),
-                        "Not a key",
-                        span.clone(),
-                        "",
-                    )
+                    eprint_span(span.clone(), path, src, "");
                 }
             }
-            Report::TooFewArgsForReporter { reporter: _, given: _, span } => {
-                display_error(
+            Report::TooFewArgsForReporter { reporter, given, span } => {
+                let (_, args, _) = reporter_details(*reporter);
+                eprint_span(
+                    span.clone(),
                     path,
                     src,
-                    self.level(),
-                    "Too few arguments for reporter",
-                    span.clone(),
-                    "",
-                )
+                    &format!("Missing {}", args[*given..].join(", ")),
+                );
             }
-            Report::TooManyArgsForReporter { reporter: _, given: _, span } => {
-                display_error(
+            Report::TooManyArgsForReporter { reporter, given, span } => {
+                let (_, args, _) = reporter_details(*reporter);
+                eprint_span(
+                    span.clone(),
                     path,
                     src,
-                    self.level(),
-                    "Too many arguments for reporter",
-                    span.clone(),
-                    "",
-                )
+                    &format!("Takes {}", args.join(", ")),
+                );
             }
-            Report::TooFewArgsForBlock { block: _, given: _, span } => display_error(
-                path,
-                src,
-                self.level(),
-                "Too few arguments for block",
-                span.clone(),
-                "",
-            ),
-            Report::TooManyArgsForBlock { block: _, given: _, span } => display_error(
-                path,
-                src,
-                self.level(),
-                "Too many arguments for block",
-                span.clone(),
-                "",
-            ),
-            Report::TooFewArgsForFunction { function: _, given: _, span } => {
-                display_error(
+            Report::TooFewArgsForBlock { block, given, span } => {
+                let (_, args, _) = block_details(*block);
+                eprint_span(
+                    span.clone(),
                     path,
                     src,
-                    self.level(),
-                    "Too few arguments for function",
-                    span.clone(),
-                    "",
-                )
+                    &format!("Missing {}", args[*given..].join(", ")),
+                );
             }
-            Report::TooManyArgsForFunction { function: _, given: _, span } => {
-                display_error(
+            Report::TooManyArgsForBlock { block, given, span } => {
+                let (_, args, _) = block_details(*block);
+                eprint_span(
+                    span.clone(),
                     path,
                     src,
-                    self.level(),
-                    "Too many arguments for function",
-                    span.clone(),
-                    "",
-                )
+                    &format!("Takes {}", args.join(", ")),
+                );
             }
-            Report::UndefinedVariable(name, span) => display_error(
-                path,
-                src,
-                self.level(),
-                "Undefined variable",
-                span.clone(),
-                name,
-            ),
-            Report::UndefinedArg(name, span) => display_error(
-                path,
-                src,
-                self.level(),
-                "Undefined argument",
-                span.clone(),
-                name,
-            ),
-            Report::UndefinedList(name, span) => display_error(
-                path,
-                src,
-                self.level(),
-                "Undefined list",
-                span.clone(),
-                name,
-            ),
-            Report::UndefinedBlock(name, span) => display_error(
-                path,
-                src,
-                self.level(),
-                "Undefined block",
-                span.clone(),
-                name,
-            ),
-            Report::UnreachableCode(span) => display_error(
-                path,
-                src,
-                self.level(),
-                "Unreachable code",
-                span.clone(),
-                "Code after this is removed",
-            ),
+            Report::TooFewArgsForProcedure { procedure, given, span } => {
+                let missing = procedure.args[*given..]
+                    .iter()
+                    .map(|&(arg, _)| arg)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                eprint_span(span.clone(), path, src, &format!("Missing {missing}"));
+            }
+            Report::TooManyArgsForProcedure { procedure, given, span } => {
+                let args = procedure
+                    .args
+                    .iter()
+                    .map(|&(arg, _)| arg)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                eprint_span(span.clone(), path, src, &format!("Takes {args}"));
+            }
+            Report::UndefinedArg { procedure, name, span } => {
+                let mut matcher = SkimMatcherV2::default();
+                let mut matches = procedure
+                    .args
+                    .iter()
+                    .filter_map(|(arg, _)| {
+                        matcher.fuzzy_match(arg, name).map(|score| (arg, score))
+                    })
+                    .collect::<Vec<_>>();
+                matches.sort_by_key(|(_, score)| *score);
+                if let Some((&m, _)) = matches.last() {
+                    eprint_span(
+                        span.clone(),
+                        path,
+                        src,
+                        &format!("Did you mean `{m}`?"),
+                    );
+                } else {
+                    eprint_span(
+                        span.clone(),
+                        path,
+                        src,
+                        &format!("Undefined argument `{name}`"),
+                    );
+                }
+            }
+            | Report::UndefinedVariable(name, span)
+            | Report::UndefinedList(name, span) => {
+                let empty = HashSet::new();
+                let matcher = SkimMatcherV2::default();
+                let mut matches = scope
+                    .variables
+                    .unwrap_or(&empty)
+                    .iter()
+                    .chain(scope.global_variables.unwrap_or(&empty))
+                    .chain(scope.lists.unwrap_or(&empty))
+                    .chain(scope.global_lists.unwrap_or(&empty))
+                    .filter_map(|choice| {
+                        matcher.fuzzy_match(choice, name).map(|score| (choice, score))
+                    })
+                    .collect::<Vec<_>>();
+                matches.sort_by_key(|(_, score)| *score);
+                if let Some((&m, _)) = matches.last() {
+                    eprint_span(
+                        span.clone(),
+                        path,
+                        src,
+                        &format!("Did you mean `{m}`?"),
+                    );
+                } else {
+                    eprint_span(span.clone(), path, src, "");
+                }
+            }
+            Report::UndefinedBlock(name, span) => {
+                let matcher = SkimMatcherV2::default();
+                let mut matches = Vec::new();
+                if let Some(procedures) = scope.procedures {
+                    for procedure in procedures.keys() {
+                        if let Some(score) = matcher.fuzzy_match(procedure, name) {
+                            matches.push((*procedure, score));
+                        }
+                    }
+                }
+                for block in Block::VARIANTS {
+                    let block = block.as_ref();
+                    if let Some(score) = matcher.fuzzy_match(block, name) {
+                        matches.push((block, score));
+                    }
+                }
+                matches.sort_by_key(|(_, score)| *score);
+                if let Some((m, _)) = matches.last() {
+                    eprint_span(
+                        span.clone(),
+                        path,
+                        src,
+                        &format!("Did you mean `{m}`?"),
+                    );
+                } else {
+                    eprint_span(span.clone(), path, src, "");
+                }
+            }
+            Report::UnreachableCode(span) => {
+                eprint_span(
+                    span.clone(),
+                    path,
+                    src,
+                    "Code after this statement was removed.",
+                );
+            }
         }
+    }
+
+    fn eprint_header(&self) {
+        eprintln!("{}: {}", self.level().colored(), self.description().bold());
     }
 }
 
-pub fn display_error(
-    path: &str,
-    src: &str,
-    level: ReportLevel,
-    code: &str,
-    span: Span,
-    hint: &str,
-) {
+fn eprint_path(path: &str) {
+    eprintln!("{} {}", "-->".blue().bold(), path.bold());
+}
+
+fn eprint_span(span: Span, path: &str, src: &str, hint: &str) {
     let mut line = 0;
     let mut column = 0;
     let mut i = 0;
@@ -308,14 +329,6 @@ pub fn display_error(
             break;
         }
     }
-    eprintln!(
-        "{}: {}",
-        match level {
-            ReportLevel::Warning => "Warning".yellow().bold(),
-            ReportLevel::Error => "Error".red().bold(),
-        },
-        code.bold()
-    );
     eprintln!(" {} {}:{}:{}", "-->".blue().bold(), path.bold(), 1 + line, 1 + column,);
     let mut i = 0;
     for (n, line) in src.lines().enumerate() {

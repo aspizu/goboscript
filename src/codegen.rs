@@ -13,14 +13,15 @@ use serde_json::json;
 
 use crate::{
     ast::{
-        BinaryOp, Block, Declr, Declrs, Expr, Exprs, Function, Names, Reporter, Rrc,
+        BinaryOp, Block, Declr, Declrs, Expr, Exprs, Names, Procedure, Reporter, Rrc,
         Stmt, Stmts, UnaryOp,
     },
     blockid::{BlockID, BlockIDFactory},
-    build::{FunctionPrototype, Program},
+    build::Program,
     config::Config,
     details::{block_details, reporter_details},
     reporting::Report,
+    visitors::ProcedurePrototype,
     zipfile::ZipFile,
 };
 
@@ -100,8 +101,8 @@ pub struct Sc<'src, 'b> {
     global_variables: Option<&'b HashSet<&'src str>>,
     lists: &'b HashSet<&'src str>,
     global_lists: Option<&'b HashSet<&'src str>>,
-    functions: &'b HashMap<&'src str, FunctionPrototype<'src>>,
-    function: Option<&'b FunctionPrototype<'src>>,
+    procedures: &'b HashMap<&'src str, ProcedurePrototype<'src>>,
+    procedure: Option<&'b ProcedurePrototype<'src>>,
 }
 
 impl<'src, T> CodeGen<T>
@@ -276,8 +277,8 @@ where
                 global_variables,
                 lists: &program.lists,
                 global_lists,
-                functions: &program.functions,
-                function: None,
+                procedures: &program.procedures,
+                procedure: None,
             },
             &program.declrs,
             false,
@@ -344,7 +345,7 @@ where
         match declr {
             Declr::Costumes(..) => unreachable!(),
             Declr::Sounds(..) => unreachable!(),
-            Declr::Def(function) => self.def(r, sc, function, comma),
+            Declr::Def(procedure) => self.def(r, sc, procedure, comma),
             Declr::OnFlag(body, span) => self.on_flag(r, sc, body, span, comma),
             Declr::OnKey(key, body, span) => {
                 self.on_key(r, sc, key.clone(), body, span.clone(), comma)
@@ -409,7 +410,7 @@ where
         &mut self,
         r: R<'src, '_>,
         sc: Sc<'src, '_>,
-        function: &Function<'src>,
+        procedure: &Procedure<'src>,
         comma: bool,
     ) -> io::Result<()> {
         let this_id = self.id.create_id();
@@ -418,7 +419,7 @@ where
         self.begin_node(
             Node::new("procedures_definition", this_id, comma)
                 .top_level()
-                .some_next_id((!function.body.is_empty()).then_some(next_id)),
+                .some_next_id((!procedure.body.is_empty()).then_some(next_id)),
         )?;
         self.comma(true)?;
         self.key("inputs")?;
@@ -429,7 +430,7 @@ where
         self.end_object()?;
 
         let mut arg_ids = Vec::new();
-        for (arg, _) in &function.args {
+        for (arg, _) in &procedure.args {
             let arg_id = self.id.create_id();
             arg_ids.push(arg_id);
             self.begin_node(
@@ -455,24 +456,24 @@ where
         self.key("inputs")?;
         self.begin_object()?;
         let mut comma = false;
-        for ((arg, _), arg_id) in function.args.iter().zip(arg_ids) {
+        for ((arg, _), arg_id) in procedure.args.iter().zip(arg_ids) {
             self.comma(comma)?;
             write!(self, r#"{}:[2,{}]"#, json!(arg), arg_id)?;
             comma = true;
         }
         self.end_object()?;
         self.begin_mutation_object()?;
-        self.proccode(function.name, function.args.len())?;
-        self.argument_stuff(&function.args)?;
+        self.proccode(procedure.name, procedure.args.len())?;
+        self.argument_stuff(&procedure.args)?;
         write!(self.zip, r#","argumentdefaults":"["#)?;
         let mut comma = false;
-        for _ in &function.args {
+        for _ in &procedure.args {
             self.comma(comma)?;
             write!(self.zip, r#"\"\""#)?;
             comma = true;
         }
         write!(self.zip, r#"]""#)?;
-        self.warp(function.warp)?;
+        self.warp(procedure.warp)?;
         self.end_object()?;
         self.end_object()?;
 
@@ -483,10 +484,10 @@ where
                 global_variables: sc.global_variables,
                 lists: sc.lists,
                 global_lists: sc.global_lists,
-                functions: sc.functions,
-                function: sc.functions.get(function.name),
+                procedures: sc.procedures,
+                procedure: sc.procedures.get(procedure.name),
             },
-            &function.body,
+            &procedure.body,
             next_id,
             Some(this_id),
             true,
@@ -906,7 +907,7 @@ where
             Stmt::Block(block, args, span) => {
                 self.block(r, sc, block, args, span, this_id, next_id, parent_id, comma)
             }
-            Stmt::Call(name, args, span) => {
+            Stmt::ProcedureCall(name, args, span) => {
                 self.call(r, sc, name, args, span, this_id, next_id, parent_id, comma)
             }
         }
@@ -1906,28 +1907,28 @@ where
         parent_id: Option<BlockID>,
         comma: bool,
     ) -> io::Result<()> {
-        let Some(function) = sc.functions.get(name) else {
+        let Some(procedure) = sc.procedures.get(name) else {
             r.push(Report::UndefinedBlock(name, span.clone()));
             return Ok(());
         };
-        match args.len().cmp(&function.args.len()) {
+        match args.len().cmp(&procedure.args.len()) {
             Ordering::Less => {
-                r.push(Report::TooFewArgsForFunction {
-                    function: function.clone(),
+                r.push(Report::TooFewArgsForProcedure {
+                    procedure: procedure.clone(),
                     given: args.len(),
                     span: span.clone(),
                 });
             }
             Ordering::Greater => {
-                r.push(Report::TooManyArgsForFunction {
-                    function: function.clone(),
+                r.push(Report::TooManyArgsForProcedure {
+                    procedure: procedure.clone(),
                     given: args.len(),
                     span: span.clone(),
                 });
             }
             Ordering::Equal => {}
         }
-        let mut ids = Vec::with_capacity(function.args.len());
+        let mut ids = Vec::with_capacity(procedure.args.len());
         self.begin_node(
             Node::new("procedures_call", this_id, comma)
                 .some_next_id(next_id)
@@ -1937,7 +1938,7 @@ where
         self.key("inputs")?;
         self.begin_object()?;
         let mut comma = false;
-        for ((name, _), arg) in function.args.iter().zip(args) {
+        for ((name, _), arg) in procedure.args.iter().zip(args) {
             let id = self.id.create_id();
             ids.push(id);
             self.input(r, sc, name, &arg.borrow(), id, comma)?;
@@ -1945,9 +1946,9 @@ where
         }
         self.end_object()?;
         self.begin_mutation_object()?;
-        self.proccode(name, function.args.len())?;
-        self.argument_stuff(&function.args)?;
-        self.warp(function.warp)?;
+        self.proccode(name, procedure.args.len())?;
+        self.argument_stuff(&procedure.args)?;
+        self.warp(procedure.warp)?;
         self.end_object()?;
         self.end_object()?;
         for (arg, id) in args.iter().zip(ids) {
@@ -2061,8 +2062,12 @@ where
         parent_id: BlockID,
         comma: bool,
     ) -> io::Result<()> {
-        if !(sc.function.is_some_and(|it| it.args_set.contains(name))) {
-            r.push(Report::UndefinedArg(name, span.clone()));
+        if !(sc.procedure.is_some_and(|it| it.args_set.contains(name))) {
+            r.push(Report::UndefinedArg {
+                procedure: sc.procedure.unwrap().clone(),
+                name,
+                span: span.clone(),
+            });
         }
         self.begin_node(
             Node::new("argument_reporter_string_number", this_id, comma)
