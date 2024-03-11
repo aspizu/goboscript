@@ -2607,7 +2607,7 @@ where
     }
 }
 
-impl<'src, T> io::Write for CodeGen<T>
+impl<T> io::Write for CodeGen<T>
 where
     T: Write + Seek,
 {
