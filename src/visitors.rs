@@ -3,7 +3,9 @@ use std::collections::{HashMap, HashSet};
 use logos::Span;
 
 use crate::{
-    ast::{rrc, BinaryOp, Declr, Declrs, Expr, Names, Rrc, Stmt, Stmts, UnaryOp},
+    ast::{
+        rrc, BinaryOp, Declr, Declrs, Expr, Names, Procedure, Rrc, Stmt, Stmts, UnaryOp,
+    },
     reporting::Report,
 };
 
@@ -14,6 +16,7 @@ pub struct ProcedurePrototype<'src> {
     pub args_set: HashSet<&'src str>,
     pub warp: bool,
     pub span: Span,
+    pub uses: usize,
 }
 
 pub struct Visitor<'src, 'b> {
@@ -21,10 +24,26 @@ pub struct Visitor<'src, 'b> {
     pub lists: &'b mut HashSet<&'src str>,
     pub procedures: &'b mut HashMap<&'src str, ProcedurePrototype<'src>>,
     pub reports: &'b mut Vec<Report<'src>>,
+    pub procedure: Option<&'src str>,
 }
 
 impl<'src, 'b> Visitor<'src, 'b> {
     pub fn visit_declrs(&mut self, declrs: &mut Declrs<'src>) {
+        for declr in declrs.iter_mut() {
+            if let Declr::Def(procedure) = &mut *declr.borrow_mut() {
+                self.procedures.insert(
+                    procedure.name,
+                    ProcedurePrototype {
+                        name: procedure.name,
+                        args: procedure.args.clone(),
+                        args_set: procedure.args.iter().map(|(arg, _)| *arg).collect(),
+                        warp: procedure.warp,
+                        span: procedure.span.clone(),
+                        uses: 0,
+                    },
+                );
+            }
+        }
         for declr in declrs.iter_mut() {
             self.visit_declr(declr);
         }
@@ -35,17 +54,9 @@ impl<'src, 'b> Visitor<'src, 'b> {
             Declr::Costumes(_, _) => {}
             Declr::Sounds(_, _) => {}
             Declr::Def(procedure) => {
+                self.procedure = Some(procedure.name);
                 self.visit_stmts(&mut procedure.body);
-                self.procedures.insert(
-                    procedure.name,
-                    ProcedurePrototype {
-                        name: procedure.name,
-                        args: procedure.args.clone(),
-                        args_set: procedure.args.iter().map(|(arg, _)| *arg).collect(),
-                        warp: procedure.warp,
-                        span: procedure.span.clone(),
-                    },
-                );
+                self.procedure = None;
             }
             Declr::OnFlag(body, _span) => {
                 self.visit_stmts(body);
@@ -135,7 +146,12 @@ impl<'src, 'b> Visitor<'src, 'b> {
                     self.visit_expr(arg);
                 }
             }
-            Stmt::ProcedureCall(_name, args, _span) => {
+            Stmt::ProcedureCall(name, args, _span) => {
+                if !(self.procedure.is_some_and(|it| it == *name)) {
+                    if let Some(procedure) = self.procedures.get_mut(name) {
+                        procedure.uses += 1;
+                    }
+                }
                 for arg in args {
                     self.visit_expr(arg);
                 }

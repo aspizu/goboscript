@@ -130,7 +130,41 @@ impl<'src> Report<'src> {
     pub fn eprint(&self, path: &str, src: &str, scope: ReportScope) {
         self.eprint_header();
         match self {
-            Report::ParserError(_) => todo!(),
+            Report::ParserError(err) => match err {
+                ParseError::InvalidToken { location } => {
+                    eprint_span(*location..*location + 1, path, src, "");
+                }
+                ParseError::UnrecognizedEof { location, expected } => {
+                    eprint_span(
+                        *location..*location + 1,
+                        path,
+                        src,
+                        &expected.join(", "),
+                    );
+                }
+                ParseError::UnrecognizedToken {
+                    token: (left, token, right),
+                    expected,
+                } => {
+                    eprint_span(
+                        *left..*right,
+                        path,
+                        src,
+                        &format!("Expected {}", expected.join(", ")),
+                    );
+                }
+                ParseError::ExtraToken { token: (left, token, right) } => {
+                    eprint_span(*left..*right, path, src, "");
+                }
+                ParseError::User { error } => match error {
+                    ParserError::InvalidToken(span) => {
+                        eprint_span(span.clone(), path, src, "");
+                    }
+                    ParserError::UnknownReporter(token, span) => {
+                        eprint_span(span.clone(), path, src, "");
+                    }
+                },
+            },
             Report::StageNotFound => {
                 eprintln!("All projects must have a `stage.gs` file with atleast one costume defined.");
             }

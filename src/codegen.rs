@@ -329,6 +329,13 @@ where
             if matches!(*declr.borrow(), Declr::Costumes(..) | Declr::Sounds(..)) {
                 continue;
             }
+            if let Declr::Def(procedure) = &*declr.borrow() {
+                if let Some(procedure) = sc.procedures.get(procedure.name) {
+                    if procedure.uses == 0 {
+                        continue;
+                    }
+                }
+            }
             self.declr(r, sc, &declr.borrow(), comma)?;
             comma = true;
         }

@@ -114,12 +114,9 @@ Stmt: Rrc<Stmt<'input>> = {
 Exprs: Exprs<'input> = Comma<Expr>;
 
 Expr: Rrc<Expr<'input>> = {
-    #[precedence(level="0")]
+    #[precedence(level="1")]
     Term,
-    #[precedence(level="1")] #[assoc(side="left")]
-    <l:@L> <e:Expr> "[" <i:Expr> "]" <r:@R>
-        => rrc(Expr::BinaryOp(BinaryOp::Of, e, i, l..r)),
-    #[precedence(level="2")] #[assoc(side="right")]
+    #[precedence(level="3")] #[assoc(side="right")]
     <l:@L> "-" <e:Expr> <r:@R> => rrc(Expr::UnaryOp(UnaryOp::Minus, e, l..r)),
     <l:@L> "not" <e:Expr> <r:@R> => rrc(Expr::UnaryOp(UnaryOp::Not, e, l..r)),
     <l:@L> "length" <e:Expr> <r:@R> => rrc(Expr::UnaryOp(UnaryOp::Length, e, l..r)),
@@ -138,27 +135,27 @@ Expr: Rrc<Expr<'input>> = {
     <l:@L> "log" <e:Expr> <r:@R> => rrc(Expr::UnaryOp(UnaryOp::Log, e, l..r)),
     <l:@L> "antiln" <e:Expr> <r:@R> => rrc(Expr::UnaryOp(UnaryOp::AntiLn, e, l..r)),
     <l:@L> "antilog" <e:Expr> <r:@R> => rrc(Expr::UnaryOp(UnaryOp::AntiLog, e, l..r)),
-    #[precedence(level="3")] #[assoc(side="left")]
+    #[precedence(level="4")] #[assoc(side="left")]
     <l:@L> <le:Expr> "*" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Mul, le, re, l..r)),
     <l:@L> <le:Expr> "/" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Div, le, re, l..r)),
     <l:@L> <le:Expr> "%" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Mod, le, re, l..r)),
-    #[precedence(level="4")] #[assoc(side="left")]
+    #[precedence(level="5")] #[assoc(side="left")]
     <l:@L> <le:Expr> "+" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Add, le, re, l..r)),
     <l:@L> <le:Expr> "-" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Sub, le, re, l..r)),
-    #[precedence(level="5")] #[assoc(side="left")]
+    #[precedence(level="6")] #[assoc(side="left")]
     <l:@L> <le:Expr> "<" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Lt, le, re, l..r)),
     <l:@L> <le:Expr> "<=" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Le, le, re, l..r)),
     <l:@L> <le:Expr> ">" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Gt, le, re, l..r)),
     <l:@L> <le:Expr> ">=" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Ge, le, re, l..r)),
-    #[precedence(level="6")] #[assoc(side="right")]
+    #[precedence(level="7")] #[assoc(side="right")]
     <l:@L> <le:Expr> "&" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Join, le, re, l..r)),
-    #[precedence(level="7")] #[assoc(side="left")]
+    #[precedence(level="8")] #[assoc(side="left")]
     <l:@L> <le:Expr> "in" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::In, le, re, l..r)),
     <l:@L> <le:Expr> "=" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Eq, le, re, l..r)),
     <l:@L> <le:Expr> "!=" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Ne, le, re, l..r)),
-    #[precedence(level="8")] #[assoc(side="left")]
-    <l:@L> <le:Expr> "and" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::And, le, re, l..r)),
     #[precedence(level="9")] #[assoc(side="left")]
+    <l:@L> <le:Expr> "and" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::And, le, re, l..r)),
+    #[precedence(level="10")] #[assoc(side="left")]
     <l:@L> <le:Expr> "or" <re:Expr> <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Or, le, re, l..r)),
 }
 
@@ -181,6 +178,7 @@ Term: Rrc<Expr<'input>> = {
         }
         Err(_) => Err(ParseError::User {error: ParserError::UnknownReporter(n, l..r)}),
     },
+    <l:@L> <e:Term> "[" <i:Expr> "]" <r:@R> => rrc(Expr::BinaryOp(BinaryOp::Of, e, i, l..r)),
 }
 
 Names: Names<'input> = SpannedComma<Name>;

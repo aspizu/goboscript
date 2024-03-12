@@ -69,6 +69,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
                 lists: &mut lists,
                 procedures: &mut procedures,
                 reports: &mut reports,
+                procedure: None,
             };
             visitor.visit_declrs(&mut declrs);
             Sprite {
@@ -108,6 +109,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> io::Result<()> 
                     lists: &mut lists,
                     procedures: &mut procedures,
                     reports: &mut reports,
+                    procedure: None,
                 };
                 visitor.visit_declrs(&mut declrs);
                 Some(Program { declrs, variables, lists, procedures })
