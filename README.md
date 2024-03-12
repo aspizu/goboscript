@@ -1,9 +1,23 @@
 # goboscript
 
-[![image](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/UAwVrejtwz)
+[![image](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/W9ZWy6ZMA3)
 ![image](https://shields.io/crates/l/goboscript)
 
 [**Installation and documentation**](https://aspizu.github.io/goboscript)
+
+goboscript is the Scratch compiler. It lets you write Scratch projects in a text-based
+programming language. It outputs `.sb3` files which can be opened in Scratch or
+Turbowarp. It is written in Rust and is designed to have fast compile times.
+
+goboscript is text-based, so you can use Visual Studio Code to write Scratch projects,
+you can even use Github Copilot to help you write Scratch projects. goboscript also
+performs optimizations, has a powerful macro system which lets you do meta-programming.
+It even finds errors in your Scratch projects before you run them.
+
+
+|goboscript code|Scratch blocks|
+|---|---|
+|![](https://media.discordapp.net/attachments/1216833762373931202/1217242019844591616/image.png?ex=66034ff8&is=65f0daf8&hm=adb07f66c0367119209da7d3c44b919766d1d6147a92d128401de23441efbf13&=&format=webp&quality=lossless&width=500&height=700)|![](https://media.discordapp.net/attachments/1216833762373931202/1217242200413442069/image.png?ex=66035023&is=65f0db23&hm=02de8a737307eac1c7c0d19b09a936549d9f179d2de2d38ef1be81dc7647e390&=&format=webp&quality=lossless&width=448&height=700)|
 
 # Contributing
 

@@ -163,7 +163,8 @@ Term: Rrc<Expr<'input>> = {
     "(" <Expr> ")",
     <l:@L> <i:Int> <r:@R> => rrc(Expr::Int(serde_json::from_str(i).unwrap(), l..r)),
     <l:@L> <f:Float> <r:@R> => rrc(Expr::Float(serde_json::from_str(f).unwrap(), l..r)),
-    <l:@L> <s:ParsedString> <r:@R> => rrc(Expr::String(s, l..r)),
+    <l:@L> <s:String+> <r:@R> => rrc(Expr::String(s.iter().map(|s| serde_json::from_str::<&str>(s).unwrap()).collect::<String>().into(), l..r)),
+    //<sl:@L> <s:String> <sr:@R> <tl:@L> <t:Term> <tr:@R> => rrc(Expr::BinaryOp(BinaryOp::Join, rrc(Expr::String(serde_json::from_str::<&str>(s).unwrap().into(), sl..sr)), t, tl..tr)),
     <l:@L> <h:Hexadecimal> <r:@R> =>
         rrc(Expr::Int(i64::from_str_radix(h.split_at(2).1, 16).unwrap(), l..r)),
     <l:@L> <b:Binary> <r:@R> =>
