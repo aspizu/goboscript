@@ -1,23 +1,33 @@
 # goboscript
 
-[![image](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/W9ZWy6ZMA3)
 ![image](https://shields.io/crates/l/goboscript)
 
 [**Installation and documentation**](https://aspizu.github.io/goboscript)
 
-goboscript is the Scratch compiler. It lets you write Scratch projects in a text-based
-programming language. It outputs `.sb3` files which can be opened in Scratch or
-Turbowarp. It is written in Rust and is designed to have fast compile times.
+goboscript is a text-based programming language which compiles to Scratch. It allows
+you to write Scratch projects in text, and compile it into a .sb3 file - which can be
+opened in the Scratch editor, TurboWarp or be uploaded to the Scratch website.
 
-goboscript is text-based, so you can use Visual Studio Code to write Scratch projects,
-you can even use Github Copilot to help you write Scratch projects. goboscript also
-performs optimizations, has a powerful macro system which lets you do meta-programming.
-It even finds errors in your Scratch projects before you run them.
+goboscript allows you to create advanced Scratch projects with ease, you can use any
+text editor, use a version control system such as git. You can refactor your code
+using search and replace. Text code can be copy pasted, which allows you to easily reuse
+code or share it with others. goboscript syntax is concise and easy to read.
 
+goboscript allows you to integrate external tooling and workflows, such as using a
+script to generate costumes for a text rendering engine. Or loading in images into
+lists.
 
-|goboscript code|Scratch blocks|
+goboscript has a powerful macro system - similar to Rust's macro system. This allows
+you to write macros to generate code.
+
+goboscript is more than just an 1:1 mapping of Scratch blocks to text, it also has
+additional features like local variables for procedures (custom blocks).
+
+goboscript also performs optimizations, detects problems and unused code.
+
+|goboscript|Scratch|
 |---|---|
-|![](https://media.discordapp.net/attachments/1216833762373931202/1217242019844591616/image.png?ex=66034ff8&is=65f0daf8&hm=adb07f66c0367119209da7d3c44b919766d1d6147a92d128401de23441efbf13&=&format=webp&quality=lossless&width=500&height=700)|![](https://media.discordapp.net/attachments/1216833762373931202/1217242200413442069/image.png?ex=66035023&is=65f0db23&hm=02de8a737307eac1c7c0d19b09a936549d9f179d2de2d38ef1be81dc7647e390&=&format=webp&quality=lossless&width=448&height=700)|
+|![](https://media.discordapp.net/attachments/1129589844637667431/1221342945160986674/image.png?ex=66123b41&is=65ffc641&hm=7a9e2dc6d578bb23215bb870a5a9a2297b6b93aa7259dcb3c57030c112c73f23&=&format=webp&quality=lossless)|![](https://media.discordapp.net/attachments/1129589844637667431/1221343388117372980/image.png?ex=66123bab&is=65ffc6ab&hm=94597db42e084f4740f4134489cb8aa437611240f75d6125263d20163e94181b&=&format=webp&quality=lossless)|
 
 # Contributing
 

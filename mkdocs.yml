@@ -1,10 +1,12 @@
 site_name: goboscript
 nav:
     - README: index.md
-    - Getting Started: getting-started.md
     - Install: install.md
+    - Getting Started: getting-started.md
     - Language:
+          - Costumes: language/costumes.md
           - Variables: language/variables.md
+          - Lists: language/lists.md
     - Editor Integration: editor-integration.md
 theme:
     name: material
@@ -34,12 +36,14 @@ theme:
               icon: material/brightness-auto
               name: Switch to light mode
         - media: "(prefers-color-scheme: light)"
-          scheme: astral-light
+          scheme: default
+          primary: white
           toggle:
               icon: material/brightness-7
               name: Switch to dark mode
         - media: "(prefers-color-scheme: dark)"
-          scheme: astral-dark
+          scheme: slate
+          primary: black
           toggle:
               icon: material/brightness-4
               name: Switch to system preference
@@ -77,4 +81,4 @@ extra:
         - icon: fontawesome/brands/github
           link: https://github.com/aspizu
         - icon: fontawesome/brands/discord
-          link: https://discord.gg/UAwVrejtwz
+          link: https://discord.gg/W9ZWy6ZMA3

@@ -1,2622 +1,1106 @@
 use std::{
-    cmp::Ordering,
-    collections::{HashMap, HashSet},
     fs::File,
     io::{self, Seek, Write},
-    path::PathBuf,
-    rc::Rc,
+    path::Path,
 };
 
+use anyhow::{bail, Result};
+use fxhash::FxHashMap;
 use logos::Span;
 use md5::{Digest, Md5};
 use serde_json::json;
-
-use crate::{
-    ast::{
-        BinaryOp, Block, Declr, Declrs, Expr, Exprs, Names, Procedure, Reporter, Rrc,
-        Stmt, Stmts, UnaryOp,
-    },
-    blockid::{BlockID, BlockIDFactory},
-    build::Program,
-    config::Config,
-    details::{block_details, reporter_details},
-    reporting::Report,
-    visitors::ProcedurePrototype,
-    zipfile::ZipFile,
+use smol_str::SmolStr;
+use zip::{
+    write::{FileOptions, ZipWriter},
+    CompressionMethod,
 };
 
-pub const KEYS: &[&str] =
-    &["space", "up arrow", "down arrow", "left arrow", "right arrow", "any"];
+use self::{
+    node::Node,
+    node_id::{NodeID, NodeIDFactory},
+};
+use crate::{
+    ast::{Costume, Event, EventDetail, Expr, Proc, Project, Sprite, Stmt, Stmts},
+    blocks::{BinOp, Block, UnOp},
+    config::Config,
+    diagnostic::{keys::is_key, Diagnostic, DiagnosticDetail},
+};
 
-struct Node {
-    opcode: &'static str,
-    this_id: BlockID,
-    comma: bool,
-    next_id: Option<BlockID>,
-    parent_id: Option<BlockID>,
-    top_level: bool,
-    shadow: bool,
-}
+pub mod node;
+pub mod node_id;
 
-impl Node {
-    fn new(opcode: &'static str, this_id: BlockID, comma: bool) -> Self {
-        Self {
-            opcode,
-            this_id,
-            comma,
-            next_id: None,
-            parent_id: None,
-            top_level: false,
-            shadow: false,
-        }
-    }
-
-    fn next_id(mut self, next_id: BlockID) -> Self {
-        self.next_id = Some(next_id);
-        self
-    }
-
-    fn some_next_id(mut self, next_id: Option<BlockID>) -> Self {
-        self.next_id = next_id;
-        self
-    }
-
-    fn parent_id(mut self, parent_id: BlockID) -> Self {
-        self.parent_id = Some(parent_id);
-        self
-    }
-
-    fn some_parent_id(mut self, parent_id: Option<BlockID>) -> Self {
-        self.parent_id = parent_id;
-        self
-    }
-
-    fn top_level(mut self) -> Self {
-        self.top_level = true;
-        self
-    }
-
-    fn shadow(mut self) -> Self {
-        self.shadow = true;
-        self
-    }
-}
-
-pub struct CodeGen<T>
-where
-    T: Write + Seek,
+pub struct Sb3<T>
+where T: Write + Seek
 {
-    zip: ZipFile<T>,
-    id: BlockIDFactory,
-    costumes: HashMap<Rc<str>, String>,
-    input: PathBuf,
-    pub config: Config,
+    zip: ZipWriter<T>,
+    id: NodeIDFactory,
+    costumes: FxHashMap<SmolStr, SmolStr>,
+    blocks_comma: bool,
+    inputs_comma: bool,
 }
 
-type R<'src, 'b> = &'b mut Vec<Report<'src>>;
+type D<'a> = &'a mut Vec<Diagnostic>;
 
-#[derive(Clone, Copy)]
-pub struct Sc<'src, 'b> {
-    variables: &'b HashSet<&'src str>,
-    global_variables: Option<&'b HashSet<&'src str>>,
-    lists: &'b HashSet<&'src str>,
-    global_lists: Option<&'b HashSet<&'src str>>,
-    procedures: &'b HashMap<&'src str, ProcedurePrototype<'src>>,
-    procedure: Option<&'b ProcedurePrototype<'src>>,
+#[derive(Copy, Clone)]
+struct S<'a> {
+    stage: Option<&'a Sprite>,
+    sprite: &'a Sprite,
+    proc: Option<&'a Proc>,
 }
 
-impl<'src, T> CodeGen<T>
-where
-    T: Write + Seek,
-{
-    pub fn new(zip: ZipFile<T>, input: PathBuf, config: Config) -> CodeGen<T> {
-        CodeGen {
-            zip,
-            id: Default::default(),
-            costumes: Default::default(),
-            input,
-            config,
-        }
+impl<'a> S<'a> {
+    fn is_arg(self, name: &str) -> bool {
+        self.proc.is_some_and(|it| it.used_args.contains_key(name))
     }
 
-    fn comma(&mut self, comma: bool) -> io::Result<()> {
-        if comma {
-            self.write_all(",".as_bytes())?;
-        }
-        Ok(())
+    fn is_local_var(self, name: &str) -> bool {
+        self.proc.is_some_and(|it| it.locals.contains_key(name))
     }
 
-    fn begin_object(&mut self) -> io::Result<()> {
-        self.write_all("{".as_bytes())
+    fn is_var(self, name: &str) -> bool {
+        self.sprite.vars.contains_key(name)
+            || self.stage.is_some_and(|it| it.vars.contains_key(name))
     }
 
-    fn end_object(&mut self) -> io::Result<()> {
-        self.write_all("}".as_bytes())
+    fn is_list(self, name: &str) -> bool {
+        self.sprite.lists.contains_key(name)
+            || self.stage.is_some_and(|it| it.lists.contains_key(name))
     }
+}
 
-    fn begin_array(&mut self) -> io::Result<()> {
-        self.write_all("[".as_bytes())
-    }
-
-    fn end_array(&mut self) -> io::Result<()> {
-        self.write_all("]".as_bytes())
-    }
-
-    fn key(&mut self, key: &str) -> io::Result<()> {
-        write!(self, r#""{key}":"#)
-    }
-
-    fn string(&mut self, s: &'static str) -> io::Result<()> {
-        write!(self, r#""{s}""#)
-    }
-
-    fn begin_node(&mut self, node: Node) -> io::Result<()> {
-        self.comma(node.comma)?;
-        write!(self, r#"{}:{{"#, node.this_id)?;
-        self.key("opcode")?;
-        self.string(node.opcode)?;
-        if let Some(next_id) = node.next_id {
-            self.comma(true)?;
-            self.key("next")?;
-            write!(self, "{next_id}")?;
-        }
-        if let Some(parent_id) = node.parent_id {
-            self.comma(true)?;
-            self.key("parent")?;
-            write!(self, "{parent_id}")?;
-        }
-        if node.top_level {
-            self.comma(true)?;
-            self.key("topLevel")?;
-            self.write_all("true".as_bytes())?;
-        }
-        if node.shadow {
-            self.comma(true)?;
-            self.key("shadow")?;
-            self.write_all("true".as_bytes())?;
-        }
-        Ok(())
-    }
-
-    pub fn begin_project(&mut self) -> io::Result<()> {
-        self.zip.begin_file("project.json")?;
-        self.write_all(r#"{"targets":["#.as_bytes())
-    }
-
-    pub fn end_project(&mut self) -> io::Result<()> {
-        self.write_all(r#"],"monitors":[],"extensions":[],"meta":{"semver":"3.0.0","vm":"0.2.0","agent":"goboscript"}}"#.as_bytes())?;
-        self.write_assets()?;
-        self.zip.end_zip()
-    }
-
-    fn write_assets(&mut self) -> io::Result<()> {
-        for (costume, hash) in &self.costumes {
-            let (_, extension) = costume.rsplit_once('.').unwrap();
-            self.zip.begin_file(&format!("{hash}.{extension}"))?;
-            let mut file = File::open(self.input.join(costume.as_ref()))?;
-            io::copy(&mut file, &mut self.zip)?;
-        }
-        Ok(())
-    }
-
-    pub fn sprite(
-        &mut self,
-        name: &str,
-        program: &Program<'src>,
-        global_variables: Option<&'src HashSet<&'src str>>,
-        global_lists: Option<&'src HashSet<&'src str>>,
-        reports: &mut Vec<Report<'src>>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.id.reset();
-        self.comma(comma)?;
-        self.begin_object()?;
-        self.key("name")?;
-        write!(self, "{}", json!(name))?;
-        self.comma(true)?;
-        self.key("isStage")?;
-        if name == "Stage" {
-            self.write_all("true".as_bytes())?;
-            if !self.config.is_default() {
-                self.comma(true)?;
-                self.key("comments")?;
-                self.begin_object()?;
-                self.key("a")?;
-                self.begin_object()?;
-                self.key("blockId")?;
-                self.write_all(b"null")?;
-                self.comma(true)?;
-                self.key("x")?;
-                self.write_all(b"0")?;
-                self.comma(true)?;
-                self.key("y")?;
-                self.write_all(b"0")?;
-                self.comma(true)?;
-                self.key("width")?;
-                self.write_all(b"350")?;
-                self.comma(true)?;
-                self.key("height")?;
-                self.write_all(b"170")?;
-                self.comma(true)?;
-                self.key("minimized")?;
-                self.write_all(b"true")?;
-                self.comma(true)?;
-                self.key("text")?;
-                write!(
-                    self, // FIXME
-                    "{}",
-                    json!(format!(
-                        r#"{} // _twconfig_"#,
-                        json!({
-                            "framerate": self.config.frame_rate,
-                            "runtimeOptions": {
-                                "maxClones": self.config.max_clones,
-                                "miscLimits": self.config.miscellaneous_limits,
-                                "fencing": self.config.sprite_fencing,
-                            },
-                            "interpolation": self.config.frame_interpolation,
-                            "hq": self.config.high_quality_pen,
-                            "width": self.config.stage_width,
-                            "height": self.config.stage_height,
-                        })
-                    ))
-                )?;
-                self.end_object()?;
-                self.end_object()?;
-            }
-        } else {
-            self.write_all("false".as_bytes())?;
-        }
-        self.comma(true)?;
-        self.key("blocks")?;
-        self.begin_object()?;
-        self.declrs(
-            reports,
-            Sc {
-                variables: &program.variables,
-                global_variables,
-                lists: &program.lists,
-                global_lists,
-                procedures: &program.procedures,
-                procedure: None,
-            },
-            &program.declrs,
-            false,
-        )?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("costumes")?;
-        self.begin_array()?;
-        for declr in &program.declrs {
-            let mut comma = false;
-            if let Declr::Costumes(costumes, _span) = &*declr.borrow() {
-                for (costume, span) in costumes {
-                    self.costume(reports, costume.clone(), span, comma)?;
-                    comma = true;
+impl Stmt {
+    fn is_terminator(&self) -> bool {
+        matches!(
+            self,
+            Stmt::Forever { .. }
+                | Stmt::Block {
+                    block: Block::DeleteThisClone
+                        | Block::StopAll
+                        | Block::StopThisScript,
+                    ..
                 }
-            }
-        }
-        self.end_array()?;
-        self.comma(true)?;
-        self.key("variables")?;
-        self.begin_object()?;
-        let mut comma = false;
-        for variable in &program.variables {
-            if global_variables.is_some_and(|it| it.contains(variable)) {
-                continue;
-            }
-            self.comma(comma)?;
-            write!(self, r#"{}:[{},0]"#, json!(variable), json!((variable)))?;
-            comma = true;
-        }
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("sounds")?;
-        self.begin_array()?;
-        self.end_array()?;
-        self.end_object()?;
-        Ok(())
-    }
-
-    fn declrs(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        declrs: &Declrs<'src>,
-        mut comma: bool,
-    ) -> io::Result<()> {
-        for declr in declrs {
-            if matches!(*declr.borrow(), Declr::Costumes(..) | Declr::Sounds(..)) {
-                continue;
-            }
-            if let Declr::Def(procedure) = &*declr.borrow() {
-                if let Some(procedure) = sc.procedures.get(procedure.name) {
-                    if procedure.uses == 0 {
-                        continue;
-                    }
-                }
-            }
-            self.declr(r, sc, &declr.borrow(), comma)?;
-            comma = true;
-        }
-        Ok(())
-    }
-
-    fn declr(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        declr: &Declr<'src>,
-        comma: bool,
-    ) -> io::Result<()> {
-        match declr {
-            Declr::Costumes(..) => unreachable!(),
-            Declr::Sounds(..) => unreachable!(),
-            Declr::Def(procedure) => self.def(r, sc, procedure, comma),
-            Declr::OnFlag(body, span) => self.on_flag(r, sc, body, span, comma),
-            Declr::OnKey(key, body, span) => {
-                self.on_key(r, sc, key.clone(), body, span.clone(), comma)
-            }
-            Declr::OnClick(body, span) => self.on_click(r, sc, body, span, comma),
-            Declr::OnBackdrop(backdrop, body, span) => {
-                self.on_backdrop(r, sc, backdrop, body, span, comma)
-            }
-            Declr::OnLoudnessGreaterThan(loudness, body, span) => self
-                .on_loudness_greater_than(r, sc, &loudness.borrow(), body, span, comma),
-            Declr::OnTimerGreaterThan(timer, body, span) => {
-                self.on_timer_greater_than(r, sc, &timer.borrow(), body, span, comma)
-            }
-            Declr::OnMessage(message, body, span) => {
-                self.on_message(r, sc, message, body, span, comma)
-            }
-            Declr::OnClone(body, span) => self.on_clone(r, sc, body, span, comma),
-        }
-    }
-
-    fn costume(
-        &mut self,
-        r: R<'src, '_>,
-        costume: Rc<str>,
-        span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let (name, extension) = costume.rsplit_once('.').unwrap();
-        if let Some(hash) = self.costumes.get(costume.as_ref()) {
-            let name = name.replace("{{fwslash}}", "/");
-            write!(self.zip, "{{")?;
-            write!(self.zip, r#""name":{}"#, json!(name))?;
-            write!(self.zip, r#","assetId":{}"#, json!(hash))?;
-            write!(self.zip, r#","dataFormat":{}"#, json!(extension))?;
-            write!(self.zip, r#","md5ext":{}"#, json!(format!("{hash}.{extension}")))?;
-            write!(self.zip, "}}")?;
-        } else {
-            let path = self.input.join(costume.as_ref());
-            let mut file = File::open(path)?;
-            let mut hasher = Md5::new();
-            io::copy(&mut file, &mut hasher)?;
-            io::copy(&mut file, &mut hasher)?;
-            let hash = hasher.finalize();
-            self.costumes.insert(costume.clone(), format!("{:x}", hash));
-            return self.costume(r, costume, span, comma);
-        }
-        Ok(())
-    }
-
-    fn sounds(
-        &mut self,
-        _r: R<'src, '_>,
-        _sc: Sc<'src, '_>,
-        _sounds: &[(String, Span)],
-        _span: &Span,
-        _comma: bool,
-    ) -> io::Result<()> {
-        todo!()
-    }
-
-    fn def(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        procedure: &Procedure<'src>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let prototype_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("procedures_definition", this_id, comma)
-                .top_level()
-                .some_next_id((!procedure.body.is_empty()).then_some(next_id)),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.key("custom_block")?;
-        write!(self, r#"[1,{}]"#, prototype_id)?;
-        self.end_object()?;
-        self.end_object()?;
-
-        let mut arg_ids = Vec::new();
-        for (arg, _) in &procedure.args {
-            let arg_id = self.id.create_id();
-            arg_ids.push(arg_id);
-            self.begin_node(
-                Node::new("argument_reporter_string_number", arg_id, true)
-                    .parent_id(prototype_id)
-                    .shadow(),
-            )?;
-            self.comma(true)?;
-            self.key("fields")?;
-            self.begin_object()?;
-            self.key("VALUE")?;
-            write!(self, r#"[{},null]"#, json!(arg))?;
-            self.end_object()?;
-            self.end_object()?;
-        }
-
-        self.begin_node(
-            Node::new("procedures_prototype", prototype_id, true)
-                .parent_id(this_id)
-                .shadow(),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        let mut comma = false;
-        for ((arg, _), arg_id) in procedure.args.iter().zip(arg_ids) {
-            self.comma(comma)?;
-            write!(self, r#"{}:[2,{}]"#, json!(arg), arg_id)?;
-            comma = true;
-        }
-        self.end_object()?;
-        self.begin_mutation_object()?;
-        self.proccode(procedure.name, procedure.args.len())?;
-        self.argument_stuff(&procedure.args)?;
-        write!(self.zip, r#","argumentdefaults":"["#)?;
-        let mut comma = false;
-        for _ in &procedure.args {
-            self.comma(comma)?;
-            write!(self.zip, r#"\"\""#)?;
-            comma = true;
-        }
-        write!(self.zip, r#"]""#)?;
-        self.warp(procedure.warp)?;
-        self.end_object()?;
-        self.end_object()?;
-
-        self.stmts(
-            r,
-            Sc {
-                variables: sc.variables,
-                global_variables: sc.global_variables,
-                lists: sc.lists,
-                global_lists: sc.global_lists,
-                procedures: sc.procedures,
-                procedure: sc.procedures.get(procedure.name),
-            },
-            &procedure.body,
-            next_id,
-            Some(this_id),
-            true,
         )
     }
 
-    fn begin_mutation_object(&mut self) -> Result<(), io::Error> {
-        write!(self, r#","mutation":{{"tagName":"mutation","children":[]"#)
+    fn opcode(&self, s: S) -> &'static str {
+        match self {
+            Stmt::Repeat { .. } => "control_repeat",
+            Stmt::Forever { .. } => "control_forever",
+            Stmt::Branch { else_body, .. } => {
+                if else_body.is_empty() {
+                    "control_if"
+                } else {
+                    "control_if_else"
+                }
+            }
+            Stmt::Until { .. } => "control_repeat_until",
+            Stmt::SetVar { .. } => "data_setvariableto",
+            Stmt::ChangeVar { .. } => "data_changevariableby",
+            Stmt::Show { name, .. } | Stmt::Hide { name, .. } => {
+                if s.is_var(name) || s.is_local_var(name) {
+                    "data_showvariable"
+                } else {
+                    "data_showlist"
+                }
+            }
+            Stmt::ListAdd { .. } => "data_addtolist",
+            Stmt::ListDelete { .. } => "data_deleteoflist",
+            Stmt::ListDeleteAll { .. } => "data_deletealloflist",
+            Stmt::ListInsert { .. } => "data_insertatlist",
+            Stmt::ListSet { .. } | Stmt::ListChange { .. } => "data_replaceitemoflist",
+            Stmt::Block { block, .. } => block.opcode(),
+            Stmt::ProcCall { .. } => "procedures_call",
+        }
     }
+}
 
-    fn warp(&mut self, warp: bool) -> io::Result<()> {
-        if warp {
-            write!(self.zip, r#","warp":"true""#)
-        } else {
-            write!(self.zip, r#","warp":"false""#)
+impl<T> Sb3<T>
+where T: Write + Seek
+{
+    pub fn new(file: T) -> Self {
+        Self {
+            zip: ZipWriter::new(file),
+            id: Default::default(),
+            costumes: Default::default(),
+            blocks_comma: false,
+            inputs_comma: false,
         }
     }
 
-    fn argument_stuff(&mut self, args: &Names) -> io::Result<()> {
-        for each in ["argumentids", "argumentnames"] {
-            write!(self.zip, r#","{}":"["#, each)?;
-            let mut comma = false;
-            for (arg, _) in args {
-                self.comma(comma)?;
-                write!(self.zip, "{}", json!(arg).to_string().replace('"', r#"\""#))?;
-                comma = true;
-            }
-            write!(self.zip, r#"]""#)?;
+    pub fn package(
+        &mut self,
+        project: &Project,
+        config: &Config,
+        input: &Path,
+        stage_diags: D,
+        diags: &mut FxHashMap<SmolStr, Vec<Diagnostic>>,
+    ) -> Result<()> {
+        self.zip.start_file(
+            "project.json",
+            FileOptions::default()
+                .compression_method(CompressionMethod::Deflated)
+                .compression_level(Some(6)),
+        )?;
+        self.write_all(br#"{"targets":["#)?;
+        self.sprite(None, &project.stage, stage_diags, "Stage", config, input)?;
+        for (name, sprite) in project.sprites.iter() {
+            self.write_all(b",")?;
+            self.sprite(
+                Some(&project.stage),
+                sprite,
+                diags.get_mut(name).unwrap(),
+                name.as_str(),
+                config,
+                input,
+            )?;
+        }
+        self.write_all(br#"],"monitors":[],"extensions":[],"meta":{"semver":"3.0.0","vm":"0.2.0","agent":"goboscript"}}"#)?;
+        self.assets(input)?;
+        self.zip.finish()?;
+        Ok(())
+    }
+
+    fn assets(&mut self, input: &Path) -> Result<()> {
+        for (path, hash) in &self.costumes {
+            let (_, extension) = path.rsplit_once('.').unwrap();
+            self.zip
+                .start_file(format!("{hash}.{extension}"), FileOptions::default())?;
+            let file = File::open(input.join(path.as_str()));
+            io::copy(&mut file?, &mut self.zip)?;
         }
         Ok(())
     }
 
-    fn proccode(&mut self, name: &str, args: usize) -> io::Result<()> {
-        write!(self, r#","proccode":"{}"#, name)?;
-        for _ in 0..args {
-            write!(self, r#" %s"#)?;
+    fn sprite(
+        &mut self,
+        stage: Option<&Sprite>,
+        sprite: &Sprite,
+        diags: D,
+        name: &str,
+        config: &Config,
+        input: &Path,
+    ) -> Result<()> {
+        self.id.reset();
+        if name == "Stage" {
+            self.write_all(br#"{"isStage":true"#)?;
+            if !config.is_default() {
+                write!(
+                    self,
+                    r#","comments":{{"a":{{"blockId":null,"x":0,"y":0,"width":350,"height":170,"minimized":false,"text":{}}}}}"#,
+                    json!(config.to_string())
+                )?;
+            }
+        } else {
+            self.write_all(br#"{"isStage":false"#)?;
         }
-        write!(self.zip, r#"""#)
-    }
-
-    fn on_flag(
-        &mut self,
-        r: &mut Vec<Report<'src>>,
-        sc: Sc<'src, '_>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whenflagclicked", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
-        )?;
-        self.end_object()?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
-    }
-
-    fn on_key(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        key: Rc<str>,
-        body: &Stmts<'src>,
-        span: Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        if !KEYS.contains(&key.as_ref()) {
-            r.push(Report::UnknownKey(key.clone(), span.clone()));
+        write!(self, r#","name":{},"blocks":{{"#, json!(name))?;
+        self.blocks_comma = false;
+        for proc in sprite.procs.values() {
+            for (name, is_used) in &proc.used_args {
+                let span =
+                    proc.args.iter().find(|(arg, _)| arg == name).unwrap().1.clone();
+                if !is_used {
+                    diags.push(
+                        DiagnosticDetail::UnusedArgument(name.clone())
+                            .to_diagnostic(span),
+                    );
+                }
+            }
+            if !sprite.used_procs.contains(&proc.name) {
+                diags.push(
+                    DiagnosticDetail::UnusedProcedure(proc.name.clone())
+                        .to_diagnostic(proc.span.clone()),
+                );
+            }
+            self.proc(S { stage, sprite, proc: Some(proc) }, diags, proc)?;
         }
-        let this_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whenkeypressed", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
-        )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("KEY_OPTION")?;
-        write!(self, r#"[{},null]"#, json!(key.as_ref()))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
+        for event in &sprite.events {
+            self.event(S { stage, sprite, proc: None }, diags, event)?;
+        }
+        // TODO: sprite.on_messages
+        self.write_all(br#"},"costumes":["#)?;
+        let mut comma = false;
+        for costume in sprite.costumes.values() {
+            self.comma(&mut comma)?;
+            self.costume(diags, costume, input)?;
+        }
+        self.write_all(br#"],"variables":{"#)?;
+        let mut comma = false;
+        for proc in sprite.procs.values() {
+            for var in proc.locals.values() {
+                let resolved = json!(local_variable_resolved_name(proc, &var.name));
+                self.comma(&mut comma)?;
+                write!(self, r#"{}:[{},{}]"#, resolved, resolved, json!(var.default))?;
+            }
+        }
+        for var in sprite.vars.values() {
+            if !var.used {
+                diags.push(
+                    DiagnosticDetail::UnusedVariable(var.name.clone())
+                        .to_diagnostic(var.span.clone()),
+                );
+            }
+            self.comma(&mut comma)?;
+            write!(
+                self,
+                r#"{}:[{},{}]"#,
+                json!(*var.name),
+                json!(*var.name),
+                json!(var.default)
+            )?;
+        }
+        self.write_all(br#"},"lists":{"#)?;
+        let mut comma = false;
+        for list in sprite.lists.values() {
+            if !list.used {
+                diags.push(
+                    DiagnosticDetail::UnusedList(list.name.clone())
+                        .to_diagnostic(list.span.clone()),
+                );
+            }
+            self.comma(&mut comma)?;
+            write!(
+                self,
+                r#"{}:[{},{}]"#,
+                json!(*list.name),
+                json!(*list.name),
+                json!(list.default)
+            )?;
+        }
+        // FIXME: Can you please fucking implement sounds this time?
+        self.write_all(br#"},"sounds":[]}"#)?;
+        for enum_ in sprite.enums.values() {
+            for (variant, span) in &enum_.variants {
+                if !enum_.used_variants.contains(variant) {
+                    diags.push(
+                        DiagnosticDetail::UnusedEnumVariant {
+                            enum_name: enum_.name.clone(),
+                            variant_name: variant.clone(),
+                        }
+                        .to_diagnostic(span.clone()),
+                    )
+                }
+            }
+        }
+        if sprite.costumes.is_empty() {
+            diags.push(DiagnosticDetail::NoCostumes.to_diagnostic(0..0))
+        }
+        Ok(())
     }
 
-    fn on_click(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whenthisspriteclicked", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
-        )?;
-        self.end_object()?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
+    fn costume(&mut self, d: D, costume: &Costume, input: &Path) -> Result<()> {
+        if let Some(hash) = self.costumes.get(&costume.path) {
+            let (_, extension) = costume.path.rsplit_once('.').unwrap();
+            write!(
+                self.zip,
+                r#"{{"name":{},"assetId":"{hash}","dataFormat":"{extension}","md5ext":"{hash}.{extension}"}}"#,
+                json!(*costume.name),
+            )?;
+            return Ok(());
+        }
+        let path = input.join(costume.path.as_str());
+        let mut file = match File::open(path) {
+            Ok(file) => file,
+            Err(err) => {
+                if matches!(err.kind(), io::ErrorKind::NotFound) {
+                    d.push(
+                        DiagnosticDetail::FileNotFound(costume.path.clone())
+                            .to_diagnostic(costume.span.clone()),
+                    );
+                    return Ok(());
+                }
+                bail!(err);
+            }
+        };
+        let mut hasher = Md5::new();
+        io::copy(&mut file, &mut hasher)?;
+        let hash = format!("{:x}", hasher.finalize());
+        self.costumes.insert(costume.path.clone(), hash.into());
+        self.costume(d, costume, input)
     }
 
-    fn on_backdrop(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        backdrop: &str,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whenbackdropswitchesto", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
+    fn proc(&mut self, s: S, d: D, proc: &Proc) -> Result<()> {
+        let this_id = self.id.new_id();
+        let prototype_id = self.id.new_id();
+        let next_id = self.id.new_id();
+        self.node(
+            Node::new("procedures_definition", this_id)
+                .some_next_id((!proc.body.is_empty()).then_some(next_id))
+                .top_level(true),
         )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("BACKDROP_OPTION")?;
-        write!(self, r#"[{},null]"#, json!(backdrop))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
+        self.inputs()?;
+        write!(self, r#""custom_block":[1,{prototype_id}]"#)?;
+        self.end_obj()?;
+        self.end_obj()?;
+
+        let mut arg_ids = Vec::with_capacity(proc.args.len());
+        for (arg, _) in &proc.args {
+            let arg_id = self.id.new_id();
+            arg_ids.push(arg_id);
+            self.node(
+                Node::new("argument_reporter_string_number", arg_id)
+                    .parent_id(prototype_id)
+                    .shadow(true),
+            )?;
+            self.single_field("VALUE", arg)?;
+            self.end_obj()?;
+        }
+
+        self.node(
+            Node::new("procedures_prototype", prototype_id)
+                .parent_id(this_id)
+                .shadow(true),
+        )?;
+        self.inputs()?;
+        let mut comma = false;
+        for ((arg, _), arg_id) in proc.args.iter().zip(arg_ids) {
+            self.comma(&mut comma)?;
+            write!(self, r#"{}:[2,{arg_id}]"#, json!(**arg))?;
+        }
+        self.end_obj()?;
+        self.mutation()?;
+        self.proccode(&proc.name, proc.args.len())?;
+        self.argument_array("argumentids", &proc.args)?;
+        self.argument_array("argumentnames", &proc.args)?;
+        self.write_all(br#","argumentdefaults":"["#)?;
+        let mut comma = false;
+        for _ in &proc.args {
+            self.comma(&mut comma)?;
+            self.write_all(br#"\"\""#)?;
+        }
+        self.write_all(br#"]""#)?;
+        self.warp(proc.warp)?;
+        self.end_obj()?;
+        self.end_obj()?;
+        self.stmts(s, d, &proc.body, next_id, Some(next_id))
     }
 
-    fn on_loudness_greater_than(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        loudness: &Expr<'src>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let loudness_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whengreaterthan", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
+    fn event(&mut self, s: S, d: D, event: &Event) -> Result<()> {
+        let this_id = self.id.new_id();
+        let next_id = self.id.new_id();
+        self.node(
+            Node::new(event.opcode(), this_id)
+                .some_next_id((!event.body.is_empty()).then_some(next_id))
+                .top_level(true),
         )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "VALUE", loudness, loudness_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("WHENGREATERTHANMENU")?;
-        write!(self, r#"["LOUDNESS",null]"#)?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, loudness, loudness_id, this_id, true)?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
-    }
-
-    fn on_timer_greater_than(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        timer: &Expr<'src>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let timer_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whengreaterthan", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "VALUE", timer, timer_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("WHENGREATERTHANMENU")?;
-        write!(self, r#"["TIMER",null]"#)?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, timer, timer_id, this_id, true)?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
-    }
-
-    fn on_message(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        message: &str,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("event_whenbroadcastreceived", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
-        )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("BROADCAST_OPTION")?;
-        write!(self, r#"[{},null]"#, json!(message))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
-    }
-
-    fn on_clone(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        comma: bool,
-    ) -> io::Result<()> {
-        let this_id = self.id.create_id();
-        let next_id = self.id.create_id();
-        self.begin_node(
-            Node::new("control_start_as_clone", this_id, comma)
-                .top_level()
-                .some_next_id((!body.is_empty()).then_some(next_id)),
-        )?;
-        self.end_object()?;
-        self.stmts(r, sc, body, next_id, Some(this_id), true)
+        match &event.kind {
+            EventDetail::OnKey { key, span } => {
+                if !is_key(key) {
+                    d.push(
+                        DiagnosticDetail::UnrecognizedKey(key.clone())
+                            .to_diagnostic(span.clone()),
+                    );
+                }
+                write!(
+                    self,
+                    r#","fields":{{"KEY_OPTION":[{},null]}}}}"#,
+                    json!(**key)
+                )?;
+            }
+            EventDetail::OnBackdrop { backdrop, span: _ } => {
+                write!(
+                    self,
+                    r#","fields":{{"BACKDROP_OPTION":[{},null]}}}}"#,
+                    json!(**backdrop)
+                )?;
+            }
+            EventDetail::OnLoudnessGt { value } | EventDetail::OnTimerGt { value } => {
+                let value_id = self.id.new_id();
+                self.inputs()?;
+                self.input(s, d, "VALUE", &value.borrow(), value_id)?;
+                self.end_obj()?;
+                self.write_all(
+                    if matches!(event.kind, EventDetail::OnLoudnessGt { .. }) {
+                        br#","fields":{"WHENGREATERTHANMENU":["LOUDNESS",null]}}"#
+                    } else {
+                        br#","fields":{"WHENGREATERTHANMENU":["TIMER",null]}}"#
+                    },
+                )?;
+                self.expr(s, d, &value.borrow(), value_id, this_id)?;
+            }
+            _ => {
+                self.end_obj()?;
+            }
+        }
+        self.stmts(s, d, &event.body, next_id, Some(next_id))
     }
 
     fn stmts(
         &mut self,
-        r: &mut Vec<Report<'src>>,
-        sc: Sc<'src, '_>,
-        stmts: &Stmts<'src>,
-        mut this_id: BlockID,
-        mut parent_id: Option<BlockID>,
-        mut comma: bool,
-    ) -> io::Result<()> {
+        s: S,
+        d: D,
+        stmts: &Stmts,
+        mut this_id: NodeID,
+        mut parent_id: Option<NodeID>,
+    ) -> Result<()> {
         for (i, stmt) in stmts.iter().enumerate() {
-            let is_before_unreachable_code = matches!(
-                &*stmt.borrow(),
-                Stmt::Block(
-                    Block::StopThisScript | Block::StopAll | Block::DeleteThisClone,
-                    ..
-                )
-            );
-            if i == stmts.len() - 1 || is_before_unreachable_code {
-                self.stmt(r, sc, &stmt.borrow(), this_id, None, parent_id, comma)?;
-                if is_before_unreachable_code {
-                    if i != stmts.len() - 1 {
-                        if let Stmt::Block(_, _, span) = &*stmt.borrow() {
-                            r.push(Report::UnreachableCode(span.clone()));
-                        } else {
-                            unreachable!()
-                        }
-                    }
-                    break;
+            let is_last = i == stmts.len() - 1;
+            if is_last || stmt.is_terminator() {
+                self.stmt(s, d, stmt, this_id, None, parent_id)?;
+                if !is_last {
+                    d.push(
+                        DiagnosticDetail::FollowedByUnreachableCode
+                            .to_diagnostic(stmt.span().clone()),
+                    )
                 }
-            } else {
-                let next_id = self.id.create_id();
-                self.stmt(
-                    r,
-                    sc,
-                    &stmt.borrow(),
-                    this_id,
-                    Some(next_id),
-                    parent_id,
-                    comma,
-                )?;
-                parent_id = Some(this_id);
-                this_id = next_id;
+                break;
             }
-            comma = true;
+            let next_id = self.id.new_id();
+            self.stmt(s, d, stmt, this_id, Some(next_id), parent_id)?;
+            parent_id = Some(this_id);
+            this_id = next_id;
         }
         Ok(())
     }
 
     fn stmt(
         &mut self,
-        r: &mut Vec<Report<'src>>,
-        sc: Sc<'src, '_>,
-        stmt: &Stmt<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
+        s: S,
+        d: D,
+        stmt: &Stmt,
+        this_id: NodeID,
+        next_id: Option<NodeID>,
+        parent_id: Option<NodeID>,
+    ) -> Result<()> {
+        self.node(
+            Node::new(stmt.opcode(s), this_id)
+                .some_next_id(next_id)
+                .some_parent_id(parent_id),
+        )?;
+        self.inputs()?;
         match stmt {
-            Stmt::Repeat(times, body, span) => self.repeat(
-                r,
-                sc,
-                &times.borrow(),
-                body,
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::Forever(body, span) => {
-                self.forever(r, sc, body, span, this_id, next_id, parent_id, comma)
+            Stmt::Forever { body, .. } => {
+                let body_id = self.id.new_id();
+                self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
+                self.end_obj()?;
+                self.end_obj()?;
+                self.stmts(s, d, body, body_id, Some(this_id))?;
             }
-            Stmt::Branch(condition, if_body, else_body, span) => self.branch(
-                r,
-                sc,
-                &condition.borrow(),
-                if_body,
-                else_body,
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::Until(condition, body, span) => self.until(
-                r,
-                sc,
-                &condition.borrow(),
-                body,
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::SetVariable(name, expr, span) => self.set_variable(
-                r,
-                sc,
-                name,
-                &expr.borrow(),
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::ChangeVariable(name, expr, span) => self.change_variable(
-                r,
-                sc,
-                name,
-                &expr.borrow(),
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::Show(name, span) => {
-                self.show(r, sc, name, span, this_id, next_id, parent_id, comma)
+            Stmt::Branch { cond, if_body, else_body } => {
+                let cond_id = self.id.new_id();
+                let if_body_id = self.id.new_id();
+                let else_body_id = self.id.new_id();
+                self.input(s, d, "CONDITION", &cond.borrow(), cond_id)?;
+                self.substack("SUBSTACK", (!if_body.is_empty()).then_some(if_body_id))?;
+                self.substack(
+                    "SUBSTACK2",
+                    (!else_body.is_empty()).then_some(else_body_id),
+                )?;
+                self.end_obj()?;
+                self.end_obj()?;
+                self.expr(s, d, &cond.borrow(), cond_id, this_id)?;
+                self.stmts(s, d, if_body, if_body_id, Some(this_id))?;
+                self.stmts(s, d, else_body, else_body_id, Some(this_id))?;
             }
-            Stmt::Hide(name, span) => {
-                self.hide(r, sc, name, span, this_id, next_id, parent_id, comma)
-            }
-            Stmt::ListAdd(name, expr, span) => self.list_add(
-                r,
-                sc,
-                name,
-                &expr.borrow(),
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::ListDelete(name, index, span) => self.list_delete(
-                r,
-                sc,
-                name,
-                &index.borrow(),
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::ListDeleteAll(name, span) => self
-                .list_delete_all(r, sc, name, span, this_id, next_id, parent_id, comma),
-            Stmt::ListInsert(name, index, expr, span) => self.list_insert(
-                r,
-                sc,
-                name,
-                &index.borrow(),
-                &expr.borrow(),
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::ListReplace(name, index, expr, span) => self.list_replace(
-                r,
-                sc,
-                name,
-                &index.borrow(),
-                &expr.borrow(),
-                span,
-                this_id,
-                next_id,
-                parent_id,
-                comma,
-            ),
-            Stmt::Block(block, args, span) => {
-                self.block(r, sc, block, args, span, this_id, next_id, parent_id, comma)
-            }
-            Stmt::ProcedureCall(name, args, span) => {
-                self.call(r, sc, name, args, span, this_id, next_id, parent_id, comma)
-            }
-        }
-    }
-
-    fn substack(
-        &mut self,
-        comma: bool,
-        name: &'static str,
-        id: Option<BlockID>,
-    ) -> io::Result<()> {
-        if let Some(id) = id {
-            self.comma(comma)?;
-            write!(self, r#""{name}":[2,{}]"#, id)?;
-        }
-        Ok(())
-    }
-
-    fn repeat(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        times: &Expr<'src>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let times_id = self.id.create_id();
-        let body_id = self.id.create_id();
-        self.begin_node(
-            Node::new("control_repeat", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "TIMES", times, times_id, false)?;
-        self.substack(true, "SUBSTACK", (!body.is_empty()).then_some(body_id))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, times, times_id, this_id, true)?;
-        self.stmts(r, sc, body, body_id, Some(this_id), true)
-    }
-
-    fn forever(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let body_id = self.id.create_id();
-        self.begin_node(
-            Node::new("control_forever", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.substack(false, "SUBSTACK", (!body.is_empty()).then_some(body_id))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.stmts(r, sc, body, body_id, Some(this_id), true)
-    }
-
-    fn branch(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        condition: &Expr<'src>,
-        if_body: &Stmts<'src>,
-        else_body: &Stmts<'src>,
-        _span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let condition_id = self.id.create_id();
-        let if_id = self.id.create_id();
-        let else_id = self.id.create_id();
-        self.begin_node(
-            Node::new(
-                if else_body.is_empty() { "control_if" } else { "control_if_else" },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "CONDITION", condition, condition_id, false)?;
-        self.substack(true, "SUBSTACK", (!if_body.is_empty()).then_some(if_id))?;
-        self.substack(true, "SUBSTACK2", (!else_body.is_empty()).then_some(else_id))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, condition, condition_id, this_id, true)?;
-        self.stmts(r, sc, if_body, if_id, Some(this_id), true)?;
-        self.stmts(r, sc, else_body, else_id, Some(this_id), true)
-    }
-
-    fn until(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        condition: &Expr<'src>,
-        body: &Stmts<'src>,
-        _span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let condition_id = self.id.create_id();
-        let body_id = self.id.create_id();
-        self.begin_node(
-            Node::new("control_repeat_until", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "CONDITION", condition, condition_id, false)?;
-        self.substack(true, "SUBSTACK", (!body.is_empty()).then_some(body_id))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.stmts(r, sc, body, body_id, Some(this_id), true)
-    }
-
-    /// Report an error if name is not a variable.
-    fn variable(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-    ) {
-        if sc.variables.contains(name) {
-            return;
-        }
-        if sc.global_variables.is_some_and(|it| it.contains(name)) {
-            return;
-        }
-        r.push(Report::UndefinedVariable(name, span.clone()));
-    }
-
-    /// Report an error if name is not a list.
-    fn list(&mut self, r: R<'src, '_>, sc: Sc<'src, '_>, name: &'src str, span: &Span) {
-        if sc.lists.contains(name) {
-            return;
-        }
-        if sc.global_lists.is_some_and(|it| it.contains(name)) {
-            return;
-        }
-        r.push(Report::UndefinedList(name, span.clone()));
-    }
-
-    /// Return true if name is a variable, false if is a list or undefined.
-    /// If name is undefined, report an error.
-    fn variable_or_list(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-    ) -> bool {
-        if sc.variables.contains(name) {
-            return true;
-        }
-        if sc.global_variables.is_some_and(|it| it.contains(name)) {
-            return true;
-        }
-        if sc.lists.contains(name) {
-            return false;
-        }
-        if sc.global_lists.is_some_and(|it| it.contains(name)) {
-            return false;
-        }
-        r.push(Report::UndefinedVariable(name, span.clone()));
-        false
-    }
-
-    fn set_variable(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        expr: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.variable(r, sc, name, span);
-        let expr_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_setvariableto", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "VALUE", expr, expr_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("VARIABLE")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, expr, expr_id, this_id, true)
-    }
-
-    fn change_variable(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        expr: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.variable(r, sc, name, span);
-        let expr_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_changevariableby", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "VALUE", expr, expr_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("VARIABLE")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, expr, expr_id, this_id, true)
-    }
-
-    fn show(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_variable = self.variable_or_list(r, sc, name, span);
-        self.begin_node(
-            Node::new(
-                if is_variable { "data_showvariable" } else { "data_showlist" },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key(if is_variable { "VARIABLE" } else { "LIST" })?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()
-    }
-
-    fn hide(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_variable = self.variable_or_list(r, sc, name, span);
-        self.begin_node(
-            Node::new(
-                if is_variable { "data_hidevariable" } else { "data_hidelist" },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key(if is_variable { "VARIABLE" } else { "LIST" })?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()
-    }
-
-    fn list_add(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        expr: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        let expr_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_addtolist", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "ITEM", expr, expr_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, expr, expr_id, this_id, true)
-    }
-
-    fn list_delete(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        index: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        let index_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_deleteoflist", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "INDEX", index, index_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, index, index_id, this_id, true)
-    }
-
-    fn list_delete_all(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        self.begin_node(
-            Node::new("data_deletealloflist", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()
-    }
-
-    fn list_insert(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        index: &Expr<'src>,
-        expr: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        let index_id = self.id.create_id();
-        let expr_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_insertatlist", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "INDEX", index, index_id, false)?;
-        self.input(r, sc, "ITEM", expr, expr_id, true)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, index, index_id, this_id, true)?;
-        self.expr(r, sc, expr, expr_id, this_id, true)
-    }
-
-    fn list_replace(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        index: &Expr<'src>,
-        expr: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        let index_id = self.id.create_id();
-        let expr_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_replaceitemoflist", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "INDEX", index, index_id, false)?;
-        self.input(r, sc, "ITEM", expr, expr_id, true)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, index, index_id, this_id, true)?;
-        self.expr(r, sc, expr, expr_id, this_id, true)
-    }
-
-    fn menu(
-        &mut self,
-        opcode: &'static str,
-        name: &str,
-        value: &str,
-        this_id: BlockID,
-        parent_id: BlockID,
-    ) -> io::Result<()> {
-        self.begin_node(
-            Node::new(opcode, this_id, true).parent_id(parent_id).shadow(),
-        )?;
-        write!(self, r#","fields":{{"{name}":["{value}",null]}}}}"#)?;
-        Ok(())
-    }
-
-    fn block(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        match block {
-            | Block::GotoRandomPosition
-            | Block::GotoMousePointer
-            | Block::GotoSprite
-            | Block::PointTowardsRandomDirection
-            | Block::PointTowardsMousePointer
-            | Block::PointTowards => {
-                return self.goto_sprite_or_point_towards(
-                    r, sc, block, args, this_id, next_id, parent_id, comma,
-                )
-            }
-            | Block::GlideToRandomPosition
-            | Block::GlideToMousePointer
-            | Block::GlideToSprite => {
-                return self.glide_to_sprite(
-                    r, sc, block, args, this_id, next_id, parent_id, comma,
-                )
-            }
-            Block::SwitchCostume | Block::SwitchBackdrop => {
-                return self.switch_costume_or_backdrop(
-                    r, sc, block, args, this_id, next_id, parent_id, comma,
-                )
-            }
-            Block::PlaySoundUntilDone | Block::StartSound => {
-                return self.play_sound_until_done_or_start_sound(
-                    r, sc, block, args, this_id, next_id, parent_id, comma,
-                )
-            }
-            Block::Clone | Block::CloneSprite => {
-                return self
-                    .clone(r, sc, block, args, this_id, next_id, parent_id, comma)
-            }
-            | Block::SetPenHue
-            | Block::SetPenSaturation
-            | Block::SetPenBrightness
-            | Block::SetPenTransparency
-            | Block::ChangePenHue
-            | Block::ChangePenSaturation
-            | Block::ChangePenBrightness
-            | Block::ChangePenTransparency => {
-                return self
-                    .pen_param(r, sc, block, args, this_id, next_id, parent_id, comma)
-            }
-            Block::Breakpoint | Block::Log | Block::Warn | Block::Error => {
-                return self.sa_debugger(
-                    r, sc, block, args, this_id, next_id, parent_id, comma,
-                )
-            }
-            _ => {}
-        }
-        let (opcode, arg_names, fields) = block_details(*block);
-        match args.len().cmp(&arg_names.len()) {
-            Ordering::Less => {
-                r.push(Report::TooFewArgsForBlock {
-                    block: *block,
-                    given: args.len(),
-                    span: span.clone(),
-                });
-            }
-            Ordering::Greater => {
-                r.push(Report::TooManyArgsForBlock {
-                    block: *block,
-                    given: args.len(),
-                    span: span.clone(),
-                });
-            }
-            Ordering::Equal => {}
-        }
-        let mut ids = Vec::with_capacity(arg_names.len());
-        self.begin_node(
-            Node::new(opcode, this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        let mut comma = false;
-        for (&name, arg) in arg_names.iter().zip(args) {
-            let id = self.id.create_id();
-            ids.push(id);
-            self.input(r, sc, name, &arg.borrow(), id, comma)?;
-            comma = true;
-        }
-        self.end_object()?;
-        if let Some(fields) = fields {
-            self.comma(true)?;
-            self.key("fields")?;
-            self.begin_object()?;
-            self.write_all(fields.as_bytes())?;
-            self.end_object()?;
-        }
-        if matches!(block, Block::StopOtherScripts) {
-            write!(
-                self,
-                r#","mutation":{{"tagName":"mutation","children":[],"hasnext": "true"}}"#
-            )?;
-        }
-        self.end_object()?;
-        for (arg, id) in args.iter().zip(ids) {
-            self.expr(r, sc, &arg.borrow(), id, this_id, true)?;
-        }
-        Ok(())
-    }
-
-    // TODO: add errors for non-existant sprite references
-    fn goto_sprite_or_point_towards(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_towards = matches!(
-            block,
-            Block::PointTowardsRandomDirection
-                | Block::PointTowardsMousePointer
-                | Block::PointTowards
-        );
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new(
-                if is_towards { "motion_pointtowards" } else { "motion_goto" },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() && args.len() == 1 {
-            self.input_with_shadow(
-                r,
-                sc,
-                if is_towards { "TOWARDS" } else { "TO" },
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-            self.end_object()?;
-            self.end_object()?;
-            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, comma)?;
-        } else {
-            self.key(if is_towards { "TOWARDS" } else { "TO" })?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-            self.end_object()?;
-            self.end_object()?;
-        }
-        self.menu(
-            if is_towards { "motion_pointtowards_menu" } else { "motion_goto_menu" },
-            if is_towards { "TOWARDS" } else { "TO" },
-            match block {
-                Block::GotoRandomPosition | Block::PointTowardsRandomDirection => {
-                    "_random_"
-                }
-                Block::GotoMousePointer | Block::PointTowardsMousePointer => "_mouse_",
-                Block::GotoSprite | Block::PointTowards => {
-                    if let Some(literal) = literal {
-                        literal
+            Stmt::Repeat { times: input, body } | Stmt::Until { cond: input, body } => {
+                let input_id = self.id.new_id();
+                let body_id = self.id.new_id();
+                self.input(
+                    s,
+                    d,
+                    if matches!(stmt, Stmt::Until { .. }) {
+                        "CONDITION"
                     } else {
-                        "_random_"
+                        "TIMES"
+                    },
+                    &input.borrow(),
+                    input_id,
+                )?;
+                self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
+                self.end_obj()?;
+                self.end_obj()?;
+                self.expr(s, d, &input.borrow(), input_id, this_id)?;
+                self.stmts(s, d, body, body_id, Some(this_id))?;
+            }
+            | Stmt::SetVar { name, span, value, .. }
+            | Stmt::ChangeVar { name, span, value } => {
+                let value_id = self.id.new_id();
+                self.input(s, d, "VALUE", &value.borrow(), value_id)?;
+                self.end_obj()?;
+                self.resolve_variable(s, d, name, span)?;
+                self.end_obj()?;
+                self.expr(s, d, &value.borrow(), value_id, this_id)?;
+            }
+            Stmt::Show { name, span } | Stmt::Hide { name, span } => {
+                self.end_obj()?;
+                self.resolve_variable_or_list(s, d, name, span)?;
+                self.end_obj()?;
+            }
+            | Stmt::ListAdd { name, span, value: input }
+            | Stmt::ListDelete { name, span, index: input } => {
+                let input_id = self.id.new_id();
+                self.list(s, d, name, span);
+                self.input(
+                    s,
+                    d,
+                    if matches!(stmt, Stmt::ListAdd { .. }) { "ITEM" } else { "INDEX" },
+                    &input.borrow(),
+                    input_id,
+                )?;
+                self.end_obj()?;
+                self.single_field_id("LIST", name)?;
+                self.end_obj()?;
+                self.expr(s, d, &input.borrow(), input_id, this_id)?;
+            }
+            Stmt::ListDeleteAll { name, span } => {
+                self.list(s, d, name, span);
+                self.end_obj()?;
+                self.single_field_id("LIST", name)?;
+                self.end_obj()?;
+            }
+            | Stmt::ListInsert { name, span, index, value }
+            | Stmt::ListSet { name, span, index, value } => {
+                let index_id = self.id.new_id();
+                let value_id = self.id.new_id();
+                self.list(s, d, name, span);
+                self.input(s, d, "INDEX", &index.borrow(), index_id)?;
+                self.input(s, d, "ITEM", &value.borrow(), value_id)?;
+                self.end_obj()?;
+                self.single_field_id("LIST", name)?;
+                self.end_obj()?;
+                self.expr(s, d, &index.borrow(), index_id, this_id)?;
+                self.expr(s, d, &value.borrow(), value_id, this_id)?;
+            }
+            Stmt::ListChange { .. } => unreachable!(),
+            Stmt::Block { block, span, args } => {
+                if args.len() != block.args().len() {
+                    d.push(
+                        DiagnosticDetail::BlockArgsCountMismatch {
+                            block: *block,
+                            given: args.len(),
+                        }
+                        .to_diagnostic(span.clone()),
+                    );
+                }
+                let arg_ids: Vec<_> = (&mut self.id).take(args.len()).collect();
+                let menu_id = block.menu().map(|_| self.id.new_id());
+                let mut menu_value = None;
+                let mut menu_is_default = menu_id.is_some();
+                for ((&name, arg), arg_id) in
+                    block.args().iter().zip(args).zip(&arg_ids)
+                {
+                    if block.menu().is_some_and(|it| it.input == name) {
+                        if let Some(arg) = arg.borrow().try_to_string() {
+                            menu_value = Some(arg);
+                            continue;
+                        } else {
+                            menu_is_default = false;
+                            self.input_with_shadow(
+                                s,
+                                d,
+                                name,
+                                &arg.borrow(),
+                                *arg_id,
+                                menu_id.unwrap(),
+                            )?;
+                        }
+                    } else {
+                        self.input(s, d, name, &arg.borrow(), *arg_id)?;
                     }
                 }
-                _ => unreachable!(),
-            },
-            menu_id,
-            this_id,
-        )
-    }
-
-    // TODO: add errors for non-existant sprite references
-    fn glide_to_sprite(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> Result<(), io::Error> {
-        let arg_id = self.id.create_id();
-        let secs_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new("motion_glideto", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() && args.len() == 2 {
-            self.input_with_shadow(
-                r,
-                sc,
-                "TO",
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-        } else {
-            self.key("TO")?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-        }
-        self.input(r, sc, "SECS", &args.last().unwrap().borrow(), secs_id, true)?;
-        self.end_object()?;
-        self.end_object()?;
-        self.menu(
-            "motion_glideto_menu",
-            "TO",
-            match block {
-                Block::GlideToRandomPosition => "_random_",
-                Block::GlideToMousePointer => "_mouse_",
-                Block::GlideToSprite => {
-                    if let Some(literal) = literal {
-                        literal
-                    } else {
-                        "_random_"
+                if menu_is_default {
+                    if self.inputs_comma {
+                        self.write_all(b",")?;
                     }
+                    self.inputs_comma = true;
+                    write!(
+                        self,
+                        r#""{}":[1,{}]"#,
+                        block.menu().unwrap().input,
+                        menu_id.unwrap()
+                    )?;
                 }
-                _ => unreachable!(),
-            },
-            menu_id,
-            this_id,
-        )?;
-        if args.len() == 2 {
-            self.expr(r, sc, &args[1].borrow(), secs_id, this_id, true)?;
-        }
-        self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)
-    }
-
-    // TODO: add errors for non-existant sprite references
-    fn clone(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> Result<(), io::Error> {
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new("control_create_clone_of", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() && args.len() == 1 {
-            self.input_with_shadow(
-                r,
-                sc,
-                "CLONE_OPTION",
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-        } else {
-            self.key("CLONE_OPTION")?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-        }
-        self.end_object()?;
-        self.end_object()?;
-        if args.len() == 1 {
-            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)?;
-        }
-        self.menu(
-            "control_create_clone_of_menu",
-            "CLONE_OPTION",
-            if let Some(literal) = literal { literal } else { "_myself_" },
-            menu_id,
-            this_id,
-        )
-    }
-
-    // TODO: Add a way to put a expr in the menu.
-    fn pen_param(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_change = matches!(
-            block,
-            Block::ChangePenHue
-                | Block::ChangePenSaturation
-                | Block::ChangePenBrightness
-                | Block::ChangePenTransparency
-        );
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        self.begin_node(
-            Node::new(
-                if is_change {
-                    "pen_setPenColorParamTo"
-                } else {
-                    "pen_changePenColorParamBy"
-                },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.key("COLOR_PARAM")?;
-        write!(self, r#"[1,{menu_id}]"#)?;
-        self.input(r, sc, "VALUE", &args[0].borrow(), arg_id, true)?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, &args[0].borrow(), this_id, this_id, true)?;
-        self.menu(
-            "pen_menu_colorParam",
-            "colorParam",
-            match block {
-                Block::SetPenHue | Block::ChangePenHue => "color",
-                Block::SetPenSaturation | Block::ChangePenSaturation => "saturation",
-                Block::SetPenBrightness | Block::ChangePenBrightness => "brightness",
-                Block::SetPenTransparency | Block::ChangePenTransparency => {
-                    "transparency"
+                self.end_obj()?;
+                if let Some(fields) = block.fields() {
+                    write!(self, r#","fields":{fields}"#)?;
                 }
-                _ => unreachable!(),
-            },
-            menu_id,
-            this_id,
-        )
-    }
-
-    fn switch_costume_or_backdrop(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_costume = matches!(block, Block::SwitchCostume);
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new(
-                if is_costume {
-                    "looks_switchcostumeto"
-                } else {
-                    "looks_switchbackdropto"
-                },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() {
-            self.input_with_shadow(
-                r,
-                sc,
-                if is_costume { "COSTUME" } else { "BACKDROP" },
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-        } else {
-            self.key(if is_costume { "COSTUME" } else { "BACKDROP" })?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-        }
-        self.end_object()?;
-        self.end_object()?;
-        self.menu(
-            if is_costume { "looks_costume" } else { "looks_backdrops" },
-            if is_costume { "COSTUME" } else { "BACKDROP" },
-            literal.map_or("make gh issue if this bothers u", |it| it.as_str()),
-            menu_id,
-            this_id,
-        )
-    }
-
-    fn play_sound_until_done_or_start_sound(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_start_sound = matches!(block, Block::StartSound);
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new(
-                if is_start_sound { "sound_play" } else { "sound_playuntildone" },
-                this_id,
-                comma,
-            )
-            .some_next_id(next_id)
-            .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() {
-            self.input_with_shadow(
-                r,
-                sc,
-                "SOUND_MENU",
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-        } else {
-            self.key("SOUND_MENU")?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-        }
-        self.end_object()?;
-        self.end_object()?;
-        self.menu(
-            "sound_sounds_menu",
-            "SOUND_MENU",
-            literal.map_or("make gh issue if this bothers u", |it| it.as_str()),
-            menu_id,
-            this_id,
-        )
-    }
-
-    fn call(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        args: &Exprs<'src>,
-        span: &Span,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let Some(procedure) = sc.procedures.get(name) else {
-            r.push(Report::UndefinedBlock(name, span.clone()));
-            return Ok(());
-        };
-        match args.len().cmp(&procedure.args.len()) {
-            Ordering::Less => {
-                r.push(Report::TooFewArgsForProcedure {
-                    procedure: procedure.clone(),
-                    given: args.len(),
-                    span: span.clone(),
-                });
+                self.end_obj()?;
+                for (arg, arg_id) in args.iter().zip(arg_ids) {
+                    self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+                }
+                if let Some(menu) = block.menu() {
+                    self.node(
+                        Node::new(menu.opcode, menu_id.unwrap())
+                            .parent_id(this_id)
+                            .shadow(true),
+                    )?;
+                    self.single_field(
+                        menu.input,
+                        menu_value.as_deref().unwrap_or(menu.default),
+                    )?;
+                    self.end_obj()?;
+                }
             }
-            Ordering::Greater => {
-                r.push(Report::TooManyArgsForProcedure {
-                    procedure: procedure.clone(),
-                    given: args.len(),
-                    span: span.clone(),
-                });
+            Stmt::ProcCall { name, span, args } => {
+                let Some(proc) = s.sprite.procs.get(name) else {
+                    d.push(
+                        DiagnosticDetail::UnrecognizedProcedure(name.clone())
+                            .to_diagnostic(span.clone()),
+                    );
+                    return Ok(());
+                };
+                if args.len() != proc.args.len() {
+                    d.push(
+                        DiagnosticDetail::ProcArgsCountMismatch {
+                            proc: name.clone(),
+                            given: args.len(),
+                        }
+                        .to_diagnostic(span.clone()),
+                    );
+                }
+                let arg_ids: Vec<_> = (&mut self.id).take(args.len()).collect();
+                for (((name, _), arg), arg_id) in
+                    proc.args.iter().zip(args).zip(&arg_ids)
+                {
+                    self.input(s, d, name, &arg.borrow(), *arg_id)?;
+                }
+                self.end_obj()?;
+                self.mutation()?;
+                self.proccode(name, args.len())?;
+                self.argument_array("argumentids", &proc.args)?;
+                self.warp(proc.warp)?;
+                self.end_obj()?;
+                self.end_obj()?;
+                for (arg, arg_id) in args.iter().zip(arg_ids) {
+                    self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+                }
             }
-            Ordering::Equal => {}
-        }
-        let mut ids = Vec::with_capacity(procedure.args.len());
-        self.begin_node(
-            Node::new("procedures_call", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        let mut comma = false;
-        for ((name, _), arg) in procedure.args.iter().zip(args) {
-            let id = self.id.create_id();
-            ids.push(id);
-            self.input(r, sc, name, &arg.borrow(), id, comma)?;
-            comma = true;
-        }
-        self.end_object()?;
-        self.begin_mutation_object()?;
-        self.proccode(name, procedure.args.len())?;
-        self.argument_stuff(&procedure.args)?;
-        self.warp(procedure.warp)?;
-        self.end_object()?;
-        self.end_object()?;
-        for (arg, id) in args.iter().zip(ids) {
-            self.expr(r, sc, &arg.borrow(), id, this_id, true)?;
-        }
-        Ok(())
-    }
-
-    fn sa_debugger(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        block: &Block,
-        args: &Exprs<'src>,
-        this_id: BlockID,
-        next_id: Option<BlockID>,
-        parent_id: Option<BlockID>,
-        comma: bool,
-    ) -> io::Result<()> {
-        let is_breakpoint = matches!(block, Block::Breakpoint);
-        let arg_id = self.id.create_id();
-        self.begin_node(
-            Node::new("procedures_call", this_id, comma)
-                .some_next_id(next_id)
-                .some_parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if !is_breakpoint {
-            self.input(r, sc, "arg0", &args[0].borrow(), arg_id, false)?;
-        }
-        self.end_object()?;
-        self.begin_mutation_object()?;
-        self.proccode(
-            match block {
-                Block::Breakpoint => "\\u200b\\u200bbreakpoint\\u200b\\u200b",
-                Block::Warn => "\\u200b\\u200bwarn\\u200b\\u200b",
-                Block::Error => "\\u200b\\u200berror\\u200b\\u200b",
-                Block::Log => "\\u200b\\u200blog\\u200b\\u200b",
-                _ => unreachable!(),
-            },
-            if is_breakpoint { 0 } else { 1 },
-        )?;
-        if is_breakpoint {
-            self.argument_stuff(&vec![])?;
-        } else {
-            self.argument_stuff(&vec![("arg0", 0..0)])?;
-        }
-
-        self.warp(false)?;
-        self.end_object()?;
-        self.end_object()?;
-        if !is_breakpoint {
-            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)?;
         }
         Ok(())
     }
 
     fn expr(
         &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        expr: &Expr<'src>,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
+        s: S,
+        d: D,
+        expr: &Expr,
+        this_id: NodeID,
+        parent_id: NodeID,
+    ) -> Result<()> {
         match expr {
-            Expr::Int(_, _) => Ok(()),
-            Expr::Float(_, _) => Ok(()),
-            Expr::String(_, _) => Ok(()),
-            Expr::Name(_, _) => Ok(()),
-            Expr::Arg(name, span) => {
-                self.arg(r, sc, name, span, this_id, parent_id, comma)
-            }
-            Expr::Reporter(reporter, args, span) => {
-                self.reporter(r, sc, reporter, args, span, this_id, parent_id, comma)
-            }
-            Expr::UnaryOp(op, expr, span) => self.unary_op(
-                r,
-                sc,
-                op,
-                &expr.borrow(),
-                span,
-                this_id,
-                parent_id,
-                comma,
-            ),
-            Expr::BinaryOp(op, left, right, span) => self.binary_op(
-                r,
-                sc,
-                op,
-                &left.borrow(),
-                &right.borrow(),
-                span,
-                this_id,
-                parent_id,
-                comma,
-            ),
-        }
-    }
-
-    fn arg(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        if !(sc.procedure.is_some_and(|it| it.args_set.contains(name))) {
-            r.push(Report::UndefinedArg {
-                procedure: sc.procedure.unwrap().clone(),
-                name,
-                span: span.clone(),
-            });
-        }
-        self.begin_node(
-            Node::new("argument_reporter_string_number", this_id, comma)
-                .parent_id(parent_id),
-        )?;
-        write!(self, r#","fields":{{"VALUE":[{}, null]}}}}"#, json!(name))
-    }
-
-    fn reporter(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        reporter: &Reporter,
-        args: &Vec<Rrc<Expr<'src>>>,
-        span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        match reporter {
-            | Reporter::TouchingMousePointer
-            | Reporter::TouchingEdge
-            | Reporter::Touching => {
-                return self.touching_object(
-                    r, sc, reporter, args, span, this_id, parent_id, comma,
-                )
-            }
-            Reporter::DistanceToMousePointer | Reporter::DistanceTo => {
-                return self.distance_to_object(
-                    r, sc, reporter, args, span, this_id, parent_id, comma,
-                )
-            }
-            _ => {}
-        }
-        let (opcode, arg_names, fields) = reporter_details(*reporter);
-        match args.len().cmp(&arg_names.len()) {
-            Ordering::Less => {
-                r.push(Report::TooFewArgsForReporter {
-                    reporter: *reporter,
-                    given: args.len(),
-                    span: span.clone(),
-                });
-            }
-            Ordering::Greater => {
-                r.push(Report::TooManyArgsForReporter {
-                    reporter: *reporter,
-                    given: args.len(),
-                    span: span.clone(),
-                });
-            }
-            Ordering::Equal => {}
-        }
-        let mut ids = Vec::with_capacity(arg_names.len());
-        self.begin_node(Node::new(opcode, this_id, comma).parent_id(parent_id))?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        let mut comma = false;
-        for (&name, arg) in arg_names.iter().zip(args) {
-            let id = self.id.create_id();
-            ids.push(id);
-            self.input(r, sc, name, &arg.borrow(), id, comma)?;
-            comma = true;
-        }
-        self.end_object()?;
-        if let Some(fields) = fields {
-            self.comma(true)?;
-            self.key("fields")?;
-            self.begin_object()?;
-            self.write_all(fields.as_bytes())?;
-            self.end_object()?;
-        }
-        self.end_object()?;
-        for (arg, id) in args.iter().zip(ids) {
-            self.expr(r, sc, &arg.borrow(), id, this_id, true)?;
-        }
-        Ok(())
-    }
-
-    fn touching_object(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        reporter: &Reporter,
-        args: &Exprs<'src>,
-        span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new("sensing_touchingobject", this_id, comma).parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() && args.len() == 1 {
-            self.input_with_shadow(
-                r,
-                sc,
-                "TOUCHINGOBJECTMENU",
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-        } else {
-            self.key("TOUCHINGOBJECTMENU")?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-        }
-        self.end_object()?;
-        self.end_object()?;
-        self.menu(
-            "sensing_touchingobjectmenu",
-            "TOUCHINGOBJECTMENU",
-            match reporter {
-                Reporter::TouchingMousePointer => "_mouse_",
-                Reporter::TouchingEdge => "_edge_",
-                Reporter::Touching => literal.map_or("_mouse_", |it| it.as_str()),
-                _ => unreachable!(),
-            },
-            menu_id,
-            this_id,
-        )
-    }
-
-    fn distance_to_object(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        reporter: &Reporter,
-        args: &Exprs<'src>,
-        span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        let arg_id = self.id.create_id();
-        let menu_id = self.id.create_id();
-        let literal = args.first().and_then(|arg| arg.borrow().literal_as_string());
-        let literal = literal.as_ref();
-        self.begin_node(
-            Node::new("sensing_distanceto", this_id, comma).parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        if literal.is_none() && args.len() == 1 {
-            self.input_with_shadow(
-                r,
-                sc,
-                "DISTANCETOMENU",
-                &args[0].borrow(),
-                arg_id,
-                menu_id,
-                false,
-            )?;
-        } else {
-            self.key("DISTANCETOMENU")?;
-            write!(self, r#"[1,{}]"#, menu_id)?;
-        }
-        self.end_object()?;
-        self.end_object()?;
-        self.menu(
-            "sensing_distancetomenu",
-            "DISTANCETOMENU",
-            match reporter {
-                Reporter::DistanceToMousePointer => "_mouse_",
-                Reporter::DistanceTo => literal.map_or("_mouse_", |it| it.as_str()),
-                _ => unreachable!(),
-            },
-            menu_id,
-            this_id,
-        )?;
-        if args.len() == 1 {
-            self.expr(r, sc, &args[0].borrow(), arg_id, this_id, true)?;
-        }
-        Ok(())
-    }
-
-    fn unary_op(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        op: &UnaryOp,
-        expr: &Expr<'src>,
-        _span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        use UnaryOp as U;
-        if matches!(op, U::Length) {
-            if let Expr::Name(name, span) = expr {
-                if sc.lists.contains(name)
-                    || sc.global_lists.is_some_and(|it| it.contains(name))
-                {
-                    return self
-                        .list_length(r, sc, name, span, this_id, parent_id, comma);
-                }
-            }
-        }
-        let expr_id = self.id.create_id();
-        self.begin_node(
-            Node::new(
-                match op {
-                    U::Minus => unreachable!(),
-                    U::Not => "operator_not",
-                    U::Length => "operator_length",
-                    U::Round => "operator_round",
-                    | U::Abs
-                    | U::Floor
-                    | U::Ceil
-                    | U::Sqrt
-                    | U::Sin
-                    | U::Cos
-                    | U::Tan
-                    | U::Asin
-                    | U::Acos
-                    | U::Atan
-                    | U::Ln
-                    | U::Log
-                    | U::AntiLn
-                    | U::AntiLog => "operator_mathop",
-                },
-                this_id,
-                comma,
-            )
-            .parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(
-            r,
-            sc,
-            match op {
-                U::Not => "OPERAND",
-                U::Length => "STRING",
-                _ => "NUM",
-            },
-            expr,
-            expr_id,
-            false,
-        )?;
-        self.end_object()?;
-        if let Some(operator) = match op {
-            U::Abs => Some("abs"),
-            U::Floor => Some("floor"),
-            U::Ceil => Some("ceiling"),
-            U::Sqrt => Some("sqrt"),
-            U::Sin => Some("sin"),
-            U::Cos => Some("cos"),
-            U::Tan => Some("tan"),
-            U::Asin => Some("asin"),
-            U::Acos => Some("acos"),
-            U::Atan => Some("atan"),
-            U::Ln => Some("ln"),
-            U::Log => Some("log"),
-            U::AntiLn => Some("e ^"),
-            U::AntiLog => Some("10 ^"),
-            _ => None,
-        } {
-            self.comma(true)?;
-            self.key("fields")?;
-            self.begin_object()?;
-            self.key("OPERATOR")?;
-            write!(self, r#"["{}",null]"#, operator)?;
-            self.end_object()?;
-        }
-        self.end_object()?;
-        self.expr(r, sc, expr, expr_id, this_id, true)
-    }
-
-    fn binary_op(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        op: &BinaryOp,
-        left: &Expr<'src>,
-        right: &Expr<'src>,
-        _span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        use BinaryOp as B;
-        if matches!(op, B::Of) {
-            if let Expr::Name(name, span) = left {
-                if sc.lists.contains(name)
-                    || sc.global_lists.is_some_and(|it| it.contains(name))
-                {
-                    return self.list_item(
-                        r, sc, name, right, span, this_id, parent_id, comma,
+            | Expr::Int(_)
+            | Expr::Float(_)
+            | Expr::Str(_)
+            | Expr::Name { .. }
+            | Expr::EnumVariant { .. } => {}
+            Expr::Arg { name, span } => {
+                if !s.is_arg(name) {
+                    d.push(
+                        DiagnosticDetail::UnrecognizedArgument {
+                            name: name.clone(),
+                            proc: s.proc.map(|proc| proc.name.clone()),
+                        }
+                        .to_diagnostic(span.clone()),
                     );
                 }
+                self.node(
+                    Node::new("argument_reporter_string_number", this_id)
+                        .parent_id(parent_id),
+                )?;
+                write!(self, r#","fields":{{"VALUE":[{},null]}}}}"#, json!(**name))?;
+            }
+            Expr::Repr { repr, span, args } => {
+                if args.len() != repr.args().len() {
+                    d.push(
+                        DiagnosticDetail::ReprArgsCountMismatch {
+                            repr: *repr,
+                            given: args.len(),
+                        }
+                        .to_diagnostic(span.clone()),
+                    );
+                }
+                let arg_ids: Vec<_> = (&mut self.id).take(args.len()).collect();
+                self.node(Node::new(repr.opcode(), this_id).parent_id(parent_id))?;
+                self.inputs()?;
+                let menu_id = repr.menu().map(|_| self.id.new_id());
+                let mut menu_value = None;
+                let mut menu_is_default = menu_id.is_some();
+                for ((&name, arg), arg_id) in repr.args().iter().zip(args).zip(&arg_ids)
+                {
+                    if repr.menu().is_some_and(|it| it.input == name) {
+                        if let Some(arg) = arg.borrow().try_to_string() {
+                            menu_value = Some(arg);
+                            continue;
+                        } else {
+                            menu_is_default = false;
+                            self.input_with_shadow(
+                                s,
+                                d,
+                                name,
+                                &arg.borrow(),
+                                *arg_id,
+                                menu_id.unwrap(),
+                            )?;
+                        }
+                    } else {
+                        self.input(s, d, name, &arg.borrow(), *arg_id)?;
+                    }
+                }
+                if menu_is_default {
+                    if self.inputs_comma {
+                        self.write_all(b",")?;
+                    }
+                    self.inputs_comma = true;
+                    write!(
+                        self,
+                        r#""{}":[1,{}]"#,
+                        repr.menu().unwrap().input,
+                        menu_id.unwrap()
+                    )?;
+                }
+                self.end_obj()?;
+                if let Some(fields) = repr.fields() {
+                    write!(self, r#","fields":{fields}"#)?;
+                }
+                self.end_obj()?;
+                for (arg, arg_id) in args.iter().zip(arg_ids) {
+                    self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+                }
+                if let Some(menu) = repr.menu() {
+                    self.node(
+                        Node::new(menu.opcode, menu_id.unwrap())
+                            .parent_id(this_id)
+                            .shadow(true),
+                    )?;
+                    self.single_field(
+                        menu.input,
+                        menu_value.as_deref().unwrap_or(menu.default),
+                    )?;
+                    self.end_obj()?;
+                }
+            }
+            Expr::UnOp { op, val } => {
+                if matches!(op, UnOp::Length) {
+                    if let Expr::Name { name, .. } = &*val.borrow() {
+                        if s.sprite.lists.contains_key(name)
+                            || s.stage.is_some_and(|it| it.lists.contains_key(name))
+                        {
+                            self.node(
+                                Node::new("data_lengthoflist", this_id)
+                                    .parent_id(parent_id),
+                            )?;
+                            self.single_field_id("LIST", name)?;
+                            self.end_obj()?;
+                            self.expr(s, d, &val.borrow(), this_id, this_id)?;
+                            return Ok(());
+                        }
+                    }
+                }
+                let val_id = self.id.new_id();
+                self.node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
+                self.inputs()?;
+                self.input(s, d, op.input(), &val.borrow(), val_id)?;
+                self.end_obj()?;
+                if let Some(fields) = op.fields() {
+                    write!(self, r#","fields":{fields}"#)?;
+                }
+                self.end_obj()?;
+                self.expr(s, d, &val.borrow(), val_id, this_id)?;
+            }
+            Expr::BinOp { op, lhs, rhs } => {
+                let right_id = self.id.new_id();
+                if matches!(op, BinOp::Of) {
+                    if let Expr::Name { name, .. } = &*lhs.borrow() {
+                        if s.sprite.lists.contains_key(name)
+                            || s.stage.is_some_and(|it| it.lists.contains_key(name))
+                        {
+                            self.node(
+                                Node::new("data_itemoflist", this_id)
+                                    .parent_id(parent_id),
+                            )?;
+                            self.inputs()?;
+                            self.input(s, d, "INDEX", &rhs.borrow(), right_id)?;
+                            self.end_obj()?;
+                            self.single_field_id("LIST", name)?;
+                            self.end_obj()?;
+                            self.expr(s, d, &rhs.borrow(), right_id, this_id)?;
+                            return Ok(());
+                        }
+                    }
+                }
+                let left_id = self.id.new_id();
+                self.node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
+                self.inputs()?;
+                self.input(s, d, op.lhs(), &lhs.borrow(), left_id)?;
+                self.input(s, d, op.rhs(), &rhs.borrow(), right_id)?;
+                self.end_obj()?;
+                self.end_obj()?;
+                self.expr(s, d, &lhs.borrow(), left_id, this_id)?;
+                self.expr(s, d, &rhs.borrow(), right_id, this_id)?;
             }
         }
-        let left_id = self.id.create_id();
-        let right_id = self.id.create_id();
-        self.begin_node(
-            Node::new(
-                match op {
-                    B::Add => "operator_add",
-                    B::Sub => "operator_subtract",
-                    B::Mul => "operator_multiply",
-                    B::Div => "operator_divide",
-                    B::Mod => "operator_mod",
-                    B::Lt => "operator_lt",
-                    B::Gt => "operator_gt",
-                    B::Eq => "operator_equals",
-                    B::And => "operator_and",
-                    B::Or => "operator_or",
-                    B::Join => "operator_join",
-                    B::In => "operator_contains",
-                    B::Of => "operator_letter_of",
-                    B::Le | B::Ge | B::Ne => unreachable!(),
-                },
-                this_id,
-                comma,
-            )
-            .parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(
-            r,
-            sc,
-            match op {
-                B::Join | B::In => "STRING1",
-                B::Of => "STRING",
-                B::Eq | B::Gt | B::Lt | B::And | B::Or => "OPERAND1",
-                _ => "NUM1",
-            },
-            left,
-            left_id,
-            false,
-        )?;
-        self.input(
-            r,
-            sc,
-            match op {
-                B::Join | B::In => "STRING2",
-                B::Of => "LETTER",
-                B::Eq | B::Gt | B::Lt | B::And | B::Or => "OPERAND2",
-                _ => "NUM2",
-            },
-            right,
-            right_id,
-            true,
-        )?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, left, left_id, this_id, true)?;
-        self.expr(r, sc, right, right_id, this_id, true)
+        Ok(())
     }
 
-    fn list_item(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        index: &Expr<'src>,
-        span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        let index_id = self.id.create_id();
-        self.begin_node(
-            Node::new("data_itemoflist", this_id, comma).parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("inputs")?;
-        self.begin_object()?;
-        self.input(r, sc, "INDEX", index, index_id, false)?;
-        self.end_object()?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()?;
-        self.expr(r, sc, index, index_id, this_id, true)
+    fn list(&mut self, s: S, d: D, name: &SmolStr, span: &Span) {
+        if s.sprite.lists.contains_key(name)
+            || s.stage.is_some_and(|it| it.lists.contains_key(name))
+        {
+            return;
+        }
+        d.push(
+            DiagnosticDetail::UnrecognizedList(name.clone())
+                .to_diagnostic(span.clone()),
+        );
     }
 
-    fn list_length(
-        &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &'src str,
-        span: &Span,
-        this_id: BlockID,
-        parent_id: BlockID,
-        comma: bool,
-    ) -> io::Result<()> {
-        self.list(r, sc, name, span);
-        self.begin_node(
-            Node::new("data_lengthoflist", this_id, comma).parent_id(parent_id),
-        )?;
-        self.comma(true)?;
-        self.key("fields")?;
-        self.begin_object()?;
-        self.key("LIST")?;
-        write!(self, r#"[{},null]"#, json!(name))?;
-        self.end_object()?;
-        self.end_object()
+    fn inputs(&mut self) -> io::Result<()> {
+        self.inputs_comma = false;
+        self.write_all(br#","inputs":{"#)
     }
 
     fn input(
         &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
+        s: S,
+        d: D,
         name: &str,
-        expr: &Expr<'src>,
-        id: BlockID,
-        comma: bool,
+        expr: &Expr,
+        this_id: NodeID,
     ) -> io::Result<()> {
-        self.comma(comma)?;
-        self.key(name)?;
-        self.input_literal(r, sc, name, expr, id, None)
+        self._input(s, d, name, expr, this_id, None)
     }
 
     fn input_with_shadow(
         &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &str,
-        expr: &Expr<'src>,
-        id: BlockID,
-        shadow_id: BlockID,
-        comma: bool,
+        s: S,
+        d: D,
+        name: &'static str,
+        expr: &Expr,
+        this_id: NodeID,
+        shadow_id: NodeID,
     ) -> io::Result<()> {
-        self.comma(comma)?;
-        self.key(name)?;
-        self.input_literal(r, sc, name, expr, id, Some(shadow_id))
+        self._input(s, d, name, expr, this_id, Some(shadow_id))
     }
 
-    fn input_literal(
+    fn substack(
         &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
-        name: &str,
-        expr: &Expr<'src>,
-        id: BlockID,
-        shadow_id: Option<BlockID>,
+        name: &'static str,
+        this_id: Option<NodeID>,
     ) -> io::Result<()> {
-        match expr {
-            Expr::Int(value, _span) => {
-                write!(self, r#"[1,[4,{}]]"#, json!(value))
+        if let Some(this_id) = this_id {
+            if self.inputs_comma {
+                self.write_all(b",")?;
             }
-            Expr::Float(value, _span) => {
-                write!(self, r#"[1,[4,{}]]"#, json!(value))
-            }
-            Expr::String(value, _span) => {
-                if name == "BROADCAST_INPUT" {
-                    write!(
-                        self,
-                        r#"[1,[11,{},{}]]"#,
-                        json!(value.as_ref()),
-                        json!(value.as_ref())
-                    )
-                } else if name == "COLOR" || name == "COLOR2" {
-                    write!(self, r#"[1,[9,{}]]"#, json!(value.as_ref()))
-                } else {
-                    write!(self, r#"[1,[10,{}]]"#, json!(value.as_ref()))
-                }
-            }
-            _ => self.input_value(r, sc, name, expr, id, shadow_id),
+            self.inputs_comma = true;
+            write!(self, r#""{name}":[2,{this_id}]"#)?;
         }
+        Ok(())
     }
 
-    fn input_value(
+    fn _input(
         &mut self,
-        r: R<'src, '_>,
-        sc: Sc<'src, '_>,
+        s: S,
+        d: D,
         name: &str,
-        expr: &Expr<'src>,
-        id: BlockID,
-        shadow_id: Option<BlockID>,
+        expr: &Expr,
+        this_id: NodeID,
+        shadow_id: Option<NodeID>,
     ) -> io::Result<()> {
+        if self.inputs_comma {
+            self.write_all(b",")?;
+        }
+        self.inputs_comma = true;
+        write!(self, r#""{name}":"#)?;
         match expr {
-            Expr::Name(variable_name, span) => {
-                if sc.variables.contains(variable_name)
-                    || sc.global_variables.is_some_and(|it| it.contains(variable_name))
-                {
-                    write!(
-                        self,
-                        r#"[3,[12,{},{}],"#,
-                        json!(variable_name),
-                        json!(variable_name)
-                    )?;
-                } else if sc.lists.contains(variable_name)
-                    || sc.global_lists.is_some_and(|it| it.contains(variable_name))
-                {
-                    write!(
-                        self,
-                        r#"[3,[13,{},{}],"#,
-                        json!(variable_name),
-                        json!(variable_name)
-                    )?;
+            Expr::Int(value) => {
+                write!(self, r#"[1,[4,{}]]"#, json!(value))
+            }
+            Expr::Float(value) => {
+                write!(self, r#"[1,[4,{}]]"#, json!(value))
+            }
+            Expr::Str(value) => {
+                if name == "BROADCAST_INPUT" {
+                    write!(self, r#"[1,[11,{},{}]]"#, json!(**value), json!(**value))
+                } else if name == "COLOR" || name == "COLOR2" {
+                    write!(self, r#"[1,[9,{}]]"#, json!(**value))
                 } else {
-                    r.push(Report::UndefinedVariable(variable_name, span.clone()));
+                    write!(self, r#"[1,[10,{}]]"#, json!(**value))
                 }
-                if let Some(shadow_id) = shadow_id {
-                    write!(self, r#"{shadow_id}"#)?;
-                } else if name == "BROADCAST_INPUT" {
-                    write!(self, r#"[11,"message1","message1"]"#)?;
+            }
+            Expr::EnumVariant { enum_name, enum_span, variant_name, variant_span } => {
+                if let Some(enum_) = s.sprite.enums.get(enum_name) {
+                    let index = enum_
+                        .variants
+                        .iter()
+                        .position(|(variant, _)| variant == variant_name);
+                    if let Some(index) = index {
+                        write!(self, r#"[1,[10,{index}]]"#)
+                    } else {
+                        d.push(
+                            DiagnosticDetail::UnrecognizedEnumVariant {
+                                enum_name: enum_name.clone(),
+                                variant_name: variant_name.clone(),
+                            }
+                            .to_diagnostic(variant_span.clone()),
+                        );
+                        Ok(())
+                    }
                 } else {
-                    write!(self, r#"[10,""]"#)?;
+                    d.push(
+                        DiagnosticDetail::UnrecognizedEnum {
+                            enum_name: enum_name.clone(),
+                            variant_name: variant_name.clone(),
+                        }
+                        .to_diagnostic(enum_span.clone()),
+                    );
+                    Ok(())
                 }
-                self.end_array()
+            }
+            Expr::Name { name: var, span } => {
+                if let Some(resolved) =
+                    self.resolve_local_variable(s, var).map(|it| json!(it))
+                {
+                    write!(self, "[3,[12,{},{}],", resolved, resolved)?;
+                } else if s.is_var(var) {
+                    write!(self, "[3,[12,{},{}],", json!(**var), json!(**var))?;
+                } else if s.is_list(var) {
+                    write!(self, "[3,[13,{},{}],", json!(**var), json!(**var))?;
+                } else {
+                    d.push(
+                        DiagnosticDetail::UnrecognizedVariable(var.clone())
+                            .to_diagnostic(span.clone()),
+                    );
+                }
+                self.input_shadow(shadow_id, name)
             }
             _ => {
                 if name == "CONDITION" || name == "CONDITION2" {
-                    write!(self, r#"[2,{id}]"#)
-                } else {
-                    write!(self, r#"[3,{id},"#)?;
-                    if name == "BROADCAST_INPUT" {
-                        write!(self, r#"[11,"message1","message1"]"#)?;
-                    } else if let Some(shadow_id) = shadow_id {
-                        write!(self, r#"{shadow_id}"#)?;
-                    } else {
-                        write!(self, r#"[10,""]"#)?;
-                    }
-                    self.end_array()
+                    return write!(self, r#"[2,{this_id}]"#);
                 }
+                write!(self, r#"[3,{this_id},"#)?;
+                self.input_shadow(shadow_id, name)
             }
         }
     }
+
+    fn input_shadow(
+        &mut self,
+        shadow_id: Option<NodeID>,
+        name: &str,
+    ) -> io::Result<()> {
+        if let Some(shadow_id) = shadow_id {
+            write!(self, "{shadow_id}]")
+        } else if name == "BROADCAST_INPUT" {
+            self.write_all(br#"[11,"message1","message1"]]"#)
+        } else {
+            self.write_all(br#"[10,""]]"#)
+        }
+    }
+
+    fn single_field(&mut self, name: &'static str, value: &str) -> io::Result<()> {
+        write!(self, r#","fields":{{"{name}":[{},null]}}"#, json!(value))
+    }
+
+    fn resolve_local_variable(&mut self, s: S, name: &SmolStr) -> Option<String> {
+        s.proc.and_then(|proc| {
+            proc.locals
+                .contains_key(name)
+                .then(|| local_variable_resolved_name(proc, name))
+        })
+    }
+
+    fn resolve_variable(
+        &mut self,
+        s: S,
+        d: D,
+        name: &SmolStr,
+        span: &Span,
+    ) -> io::Result<()> {
+        if s.is_local_var(name) {
+            return self.single_field(
+                "VARIABLE",
+                &local_variable_resolved_name(s.proc.unwrap(), name),
+            );
+        }
+        if s.is_var(name) {
+            return self.single_field_id("VARIABLE", name);
+        }
+        d.push(
+            DiagnosticDetail::UnrecognizedVariable(name.clone())
+                .to_diagnostic(span.clone()),
+        );
+        Ok(())
+    }
+
+    fn resolve_variable_or_list(
+        &mut self,
+        s: S,
+        d: D,
+        name: &SmolStr,
+        span: &Span,
+    ) -> io::Result<()> {
+        if s.is_local_var(name) {
+            return self.single_field(
+                "VARIABLE",
+                &local_variable_resolved_name(s.proc.unwrap(), name),
+            );
+        }
+        if s.is_var(name) {
+            return self.single_field_id("VARIABLE", name);
+        }
+        if s.is_list(name) {
+            return self.single_field_id("LIST", name);
+        }
+        d.push(
+            DiagnosticDetail::UnrecognizedVariable(name.clone())
+                .to_diagnostic(span.clone()),
+        );
+        Ok(())
+    }
+
+    fn single_field_id(&mut self, name: &'static str, value: &str) -> io::Result<()> {
+        write!(self, r#","fields":{{"{name}":[{},{}]}}"#, json!(value), json!(value))
+    }
+
+    fn mutation(&mut self) -> io::Result<()> {
+        self.write_all(br#","mutation":{"tagName":"mutation","children":[]"#)
+    }
+
+    fn warp(&mut self, warp: bool) -> io::Result<()> {
+        if warp {
+            self.write_all(br#","warp":"true""#)
+        } else {
+            self.write_all(br#","warp":"false""#)
+        }
+    }
+
+    fn argument_array(
+        &mut self,
+        key: &'static str,
+        args: &Vec<(SmolStr, Span)>,
+    ) -> io::Result<()> {
+        write!(self, r#","{key}":"["#)?;
+        let mut comma = false;
+        for (arg, _) in args {
+            self.comma(&mut comma)?;
+            write!(self, r#"\"{arg}\""#)?;
+        }
+        self.write_all(br#"]""#)
+    }
+
+    fn proccode(&mut self, name: &str, args: usize) -> io::Result<()> {
+        write!(self, r#","proccode":"{name}"#)?;
+        for _ in 0..args {
+            self.write_all(b" %s")?;
+        }
+        self.write_all(br#"""#)
+    }
+
+    fn comma(&mut self, comma: &mut bool) -> io::Result<()> {
+        if *comma {
+            self.write_all(b",")?;
+        }
+        *comma = true;
+        Ok(())
+    }
+
+    fn end_obj(&mut self) -> io::Result<()> {
+        self.write_all(b"}")
+    }
 }
 
-impl<T> io::Write for CodeGen<T>
-where
-    T: Write + Seek,
+impl<T> Write for Sb3<T>
+where T: Write + Seek
 {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.zip.write(buf)
@@ -2625,4 +1109,8 @@ where
     fn flush(&mut self) -> io::Result<()> {
         self.zip.flush()
     }
+}
+
+fn local_variable_resolved_name(proc: &Proc, name: &SmolStr) -> String {
+    format!("{}.{}", proc.name, name)
 }

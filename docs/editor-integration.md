@@ -2,13 +2,14 @@
 
 ## Visual Studio Code
 
-### Install from source-code
+The VSCode extension provides code snippets and syntax highlighting.
 
-Currently, the only way to install the Visual Studio Code extension is to build it from source-code.
+### Install from source
 
-You will need npm to build the extension.
+You will need `npm` installed.
 
 ```shell
+# Inside the root of the goboscript git repository:
 cd editors/code
 npm install
 npm run package

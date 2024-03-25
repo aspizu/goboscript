@@ -1,31 +1,47 @@
 [package]
-name          = "goboscript"
-description   = "goboscript is the Scratch compiler."
-version       = "0.1.0"
-license       = "MIT"
-keywords      = ["scratch", "compiler"]
-categories    = ["compilers"]
+name = "goboscript"
+version = "1.0.0"
+description = "goboscript is the Scratch compiler."
+license = "MIT"
+keywords = ["scratch", "compiler"]
+categories = ["compilers"]
 documentation = "https://aspizu.github.io/goboscript"
-homepage      = "https://github.com/aspizu/goboscript"
-repository    = "https://github.com/aspizu/goboscript"
-edition       = "2021"
-exclude       = ["/tools"]
+homepage = "https://github.com/aspizu/goboscript"
+repository = "https://github.com/aspizu/goboscript"
+edition = "2021"
+exclude = [
+    "/tools",
+    "/docs",
+    "/tests",
+    "/editors",
+    "/examples",
+    "gdsl.py",
+    "gdsl.txt",
+    "mkdocs.yml",
+]
 
 [dependencies]
-clap          = "4.5.2"
+anyhow                = "1.0.81"
+bumpalo               = "3.15.4"
+clap                  = { version = "4.5.3", features = ["derive"] }
 clap_complete_command = "0.5.1"
-clap_derive   = "4.5.0"
-colored       = "2.1.0"
-crc32fast     = "1.4.0"
-fuzzy-matcher = "0.3.7"
-lalrpop-util  = "0.20.2"
-logos         = "0.14.0"
-md-5          = "0.10.6"
-serde = { version = "1.0.197", features = ["derive"] }
-serde_json    = "1.0.114"
-strum         = { version = "0.26.1", features = ["derive"] }
-strum_macros  = "0.26.1"
-toml = "0.8.10"
+clap_derive           = "4.5.3"
+colored               = "2.1.0"
+fuzzy-matcher         = "0.3.7"
+fxhash                = "0.2.1"
+lalrpop-util          = "0.20.2"
+logos                 = "0.14.0"
+md-5                  = "0.10.6"
+serde                 = { version = "1.0.197", features = ["derive"] }
+serde_json            = "1.0.114"
+smol_str              = "0.2.1"
+toml                  = "0.8.11"
+zip                   = "0.6.6"
 
 [build-dependencies]
 lalrpop = "0.20.2"
+
+[profile.release]
+panic = "abort"
+lto   = "fat"
+debug = true

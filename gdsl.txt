@@ -1,0 +1,185 @@
+UNARY OPERATORS
+
+VARIANT  OPCODE   INPUT   | FIELDS
+==========================|=============
+Not      not      OPERAND |
+Length   length   STRING  |
+Round    round    NUM     |
+Abs      mathop   ...     | OPERATOR=abs
+Floor    ...      ...     | ...=floor
+Ceil     ...      ...     | ...=ceil
+Sqrt     ...      ...     | ...=sqrt
+Sin      ...      ...     | ...=sin
+Cos      ...      ...     | ...=cos
+Tan      ...      ...     | ...=tan
+Asin     ...      ...     | ...=asin
+Acos     ...      ...     | ...=acos
+Atan     ...      ...     | ...=atan
+Ln       ...      ...     | ...=ln
+Log      ...      ...     | ...=log
+AntiLn   ...      ...     | ...=e ^
+AntiLog  ...      ...     | ...=10 ^
+Minus~
+
+BINARY OPERATORS
+
+VARIANT  OPCODE     LHS       RHS
+=======================================
+Add      add        NUM1      NUM2
+Sub      subtract   ...       ...
+Mul      multiply   ...       ...
+Div      divide     ...       ...
+Mod      mod        ...       ...
+Lt       lt         OPERAND1  OPERAND2
+Gt       gt         ...       ...
+Eq       equals     ...       ...
+And      and        ...       ...
+Or       or         ...       ...
+Join     join       STRING1   STRING2
+In       contains   ...       ...
+Of       letter_of  STRING    LETTER
+Le~
+Ge~
+Ne~
+
+BLOCKS
+
+----------------------------------------------------------------------------------------------------
+VARIANT                           OPCODE            ARGS         | FIELDS                   | MENU (For now, only one menu is supported)
+[motion]=========================================================|==========================|=======
+move                              movesteps         STEPS        |                          |
+turn_left                         turnleft          DEGREES      |                          |
+turn_right                        turnright         ...          |                          |
+goto_random_position              goto                           |                          | TO:motion_goto_menu=_random_
+goto_mouse_pointer                ...                            |                          | ...=_mouse_
+goto                              ...               TO           |                          | ...=_random_
+goto                              gotoxy            X,Y          |                          |
+glide                             glidesecstoxy     X,Y,SECS     |                          |
+glide_to_random_position          glideto           SECS         |                          | TO:motion_glideto_menu=_random_
+glide_to_mouse_pointer            ...               ...          |                          | ...=_mouse_
+glide                             ...               TO,SECS      |                          | ...=_random_
+point_in_direction                pointindirection  DIRECTION    |                          |
+point_towards_mouse_pointer       pointtowards                   |                          | TOWARDS:motion_pointtowards_menu=_mouse_
+point_towards_random_direction    ...                            |                          | ...=_random_
+point_towards                     ...               TOWARDS      |                          | ...=_random_
+change_x                          changexby         DX           |                          |
+set_x                             setx              X            |                          |
+change_y                          changeyby         DY           |                          |
+set_y                             sety              Y            |                          |
+if_on_edge_bounce                 ifonedgebounce                 |                          |
+set_rotation_style_left_right     setrotationstyle               | STYLE=left-right         |
+set_rotation_style_do_not_rotate  ...                            | ...=don't rotate         |
+set_rotation_style_all_around     ...                            | ...=all around           |
+[looks]==========================================================|==========================|
+say                               sayforsecs        MESSAGE,SECS |                          |
+think                             thinkforsecs      ...          |                          |
+say                               say               MESSAGE      |                          |
+think                             think             ...          |                          |
+switch_costume                    switchcostumeto   COSTUME      |                          | COSTUME:looks_costume=make gh issue if this bothers u
+next_costume                      nextcostume                    |                          |
+switch_backdrop                   switchbackdropto  BACKDROP     |                          | BACKDROP:looks_backdrops=make gh issue if this bothers u
+next_backdrop                     nextbackdrop                   |                          |
+set_size                          setsizeto         SIZE         |                          |
+change_size                       changesizeby      CHANGE       |                          |
+change_color_effect               changeeffectby    ...          | EFFECT=COLOR             |
+change_fisheye_effect             ...               ...          | ...=FISHEYE              |
+change_whirl_effect               ...               ...          | ...=WHIRL                |
+change_pixelate_effect            ...               ...          | ...=PIXELATE             |
+change_mosaic_effect              ...               ...          | ...=MOSAIC               |
+change_brightness_effect          ...               ...          | ...=BRIGHTNESS           |
+change_ghost_effect               ...               ...          | ...=GHOST                |
+set_color_effect                  seteffectto       VALUE        | ...=COLOR                |
+set_fisheye_effect                ...               ...          | ...=FISHEYE              |
+set_whirl_effect                  ...               ...          | ...=WHIRL                |
+set_pixelate_effect               ...               ...          | ...=PIXELATE             |
+set_mosaic_effect                 ...               ...          | ...=MOSAIC               |
+set_brightness_effect             ...               ...          | ...=BRIGHTNESS           |
+set_ghost_effect                  ...               ...          | ...=GHOST                |
+clear_graphic_effects             cleargraphiceffects            |                          |
+show                              show                           |                          |
+hide                              hide                           |                          |
+goto_front                        gotofrontback                  | FRONT_BACK=front         |
+goto_back                         ...                            | ...=back                 |
+go_forward                        goforwardbackwardlayers NUM    | FORWARD_BACKWARD=forward |
+go_backward                       ...               ...          | ...=backward             |
+[sound]==========================================================|==========================|
+play_sound_until_done             playuntildone     SOUND_MENU   |                          | SOUND_MENU:sound_sounds_menu=make gh issue if this bothers u
+start_sound                       play              ...          |                          | ...=make gh issue if this bothers u
+stop_all_sounds                   stopallsounds                  |                          |
+change_pitch_effect               changeeffectby    VALUE        | EFFECT=PITCH             |
+change_pan_effect                 ...               ...          | ...=PAN                  |
+set_pitch_effect                  seteffectto       ...          | ...=PITCH                |
+set_pan_effect                    ...               ...          | ...=PAN                  |
+change_volume                     changevolumeby    VOLUME       |                          |
+set_volume                        setvolumeto       ...          |                          |
+clear_sound_effects               cleareffects                   |                          |
+[event]==========================================================|==========================|
+broadcast                         broadcast        BROADCAST_INPUT |                        |
+broadcast_and_wait                broadcastandwait BROADCAST_INPUT |                        |
+[control]========================================================|==========================|
+wait                              wait              DURATION     |                          |
+wait_until                        wait_until        CONDITION    |                          |
+stop_all                          stop                           | STOP_OPTION=all          |
+stop_this_script                  ...                            | ...=this script          |
+stop_other_scripts                ...                            | ...=other scripts in sprite|
+delete_this_clone                 delete_this_clone              |                          |
+clone                             create_clone_of                |                          | CLONE_OPTION:control_create_clone_of_menu=_myself_
+clone                             ...               CLONE_OPTION |                          | ...=_myself_
+[sensing]========================================================|==========================|
+ask                               askandwait        QUESTION     |                          |
+set_drag_mode_draggable           setdragmode                    | DRAG_MODE=draggable      |
+set_drag_mode_not_draggable       ...                            | ...=not draggable        |
+reset_timer                       resettimer                     |                          |
+[pen]============================================================|==========================|
+erase_all                         clear                          |                          |
+stamp                             stamp                          |                          |
+pen_down                          penDown                        |                          |
+pen_up                            penUp                          |                          |
+set_pen_color                     setPenColorToColor COLOR       |                          |
+change_pen_size                   changePenSizeBy   SIZE         |                          |
+set_pen_size                      setPenSizeTo      ...          |                          |
+[music]==========================================================|==========================|
+rest                              restForBeats      BEATS        |                          |
+set_tempo                         setTempo          TEMPO        |                          |
+change_tempo                      changeTempo       ...          |                          |
+
+REPORTERS
+
+----------------------------------------------------------------------------------------------
+VARIANT                           OPCODE            ARGS         | FIELDS             | MENUS
+[motion]=========================================================|====================| 
+x_position                        xposition                      |                    | 
+y_position                        yposition                      |                    | 
+direction                         direction                      |                    | 
+[looks]==========================================================|====================|=
+size                              size                           |                    | 
+costume_number                    costumenumbername              | NUMBER_NAME=number | 
+costume_name                      ...                            | ...=name           | 
+backdrop_number                   backdropnumbername             | ...=number         | 
+backdrop_name                     ...                            | ...=name           | 
+[sound]==========================================================|====================|=
+volume                            volume                         |                    | 
+[sensing]========================================================|====================|=
+touching_mouse_pointer            touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
+touching_edge                     touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_edge_
+touching                          touchingobject TOUCHINGOBJECTMENU|                  | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
+key_pressed                       keypressed        KEY_OPTION   |                    | KEY_OPTION:sensing_keyoptions=any
+mouse_down                        mousedown                      |                    | 
+mouse_x                           mousex                         |                    | 
+mouse_y                           mousey                         |                    | 
+loudness                          loudness                       |                    | 
+timer                             timer                          |                    | 
+current_year                      current                        | CURRENTMENU=YEAR   | 
+current_month                     ...                            | ...=MONTH          | 
+current_date                      ...                            | ...=DATE           | 
+current_day_of_week               ...                            | ...=DAYOFWEEK      | 
+current_hour                      ...                            | ...=HOUR           | 
+current_minute                    ...                            | ...=MINUTE         | 
+current_second                    ...                            | ...=SECOND         | 
+days_since_2000                   dayssince2000                  |                    | 
+username                          username                       |                    | 
+touching_color                    touchingcolor     COLOR        |                    | 
+color_is_touching_color           coloristouchingcolor COLOR,COLOR2|                  | 
+answer                            answer                         |                    | 
+[operator]=======================================================|====================|=
+random                            random            FROM,TO      |                    | 

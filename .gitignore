@@ -1,5 +1,4 @@
 /target
+**/*.sb3
+**/project.json
 /playground
-/tools/.node_modules
-/site
-release.sh

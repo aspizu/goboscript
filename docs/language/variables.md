@@ -1,86 +1,63 @@
 # Variables
 
-## For all sprites variables
+## Variables for all sprites
 
-To define a for all sprites variable, either assign to it, or set a initial value
-in stage. All variables defined in the stage are for all sprites.
+To declare a variable for all sprites, assign to it in `stage.gs`.
 
-
-```{.goboscript title="Assign to the variable" }
+```goboscript
 onflag {
-    global_variable = 100 + 200;
+    pi = 3.14159265359;
 }
 ```
 
-```{.goboscript title="Set a initial value" }
-global_variable = 100;
-```
+## Variables for this sprite only
 
-## For this sprite only variables
+To declare a variable for this sprite only, assign to it in the sprite's `.gs` file.
 
-To define a for this sprite only variable, either assign to it, or set a initial value
-in the sprite.
-
-```{.goboscript title="Assign to the variable" }
+```goboscript
 onflag {
-    this_sprite_variable = 100 + 200;
+    x = 0;
 }
 ```
 
-```{.goboscript title="Set a initial value" }
-this_sprite_variable = 100;
-```
+## Local variables (for a procedure only)
 
-## Local variables
-
-Local variables are defined in a procedure (custom block) and are only accessible
-inside the procedure.
+Local variables is a feature of goboscript, which lets you define a variable which can
+only be used inside a procedure and is not accessible outside of it.
 
 ```goboscript
-def my_procedure {
-    local local_variable = 100;
+define my_procedure {
+    local x = 0;
+    x = x + 1;
 }
 ```
 
-If a local variable is defined with the same name as a regular variable, that variable
-will be shadowed. 
+In the compiled Scratch project, the variable `x` will be named as `my_procedure.x`.
 
-## Show or hide variable monitors
+!!! note
+    Local variables will have unexpected behavior if the procedure is recursive.
 
-To show or hide a variable monitor, use the `show` or `hide` statement.
-
-```{.goboscript title="Show a variable monitor" }
-show global_variable;
-```
-
-```{.goboscript title="Hide a variable monitor" }
-hide global_variable;
-```
-
-## Set or change variable
-
-Set variables using the syntax:
+## Set variable
 
 ```goboscript
-variable = expression;
+x = 10;
 ```
 
-Change variables using the syntax:
+## Change variable
 
 ```goboscript
-variable += expression;
+x += 1;
 ```
 
-### Compound assignment operators
+## Change variables using a operator
 
 ```goboscript
-variable -= expression; # Will use the change variable statement.
-variable *= expression; # Rest use the set variable statement.
-variable /= expression;
-variable %= expression;
-variable &= expression; # & is the join operator.
+x += 1;
+x -= 1;
+x *= 2;
+x /= 2;
+x %= 2;
+x &= "str";
 ```
 
-```scratchblocks
-change [variable v] by ((0) - (expression))
-```
+The `-=` statement is implemented using the change variable block.

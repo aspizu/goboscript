@@ -1,31 +1,37 @@
+use std::{panic, process::ExitCode, time::Instant};
+
+use colored::Colorize;
+
 mod ast;
-mod blockid;
-mod build;
+mod blocks;
 mod cli;
 mod codegen;
 mod config;
-mod details;
+mod custom_toml_error;
+mod diagnostic;
+mod frontend;
 mod lexer;
-mod logoslalrpop;
-mod reporting;
+mod parser;
+mod preproc;
 mod visitors;
-mod zipfile;
 
-use std::io;
-
-use build::build;
-use clap::{CommandFactory, Parser};
-use cli::{Cli, Commands};
-use lalrpop_util::lalrpop_mod;
-
-lalrpop_mod!(pub grammar);
-
-fn main() -> io::Result<()> {
-    match Cli::parse().command {
-        Commands::Build { input, output } => build(input, output)?,
-        Commands::Completions { shell } => {
-            shell.generate(&mut Cli::command(), &mut std::io::stdout());
-        }
+fn main() -> ExitCode {
+    panic::set_hook(Box::new(|info| {
+        eprintln!(
+            "{info}\n\n{} 💀\nor open an issue at {}",
+            "Let's pretend that didn't happen".bold(),
+            "https://github.com/aspizu/goboscript/issues".blue()
+        );
+    }));
+    let begin = Instant::now();
+    let result = frontend::frontend();
+    if let Err(err) = &result {
+        eprintln!("{}{} {}", "error".bold().red(), ":".bold(), err.to_string().bold());
     }
-    Ok(())
+    eprintln!("{} in {:?}", "finished".bold().blue(), begin.elapsed());
+    if result.is_ok() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    }
 }
