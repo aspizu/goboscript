@@ -9,22 +9,23 @@ pub struct NodeID {
 
 impl Display for NodeID {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        if self.value == 0 {
-            return write!(f, r#""{}""#, BLOCK_ID_CHARS.chars().next().unwrap());
-        }
-        let mut n = self.value;
-        let len = BLOCK_ID_CHARS.chars().count();
-        let mut chars = Vec::new();
-        while n > 0 {
-            chars.push(BLOCK_ID_CHARS.chars().nth(n % len).unwrap());
-            n /= len;
-        }
-        write!(f, "\"")?;
-        for ch in chars.iter().rev() {
-            write!(f, "{}", ch)?;
-        }
-        write!(f, "\"")?;
-        Ok(())
+        write!(f, "\"{}\"", self.value)
+        // if self.value == 0 {
+        //     return write!(f, r#""{}""#, BLOCK_ID_CHARS.chars().next().unwrap());
+        // }
+        // let mut n = self.value;
+        // let len = BLOCK_ID_CHARS.chars().count();
+        // let mut chars = Vec::new();
+        // while n > 0 {
+        //     chars.push(BLOCK_ID_CHARS.chars().nth(n % len).unwrap());
+        //     n /= len;
+        // }
+        // write!(f, "\"")?;
+        // for ch in chars.iter().rev() {
+        //     write!(f, "{}", ch)?;
+        // }
+        // write!(f, "\"")?;
+        // Ok(())
     }
 }
 
