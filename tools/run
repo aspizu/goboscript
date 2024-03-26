@@ -23,6 +23,11 @@ case $1 in
     python -m json.tool --indent 4 playground/project.json playground/project.json
     node tools/sb3.js playground/project.json
     ;;
+  "check")
+    unzip -o playground/playground.sb3 project.json -d playground
+    python -m json.tool --indent 4 playground/project.json playground/project.json
+    node tools/sb3.js playground/project.json
+    ;;
   "uncompile")
     unzip -o playground/playground.sb3 project.json -d playground
     python -m json.tool --indent 4 playground/project.json playground/project.json
@@ -33,11 +38,6 @@ case $1 in
     jq -c . playground/project.json > project.json
     zip -ur playground/playground.sb3 project.json
     rm project.json
-    ;;
-  "check")
-    zip -ur "$2" TMP
-    node tools/sb3.js TMP
-    rm TMP
     ;;
   *)
     echo "Usage: tools/run {compile|uncompile|patch|check}"
