@@ -22,7 +22,7 @@ pub fn mac(lex: &mut Lexer<Token>) -> SmolStr {
 pub fn bin(lex: &mut Lexer<Token>) -> i64 {
     let mut neg = false;
     let mut value = 0;
-    for &c in lex.slice().as_bytes().iter() {
+    for &c in lex.slice().as_bytes()[2..].iter() {
         if c == b'-' {
             neg = true;
             continue;
@@ -43,7 +43,7 @@ pub fn bin(lex: &mut Lexer<Token>) -> i64 {
 pub fn oct(lex: &mut Lexer<Token>) -> i64 {
     let mut neg = false;
     let mut value = 0;
-    for &c in lex.slice().as_bytes().iter() {
+    for &c in lex.slice().as_bytes()[2..].iter() {
         if c == b'-' {
             neg = true;
             continue;
@@ -85,7 +85,7 @@ pub fn int(lex: &mut Lexer<Token>) -> i64 {
 pub fn hex(lex: &mut Lexer<Token>) -> i64 {
     let mut neg = false;
     let mut value = 0;
-    for &c in lex.slice().as_bytes().iter() {
+    for &c in lex.slice().as_bytes()[2..].iter() {
         if c == b'-' {
             neg = true;
             continue;
