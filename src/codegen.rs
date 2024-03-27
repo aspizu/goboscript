@@ -909,10 +909,15 @@ where T: Write + Seek
                 write!(self, r#"[1,[4,{}]]"#, json!(value))
             }
             Expr::Str(value) => {
+                let color = if name == "COLOR" || name == "COLOR2" {
+                    csscolorparser::parse(value).ok().filter(|color| color.a == 1.0)
+                } else {
+                    None
+                };
                 if name == "BROADCAST_INPUT" {
                     write!(self, r#"[1,[11,{},{}]]"#, json!(**value), json!(**value))
-                } else if name == "COLOR" || name == "COLOR2" {
-                    write!(self, r#"[1,[9,{}]]"#, json!(**value))
+                } else if let Some(color) = color {
+                    write!(self, r#"[1,[9,{}]]"#, json!(color.to_hex_string()))
                 } else {
                     write!(self, r#"[1,[10,{}]]"#, json!(**value))
                 }
