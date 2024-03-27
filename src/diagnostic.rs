@@ -210,15 +210,7 @@ impl Diagnostic {
             );
             return;
         }
-        let mut help = self.detail.help(sprite);
-        if let DiagnosticDetail::UnrecognizedToken(token, expected) = &self.detail {
-            if expected.iter().any(|s| s == "\";\"") {
-                line_no -= 1;
-                let line = src.lines().nth(line_no).unwrap();
-                col_no = line.trim_end().len();
-                help = Some("missing semicolon here?".to_string());
-            }
-        }
+        let help = self.detail.help(sprite);
         let line = src.lines().nth(line_no).unwrap();
         eprintln!(
             "      {} {}:{}:{}",
