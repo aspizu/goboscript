@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{bail, Result};
+use colored::Colorize;
 use fxhash::FxHashMap;
 use smol_str::SmolStr;
 
@@ -14,7 +15,7 @@ use crate::{
     codegen::Sb3,
     config::Config,
     custom_toml_error::CustomTOMLError,
-    diagnostic::Diagnostic,
+    diagnostic::{Diagnostic, LogLevel},
     parser::parse,
     visitors::{pass1, pass2},
 };
@@ -83,22 +84,56 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
     let mut sb3 = Sb3::new(BufWriter::new(File::create(output)?));
     sb3.package(&project, &config, &input, &mut stage_diags, &mut diags)?;
     let mut errors = 0;
+    let mut warnings = 0;
     for diag in stage_diags {
         diag.eprint(stage_path.to_str().unwrap(), &stage_src, &project.stage);
-        errors += 1;
+        match diag.detail.log_level() {
+            LogLevel::Error => errors += 1,
+            LogLevel::Warning => warnings += 1,
+        };
     }
     for (name, diags) in diags {
         for diag in diags {
             let (path, src) = &srcs[&name];
             diag.eprint(path.to_str().unwrap(), src, &project.sprites[&name]);
-            errors += 1;
+            match diag.detail.log_level() {
+                LogLevel::Error => errors += 1,
+                LogLevel::Warning => warnings += 1,
+            };
         }
     }
-    if errors == 1 {
-        bail!("one error generated")
+    let err_summary = make_err_summary(errors, warnings);
+    if errors > 0 {
+        bail!(err_summary);
     }
-    if errors > 1 {
-        bail!("{errors} errors generated")
+    if warnings > 0 {
+        eprintln!("{}: {}", "warning".yellow().bold(), err_summary.bold())
     }
     Ok(())
+}
+
+fn make_err_summary(errors: i32, warnings: i32) -> String {
+    let error_text = if errors == 1 {
+        Some(String::from("one error generated"))
+    } else if errors > 1 {
+        Some(format!("{errors} errors generated"))
+    } else {
+        None
+    };
+    let warning_text = if warnings == 1 {
+        Some(String::from("one warning generated"))
+    } else if warnings > 1 {
+        Some(format!("{warnings} warnings generated"))
+    } else {
+        None
+    };
+    if let (Some(errs), Some(warns)) = (&error_text, &warning_text) {
+        format!("{errs}; {warns}")
+    } else if let Some(errs) = error_text {
+        errs
+    } else if let Some(warns) = warning_text {
+        warns
+    } else {
+        "".into()
+    }
 }
