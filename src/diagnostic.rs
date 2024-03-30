@@ -179,6 +179,39 @@ impl DiagnosticDetail {
     fn info(&self) -> Option<String> {
         None
     }
+
+    pub fn log_level(&self) -> LogLevel {
+        match self {
+            Self::InvalidToken
+            | Self::UnrecognizedEof(_)
+            | Self::UnrecognizedToken(_, _)
+            | Self::ExtraToken(_)
+            | Self::FileNotFound(_)
+            | Self::UnrecognizedReporter(_)
+            | Self::UnrecognizedVariable(_)
+            | Self::UnrecognizedProcedure(_)
+            | Self::UnrecognizedList(_)
+            | Self::UnrecognizedKey(_)
+            | Self::UnrecognizedArgument { .. }
+            | Self::UnrecognizedEnum { .. }
+            | Self::UnrecognizedEnumVariant { .. }
+            | Self::BlockArgsCountMismatch { .. }
+            | Self::ReprArgsCountMismatch { .. }
+            | Self::ProcArgsCountMismatch { .. }
+            | Self::NoCostumes => LogLevel::Error,
+            Self::FollowedByUnreachableCode
+            | Self::UnusedVariable(_)
+            | Self::UnusedProcedure(_)
+            | Self::UnusedList(_)
+            | Self::UnusedArgument(_)
+            | Self::UnusedEnumVariant { .. } => LogLevel::Warning,
+        }
+    }
+}
+
+pub enum LogLevel {
+    Error,
+    Warning,
 }
 
 impl Diagnostic {
@@ -194,9 +227,14 @@ impl Diagnostic {
             }
             i += line.len() + 1;
         }
+        let log_level = self.detail.log_level();
+        let header = match log_level {
+            LogLevel::Error => "error".red(),
+            LogLevel::Warning => "warning".yellow(),
+        };
         eprintln!(
             "{}{} {}",
-            "error".red().bold(),
+            header.bold(),
             ":".bold(),
             self.detail.message(sprite).bold(),
         );
@@ -223,11 +261,15 @@ impl Diagnostic {
         eprintln!("{} {}", format!(" {:4} │", line_no + 1).bold(), line);
         let pad = " ".repeat(col_no);
         let padn = " ".repeat(self.span.len());
+        let line = "─".repeat(self.span.len()).bold();
         eprintln!(
             "{} {}{} {}",
             "      │".bold(),
             pad,
-            "─".repeat(self.span.len()).bold().red(),
+            match log_level {
+                LogLevel::Error => line.red(),
+                LogLevel::Warning => line.yellow(),
+            },
             help.unwrap_or_default()
                 .replace('\n', &format!("\n         {pad}{padn}"))
                 .bold()
@@ -240,7 +282,9 @@ impl Diagnostic {
 }
 
 fn get_closest_match<'a, T>(pattern: &str, choices: T) -> Option<String>
-where T: Iterator<Item = &'a str> {
+where
+    T: Iterator<Item = &'a str>,
+{
     let matcher = SkimMatcherV2::default();
     let mut matches: Vec<_> = choices
         .filter_map(|choice| {
