@@ -1,0 +1,90 @@
+%YAML 1.2
+---
+name: GoboScript
+file_extensions:
+  - gs
+scope: scope.gobo
+contexts:
+  main:
+
+    - scope: comment.block
+      match: "/\\*"
+      push: comment_block
+
+    - scope: comment.line
+      match: "#"
+      push: comment_line
+
+    - scope: string.quoted.double
+      match: \"([^\"\\\\]|\\\\[\"\\\\bnfrt]|u[a-fA-F0-9]{4})*\"
+
+    - scope: keyword
+      match: "\\b(costumes|sounds|global|variables|lists|nowarp|onflag|onkey|onbackdrop|onloudness|ontimer|on|onclone)\\b"
+
+    - scope: keyword.control
+      match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert)\\b"
+
+    - scope: keyword
+      match: "\\b(error|warn|breakpoint|local|not|and|or|in|length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
+
+    - scope: support.function.builtin
+      match: "\\b(move|turn_left|turn_right|goto_random_position|goto_mouse_pointer|goto|glide|glide_to_random_position|glide_to_mouse_pointer|point_in_direction|point_towards_mouse_pointer|point_towards_random_direction|point_towards|change_x|set_x|change_y|set_y|if_on_edge_bounce|set_rotation_style_left_right|set_rotation_style_do_not_rotate|set_rotation_style_all_around|say|think|switch_costume|next_costume|switch_backdrop|next_backdrop|set_size|change_size|change_color_effect|change_fisheye_effect|change_whirl_effect|change_pixelate_effect|change_mosaic_effect|change_brightness_effect|change_ghost_effect|set_color_effect|set_fisheye_effect|set_whirl_effect|set_pixelate_effect|set_mosaic_effect|set_brightness_effect|set_ghost_effect|clear_graphic_effects|show|hide|goto_front|goto_back|go_forward|go_backward|play_sound_until_done|start_sound|stop_all_sounds|change_pitch_effect|change_pan_effect|set_pitch_effect|set_pan_effect|change_volume|set_volume|clear_sound_effects|broadcast|broadcast_and_wait|wait|wait_until|stop_all|stop_this_script|stop_other_scripts|delete_this_clone|clone|ask|set_drag_mode_draggable|set_drag_mode_not_draggable|reset_timer|erase_all|stamp|pen_down|pen_up|set_pen_color|change_pen_size|set_pen_size|rest|set_tempo|change_tempo)\\b"
+
+    - scope: punctuation
+      match: ",|;"
+
+    - scope: keyword.operator
+      match: "[+\\-*/%<>=&]"
+
+    - scope: variable.parameter
+      match: "\\$[_a-zA-Z0-9]+"
+
+    - scope: variable.parameter
+      match: "[a-zA-Z_0-9]+!"
+
+    - scope: constant.numeric
+      match: "\\b([0-9][_0-9]*|0x[_0-9a-fA-F]+|0b[_0-1]+|0o[_0-7]+|([0-9][0-9]*)?\\.[0-9][_0-9]*)\\b"
+
+    - scope: punctuation
+      match: "([a-zA-Z_0-9][_a-zA-Z_0-9]*)\\.([a-zA-Z_0-9][_a-zA-Z_0-9]*)"
+
+    - scope: punctuation
+      match: "([a-zA-Z_0-9][_a-zA-Z_0-9]*)\\.([a-zA-Z_0-9][_a-zA-Z_0-9]*)"
+      captures:
+        1: entity.name.type
+        2: entity.name.function
+
+    - match: "(enum)\\s+([a-zA-Z_][_a-zA-Z0-9]*)"
+      push: enum
+      captures:
+        1: keyword
+        2: entity.name.type
+
+    - match: "\\b(proc)[\\s\\n]+([a-zA-Z_][_a-zA-Z0-9]*)"
+      end: "\\{"
+      push: proc
+      captures:
+          1: keyword
+          2: entity.name.function
+          
+  proc:
+    - scope: variable.parameter
+      match: "[a-zA-Z_][_a-zA-Z0-9]*"
+    - scope: punctuation
+      match: ",|;"
+    - match: "\\{"
+      pop: true
+
+  enum:
+    - match: "\\{"
+      pop: true
+
+  comment_block:
+    - meta_scope: comment.block
+    - match: "\\*/"
+      pop: true
+
+  comment_line:
+    - meta_scope: comment.line
+    - match: "$"
+      pop: true
