@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 use crate::{
     ast::*,
     blocks::*,
-    diagnostic::{Diagnostic, DiagnosticDetail},
+    diagnostic::{Diagnostic, DiagnosticKind},
     lexer::token::Token,
 };
 
@@ -171,7 +171,7 @@ Term: Rrc<Expr> = {
     <l:@L> <name:ARG> <r:@R> => Expr::Arg { name, span: l..r }.into(),
     <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" =>? match Repr::from_shape(&name, args.len()) {
         Some(repr) => Ok(Expr::Repr { repr, span: l..r, args }.into()),
-        None => Err(ParseError::User { error: DiagnosticDetail::UnrecognizedReporter(name).to_diagnostic(l..r) }),
+        None => Err(ParseError::User { error: DiagnosticKind::UnrecognizedReporter(name).to_diagnostic(l..r) }),
     },
     <l:@L> <e:Term> "[" <i:Expr> "]" <r:@R> => BinOp::Of.to_expr(e, i).into(),
     <nl:@L> <enum_name:NAME> <nr:@R> "." <vl:@L> <variant_name:NAME> <vr:@R> =>

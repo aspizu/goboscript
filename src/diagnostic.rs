@@ -227,7 +227,7 @@ impl Diagnostic {
             }
             i += line.len() + 1;
         }
-        let log_level = self.detail.log_level();
+        let log_level = self.kind.log_level();
         let header = match log_level {
             LogLevel::Error => "error".red(),
             LogLevel::Warning => "warning".yellow(),
@@ -282,9 +282,7 @@ impl Diagnostic {
 }
 
 fn get_closest_match<'a, T>(pattern: &str, choices: T) -> Option<String>
-where
-    T: Iterator<Item = &'a str>,
-{
+where T: Iterator<Item = &'a str> {
     let matcher = SkimMatcherV2::default();
     let mut matches: Vec<_> = choices
         .filter_map(|choice| {

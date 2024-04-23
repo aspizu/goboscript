@@ -87,7 +87,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
     let mut warnings = 0;
     for diag in stage_diags {
         diag.eprint(stage_path.to_str().unwrap(), &stage_src, &project.stage);
-        match diag.detail.log_level() {
+        match diag.kind.log_level() {
             LogLevel::Error => errors += 1,
             LogLevel::Warning => warnings += 1,
         };
@@ -96,7 +96,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
         for diag in diags {
             let (path, src) = &srcs[&name];
             diag.eprint(path.to_str().unwrap(), src, &project.sprites[&name]);
-            match diag.detail.log_level() {
+            match diag.kind.log_level() {
                 LogLevel::Error => errors += 1,
                 LogLevel::Warning => warnings += 1,
             };
