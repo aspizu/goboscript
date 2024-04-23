@@ -1,7 +1,7 @@
 use logos::{Logos, SpannedIter};
 
 use super::token::Token;
-use crate::diagnostic::{Diagnostic, DiagnosticDetail};
+use crate::diagnostic::{Diagnostic, DiagnosticKind};
 
 pub struct Lexer<'source> {
     token_stream: SpannedIter<'source, Token>,
@@ -26,7 +26,7 @@ impl<'source> Iterator for Lexer<'source> {
         self.token_stream.next().map(|(token, span)| {
             token
                 .map(|token| (span.start, token, span.end))
-                .map_err(|_| DiagnosticDetail::InvalidToken.to_diagnostic(span))
+                .map_err(|_| DiagnosticKind::InvalidToken.to_diagnostic(span))
         })
     }
 }

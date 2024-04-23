@@ -26,7 +26,7 @@ impl Project {
 
 #[derive(Debug, Default)]
 pub struct Sprite {
-    pub costumes: FxHashMap<SmolStr, Costume>,
+    pub costumes: Vec<Costume>,
     pub procs: FxHashMap<SmolStr, Proc>,
     pub used_procs: FxHashSet<SmolStr>,
     pub enums: FxHashMap<SmolStr, Enum>,

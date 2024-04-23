@@ -23,7 +23,7 @@ use crate::{
     ast::{Costume, Event, EventDetail, Expr, Proc, Project, Sprite, Stmt, Stmts},
     blocks::{BinOp, Block, UnOp},
     config::Config,
-    diagnostic::{keys::is_key, Diagnostic, DiagnosticDetail},
+    diagnostic::{keys::is_key, Diagnostic, DiagnosticKind},
 };
 
 pub mod node;
@@ -201,14 +201,14 @@ where T: Write + Seek
                     proc.args.iter().find(|(arg, _)| arg == name).unwrap().1.clone();
                 if !is_used {
                     diags.push(
-                        DiagnosticDetail::UnusedArgument(name.clone())
+                        DiagnosticKind::UnusedArgument(name.clone())
                             .to_diagnostic(span),
                     );
                 }
             }
             if !sprite.used_procs.contains(&proc.name) {
                 diags.push(
-                    DiagnosticDetail::UnusedProcedure(proc.name.clone())
+                    DiagnosticKind::UnusedProcedure(proc.name.clone())
                         .to_diagnostic(proc.span.clone()),
                 );
             }
@@ -220,7 +220,7 @@ where T: Write + Seek
         // TODO: sprite.on_messages
         self.write_all(br#"},"costumes":["#)?;
         let mut comma = false;
-        for costume in sprite.costumes.values() {
+        for costume in &sprite.costumes {
             self.comma(&mut comma)?;
             self.costume(diags, costume, input)?;
         }
@@ -236,7 +236,7 @@ where T: Write + Seek
         for var in sprite.vars.values() {
             if !var.used {
                 diags.push(
-                    DiagnosticDetail::UnusedVariable(var.name.clone())
+                    DiagnosticKind::UnusedVariable(var.name.clone())
                         .to_diagnostic(var.span.clone()),
                 );
             }
@@ -254,7 +254,7 @@ where T: Write + Seek
         for list in sprite.lists.values() {
             if !list.used {
                 diags.push(
-                    DiagnosticDetail::UnusedList(list.name.clone())
+                    DiagnosticKind::UnusedList(list.name.clone())
                         .to_diagnostic(list.span.clone()),
                 );
             }
@@ -273,7 +273,7 @@ where T: Write + Seek
             for (variant, span) in &enum_.variants {
                 if !enum_.used_variants.contains(variant) {
                     diags.push(
-                        DiagnosticDetail::UnusedEnumVariant {
+                        DiagnosticKind::UnusedEnumVariant {
                             enum_name: enum_.name.clone(),
                             variant_name: variant.clone(),
                         }
@@ -283,7 +283,7 @@ where T: Write + Seek
             }
         }
         if sprite.costumes.is_empty() {
-            diags.push(DiagnosticDetail::NoCostumes.to_diagnostic(0..0))
+            diags.push(DiagnosticKind::NoCostumes.to_diagnostic(0..0))
         }
         Ok(())
     }
@@ -304,7 +304,7 @@ where T: Write + Seek
             Err(err) => {
                 if matches!(err.kind(), io::ErrorKind::NotFound) {
                     d.push(
-                        DiagnosticDetail::FileNotFound(costume.path.clone())
+                        DiagnosticKind::FileNotFound(costume.path.clone())
                             .to_diagnostic(costume.span.clone()),
                     );
                     return Ok(());
@@ -387,7 +387,7 @@ where T: Write + Seek
             EventDetail::OnKey { key, span } => {
                 if !is_key(key) {
                     d.push(
-                        DiagnosticDetail::UnrecognizedKey(key.clone())
+                        DiagnosticKind::UnrecognizedKey(key.clone())
                             .to_diagnostic(span.clone()),
                     );
                 }
@@ -439,7 +439,7 @@ where T: Write + Seek
                 self.stmt(s, d, stmt, this_id, None, parent_id)?;
                 if !is_last {
                     d.push(
-                        DiagnosticDetail::FollowedByUnreachableCode
+                        DiagnosticKind::FollowedByUnreachableCode
                             .to_diagnostic(stmt.span().clone()),
                     )
                 }
@@ -565,7 +565,7 @@ where T: Write + Seek
             Stmt::Block { block, span, args } => {
                 if args.len() != block.args().len() {
                     d.push(
-                        DiagnosticDetail::BlockArgsCountMismatch {
+                        DiagnosticKind::BlockArgsCountMismatch {
                             block: *block,
                             given: args.len(),
                         }
@@ -634,14 +634,14 @@ where T: Write + Seek
             Stmt::ProcCall { name, span, args } => {
                 let Some(proc) = s.sprite.procs.get(name) else {
                     d.push(
-                        DiagnosticDetail::UnrecognizedProcedure(name.clone())
+                        DiagnosticKind::UnrecognizedProcedure(name.clone())
                             .to_diagnostic(span.clone()),
                     );
                     return Ok(());
                 };
                 if args.len() != proc.args.len() {
                     d.push(
-                        DiagnosticDetail::ProcArgsCountMismatch {
+                        DiagnosticKind::ProcArgsCountMismatch {
                             proc: name.clone(),
                             given: args.len(),
                         }
@@ -686,7 +686,7 @@ where T: Write + Seek
             Expr::Arg { name, span } => {
                 if !s.is_arg(name) {
                     d.push(
-                        DiagnosticDetail::UnrecognizedArgument {
+                        DiagnosticKind::UnrecognizedArgument {
                             name: name.clone(),
                             proc: s.proc.map(|proc| proc.name.clone()),
                         }
@@ -702,7 +702,7 @@ where T: Write + Seek
             Expr::Repr { repr, span, args } => {
                 if args.len() != repr.args().len() {
                     d.push(
-                        DiagnosticDetail::ReprArgsCountMismatch {
+                        DiagnosticKind::ReprArgsCountMismatch {
                             repr: *repr,
                             given: args.len(),
                         }
@@ -839,8 +839,7 @@ where T: Write + Seek
             return;
         }
         d.push(
-            DiagnosticDetail::UnrecognizedList(name.clone())
-                .to_diagnostic(span.clone()),
+            DiagnosticKind::UnrecognizedList(name.clone()).to_diagnostic(span.clone()),
         );
     }
 
@@ -932,7 +931,7 @@ where T: Write + Seek
                         write!(self, r#"[1,[10,{index}]]"#)
                     } else {
                         d.push(
-                            DiagnosticDetail::UnrecognizedEnumVariant {
+                            DiagnosticKind::UnrecognizedEnumVariant {
                                 enum_name: enum_name.clone(),
                                 variant_name: variant_name.clone(),
                             }
@@ -942,7 +941,7 @@ where T: Write + Seek
                     }
                 } else {
                     d.push(
-                        DiagnosticDetail::UnrecognizedEnum {
+                        DiagnosticKind::UnrecognizedEnum {
                             enum_name: enum_name.clone(),
                             variant_name: variant_name.clone(),
                         }
@@ -962,7 +961,7 @@ where T: Write + Seek
                     write!(self, "[3,[13,{},{}],", json!(**var), json!(**var))?;
                 } else {
                     d.push(
-                        DiagnosticDetail::UnrecognizedVariable(var.clone())
+                        DiagnosticKind::UnrecognizedVariable(var.clone())
                             .to_diagnostic(span.clone()),
                     );
                 }
@@ -1021,7 +1020,7 @@ where T: Write + Seek
             return self.single_field_id("VARIABLE", name);
         }
         d.push(
-            DiagnosticDetail::UnrecognizedVariable(name.clone())
+            DiagnosticKind::UnrecognizedVariable(name.clone())
                 .to_diagnostic(span.clone()),
         );
         Ok(())
@@ -1047,7 +1046,7 @@ where T: Write + Seek
             return self.single_field_id("LIST", name);
         }
         d.push(
-            DiagnosticDetail::UnrecognizedVariable(name.clone())
+            DiagnosticKind::UnrecognizedVariable(name.clone())
                 .to_diagnostic(span.clone()),
         );
         Ok(())

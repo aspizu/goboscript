@@ -6,7 +6,7 @@ lalrpop_mod!(grammar, "/parser/grammar.rs");
 
 use crate::{
     ast::Sprite,
-    diagnostic::{Diagnostic, DiagnosticDetail},
+    diagnostic::{Diagnostic, DiagnosticKind},
     preproc,
 };
 
@@ -25,18 +25,18 @@ pub fn parse(src: &str) -> Result<Sprite, Diagnostic> {
         .map(|_| sprite)
         .map_err(|err| match err {
             ParseError::InvalidToken { location } => {
-                DiagnosticDetail::InvalidToken.to_diagnostic(location..location + 1)
+                DiagnosticKind::InvalidToken.to_diagnostic(location..location + 1)
             }
             ParseError::UnrecognizedEof { location, expected } => {
-                DiagnosticDetail::UnrecognizedEof(expected)
+                DiagnosticKind::UnrecognizedEof(expected)
                     .to_diagnostic(location..location + 1)
             }
             ParseError::UnrecognizedToken { token: (left, token, right), expected } => {
-                DiagnosticDetail::UnrecognizedToken(token, expected)
+                DiagnosticKind::UnrecognizedToken(token, expected)
                     .to_diagnostic(left..right)
             }
             ParseError::ExtraToken { token: (left, token, right) } => {
-                DiagnosticDetail::ExtraToken(token).to_diagnostic(left..right)
+                DiagnosticKind::ExtraToken(token).to_diagnostic(left..right)
             }
             ParseError::User { error } => error,
         })

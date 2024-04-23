@@ -50,6 +50,23 @@ fn join(span: Span, args: &[Vec<(Token, Span)>]) -> Vec<(Token, Span)> {
     vec![(token.clone(), span)]
 }
 
+fn costumes_ascii(span: Span, args: &[Vec<(Token, Span)>]) -> Vec<(Token, Span)> {
+    let path = args.first().unwrap().first().unwrap();
+    let mut tokens = Vec::new();
+    for i in 32..127 {
+        tokens.push(path.clone());
+        tokens.push((Token::As, span.clone()));
+        tokens.push((
+            Token::Str(SmolStr::from(std::str::from_utf8(&[b'_', i]).unwrap())),
+            span.clone(),
+        ));
+        if i != 126 {
+            tokens.push((Token::Comma, span.clone()));
+        }
+    }
+    tokens
+}
+
 #[derive(Debug)]
 pub struct Rule {
     name: SmolStr,
@@ -108,6 +125,8 @@ pub fn process(
                         }
                         let processed = if mac == "join" {
                             join(span.clone(), args)
+                        } else if mac == "costumes_ascii" {
+                            costumes_ascii(span.clone(), args)
                         } else if let Some(rule) = rules.get(mac) {
                             let map: FxHashMap<_, _> =
                                 rule.args.iter().zip(args).collect();

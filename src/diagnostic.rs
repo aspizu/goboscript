@@ -16,12 +16,12 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Diagnostic {
-    pub detail: DiagnosticDetail,
+    pub kind: DiagnosticKind,
     pub span: Span,
 }
 
 #[derive(Debug)]
-pub enum DiagnosticDetail {
+pub enum DiagnosticKind {
     InvalidToken,
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
@@ -47,9 +47,9 @@ pub enum DiagnosticDetail {
     NoCostumes,
 }
 
-impl DiagnosticDetail {
+impl DiagnosticKind {
     pub fn to_diagnostic(self, span: Span) -> Diagnostic {
-        Diagnostic { detail: self, span }
+        Diagnostic { kind: self, span }
     }
 
     fn message(&self, sprite: &Sprite) -> &'static str {
@@ -236,7 +236,7 @@ impl Diagnostic {
             "{}{} {}",
             header.bold(),
             ":".bold(),
-            self.detail.message(sprite).bold(),
+            self.kind.message(sprite).bold(),
         );
         if self.span == (0..0) {
             eprintln!(
@@ -248,7 +248,7 @@ impl Diagnostic {
             );
             return;
         }
-        let help = self.detail.help(sprite);
+        let help = self.kind.help(sprite);
         let line = src.lines().nth(line_no).unwrap();
         eprintln!(
             "      {} {}:{}:{}",
@@ -275,7 +275,7 @@ impl Diagnostic {
                 .bold()
                 .green(),
         );
-        if let Some(info) = self.detail.info() {
+        if let Some(info) = self.kind.info() {
             eprintln!("{}", info.magenta());
         }
     }

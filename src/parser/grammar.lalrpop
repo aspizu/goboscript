@@ -13,14 +13,14 @@ grammar<'a>(sprite: &'a mut Sprite);
 
 pub Sprite = Declr*;
 
+Costume: () = {
+    <l:@L> <name:STR> <r:@R> <alias:(AS <STR>)?> => {
+        sprite.costumes.push(Costume::new(name, l..r, alias));
+    }
+}
 
 Declr: () = {
-    COSTUMES <paths:SpannedComma<STR>> <alias:(AS <STR>)?> ";" => {
-        for (path, span) in paths {
-            let costume = Costume::new(path, span, alias.clone());
-            sprite.costumes.insert(costume.name.clone(), costume);
-        }
-    },
+    COSTUMES Comma<Costume> ";" => {},
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:SpannedComma<NAME>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, b, w.is_none()));
     },
