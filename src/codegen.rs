@@ -372,7 +372,7 @@ where T: Write + Seek
         self.warp(proc.warp)?;
         self.end_obj()?;
         self.end_obj()?;
-        self.stmts(s, d, &proc.body, next_id, Some(next_id))
+        self.stmts(s, d, &proc.body, next_id, Some(this_id))
     }
 
     fn event(&mut self, s: S, d: D, event: &Event) -> Result<()> {
@@ -422,7 +422,7 @@ where T: Write + Seek
                 self.end_obj()?;
             }
         }
-        self.stmts(s, d, &event.body, next_id, Some(next_id))
+        self.stmts(s, d, &event.body, next_id, Some(this_id))
     }
 
     fn stmts(
