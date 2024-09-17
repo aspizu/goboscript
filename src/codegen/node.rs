@@ -66,15 +66,23 @@ where T: Write + Seek
         write!(self, r#"{}:{{"opcode":"{}""#, node.this_id, node.opcode)?;
         if let Some(next_id) = node.next_id {
             write!(self, r#","next":{next_id}"#)?;
+        } else {
+            write!(self, r#","next":null"#)?;
         }
         if let Some(parent_id) = node.parent_id {
             write!(self, r#","parent":{parent_id}"#)?;
+        } else {
+            write!(self, r#","parent":null"#)?;
         }
         if node.top_level {
             self.write_all(br#","topLevel":true"#)?;
+        } else {
+            self.write_all(br#","topLevel":false"#)?;
         }
         if node.shadow {
             self.write_all(br#","shadow":true"#)?;
+        } else {
+            self.write_all(br#","shadow":false"#)?;
         }
         Ok(())
     }
