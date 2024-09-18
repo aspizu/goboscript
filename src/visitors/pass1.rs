@@ -7,7 +7,7 @@ use crate::{
         Enum, Event, Expr, List, OnMessage, Proc, Project, References, Rrc, Sprite,
         Stmt, Var,
     },
-    blocks::{BinOp, UnOp},
+    blocks::{BinOp, UnOp, Block},
 };
 
 struct V<'a> {
@@ -70,6 +70,7 @@ fn visit_event(event: &mut Event, s: &mut S<'_>) {
 }
 
 fn visit_on_message(on_message: &mut OnMessage, s: &mut S<'_>) {
+    on_message.references.messages.insert(on_message.message.clone());
     visit_stmts(
         &mut on_message.body,
         &mut V { references: &mut on_message.references, used_args: None },
@@ -149,7 +150,18 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V<'_>, s: &mut S<'_>) {
             visit_expr(index, v, s);
             visit_expr(value, v, s);
         }
-        Stmt::Block { block: _, span: _, args } => {
+        Stmt::Block { block, span: _, args } => {
+            // reference the broadcast if this is a broadcast block.
+            // if the broadcast argument is an expression, mark shadowed_message.
+            // if shadowed_message is true,
+            // then later down the line the broadcast block's shadowed input will be set to
+            // an arbitrary broadcast, or a placeholder "message1" if no broadcasts exist in the project.
+            if let Block::Broadcast | Block::BroadcastAndWait = block {
+                if let Expr::Str(broadcast_name) = &mut *args[0].borrow_mut() {
+                    v.references.messages.insert(broadcast_name.clone());
+                }
+            }
+
             for arg in args {
                 visit_expr(arg, v, s);
             }
