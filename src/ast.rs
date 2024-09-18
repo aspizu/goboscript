@@ -32,6 +32,7 @@ pub struct Sprite {
     pub enums: FxHashMap<SmolStr, Enum>,
     pub vars: FxHashMap<SmolStr, Var>,
     pub lists: FxHashMap<SmolStr, List>,
+    pub broadcasts: FxHashSet<SmolStr>,
     pub on_messages: FxHashMap<SmolStr, OnMessage>,
     pub events: Vec<Event>,
 }
@@ -100,6 +101,7 @@ pub struct References {
     pub procs: FxHashSet<SmolStr>,
     pub vars: FxHashSet<SmolStr>,
     pub lists: FxHashSet<SmolStr>,
+    pub messages: FxHashSet<SmolStr>,
     pub enum_variants: FxHashSet<(SmolStr, SmolStr)>,
 }
 
