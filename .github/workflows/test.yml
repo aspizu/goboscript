@@ -10,7 +10,7 @@ jobs:
         - run: |
             sudo apt update
             sudo apt install -y unzip nodejs npm
-            snap install rustup --classic
+            sudo snap install rustup --classic
             rustup update
             cd tools
             npm install
