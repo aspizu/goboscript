@@ -79,7 +79,7 @@ impl UnOp {
             Self::Round => None,
             Self::Abs => Some("{\"OPERATOR\": [\"abs\", null]}"),
             Self::Floor => Some("{\"OPERATOR\": [\"floor\", null]}"),
-            Self::Ceil => Some("{\"OPERATOR\": [\"ceil\", null]}"),
+            Self::Ceil => Some("{\"OPERATOR\": [\"ceiling\", null]}"),
             Self::Sqrt => Some("{\"OPERATOR\": [\"sqrt\", null]}"),
             Self::Sin => Some("{\"OPERATOR\": [\"sin\", null]}"),
             Self::Cos => Some("{\"OPERATOR\": [\"cos\", null]}"),

@@ -20,7 +20,10 @@ use self::{
     node_id::{NodeID, NodeIDFactory},
 };
 use crate::{
-    ast::{Costume, Event, OnMessage, EventDetail, Expr, Proc, Project, Sprite, Stmt, Stmts},
+    ast::{
+        Costume, Event, EventDetail, Expr, OnMessage, Proc, Project, Sprite, Stmt,
+        Stmts,
+    },
     blocks::{BinOp, Block, UnOp},
     config::Config,
     diagnostic::{keys::is_key, Diagnostic, DiagnosticKind},
@@ -274,12 +277,7 @@ where T: Write + Seek
         let mut comma = false;
         for broadcast_name in sprite.broadcasts.iter() {
             self.comma(&mut comma)?;
-            write!(
-                self,
-                r#"{}:{}"#,
-                json!(**broadcast_name),
-                json!(**broadcast_name),
-            )?;
+            write!(self, r#"{}:{}"#, json!(**broadcast_name), json!(**broadcast_name),)?;
         }
         // FIXME: Can you please fucking implement sounds this time?
         self.write_all(br#"},"sounds":[]}"#)?;
@@ -1019,10 +1017,17 @@ where T: Write + Seek
             write!(self, "{shadow_id}]")
         } else if name == "BROADCAST_INPUT" {
             let broadcast_name = match s.stage {
-                Some(stage) => stage.broadcasts.iter().min().expect("no broadcasts?").clone(),
-                None => "message1".into()
+                Some(stage) => {
+                    stage.broadcasts.iter().min().expect("no broadcasts?").clone()
+                }
+                None => "message1".into(),
             };
-            write!(self, r#"[11,{},{}]]"#, json!(*broadcast_name), json!(*broadcast_name))
+            write!(
+                self,
+                r#"[11,{},{}]]"#,
+                json!(*broadcast_name),
+                json!(*broadcast_name)
+            )
         } else {
             self.write_all(br#"[10,""]]"#)
         }

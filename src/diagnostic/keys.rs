@@ -35,7 +35,6 @@ const KEYS: &[&str] = &[
     "7",
     "8",
     "9",
-    
     "space",
     "up arrow",
     "down arrow",

@@ -7,7 +7,7 @@ use crate::{
         Enum, Event, Expr, List, OnMessage, Proc, Project, References, Rrc, Sprite,
         Stmt, Var,
     },
-    blocks::{BinOp, UnOp, Block},
+    blocks::{BinOp, Block, UnOp},
 };
 
 struct V<'a> {
