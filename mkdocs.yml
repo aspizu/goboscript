@@ -3,11 +3,19 @@ nav:
     - README: index.md
     - Install: install.md
     - Getting Started: getting-started.md
+    - Configuration: configuration.md
     - Language:
+          - Syntax: language/syntax.md
           - Costumes: language/costumes.md
           - Variables: language/variables.md
           - Lists: language/lists.md
           - Motion: language/motion.md
+          - Control Flow: language/control-flow.md
+          - Hat Blocks: language/hat-blocks.md
+          - Blocks: language/blocks.md
+          - Reporters: language/reporters.md
+          - Custom Blocks: language/custom-blocks.md
+          - Enums: language/enums.md
     - Editor Integration: editor-integration.md
 theme:
     name: material

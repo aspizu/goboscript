@@ -26,7 +26,7 @@ Local variables is a feature of goboscript, which lets you define a variable whi
 only be used inside a procedure and is not accessible outside of it.
 
 ```goboscript
-define my_procedure {
+proc my_procedure {
     local x = 0;
     x = x + 1;
 }

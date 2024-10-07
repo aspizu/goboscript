@@ -49,7 +49,7 @@ list[index] -= 1;
 list[index] *= 1;
 list[index] /= 1;
 list[index] %= 1;
-list[index] &= "str";
+list[index] &= "suffix";
 ```
 
 ## Get item at index from list
