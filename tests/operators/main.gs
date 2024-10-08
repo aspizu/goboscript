@@ -1,6 +1,7 @@
 costumes "blank.svg";
 
 onflag {
+    delete my_list;
     lhs = 1;
     rhs = 2;
     say lhs + rhs;
@@ -39,4 +40,18 @@ onflag {
     say antilog lhs;
     lhs++;
     lhs--;
+    lhs += rhs;
+    lhs -= rhs;
+    lhs *= rhs;
+    lhs /= rhs;
+    lhs %= rhs;
+    lhs &= "suffix";
+    my_list[0] += 1;
+    my_list[0] -= 1;
+    my_list[0] *= 1;
+    my_list[0] /= 1;
+    my_list[0] %= 1;
+    my_list[0] &= "suffix";
+    my_list[0]++;
+    my_list[0]--;
 }

@@ -211,11 +211,6 @@ pub enum Stmt {
         span: Span,
         value: Rrc<Expr>,
     },
-    IncDecVar {
-        name: SmolStr,
-        span: Span,
-        delta: i64,
-    },
     Show {
         name: SmolStr,
         span: Span,

@@ -98,9 +98,7 @@ impl Stmt {
             }
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
-            | Stmt::ChangeVar { .. } | Stmt::IncDecVar { .. } => {
-                "data_changevariableby"
-            }
+            Stmt::ChangeVar { .. } => "data_changevariableby",
             Stmt::Show { name, .. } | Stmt::Hide { name, .. } => {
                 if s.is_var(name) || s.is_local_var(name) {
                     "data_showvariable"
@@ -553,12 +551,6 @@ where T: Write + Seek
                 self.end_obj()?;
                 self.expr(s, d, &value.borrow(), value_id, this_id)?;
             }
-            Stmt::IncDecVar { name, span, delta } => {
-                self.input(s, d, "VALUE", &Expr::Int(*delta), NodeID::default())?;
-                self.end_obj()?;
-                self.resolve_variable(s, d, name, span)?;
-                self.end_obj()?;
-            }
             Stmt::Show { name, span } | Stmt::Hide { name, span } => {
                 self.end_obj()?;
                 self.resolve_variable_or_list(s, d, name, span)?;
@@ -599,7 +591,29 @@ where T: Write + Seek
                 self.expr(s, d, &index.borrow(), index_id, this_id)?;
                 self.expr(s, d, &value.borrow(), value_id, this_id)?;
             }
-            Stmt::ListChange { .. } => unreachable!(),
+            Stmt::ListChange { index, name, op, span, value } => {
+                let index_id = self.id.new_id();
+                let value_id = self.id.new_id();
+                let expr = Expr::BinOp {
+                    op: *op,
+                    lhs: Expr::BinOp {
+                        op: BinOp::Of,
+                        lhs: Expr::Name { name: name.clone(), span: span.clone() }
+                            .into(),
+                        rhs: index.clone(),
+                    }
+                    .into(),
+                    rhs: value.clone(),
+                };
+                self.list(s, d, name, span);
+                self.input(s, d, "INDEX", &index.borrow(), index_id)?;
+                self.input(s, d, "ITEM", &expr, value_id)?;
+                self.end_obj()?;
+                self.single_field_id("LIST", name)?;
+                self.end_obj()?;
+                self.expr(s, d, &index.borrow(), index_id, this_id)?;
+                self.expr(s, d, &expr, value_id, this_id)?;
+            }
             Stmt::Block { block, span, args } => {
                 if args.len() != block.args().len() {
                     d.push(
