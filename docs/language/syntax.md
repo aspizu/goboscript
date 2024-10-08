@@ -40,6 +40,7 @@ Whitespace & indentation has no semantic significance.
 | `-`      | Subtraction / Unary Minus |
 | `*`      | Multiplication |
 | `/`      | Division |
+| `//`     | Floor Division |
 | `%`      | Modulo |
 | `&`      | Join |
 | `==`     | Equal |

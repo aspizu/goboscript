@@ -8,6 +8,7 @@ onflag {
     say lhs - rhs;
     say lhs * rhs;
     say lhs / rhs;
+    say lhs // rhs;
     say random(lhs, rhs);
     say lhs > rhs;
     say lhs >= rhs;
@@ -44,12 +45,14 @@ onflag {
     lhs -= rhs;
     lhs *= rhs;
     lhs /= rhs;
+    lhs //= rhs;
     lhs %= rhs;
     lhs &= "suffix";
     my_list[0] += 1;
     my_list[0] -= 1;
     my_list[0] *= 1;
     my_list[0] /= 1;
+    my_list[0] //= 1;
     my_list[0] %= 1;
     my_list[0] &= "suffix";
     my_list[0]++;

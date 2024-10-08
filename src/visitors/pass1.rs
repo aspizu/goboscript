@@ -331,6 +331,15 @@ fn visit_expr(expr: &mut Rrc<Expr>, v: &mut V<'_>, s: &mut S<'_>) {
                             .into(),
                     )
                 }
+                BinOp::FloorDiv => {
+                    replace = Some(
+                        UnOp::Floor
+                            .to_expr(
+                                BinOp::Div.to_expr(lhs.clone(), rhs.clone()).into(),
+                            )
+                            .into(),
+                    )
+                }
                 _ => {}
             }
         }

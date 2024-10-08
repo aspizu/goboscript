@@ -594,16 +594,23 @@ where T: Write + Seek
             Stmt::ListChange { index, name, op, span, value } => {
                 let index_id = self.id.new_id();
                 let value_id = self.id.new_id();
-                let expr = Expr::BinOp {
-                    op: *op,
-                    lhs: Expr::BinOp {
-                        op: BinOp::Of,
-                        lhs: Expr::Name { name: name.clone(), span: span.clone() }
-                            .into(),
-                        rhs: index.clone(),
-                    }
-                    .into(),
-                    rhs: value.clone(),
+                let nameexpr = Expr::Name { name: name.clone(), span: span.clone() };
+                let expr = match op {
+                    BinOp::FloorDiv => UnOp::Floor
+                        .to_expr(
+                            BinOp::Div.to_expr(nameexpr.into(), index.clone()).into(),
+                        )
+                        .into(),
+                    _ => Expr::BinOp {
+                        op: *op,
+                        lhs: Expr::BinOp {
+                            op: BinOp::Of,
+                            lhs: nameexpr.into(),
+                            rhs: index.clone(),
+                        }
+                        .into(),
+                        rhs: value.clone(),
+                    },
                 };
                 self.list(s, d, name, span);
                 self.input(s, d, "INDEX", &index.borrow(), index_id)?;

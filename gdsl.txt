@@ -41,6 +41,7 @@ Of       letter_of  STRING    LETTER
 Le~
 Ge~
 Ne~
+FloorDiv~
 
 BLOCKS
 

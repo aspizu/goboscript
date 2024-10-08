@@ -114,6 +114,7 @@ pub enum BinOp {
     Le,
     Ge,
     Ne,
+    FloorDiv,
 }
 
 impl BinOp {

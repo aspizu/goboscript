@@ -48,6 +48,7 @@ list[index] += 1;
 list[index] -= 1;
 list[index] *= 1;
 list[index] /= 1;
+list[index] // = 1; # Floor Division
 list[index] %= 1;
 list[index] &= "suffix";
 ```

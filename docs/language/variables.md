@@ -56,6 +56,7 @@ x += 1;
 x -= 1;
 x *= 2;
 x /= 2;
+x //= 2; # Floor Division
 x %= 2;
 x &= "str";
 x++; # Increment by 1
