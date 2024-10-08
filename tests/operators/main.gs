@@ -37,4 +37,6 @@ onflag {
     say log lhs;
     say antiln lhs;
     say antilog lhs;
+    lhs++;
+    lhs--;
 }

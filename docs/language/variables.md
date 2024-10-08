@@ -58,6 +58,8 @@ x *= 2;
 x /= 2;
 x %= 2;
 x &= "str";
+x++; # Increment by 1
+x--; # Decrement by 1
 ```
 
 The `-=` statement is implemented using the change variable block.

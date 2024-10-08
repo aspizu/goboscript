@@ -122,6 +122,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V<'_>, s: &mut S<'_>) {
             // should change variable count as a reference?
             visit_expr(value, v, s);
         }
+        Stmt::IncDecVar { .. } => {}
         Stmt::Show { name: _, span: _ } => {}
         Stmt::Hide { name: _, span: _ } => {}
         Stmt::ListAdd { name, span: _, value } => {

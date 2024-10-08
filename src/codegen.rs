@@ -98,7 +98,9 @@ impl Stmt {
             }
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
-            Stmt::ChangeVar { .. } => "data_changevariableby",
+            | Stmt::ChangeVar { .. } | Stmt::IncDecVar { .. } => {
+                "data_changevariableby"
+            }
             Stmt::Show { name, .. } | Stmt::Hide { name, .. } => {
                 if s.is_var(name) || s.is_local_var(name) {
                     "data_showvariable"
@@ -550,6 +552,12 @@ where T: Write + Seek
                 self.resolve_variable(s, d, name, span)?;
                 self.end_obj()?;
                 self.expr(s, d, &value.borrow(), value_id, this_id)?;
+            }
+            Stmt::IncDecVar { name, span, delta } => {
+                self.input(s, d, "VALUE", &Expr::Int(*delta), NodeID::default())?;
+                self.end_obj()?;
+                self.resolve_variable(s, d, name, span)?;
+                self.end_obj()?;
             }
             Stmt::Show { name, span } | Stmt::Hide { name, span } => {
                 self.end_obj()?;

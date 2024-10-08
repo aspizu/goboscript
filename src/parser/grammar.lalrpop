@@ -69,6 +69,8 @@ Stmt: Stmt = {
         }
         Stmt::SetVar { name: name.clone(), span: l..r, value, is_local: false }
     },
+    <l:@L> <name:NAME> <r:@R> "++" ";" => Stmt::IncDecVar { name, span: l..r, delta:  1 },
+    <l:@L> <name:NAME> <r:@R> "--" ";" => Stmt::IncDecVar { name, span: l..r, delta: -1 },
     <l:@L> <name:NAME> <r:@R> "+=" <value:Expr> ";" => Stmt::ChangeVar { name, span: l..r, value },
     <l:@L> <name:NAME> <r:@R> "-=" <value:Expr> ";" => Stmt::ChangeVar { name,               span: l..r, value: BinOp::Sub .to_expr(Expr::Int(0).into(), value).into()},
     <l:@L> <name:NAME> <r:@R> "*=" <value:Expr> ";" => Stmt::SetVar { name: name.clone(), span: l..r, value: BinOp::Mul .to_expr(Expr::Name { name: name.clone(), span: l..r }.into(), value).into(), is_local: false },
