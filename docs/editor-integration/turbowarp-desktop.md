@@ -3,7 +3,7 @@
 ## Instant Project Reload
 
 This will add a keyboard shortcut to instantly reload the project in
-Turbowarp Desktop using +ctrl+b+
+Turbowarp Desktop using ++ctrl+b++
 
 Open the user data folder using: 
 `Settings` > `Desktop Settings` > `Open User Data`
