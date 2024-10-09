@@ -187,4 +187,8 @@ pub enum Token {
     As,
     #[token("enum")]
     Enum,
+    #[token("true")]
+    True,
+    #[token("false")]
+    False,
 }

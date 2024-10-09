@@ -32,45 +32,51 @@ Whitespace & indentation has no semantic significance.
 "\t" # Tab
 ```
 
+## Booleans
+
+`true` is replaced with `1` during compilation.
+
+`false` is replaced with `0` during compilation.
+
 ## Operators
 
-| Operator | Description |
-| -------- | ----------- |
-| `+`      | Addition    |
+| Operator | Description               |
+| -------- | ------------------------- |
+| `+`      | Addition                  |
 | `-`      | Subtraction / Unary Minus |
-| `*`      | Multiplication |
-| `/`      | Division |
-| `//`     | Floor Division |
-| `%`      | Modulo |
-| `&`      | Join |
-| `==`     | Equal |
-| `!=`     | Not equal |
-| `<`      | Less than |
-| `<=`     | Less than or equal to |
-| `>`      | Greater than |
-| `>=`     | Greater than or equal to |
-| `in`     | Contains |
-| `&`      | Join |
-| `not`    | Not |
-| `and`    | And |
-| `or`     | Or |
+| `*`      | Multiplication            |
+| `/`      | Division                  |
+| `//`     | Floor Division            |
+| `%`      | Modulo                    |
+| `&`      | Join                      |
+| `==`     | Equal                     |
+| `!=`     | Not equal                 |
+| `<`      | Less than                 |
+| `<=`     | Less than or equal to     |
+| `>`      | Greater than              |
+| `>=`     | Greater than or equal to  |
+| `in`     | Contains                  |
+| `&`      | Join                      |
+| `not`    | Not                       |
+| `and`    | And                       |
+| `or`     | Or                        |
 
 ### Mathematical operators
 
-| Operator | Description |
-| -------- | ----------- |
-| `round`  | Round |
-| `abs`    | Absolute value |
-| `floor`  | Floor |
-| `ceil`   | Ceil |
-| `sqrt`   | Square root |
-| `sin`    | Sine |
-| `cos`    | Cosine |
-| `tan`    | Tangent |
-| `asin`   | Arc sine |
-| `acos`   | Arc cosine |
-| `atan`   | Arc tangent |
-| `ln`     | Natural logarithm |
-| `log`    | Logarithm |
-| `antiln` | e ^ |
-| `antilog` | 10 ^ |
+| Operator  | Description       |
+| --------- | ----------------- |
+| `round`   | Round             |
+| `abs`     | Absolute value    |
+| `floor`   | Floor             |
+| `ceil`    | Ceil              |
+| `sqrt`    | Square root       |
+| `sin`     | Sine              |
+| `cos`     | Cosine            |
+| `tan`     | Tangent           |
+| `asin`    | Arc sine          |
+| `acos`    | Arc cosine        |
+| `atan`    | Arc tangent       |
+| `ln`      | Natural logarithm |
+| `log`     | Logarithm         |
+| `antiln`  | e ^               |
+| `antilog` | 10 ^              |

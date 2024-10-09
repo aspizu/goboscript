@@ -168,6 +168,8 @@ Expr: Rrc<Expr> = {
 
 Term: Rrc<Expr> = {
     "(" <Expr> ")",
+    TRUE          => Expr::Int(1).into(),
+    FALSE         => Expr::Int(0).into(),
     <value:INT>   => Expr::Int(value).into(),
     <value:HEX>   => Expr::Int(value).into(),
     <value:OCT>   => Expr::Int(value).into(),
@@ -304,5 +306,7 @@ extern {
         OF             => Token::Of,
         AS             => Token::As,
         ENUM           => Token::Enum,
+        TRUE           => Token::True,
+        FALSE          => Token::False,
     }
 }
