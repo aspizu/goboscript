@@ -20,7 +20,11 @@ use crate::{
     visitors::{pass1, pass2},
 };
 
-pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
+pub fn build(
+    input: Option<PathBuf>,
+    output: Option<PathBuf>,
+    compact: bool,
+) -> Result<()> {
     let input = if let Some(input) = input { input } else { env::current_dir()? };
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
@@ -50,7 +54,12 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
     let stage = match parse(&stage_src) {
         Ok(stage) => stage,
         Err(diag) => {
-            diag.eprint(stage_path.to_str().unwrap(), &stage_src, &Default::default());
+            diag.eprint(
+                stage_path.to_str().unwrap(),
+                &stage_src,
+                &Default::default(),
+                compact,
+            );
             bail!("cannot continue due to syntax errors")
         }
     };
@@ -69,7 +78,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
         let sprite = match parse(&src) {
             Ok(sprite) => sprite,
             Err(diag) => {
-                diag.eprint(path.to_str().unwrap(), &src, &Default::default());
+                diag.eprint(path.to_str().unwrap(), &src, &Default::default(), compact);
                 bail!("cannot continue due to syntax errors")
             }
         };
@@ -86,7 +95,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
     let mut errors = 0;
     let mut warnings = 0;
     for diag in stage_diags {
-        diag.eprint(stage_path.to_str().unwrap(), &stage_src, &project.stage);
+        diag.eprint(stage_path.to_str().unwrap(), &stage_src, &project.stage, compact);
         match diag.kind.log_level() {
             LogLevel::Error => errors += 1,
             LogLevel::Warning => warnings += 1,
@@ -95,7 +104,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<()> {
     for (name, diags) in diags {
         for diag in diags {
             let (path, src) = &srcs[&name];
-            diag.eprint(path.to_str().unwrap(), src, &project.sprites[&name]);
+            diag.eprint(path.to_str().unwrap(), src, &project.sprites[&name], compact);
             match diag.kind.log_level() {
                 LogLevel::Error => errors += 1,
                 LogLevel::Warning => warnings += 1,

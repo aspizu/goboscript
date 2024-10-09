@@ -11,7 +11,9 @@ use crate::{
 
 pub fn frontend() -> Result<()> {
     match Cli::parse().command {
-        Commands::Build { input, output } => build::build(input, output),
+        Commands::Build { input, output, compact } => {
+            build::build(input, output, compact)
+        }
         Commands::New {
             name,
             frame_rate,

@@ -215,7 +215,7 @@ pub enum LogLevel {
 }
 
 impl Diagnostic {
-    pub fn eprint(&self, path: &str, src: &str, sprite: &Sprite) {
+    pub fn eprint(&self, path: &str, src: &str, sprite: &Sprite, compact: bool) {
         let mut line_no = 0;
         let mut col_no = 0;
         let mut i = 0;
@@ -232,6 +232,23 @@ impl Diagnostic {
             LogLevel::Error => "error".red(),
             LogLevel::Warning => "warning".yellow(),
         };
+        let help = self.kind.help(sprite);
+        let line = src.lines().nth(line_no).unwrap();
+        if compact {
+            eprintln!(
+                "[{}] {}:{}:{}:{} {}",
+                header,
+                path,
+                line_no + 1,
+                col_no + 1,
+                col_no + 1 + self.span.len(),
+                self.kind.message(sprite),
+            );
+            if let Some(help) = help {
+                eprintln!("{}", help.magenta());
+            }
+            return;
+        }
         eprintln!(
             "{}{} {}",
             header.bold(),
@@ -248,8 +265,7 @@ impl Diagnostic {
             );
             return;
         }
-        let help = self.kind.help(sprite);
-        let line = src.lines().nth(line_no).unwrap();
+
         eprintln!(
             "      {} {}:{}:{}",
             "╭→".bold(),

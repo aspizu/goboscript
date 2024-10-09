@@ -46,7 +46,7 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "js-yaml": "^4.1.0",
-    "prettier": "^3.2.5",
+    "prettier": "^3.3.3",
     "tslib": "^2.6.2",
     "typescript": "^5.4.2"
   },
@@ -74,6 +74,29 @@
       {
         "language": "goboscript",
         "path": "./snippets/snippets.json"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "goboscript-build",
+        "required": [],
+        "properties": {}
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "goboscript",
+        "owner": "goboscript-build",
+        "fileLocation": "absolute",
+        "pattern": {
+          "regexp": "^\\[(warning|error)\\] (.*):(\\d+):(\\d+):(\\d+) (.*)",
+          "severity": 1,
+          "file": 2,
+          "line": 3,
+          "column": 4,
+          "endColumn": 5,
+          "message": 6
+        }
       }
     ]
   }
