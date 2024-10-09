@@ -17,6 +17,7 @@ nav:
       - Custom Blocks: language/custom-blocks.md
       - Enums: language/enums.md
   - Editor Integration:
+      - Turbowarp Desktop: editor-integration/turbowarp-desktop.md
       - Visual Studio Code: editor-integration/vscode.md
       - Sublime Text: editor-integration/sublime-text.md
 theme:
