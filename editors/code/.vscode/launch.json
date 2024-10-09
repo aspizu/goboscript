@@ -1,17 +1,17 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Launch",
-            "type": "extensionHost",
-            "request": "launch",
-            "args": [
-                //"--disable-extensions",
-                "--extensionDevelopmentPath=${workspaceFolder}"
-            ],
-            "outFiles": ["${workspaceFolder}/out/**/*.js"],
-            "preLaunchTask": "Build Extension",
-            "skipFiles": ["<node_internals>/**/*.js"]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        //"--disable-extensions",
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "Build Extension",
+      "skipFiles": ["<node_internals>/**/*.js"]
+    }
+  ]
 }

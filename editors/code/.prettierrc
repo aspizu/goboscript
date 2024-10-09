@@ -1,0 +1,7 @@
+{
+  "tabWidth": 2,
+  "semi": false,
+  "experimentalTernaries": true,
+  "printWidth": 88,
+  "endOfLine": "lf"
+}
