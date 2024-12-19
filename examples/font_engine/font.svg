@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="4"
+   height="6"
+   viewBox="0 0 4 6"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   sodipodi:docname="font.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     showgrid="true"
+     inkscape:zoom="22.576626"
+     inkscape:cx="722.45074"
+     inkscape:cy="3.4106071"
+     inkscape:window-width="1440"
+     inkscape:window-height="756"
+     inkscape:window-x="-6"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1"
+     showguides="true">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="4"
+       dotted="false"
+       gridanglex="30"
+       gridanglez="30"
+       visible="true" />
+    <sodipodi:guide
+       position="504,0"
+       orientation="0,-1"
+       id="guide84"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="453.61196,6"
+       orientation="0,-1"
+       id="guide85"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="406,-2"
+       orientation="0,-1"
+       id="guide86"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="363.40683,4"
+       orientation="0,-1"
+       id="guide87"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <path
+     id="path3"
+     style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;paint-order:stroke markers fill"
+     d="M 0,4 H 4 M 0,6 V 4 L 2,0 L 4,4 V 6"
+     inkscape:label="A"
+     sodipodi:nodetypes="ccccccc" />
+  <path
+     id="path2"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 11,3 H 8 M 8,6 V 0 H 11 L 12,1 V 2 L 11,3 L 12,4 V 5 L 11,6 Z"
+     inkscape:label="B"
+     sodipodi:nodetypes="cccccccccccc" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 20,5 L 19,6 H 17 L 16,5 V 1 L 17,0 H 19 L 20,1"
+     id="path4"
+     inkscape:label="C"
+     sodipodi:nodetypes="cccccccc" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 24,6 H 26 L 28,4 V 2 L 26,0 H 24 Z"
+     id="path5"
+     inkscape:label="D"
+     sodipodi:nodetypes="ccccccc" />
+  <path
+     id="path7"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 32,3 H 36 M 36,0 H 32 V 6 H 36"
+     inkscape:label="E" />
+  <path
+     id="path9"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 44,3 H 40 M 44,0 H 40 V 6"
+     inkscape:label="F" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 50,3 H 52 V 5 L 51,6 H 49 L 48,5 V 1 L 49,0 H 51 L 52,1"
+     id="path10"
+     inkscape:label="G" />
+  <path
+     id="path13"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 60,3 H 56 M 60,0 V 6 M 56,0 V 6"
+     inkscape:label="H" />
+  <path
+     id="path16"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 66,0 V 6 M 64,6 H 68 M 64,0 H 68"
+     inkscape:label="I" />
+  <path
+     id="path18"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 74,0 V 5 L 73,6 H 72 M 72,0 H 76"
+     inkscape:label="J" />
+  <path
+     id="path21"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 84,0 L 80,3 M 84,6 L 80,3 M 80,0 V 6"
+     inkscape:label="K" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 88,0 V 6 H 92"
+     id="path22"
+     inkscape:label="L" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 96,6 V 0 L 98,2 L 100,0 V 6"
+     id="path23"
+     inkscape:label="M" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 104,6 V 0 L 108,6 V 0"
+     id="path24"
+     inkscape:label="N" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 112,1 L 113,0 H 115 L 116,1 V 5 L 115,6 H 113 L 112,5 Z"
+     id="path25"
+     inkscape:label="O" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 120,6 V 0 H 123 L 124,1 V 3 L 123,4 H 120"
+     id="path26"
+     inkscape:label="P" />
+  <path
+     id="path28"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 130,4 L 133,7 M 128,1 L 129,0 H 131 L 132,1 V 5 L 131,6 H 129 L 128,5 Z"
+     inkscape:label="Q" />
+  <path
+     id="path30"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 140,6 L 136,4 M 136,6 V 0 H 139 L 140,1 V 3 L 139,4 H 136"
+     inkscape:label="R" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 148,1 L 147,0 H 145 L 144,1 V 2 L 145,3 H 147 L 148,4 V 5 L 147,6 H 145 L 144,5"
+     id="path31"
+     inkscape:label="S" />
+  <path
+     id="path33"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 154,0 V 6 M 152,0 H 156"
+     inkscape:label="T" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 160,0 V 5 L 161,6 H 163 L 164,5 V 0"
+     id="path34"
+     inkscape:label="U" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 168,0 L 170,6 L 172,0"
+     id="path35"
+     inkscape:label="V" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 176,0 V 6 L 178,4 L 180,6 V 0"
+     id="path36"
+     inkscape:label="W" />
+  <path
+     id="path38"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 188,0 L 184,6 M 184,0 L 188,6"
+     inkscape:label="X" />
+  <path
+     id="path40"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 192,0 L 194,3 M 196,0 L 192,6"
+     inkscape:label="Y" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 200,0 H 204 L 200,6 H 204"
+     id="path41"
+     inkscape:label="Z" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 209,2 H 211 L 212,3 V 6 H 209 L 208,5 L 209,4 H 212"
+     id="path42"
+     sodipodi:nodetypes="cccccccc"
+     inkscape:label="a" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 216,0 V 6 H 219 L 220,5 V 4 V 3 L 219,2 H 216"
+     id="path43"
+     inkscape:label="b"
+     sodipodi:nodetypes="cccccccc" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 228,3 L 227,2 H 225 L 224,3 V 5 L 225,6 H 227 L 228,5"
+     id="path1"
+     inkscape:label="c" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 236,0 V 6 H 233 L 232,5 V 3 L 233,2 H 236"
+     id="path6"
+     inkscape:label="d" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 240,4 H 244 V 3 L 243,2 H 241 L 240,3 V 5 L 241,6 H 243"
+     id="path8"
+     sodipodi:nodetypes="ccccccccc"
+     inkscape:label="e" />
+  <path
+     id="path12"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 248,2 H 252 M 252,0 H 251 L 250,1 V 6"
+     inkscape:label="f" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 260,6 H 257 L 256,5 V 3 L 257,2 H 260 V 7 L 259,8 H 257"
+     id="path14"
+     inkscape:label="g" />
+  <path
+     id="path17"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 264,2 H 267 L 268,3 V 6 M 264,0 V 6"
+     inkscape:label="h" />
+  <path
+     id="path27"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 274,0 V 0 M 272,6 H 276 M 272,2 H 274 V 6"
+     inkscape:label="i" />
+  <path
+     id="path32"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 282,0 V 0 M 282,2 V 6 L 281,7 H 280"
+     inkscape:label="j" />
+  <path
+     id="path39"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 292,2 L 288,4 L 292,6 M 288,6 V 0"
+     inkscape:label="k" />
+  <path
+     id="path45"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 296,6 H 300 M 296,0 H 298 V 6"
+     inkscape:label="l" />
+  <path
+     id="path47"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 308,6 V 3 L 307,2 L 306,3 M 304,6 V 2 H 305 L 306,3 V 6"
+     inkscape:label="m" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 312,6 V 2 H 315 L 316,3 V 6"
+     id="path48"
+     inkscape:label="n" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 320,3 V 5 L 321,6 H 323 L 324,5 V 3 L 323,2 H 321 Z"
+     id="path49"
+     inkscape:label="o" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 328,7 V 2 H 331 L 332,3 V 5 L 331,6 H 328"
+     id="path50"
+     inkscape:label="p" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 340,7 V 2 H 337 L 336,3 V 5 L 337,6 H 340"
+     id="path51"
+     inkscape:label="q" />
+  <path
+     id="path53"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 348,2 H 346 L 344,4 M 344,6 V 2"
+     inkscape:label="r" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 356,2 H 353 L 352,3 L 353,4 H 355 L 356,5 L 355,6 H 352"
+     id="path54"
+     inkscape:label="s" />
+  <path
+     id="path56"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 360,2 H 364 M 362,0 V 5 L 363,6 H 364"
+     inkscape:label="t" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 368,2 V 5 L 369,6 H 372 V 2"
+     id="path57"
+     inkscape:label="u" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 376,2 L 378,6 L 380,2"
+     id="path58"
+     inkscape:label="v" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 384,2 V 6 L 386,4 L 388,6 V 2"
+     id="path59"
+     inkscape:label="w" />
+  <path
+     id="path61"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 396,2 L 392,6 M 392,2 L 396,6"
+     inkscape:label="x" />
+  <path
+     id="path63"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 404,2 V 7 L 403,8 H 401 M 400,2 V 5 L 401,6 H 404"
+     inkscape:label="y" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 408,2 H 412 L 408,6 H 412"
+     id="path64"
+     inkscape:label="z" />
+  <path
+     id="path66"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 418,6 V 6 M 418,0 V 4"
+     inkscape:label="!" />
+  <path
+     id="path68"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 427,0 V 2 M 425,0 V 2"
+     inkscape:label="&quot;"
+     sodipodi:nodetypes="cccc" />
+  <path
+     id="path72"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 436,4 H 432 M 432,2 H 436 M 435,0 V 6 M 433,0 V 6"
+     inkscape:label="#"
+     sodipodi:nodetypes="cccccccc" />
+  <path
+     id="path74"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 444,1 H 441 L 440,2 L 441,3 H 443 L 444,4 L 443,5 H 440 M 442,6 V 0"
+     inkscape:label="$" />
+  <path
+     id="path77-5"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 451,5 V 6 H 452 V 5 H 451 M 448,0 V 1 H 449 V 0 H 448 M 448,6 L 452,0"
+     inkscape:label="%" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 460,4 L 458,6 H 457 L 456,5 V 4 L 458,2 V 1 L 457,0 L 456,1 V 2 L 460,6"
+     id="path77"
+     sodipodi:nodetypes="ccccccccccc"
+     inkscape:label="&amp;" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 466,0 V 2"
+     id="path78"
+     inkscape:label="'" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 476,0 L 474,2 V 4 L 476,6"
+     id="path79"
+     sodipodi:nodetypes="cccc"
+     inkscape:label="(" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 480,0 L 482,2 V 4 L 480,6"
+     id="path79-8"
+     sodipodi:nodetypes="cccc"
+     inkscape:label=")" />
+  <path
+     id="path82"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 490,4 V 0 M 488,1 L 490,2 L 492,1 M 492,3 L 490,2 L 488,3"
+     inkscape:label="*" />
+  <path
+     id="path84"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 498,2 V 6 M 496,4 H 500"
+     inkscape:label="+" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 506,7 L 507,6 V 5 H 506 V 6 H 507"
+     id="path87"
+     inkscape:label="," />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 512,4 H 516"
+     id="path88"
+     inkscape:label="-" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 523,6 H 522 V 5 H 523 V 6"
+     id="path89"
+     inkscape:label="." />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 528,7 L 532,1"
+     id="path90"
+     inkscape:label="/" />
+  <path
+     id="path92"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 536.5,5.5 L 539.5,0.5 M 539,6 H 537 L 536,5 V 1 L 537,0 H 539 L 540,1 V 5 L 539,6"
+     inkscape:label="0" />
+  <path
+     id="path94"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 548,6 H 544 M 544,2 L 546,0 V 6"
+     inkscape:label="1" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 556,6 H 552 L 555,4 L 556,3 V 1 L 555,0 H 553 L 552,1"
+     id="path95"
+     sodipodi:nodetypes="cccccccc"
+     inkscape:label="2" />
+  <path
+     id="path97"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 563,3 H 562 M 560,1 L 561,0 H 563 L 564,1 V 2 L 563,3 L 564,4 V 5 L 563,6 H 561 L 560,5"
+     inkscape:label="3" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 571,6 V 0 L 568,4 H 572"
+     id="path98"
+     inkscape:label="4" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 580,0 H 576 V 2 H 579 L 580,3 V 5 L 579,6 H 577 L 576,5"
+     id="path99"
+     inkscape:label="5" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 588,1 L 587,0 H 585 L 584,1 V 5 L 585,6 H 587 L 588,5 V 3 L 587,2 H 585 L 584,3"
+     id="path100"
+     inkscape:label="6" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 592,1 V 0 H 596 L 592,6"
+     id="path101"
+     inkscape:label="7" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 603,0 H 601 L 600,1 V 2 L 601,3 H 603 L 604,4 V 5 L 603,6 H 601 L 600,5 V 4 L 601,3 H 603 L 604,2 V 1 Z"
+     id="path102"
+     inkscape:label="8" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 608,5 L 609,6 H 611 L 612,5 V 1 L 611,0 H 609 L 608,1 V 3 L 609,4 H 611 L 612,3"
+     id="path100-3"
+     inkscape:label="9" />
+  <path
+     id="path104"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 617,5 H 618 V 6 H 617 Z M 617,2 H 618 V 3 H 617 Z"
+     inkscape:label=":" />
+  <path
+     id="path106"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 625,7 L 626,6 V 5 H 625 V 6 H 626 M 625,2 H 626 V 3 H 625 Z"
+     inkscape:label=";" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 636,2 L 632,4 L 636,6"
+     id="path107"
+     sodipodi:nodetypes="ccc"
+     inkscape:label="&lt;" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 648,2 L 652,4 L 648,6"
+     id="path107-5"
+     sodipodi:nodetypes="ccc"
+     inkscape:label="&gt;" />
+  <path
+     id="path109"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 644,5 H 640 M 640,3 H 644"
+     inkscape:label="=" />
+  <path
+     id="path111"
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 658,7 V 7 M 656,2 V 1 L 657,0 H 659 L 660,1 V 3 L 659,4 H 658 V 5"
+     inkscape:label="?" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 667,7 H 665 L 664,6 V 1 L 665,0 H 667 L 668,1 V 5 H 666 V 2 H 668"
+     id="path112"
+     sodipodi:nodetypes="ccccccccccc"
+     inkscape:label="@" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 675,0 L 674,1 V 3 L 673,4 H 672 H 673 L 674,5 V 7 L 675,8"
+     id="path113"
+     inkscape:label="{" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 688.5,0 L 689.5,1 V 3 L 690.5,4 H 691.5 H 690.5 L 689.5,5 V 7 L 688.5,8"
+     id="path113-3"
+     inkscape:label="}" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 682,0 V 8"
+     id="path114"
+     inkscape:label="|" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 696,5 V 4 L 697,3 L 699,5 L 700,4 V 3"
+     id="path115"
+     sodipodi:nodetypes="cccccc"
+     inkscape:label="~" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 705,1 L 707,3"
+     id="path11"
+     inkscape:label="`" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 712,6 H 716"
+     id="path15"
+     inkscape:label="_" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 724,0 H 722 V 7 H 724"
+     id="path19"
+     inkscape:label="[" />
+  <path
+     style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+     d="M 728,0 H 730 V 7 H 728"
+     id="path20"
+     inkscape:label="]" />
+</svg>
