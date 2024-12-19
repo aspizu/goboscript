@@ -195,6 +195,7 @@ impl Stmt {
             }
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
+            Stmt::ChangeVar { .. } => "data_changevariableby",
             Stmt::Show(name) => {
                 if s.is_name_list(name) {
                     "data_showlist"
@@ -760,6 +761,7 @@ where T: Write + Seek
                 type_,
                 is_local,
             } => self.set_var(s, d, this_id, name, value, type_, is_local),
+            Stmt::ChangeVar { name, value } => self.change_var(s, d, this_id, name, value),
             Stmt::Show(name) => self.show(s, d, name),
             Stmt::Hide(name) => self.hide(s, d, name),
             Stmt::AddToList { name, value } => self.add_to_list(s, d, this_id, name, value),

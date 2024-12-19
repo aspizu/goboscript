@@ -29,6 +29,10 @@ pub enum Stmt {
         type_: Type,
         is_local: bool,
     },
+    ChangeVar {
+        name: Name,
+        value: Rrc<Expr>,
+    },
     Show(Name),
     Hide(Name),
     AddToList {
