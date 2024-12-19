@@ -508,10 +508,9 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let data = match &list.cmd {
             Some(cmd) => {
-                eprintln!("{cmd:#?}");
                 let output = Command::new("/usr/bin/sh")
                     .arg("-c")
-                    .arg(format!("cd {};{}", input.display(), cmd.cmd))
+                    .arg(format!("set -e;cd {};{}", input.display(), cmd.cmd))
                     .output()?;
                 if !output.status.success() {
                     d.report(

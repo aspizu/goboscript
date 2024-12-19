@@ -133,6 +133,15 @@ where T: Write + Seek
         _span: &Span,
         opr: &Rrc<Expr>,
     ) -> io::Result<()> {
+        if matches!(op, UnOp::Length) {
+            if let Expr::Name(Name::Name { name, span: _ }) = &*opr.borrow() {
+                if s.sprite.lists.contains_key(name)
+                    || s.stage.is_some_and(|stage| stage.lists.contains_key(name))
+                {
+                    return self.list_length(this_id, parent_id, name);
+                }
+            }
+        }
         let opr_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
@@ -192,5 +201,11 @@ where T: Write + Seek
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
         self.expr(s, d, &index.borrow(), index_id, this_id)
+    }
+
+    fn list_length(&mut self, this_id: NodeID, parent_id: NodeID, name: &str) -> io::Result<()> {
+        self.begin_node(Node::new("data_lengthoflist", this_id).parent_id(parent_id))?;
+        self.single_field_id("LIST", name)?;
+        self.end_obj() // node
     }
 }
