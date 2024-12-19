@@ -9,6 +9,7 @@ proc main {
     var -= local_var;
     var *= local_var;
     var /= local_var;
+    var //= local_var;
     var %= local_var;
     var &= local_var;
 }

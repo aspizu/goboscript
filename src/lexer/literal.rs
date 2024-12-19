@@ -11,6 +11,10 @@ pub fn string(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(serde_json::from_str::<'_, String>(lex.slice()).unwrap())
 }
 
+pub fn cmd(lex: &mut Lexer<Token>) -> SmolStr {
+    SmolStr::from(&lex.slice()[3..lex.slice().len() - 3])
+}
+
 pub fn arg(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(&lex.slice()[1..])
 }

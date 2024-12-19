@@ -377,24 +377,16 @@ impl Block {
             ("glide_to_mouse_pointer", _) => Some(Self::GlideToMousePointer),
             ("point_in_direction", _) => Some(Self::PointInDirection),
             ("point_towards_mouse_pointer", _) => Some(Self::PointTowardsMousePointer),
-            ("point_towards_random_direction", _) => {
-                Some(Self::PointTowardsRandomDirection)
-            }
+            ("point_towards_random_direction", _) => Some(Self::PointTowardsRandomDirection),
             ("point_towards", _) => Some(Self::PointTowards),
             ("change_x", _) => Some(Self::ChangeX),
             ("set_x", _) => Some(Self::SetX),
             ("change_y", _) => Some(Self::ChangeY),
             ("set_y", _) => Some(Self::SetY),
             ("if_on_edge_bounce", _) => Some(Self::IfOnEdgeBounce),
-            ("set_rotation_style_left_right", _) => {
-                Some(Self::SetRotationStyleLeftRight)
-            }
-            ("set_rotation_style_do_not_rotate", _) => {
-                Some(Self::SetRotationStyleDoNotRotate)
-            }
-            ("set_rotation_style_all_around", _) => {
-                Some(Self::SetRotationStyleAllAround)
-            }
+            ("set_rotation_style_left_right", _) => Some(Self::SetRotationStyleLeftRight),
+            ("set_rotation_style_do_not_rotate", _) => Some(Self::SetRotationStyleDoNotRotate),
+            ("set_rotation_style_all_around", _) => Some(Self::SetRotationStyleAllAround),
             ("say", 2) => Some(Self::Say2),
             ("say", 1) => Some(Self::Say1),
             ("say", _) => Some(Self::Say2),
@@ -856,15 +848,9 @@ impl Block {
             Self::ChangeY => None,
             Self::SetY => None,
             Self::IfOnEdgeBounce => None,
-            Self::SetRotationStyleLeftRight => {
-                Some("{\"STYLE\": [\"left-right\", null]}")
-            }
-            Self::SetRotationStyleDoNotRotate => {
-                Some("{\"STYLE\": [\"don't rotate\", null]}")
-            }
-            Self::SetRotationStyleAllAround => {
-                Some("{\"STYLE\": [\"all around\", null]}")
-            }
+            Self::SetRotationStyleLeftRight => Some("{\"STYLE\": [\"left-right\", null]}"),
+            Self::SetRotationStyleDoNotRotate => Some("{\"STYLE\": [\"don't rotate\", null]}"),
+            Self::SetRotationStyleAllAround => Some("{\"STYLE\": [\"all around\", null]}"),
             Self::Say2 => None,
             Self::Say1 => None,
             Self::Think2 => None,
@@ -880,9 +866,7 @@ impl Block {
             Self::ChangeWhirlEffect => Some("{\"EFFECT\": [\"WHIRL\", null]}"),
             Self::ChangePixelateEffect => Some("{\"EFFECT\": [\"PIXELATE\", null]}"),
             Self::ChangeMosaicEffect => Some("{\"EFFECT\": [\"MOSAIC\", null]}"),
-            Self::ChangeBrightnessEffect => {
-                Some("{\"EFFECT\": [\"BRIGHTNESS\", null]}")
-            }
+            Self::ChangeBrightnessEffect => Some("{\"EFFECT\": [\"BRIGHTNESS\", null]}"),
             Self::ChangeGhostEffect => Some("{\"EFFECT\": [\"GHOST\", null]}"),
             Self::SetColorEffect => Some("{\"EFFECT\": [\"COLOR\", null]}"),
             Self::SetFisheyeEffect => Some("{\"EFFECT\": [\"FISHEYE\", null]}"),
@@ -921,12 +905,8 @@ impl Block {
             Self::Clone0 => None,
             Self::Clone1 => None,
             Self::Ask => None,
-            Self::SetDragModeDraggable => {
-                Some("{\"DRAG_MODE\": [\"draggable\", null]}")
-            }
-            Self::SetDragModeNotDraggable => {
-                Some("{\"DRAG_MODE\": [\"not draggable\", null]}")
-            }
+            Self::SetDragModeDraggable => Some("{\"DRAG_MODE\": [\"draggable\", null]}"),
+            Self::SetDragModeNotDraggable => Some("{\"DRAG_MODE\": [\"not draggable\", null]}"),
             Self::ResetTimer => None,
             Self::EraseAll => None,
             Self::Stamp => None,

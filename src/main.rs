@@ -1,37 +1,28 @@
-use std::{panic, process::ExitCode, time::Instant};
-
-use colored::Colorize;
-
 mod ast;
 mod blocks;
-mod cli;
 mod codegen;
 mod config;
-mod custom_toml_error;
 mod diagnostic;
 mod frontend;
 mod lexer;
+mod misc;
 mod parser;
-mod preproc;
-mod visitors;
+mod visitor;
+use std::{process::ExitCode, time::Instant};
+
+use colored::Colorize;
 
 fn main() -> ExitCode {
-    panic::set_hook(Box::new(|info| {
+    pretty_env_logger::init();
+    std::panic::set_hook(Box::new(|info| {
         eprintln!(
-            "{info}\n\n{} 💀\nor open an issue at {}",
-            "Let's pretend that didn't happen".bold(),
-            "https://github.com/aspizu/goboscript/issues".blue()
+            "{info}\n{}\nopen an issue at {}",
+            "-9999 aura 💀".red().bold(),
+            "https://github.com/aspizu/goboscript/issues".cyan()
         );
     }));
     let begin = Instant::now();
     let result = frontend::frontend();
-    if let Err(err) = &result {
-        eprintln!("{}{} {}", "error".bold().red(), ":".bold(), err.to_string().bold());
-    }
-    eprintln!("{} in {:?}", "finished".bold().blue(), begin.elapsed());
-    if result.is_ok() {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::FAILURE
-    }
+    eprintln!("{} in {:?}", "Finished".green().bold(), begin.elapsed());
+    result
 }

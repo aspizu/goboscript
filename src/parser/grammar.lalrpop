@@ -1,198 +1,266 @@
-use lalrpop_util::ParseError;
-use logos::Span;
 use smol_str::SmolStr;
-
-use crate::{
-    ast::*,
-    blocks::*,
-    diagnostic::{Diagnostic, DiagnosticKind},
-    lexer::token::Token,
-};
+use logos::Span;
+use lalrpop_util::ParseError;
+use crate::ast::*;
+use crate::blocks::*;
+use crate::diagnostic::*;
+use crate::lexer::token::*;
+use crate::lexer::adaptor::*;
+use crate::misc::*;
 
 grammar<'a>(sprite: &'a mut Sprite);
 
 pub Sprite = Declr*;
 
-Costume: () = {
-    <l:@L> <name:STR> <r:@R> <alias:(AS <STR>)?> => {
-        sprite.costumes.push(Costume::new(name, l..r, alias));
-    }
+#[inline]
+Type: Type = {
+    <l:@L> <n:NAME> <r:@R> => Type::Struct { name: n, span: l..r },
+    => Type::Value,
 }
+
+Arg: Arg = {
+    <t:Type> <l:@L> <n:NAME> <r:@R> => Arg { name: n, span: l..r, type_: t },
+}
+
+Stmts: Vec<Stmt> = "{" <Stmt*> "}";
 
 Declr: () = {
     COSTUMES Comma<Costume> ";" => {},
-    <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:SpannedComma<NAME>> <b:Stmts> => {
-        sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, b, w.is_none()));
+    <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
+        sprite.procs.insert(n.clone(), Proc::new(n, l..r, a, b, w.is_none()));
     },
-    <l:@L> ONFLAG <r:@R> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnFlag.to_event(l..r, b));
+    <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),
+    <l:@L> ONKEY <r:@R> <kl:@L> <key:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnKey { key, span: kl..kr }.to_event(l..r, b)),
+    <l:@L> ONCLICK <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClick.to_event(l..r, b)),
+    <l:@L> ONBACKDROP <r:@R> <kl:@L> <backdrop:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnBackdrop { backdrop, span: kl..kr }.to_event(l..r, b)),
+    <l:@L> ONLOUDNESS <r:@R> ">" <value:IfExpr> <b:Stmts> => sprite.events.push(EventKind::OnLoudnessGt { value }.to_event(l..r, b)),
+    <l:@L> ONTIMER <r:@R> ">" <value:IfExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
+    <l:@L> ONCLONE <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClone.to_event(l..r, b)),
+    STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:SpannedComma<NAME>> "}" => {
+        sprite.structs.insert(name.clone(), Struct::new(name, l..r, fields));
     },
-    <l:@L> ONKEY <r:@R> <kl:@L> <key:STR> <kr:@R> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnKey { key, span: kl..kr }.to_event(l..r, b));
+    LIST <t:Type> <l:@L> <name:NAME> <r:@R> ";" => {
+        sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: None });
     },
-    <l:@L> ONCLICK <r:@R> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnClick.to_event(l..r, b));
+    LIST <t:Type> <l:@L> <name:NAME> <r:@R> "=" <cl:@L> <cmd:CMD> <cr:@R> ";" => {
+        sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: Some(Cmd { cmd, span: cl..cr }) });
     },
-    <l:@L> ONBACKDROP <r:@R> <kl:@L> <backdrop:STR> <kr:@R> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnBackdrop { backdrop, span: kl..kr }.to_event(l..r, b));
-    },
-    <l:@L> ONLOUDNESS <r:@R> ">" <value:Expr> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnLoudnessGt { value }.to_event(l..r, b));
-    },
-    <l:@L> ONTIMER <r:@R> ">" <value:Expr> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnTimerGt { value }.to_event(l..r, b));
-    },
-    ON <l:@L> <k:STR> <r:@R> <b:Stmts> => {
-        sprite.on_messages.insert(k.clone(), OnMessage::new(k, l..r, b));
-    },
-    <l:@L> ONCLONE <r:@R> <b:Stmts> => {
-        sprite.events.push(EventDetail::OnClone.to_event(l..r, b));
-    },
-    ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:SpannedComma<NAME>> "}" => {
-        sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
-    }
 }
-
-Stmts: Stmts = "{" <Stmt*> "}";
 
 Stmt: Stmt = {
     <If>,
-    REPEAT <times:Expr> <body:Stmts> => Stmt::Repeat { times, body },
-    <l:@L> FOREVER <r:@R> <body:Stmts> => Stmt::Forever { body, span: l..r },
-    UNTIL <cond:Expr> <body:Stmts> => Stmt::Until { cond, body },
-    LOCAL <l:@L> <name:NAME> <r:@R> "=" <value:Expr> ";" => {
-        Stmt::SetVar { name: name.clone(), span: l..r, value, is_local: true }
-    },
-    <l:@L> <name:NAME> <r:@R> "=" <value:Expr> ";" => {
-        if !sprite.vars.contains_key(&name) {
-            sprite.vars.insert(name.clone(), Var::new(name.clone(), l..r, None));
-        }
-        Stmt::SetVar { name: name.clone(), span: l..r, value, is_local: false }
-    },
-    <l:@L> <name:NAME> <r:@R> "++" ";" => Stmt::ChangeVar { name, span: l..r, value: Expr::Int(1).into() },
-    <l:@L> <name:NAME> <r:@R> "--" ";" => Stmt::ChangeVar { name, span: l..r, value: Expr::Int(-1).into() },
-    <l:@L> <name:NAME> <r:@R> "+=" <value:Expr> ";" => Stmt::ChangeVar { name, span: l..r, value },
-    <l:@L> <name:NAME> <r:@R> "-=" <value:Expr> ";" => Stmt::ChangeVar { name,               span: l..r, value: BinOp::Sub .to_expr(Expr::Int(0).into(), value).into()},
-    <l:@L> <name:NAME> <r:@R> "*=" <value:Expr> ";" => Stmt::SetVar { name: name.clone(), span: l..r, value: BinOp::Mul .to_expr(Expr::Name { name: name.clone(), span: l..r }.into(), value).into(), is_local: false },
-    <l:@L> <name:NAME> <r:@R> "/=" <value:Expr> ";" => Stmt::SetVar { name: name.clone(), span: l..r, value: BinOp::Div .to_expr(Expr::Name { name: name.clone(), span: l..r }.into(), value).into(), is_local: false },
-    <l:@L> <name:NAME> <r:@R> "//=" <value:Expr> ";" => Stmt::SetVar { name: name.clone(), span: l..r, value: BinOp::FloorDiv .to_expr(Expr::Name { name: name.clone(), span: l..r }.into(), value).into(), is_local: false },
-    <l:@L> <name:NAME> <r:@R> "%=" <value:Expr> ";" => Stmt::SetVar { name: name.clone(), span: l..r, value: BinOp::Mod .to_expr(Expr::Name { name: name.clone(), span: l..r }.into(), value).into(), is_local: false },
-    <l:@L> <name:NAME> <r:@R> "&=" <value:Expr> ";" => Stmt::SetVar { name: name.clone(), span: l..r, value: BinOp::Join.to_expr(Expr::Name { name: name.clone(), span: l..r }.into(), value).into(), is_local: false },
-    SHOW <l:@L> <name:NAME> <r:@R> ";" => Stmt::Show { name, span: l..r },
-    HIDE <l:@L> <name:NAME> <r:@R> ";" => Stmt::Hide { name, span: l..r },
+    REPEAT <t:IfExpr> <b:Stmts> => Stmt::Repeat { times: t, body: b },
+    <l:@L> FOREVER <r:@R> <b:Stmts> => Stmt::Forever { body: b, span: l..r },
+    UNTIL <c:IfExpr> <b:Stmts> => Stmt::Until { cond: c, body: b },
+    <l:@L> <n:NAME> <r:@R> "+=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Add.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "-=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Sub.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "*=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mul.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "/=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Div.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "//=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "%=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mod.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "&=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Join.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
+    <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: false },
+    LOCAL <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: true },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, value: v, type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "+=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: BinOp::Add.to_expr(l..r, Expr::Name(Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }).into(), v).into(), type_: Type::Value, is_local: false },
+    SHOW <name:NameName> ";" => Stmt::Show (name),
+    HIDE <name:NameName> ";" => Stmt::Hide (name),
     <l:@L> SHOW <r:@R> ";" => Stmt::Block { block: Block::Show, span: l..r, args: vec![] },
     <l:@L> HIDE <r:@R> ";" => Stmt::Block { block: Block::Hide, span: l..r, args: vec![] },
-    ADD <value:Expr> TO <l:@L> <name:NAME> <r:@R> ";" => Stmt::ListAdd { name, span: l..r, value },
-    DELETE <l:@L> <name:NAME> <r:@R> ";" => {
-        if !sprite.lists.contains_key(&name) {
-            sprite.lists.insert(name.clone(), List::new(name.clone(), l..r, Default::default()));
-        }
-        Stmt::ListDeleteAll { name, span: l..r }
+    ADD <v:Expr> TO <n:NameName> ";" => Stmt::AddToList { name: n, value: v },
+    DELETE <name:NameName> ";" => Stmt::DeleteList (name),
+    DELETE <name:NameName> "[" <index:Expr> "]" ";" => Stmt::DeleteListIndex { name, index },
+    <name:NameName> "[" <index:Expr> "]" "=" <value:Expr> ";" => Stmt::SetListIndex { name, index, value },
+    <name:NameName> "[" <index:Expr> "]" "+=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <name:NameName> "[" <index:Expr> "]" "-=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <name:NameName> "[" <index:Expr> "]" "*=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mul.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <name:NameName> "[" <index:Expr> "]" "/=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Div.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <name:NameName> "[" <index:Expr> "]" "//=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::FloorDiv.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <name:NameName> "[" <index:Expr> "]" "%=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mod.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <name:NameName> "[" <index:Expr> "]" "&=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Join.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "=" <value:Expr> ";" => Stmt::SetListIndex { name: Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, index, value },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "+=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
     },
-    DELETE <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" ";" => Stmt::ListDelete { name, span: l..r, index },
-    INSERT <value:Expr> AT <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" ";" => Stmt::ListInsert { name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "=" <value:Expr> ";" => Stmt::ListSet { name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "+=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::Add,  name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "++" ";" => Stmt::ListChange { op: BinOp::Add,  name, span: l..r, index, value: Expr::Int(1).into() },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "--" ";" => Stmt::ListChange { op: BinOp::Add,  name, span: l..r, index, value: Expr::Int(-1).into() },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "-=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::Sub,  name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "*=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::Mul,  name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "/=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::Div,  name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "//=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::FloorDiv,  name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "%=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::Mod,  name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "&=" <value:Expr> ";" => Stmt::ListChange { op: BinOp::Join, name, span: l..r, index, value },
-    <l:@L> <name:NAME> <r:@R> <args:Exprs> ";" => match Block::from_shape(&name, args.len()) {
-        Some(block) => Stmt::Block { block, span: l..r, args },
-        None => Stmt::ProcCall { name, span: l..r, args },
-    }
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "-=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "*=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mul.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "/=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Div.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "//=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::FloorDiv.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "%=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mod.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "&=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Join.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    INSERT <value:Expr> AT <name:Name> "[" <index:Expr> "]" ";" => Stmt::InsertAtList { name, index, value },
+    <l:@L> <name:NAME> <r:@R> <a:Comma<Expr>> ";" => match Block::from_shape(&name, a.len()) {
+        Some(block) => Stmt::Block { block, span: l..r, args: a },
+        None => Stmt::ProcCall { name, span: l..r, args: a },
+    },
 }
 
 If: Stmt = {
-    IF <cond:Expr> <if_body:Stmts> => Stmt::Branch { cond, if_body, else_body: Default::default() },
-    IF <cond:Expr> <if_body:Stmts> ELSE <else_body:Stmts> => Stmt::Branch { cond, if_body, else_body },
-    IF <cond:Expr> <if_body:Stmts> <else_body:Elif> => Stmt::Branch { cond, if_body, else_body: vec![else_body] },
+    IF <cond:IfExpr> <if_body:Stmts> => Stmt::Branch { cond, if_body, else_body: Default::default() },
+    IF <cond:IfExpr> <if_body:Stmts> ELSE <else_body:Stmts> => Stmt::Branch { cond, if_body, else_body },
+    IF <cond:IfExpr> <if_body:Stmts> <else_body:Elif> => Stmt::Branch { cond, if_body, else_body: vec![else_body] },
 }
 
 Elif: Stmt = {
-    ELIF <cond:Expr> <body:Stmts> => Stmt::Branch { cond, if_body: body, else_body: Default::default() },
-    ELIF <cond:Expr> <body:Stmts> <else_body:Elif> => Stmt::Branch { cond, if_body: body, else_body: vec![else_body] },
-    ELIF <cond:Expr> <body:Stmts> ELSE <else_body:Stmts> => Stmt::Branch { cond, if_body: body, else_body },
+    ELIF <cond:IfExpr> <body:Stmts> => Stmt::Branch { cond, if_body: body, else_body: Default::default() },
+    ELIF <cond:IfExpr> <body:Stmts> <else_body:Elif> => Stmt::Branch { cond, if_body: body, else_body: vec![else_body] },
+    ELIF <cond:IfExpr> <body:Stmts> ELSE <else_body:Stmts> => Stmt::Branch { cond, if_body: body, else_body },
 }
+
+Costume: () = {
+    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
+        sprite.costumes.push(Costume::new(path, alias, l..r));
+    }
+}
+
+Exprs: Vec<Rrc<Expr>> = <Comma<Expr>>;
 
 Expr: Rrc<Expr> = {
     #[precedence(level="1")]
+    StructLiteral,
     Term,
     #[precedence(level="2")] #[assoc(side="right")]
-    "-"     <expr:Expr> => UnOp::Minus  .to_expr(expr).into(),
-    NOT     <expr:Expr> => UnOp::Not    .to_expr(expr).into(),
-    LENGTH  <expr:Expr> => UnOp::Length .to_expr(expr).into(),
-    ROUND   <expr:Expr> => UnOp::Round  .to_expr(expr).into(),
-    ABS     <expr:Expr> => UnOp::Abs    .to_expr(expr).into(),
-    FLOOR   <expr:Expr> => UnOp::Floor  .to_expr(expr).into(),
-    CEIL    <expr:Expr> => UnOp::Ceil   .to_expr(expr).into(),
-    SQRT    <expr:Expr> => UnOp::Sqrt   .to_expr(expr).into(),
-    SIN     <expr:Expr> => UnOp::Sin    .to_expr(expr).into(),
-    COS     <expr:Expr> => UnOp::Cos    .to_expr(expr).into(),
-    TAN     <expr:Expr> => UnOp::Tan    .to_expr(expr).into(),
-    ASIN    <expr:Expr> => UnOp::Asin   .to_expr(expr).into(),
-    ACOS    <expr:Expr> => UnOp::Acos   .to_expr(expr).into(),
-    ATAN    <expr:Expr> => UnOp::Atan   .to_expr(expr).into(),
-    LN      <expr:Expr> => UnOp::Ln     .to_expr(expr).into(),
-    LOG     <expr:Expr> => UnOp::Log    .to_expr(expr).into(),
-    ANTILN  <expr:Expr> => UnOp::AntiLn .to_expr(expr).into(),
-    ANTILOG <expr:Expr> => UnOp::AntiLog.to_expr(expr).into(),
+    <l:@L> "-"     <e:Expr> <r:@R> => UnOp::Minus  .to_expr(l..r, e).into(),
+    <l:@L> NOT     <e:Expr> <r:@R> => UnOp::Not    .to_expr(l..r, e).into(),
+    <l:@L> LENGTH  <e:Expr> <r:@R> => UnOp::Length .to_expr(l..r, e).into(),
+    <l:@L> ROUND   <e:Expr> <r:@R> => UnOp::Round  .to_expr(l..r, e).into(),
+    <l:@L> ABS     <e:Expr> <r:@R> => UnOp::Abs    .to_expr(l..r, e).into(),
+    <l:@L> FLOOR   <e:Expr> <r:@R> => UnOp::Floor  .to_expr(l..r, e).into(),
+    <l:@L> CEIL    <e:Expr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e).into(),
+    <l:@L> SQRT    <e:Expr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e).into(),
+    <l:@L> SIN     <e:Expr> <r:@R> => UnOp::Sin    .to_expr(l..r, e).into(),
+    <l:@L> COS     <e:Expr> <r:@R> => UnOp::Cos    .to_expr(l..r, e).into(),
+    <l:@L> TAN     <e:Expr> <r:@R> => UnOp::Tan    .to_expr(l..r, e).into(),
+    <l:@L> ASIN    <e:Expr> <r:@R> => UnOp::Asin   .to_expr(l..r, e).into(),
+    <l:@L> ACOS    <e:Expr> <r:@R> => UnOp::Acos   .to_expr(l..r, e).into(),
+    <l:@L> ATAN    <e:Expr> <r:@R> => UnOp::Atan   .to_expr(l..r, e).into(),
+    <l:@L> LN      <e:Expr> <r:@R> => UnOp::Ln     .to_expr(l..r, e).into(),
+    <l:@L> LOG     <e:Expr> <r:@R> => UnOp::Log    .to_expr(l..r, e).into(),
+    <l:@L> ANTILN  <e:Expr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e).into(),
+    <l:@L> ANTILOG <e:Expr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e).into(),
     #[precedence(level="3")] #[assoc(side="left")]
-    <lhs:Expr> "*"  <rhs:Expr> => BinOp::Mul.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "/"  <rhs:Expr> => BinOp::Div.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "//"  <rhs:Expr> => BinOp::FloorDiv.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "%"  <rhs:Expr> => BinOp::Mod.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "*" <rhs:Expr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "/" <rhs:Expr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "//"<rhs:Expr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "%" <rhs:Expr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs).into(),
     #[precedence(level="4")] #[assoc(side="left")]
-    <lhs:Expr> "+"  <rhs:Expr> => BinOp::Add.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "-"  <rhs:Expr> => BinOp::Sub.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "+" <rhs:Expr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "-" <rhs:Expr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs).into(),
     #[precedence(level="5")] #[assoc(side="left")]
-    <lhs:Expr> "<"  <rhs:Expr> => BinOp::Lt.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "<=" <rhs:Expr> => BinOp::Le.to_expr(lhs, rhs).into(),
-    <lhs:Expr> ">"  <rhs:Expr> => BinOp::Gt.to_expr(lhs, rhs).into(),
-    <lhs:Expr> ">=" <rhs:Expr> => BinOp::Ge.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "<" <rhs:Expr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs).into(),
     #[precedence(level="6")] #[assoc(side="right")]
-    <lhs:Expr> "&"  <rhs:Expr> => BinOp::Join.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs).into(),
     #[precedence(level="7")] #[assoc(side="left")]
-    <lhs:Expr>  IN  <rhs:Expr> => BinOp::In.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "==" <rhs:Expr> => BinOp::Eq.to_expr(lhs, rhs).into(),
-    <lhs:Expr> "!=" <rhs:Expr> => BinOp::Ne.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "=="<rhs:Expr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "!="<rhs:Expr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs).into(),
     #[precedence(level="8")] #[assoc(side="left")]
-    <lhs:Expr> AND  <rhs:Expr> => BinOp::And.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr> AND <rhs:Expr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs).into(),
     #[precedence(level="9")] #[assoc(side="left")]
-    <lhs:Expr>  OR  <rhs:Expr> => BinOp::Or.to_expr(lhs, rhs).into(),
+    <l:@L> <lhs:Expr> OR  <rhs:Expr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
+}
+
+IfExpr: Rrc<Expr> = {
+    #[precedence(level="1")]
+    Term,
+    #[precedence(level="2")] #[assoc(side="right")]
+    <l:@L> "-"     <e:IfExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e).into(),
+    <l:@L> NOT     <e:IfExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e).into(),
+    <l:@L> LENGTH  <e:IfExpr> <r:@R> => UnOp::Length .to_expr(l..r, e).into(),
+    <l:@L> ROUND   <e:IfExpr> <r:@R> => UnOp::Round  .to_expr(l..r, e).into(),
+    <l:@L> ABS     <e:IfExpr> <r:@R> => UnOp::Abs    .to_expr(l..r, e).into(),
+    <l:@L> FLOOR   <e:IfExpr> <r:@R> => UnOp::Floor  .to_expr(l..r, e).into(),
+    <l:@L> CEIL    <e:IfExpr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e).into(),
+    <l:@L> SQRT    <e:IfExpr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e).into(),
+    <l:@L> SIN     <e:IfExpr> <r:@R> => UnOp::Sin    .to_expr(l..r, e).into(),
+    <l:@L> COS     <e:IfExpr> <r:@R> => UnOp::Cos    .to_expr(l..r, e).into(),
+    <l:@L> TAN     <e:IfExpr> <r:@R> => UnOp::Tan    .to_expr(l..r, e).into(),
+    <l:@L> ASIN    <e:IfExpr> <r:@R> => UnOp::Asin   .to_expr(l..r, e).into(),
+    <l:@L> ACOS    <e:IfExpr> <r:@R> => UnOp::Acos   .to_expr(l..r, e).into(),
+    <l:@L> ATAN    <e:IfExpr> <r:@R> => UnOp::Atan   .to_expr(l..r, e).into(),
+    <l:@L> LN      <e:IfExpr> <r:@R> => UnOp::Ln     .to_expr(l..r, e).into(),
+    <l:@L> LOG     <e:IfExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e).into(),
+    <l:@L> ANTILN  <e:IfExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e).into(),
+    <l:@L> ANTILOG <e:IfExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e).into(),
+    #[precedence(level="3")] #[assoc(side="left")]
+    <l:@L> <lhs:IfExpr> "*" <rhs:IfExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "/" <rhs:IfExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "//"<rhs:IfExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "%" <rhs:IfExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs).into(),
+    #[precedence(level="4")] #[assoc(side="left")]
+    <l:@L> <lhs:IfExpr> "+" <rhs:IfExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "-" <rhs:IfExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs).into(),
+    #[precedence(level="5")] #[assoc(side="left")]
+    <l:@L> <lhs:IfExpr> "<" <rhs:IfExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "<="<rhs:IfExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> ">" <rhs:IfExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> ">="<rhs:IfExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs).into(),
+    #[precedence(level="6")] #[assoc(side="right")]
+    <l:@L> <lhs:IfExpr> "&" <rhs:IfExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs).into(),
+    #[precedence(level="7")] #[assoc(side="left")]
+    <l:@L> <lhs:IfExpr>  IN <rhs:IfExpr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "=="<rhs:IfExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:IfExpr> "!="<rhs:IfExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs).into(),
+    #[precedence(level="8")] #[assoc(side="left")]
+    <l:@L> <lhs:IfExpr> AND <rhs:IfExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs).into(),
+    #[precedence(level="9")] #[assoc(side="left")]
+    <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
 }
 
 Term: Rrc<Expr> = {
     "(" <Expr> ")",
-    TRUE          => Expr::Int(1).into(),
-    FALSE         => Expr::Int(0).into(),
-    <value:INT>   => Expr::Int(value).into(),
-    <value:HEX>   => Expr::Int(value).into(),
-    <value:OCT>   => Expr::Int(value).into(),
-    <value:BIN>   => Expr::Int(value).into(),
-    <value:FLOAT> => Expr::Float(value).into(),
-    <value:STR>   => Expr::Str(value).into(),
-    <l:@L> <name:NAME> <r:@R> => Expr::Name { name, span: l..r }.into(),
-    <l:@L> <name:ARG> <r:@R> => Expr::Arg { name, span: l..r }.into(),
+    <l:@L> TRUE      <r:@R> => Value::from(1).to_expr(l..r).into(),
+    <l:@L> FALSE     <r:@R> => Value::from(0).to_expr(l..r).into(),
+    <l:@L> <v:INT>   <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <l:@L> <v:HEX>   <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <l:@L> <v:OCT>   <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <l:@L> <v:BIN>   <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <l:@L> <v:FLOAT> <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <l:@L> <v:STR>   <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <l:@L> <n:NAME>  <r:@R> => Expr::Name (Name::Name { name: n, span: l..r }).into(),
+    <l:@L> <n:ARG>   <r:@R> => Expr::Arg (Name::Name { name: n, span: l..r }).into(),
     <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" =>? match Repr::from_shape(&name, args.len()) {
         Some(repr) => Ok(Expr::Repr { repr, span: l..r, args }.into()),
-        None => Err(ParseError::User { error: DiagnosticKind::UnrecognizedReporter(name).to_diagnostic(l..r) }),
+        None => Err(ParseError::User { error: Diagnostic { kind: DiagnosticKind::UnrecognizedReporter(name), span: l..r } }),
     },
-    <l:@L> <e:Term> "[" <i:Expr> "]" <r:@R> => BinOp::Of.to_expr(e, i).into(),
-    <nl:@L> <enum_name:NAME> <nr:@R> "." <vl:@L> <variant_name:NAME> <vr:@R> =>
-        Expr::EnumVariant {
-            enum_name,
-            enum_span: nl..nr,
-            variant_name,
-            variant_span: vl..vr
-        }.into(),
+    <l:@L> <e:Term> "[" <i:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, e, i).into(),
+    <v:Term> "." <l:@L> <n:NAME> <r:@R> => Expr::Dot { lhs: v, rhs: n, rhs_span: l..r }.into(),
 }
 
-Exprs: Vec<Rrc<Expr>> = <Comma<Expr>>;
+StructLiteral: Rrc<Expr> = <l:@L> <n:NAME> <r:@R> "{" <f:Comma<StructLiteralField>> "}" => Expr::StructLiteral { name: n, span: l..r, fields: f }.into();
+StructLiteralField: StructLiteralField = <l:@L> <n:NAME> <r:@R> "=" <v:Expr> => StructLiteralField { name: n, span: l..r, value: v };
+
+Name: Name = {
+    <NameName>,
+    <NameDotName>,
+}
+
+#[inline]
+NameName: Name = <l:@L> <n:NAME> <r:@R> => Name::Name { name: n, span: l..r };
+#[inline]
+NameDotName: Name = <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> => Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
 
 SpannedComma<T>: Vec<(T, Span)> = {
     <mut v:SpannedComma<T>> "," <l:@L> <e:T> <r:@R> => {
@@ -225,6 +293,7 @@ extern {
         HEX            => Token::Hex(<i64>),
         FLOAT          => Token::Float(<f64>),
         STR            => Token::Str(<SmolStr>),
+        CMD            => Token::Cmd(<SmolStr>),
         COSTUMES       => Token::Costumes,
         SOUNDS         => Token::Sounds,
         LOCAL          => Token::Local,
@@ -306,7 +375,9 @@ extern {
         OF             => Token::Of,
         AS             => Token::As,
         ENUM           => Token::Enum,
+        STRUCT         => Token::Struct,
         TRUE           => Token::True,
         FALSE          => Token::False,
+        LIST           => Token::List,
     }
 }

@@ -1,7 +1,7 @@
 use logos::Logos;
 use smol_str::SmolStr;
 
-use super::literal::{arg, bin, float, hex, int, mac, name, oct, string};
+use super::literal::{arg, bin, cmd, float, hex, int, mac, name, oct, string};
 
 #[derive(Debug, Logos, Clone)]
 #[logos(skip r"[ \t\n\f]+")]
@@ -25,6 +25,8 @@ pub enum Token {
     Float(f64),
     #[regex(r#""([^"\\]|\\["\\/bfnrt]|\\u[0-9a-zA-Z]{4})*""#, string)]
     Str(SmolStr),
+    #[regex(r#"```([^`]|\n)*```"#, cmd)]
+    Cmd(SmolStr),
     #[token("costumes")]
     Costumes,
     #[token("sounds")]
@@ -187,8 +189,12 @@ pub enum Token {
     As,
     #[token("enum")]
     Enum,
+    #[token("struct")]
+    Struct,
     #[token("true")]
     True,
     #[token("false")]
     False,
+    #[token("list")]
+    List,
 }

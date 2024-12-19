@@ -18,7 +18,7 @@ case $1 in
     done
     ;;
   "compile")
-    cargo run -- build -i playground
+    RUST_LOG=info cargo run -- build -i playground
     unzip -o playground/playground.sb3 project.json -d playground
     python -m json.tool --indent 4 playground/project.json playground/project.json
     node tools/sb3.js playground/project.json

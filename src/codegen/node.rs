@@ -1,8 +1,8 @@
-use std::io::{self, Seek, Write};
+use std::fmt::{self, Display};
 
-use super::{node_id::NodeID, Sb3};
+use super::node_id::NodeID;
 
-#[derive(Default, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Node {
     opcode: &'static str,
     this_id: NodeID,
@@ -24,65 +24,53 @@ impl Node {
         }
     }
 
-    pub fn next_id(mut self, next_id: NodeID) -> Self {
-        self.next_id = Some(next_id);
-        self
+    pub fn parent_id(self, parent_id: NodeID) -> Self {
+        Self {
+            parent_id: Some(parent_id),
+            ..self
+        }
     }
 
-    pub fn some_next_id(mut self, next_id: Option<NodeID>) -> Self {
-        self.next_id = next_id;
-        self
+    pub fn top_level(self, top_level: bool) -> Self {
+        Self { top_level, ..self }
     }
 
-    pub fn parent_id(mut self, parent_id: NodeID) -> Self {
-        self.parent_id = Some(parent_id);
-        self
+    pub fn shadow(self, shadow: bool) -> Self {
+        Self { shadow, ..self }
     }
 
-    pub fn some_parent_id(mut self, parent_id: Option<NodeID>) -> Self {
-        self.parent_id = parent_id;
-        self
+    pub fn some_next_id(self, next_id: Option<NodeID>) -> Self {
+        Self { next_id, ..self }
     }
 
-    pub fn top_level(mut self, top_level: bool) -> Self {
-        self.top_level = top_level;
-        self
-    }
-
-    pub fn shadow(mut self, shadow: bool) -> Self {
-        self.shadow = shadow;
-        self
+    pub fn some_parent_id(self, parent_id: Option<NodeID>) -> Self {
+        Self { parent_id, ..self }
     }
 }
 
-impl<T> Sb3<T>
-where T: Write + Seek
-{
-    pub fn node(&mut self, node: Node) -> io::Result<()> {
-        if self.blocks_comma {
-            self.write_all(b",")?;
-        }
-        self.blocks_comma = true;
-        write!(self, r#"{}:{{"opcode":"{}""#, node.this_id, node.opcode)?;
-        if let Some(next_id) = node.next_id {
-            write!(self, r#","next":{next_id}"#)?;
+impl Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{{", self.this_id)?;
+        write!(f, "\"opcode\":\"{}\"", self.opcode)?;
+        if let Some(next_id) = self.next_id {
+            write!(f, ",\"next\":{next_id}")?;
         } else {
-            write!(self, r#","next":null"#)?;
+            write!(f, ",\"next\":null")?;
         }
-        if let Some(parent_id) = node.parent_id {
-            write!(self, r#","parent":{parent_id}"#)?;
+        if let Some(parent_id) = self.parent_id {
+            write!(f, ",\"parent\":{parent_id}")?;
         } else {
-            write!(self, r#","parent":null"#)?;
+            write!(f, ",\"parent\":null")?;
         }
-        if node.top_level {
-            self.write_all(br#","topLevel":true"#)?;
+        if self.top_level {
+            write!(f, ",\"topLevel\":true")?;
         } else {
-            self.write_all(br#","topLevel":false"#)?;
+            write!(f, ",\"topLevel\":false")?;
         }
-        if node.shadow {
-            self.write_all(br#","shadow":true"#)?;
+        if self.shadow {
+            write!(f, ",\"shadow\":true")?;
         } else {
-            self.write_all(br#","shadow":false"#)?;
+            write!(f, ",\"shadow\":false")?;
         }
         Ok(())
     }

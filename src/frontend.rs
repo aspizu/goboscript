@@ -1,45 +1,57 @@
-pub mod build;
-pub mod new;
+mod build;
+mod cli;
+mod new;
 
-use anyhow::Result;
+use std::process::ExitCode;
+
 use clap::{CommandFactory, Parser};
+use cli::{Cli, Command};
+use colored::Colorize;
 
-use crate::{
-    cli::{Cli, Commands},
-    config::Config,
-};
-
-pub fn frontend() -> Result<()> {
+pub fn frontend() -> ExitCode {
     match Cli::parse().command {
-        Commands::Build { input, output, compact } => {
-            build::build(input, output, compact)
+        Command::Build { input, output } => {
+            let result = build::build(input, output);
+            match result {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(build::BuildError::AnyhowError(err)) => {
+                    eprintln!("{}: {:?}", "error".red().bold(), err);
+                    ExitCode::FAILURE
+                }
+                Err(build::BuildError::ProjectDiagnostics(diagnostics)) => {
+                    diagnostics.eprint();
+                    eprintln!();
+                    ExitCode::FAILURE
+                }
+            }
         }
-        Commands::New {
-            name,
-            frame_rate,
-            max_clones,
-            no_miscellaneous_limits,
-            no_sprite_fencing,
-            frame_interpolation,
-            high_quality_pen,
-            stage_width,
-            stage_height,
-        } => new::new(
-            name,
-            Config {
-                frame_rate,
-                max_clones,
-                no_miscellaneous_limits: no_miscellaneous_limits.then_some(true),
-                no_sprite_fencing: no_sprite_fencing.then_some(true),
-                frame_interpolation: frame_interpolation.then_some(true),
-                high_quality_pen: high_quality_pen.then_some(true),
-                stage_width,
-                stage_height,
-            },
-        ),
-        Commands::Completions { shell } => {
+        Command::Completions { shell } => {
             shell.generate(&mut Cli::command(), &mut std::io::stdout());
-            Ok(())
+            ExitCode::SUCCESS
         }
+        _ => panic!(),
+        // Command::New {
+        //     name,
+        //     frame_rate,
+        //     max_clones,
+        //     no_miscellaneous_limits,
+        //     no_sprite_fencing,
+        //     frame_interpolation,
+        //     high_quality_pen,
+        //     stage_width,
+        //     stage_height,
+        // } => new::new(
+        //     name,
+        //     Config {
+        //         frame_rate,
+        //         max_clones,
+        //         no_miscellaneous_limits: Some(no_miscellaneous_limits),
+        //         no_sprite_fencing: Some(no_sprite_fencing),
+        //         frame_interpolation: Some(frame_interpolation),
+        //         high_quality_pen: Some(high_quality_pen),
+        //         stage_width,
+        //         stage_height,
+        //     },
+        // ),
     }
 }

@@ -1,6 +1,4 @@
-use_small_heuristics    = "Max"
-max_width               = 88
-imports_granularity     = "Crate"
-group_imports           = "StdExternalCrate"
+imports_granularity = "Crate"
+group_imports = "StdExternalCrate"
 match_arm_leading_pipes = "Preserve"
-where_single_line       = true
+where_single_line = true
