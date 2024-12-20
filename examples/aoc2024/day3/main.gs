@@ -1,6 +1,6 @@
 costumes "blank.svg";
 
-list input = ``` cat input.txt ```;
+list input = file ```input.txt```;
 
 proc join_input {
     join_input = "";

@@ -1,6 +1,6 @@
 costumes "blank.svg";
 
-list input = ``` cat day1.txt ```;
+list input = file ```input.txt```;
 list list1;
 list list2;
 

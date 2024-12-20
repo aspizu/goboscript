@@ -14,7 +14,8 @@ use smol_str::SmolStr;
 use zip::{write::SimpleFileOptions, ZipWriter};
 
 use super::{
-    node::Node, node_id::NodeID, node_id_factory::NodeIDFactory, turbowarp_config::TurbowarpConfig,
+    cmd::cmd_to_list, node::Node, node_id::NodeID, node_id_factory::NodeIDFactory,
+    turbowarp_config::TurbowarpConfig,
 };
 use crate::{
     ast::*,
@@ -507,32 +508,11 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = match &list.cmd {
-            Some(cmd) => {
-                let output = Command::new("/usr/bin/sh")
-                    .arg("-c")
-                    .arg(format!("set -e;cd {};{}", input.display(), cmd.cmd))
-                    .output()?;
-                if !output.status.success() {
-                    d.report(
-                        DiagnosticKind::CommandFailed {
-                            stderr: output.stderr,
-                        },
-                        &cmd.span,
-                    );
-                }
-                output.status.success().then(|| {
-                    let mut lines = output
-                        .stdout
-                        .split(|&b| b == b'\n')
-                        .map(|line| str::from_utf8(line).unwrap_or_default().to_owned())
-                        .collect::<Vec<_>>();
-                    lines.pop();
-                    lines
-                })
-            }
-            None => None,
-        };
+        let data = list.cmd.as_ref().and_then(|cmd| {
+            cmd_to_list(cmd, input)
+                .map_err(|err| d.diagnostics.push(err))
+                .ok()
+        });
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;

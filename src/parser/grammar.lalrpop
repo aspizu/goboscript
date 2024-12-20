@@ -42,8 +42,8 @@ Declr: () = {
     LIST <t:Type> <l:@L> <name:NAME> <r:@R> ";" => {
         sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: None });
     },
-    LIST <t:Type> <l:@L> <name:NAME> <r:@R> "=" <cl:@L> <cmd:CMD> <cr:@R> ";" => {
-        sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: Some(Cmd { cmd, span: cl..cr }) });
+    LIST <t:Type> <l:@L> <name:NAME> <r:@R> "=" <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> ";" => {
+        sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: Some(Cmd { program: program.map(|program| Program { name: program, span: pl..pr }), cmd, span: cl..cr }) });
     },
 }
 
