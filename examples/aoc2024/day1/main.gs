@@ -9,16 +9,16 @@ proc split_once string, sep {
     split_once_left = "";
     until $string[i] == $sep or i > length($string) {
         split_once_left &= $string[i];
-        i += 1;
+        i++;
     }
-    i += 1;
+    i++;
     until $string[i] != $sep or i > length($string) {
-        i += 1;
+        i++;
     }
     split_once_right = "";
     until i > length($string) {
         split_once_right &= $string[i];
-        i += 1;
+        i++;
     }
 }
 
@@ -30,7 +30,7 @@ proc parse_input {
         split_once input[i], " ";
         add split_once_left to list1;
         add split_once_right to list2;
-        i += 1;
+        i++;
     }
 }
 
@@ -41,10 +41,10 @@ proc sort_list1 {
         local j = i;
         until j <= 1 or list1[j - 1] <= x {
             list1[j] = list1[j - 1];
-            j -= 1;
+            j--;
         }
         list1[j] = x;
-        i += 1;
+        i++;
     }
 }
 
@@ -55,10 +55,10 @@ proc sort_list2 {
         local j = i;
         until j <= 1 or list2[j - 1] <= x {
             list2[j] = list2[j - 1];
-            j -= 1;
+            j--;
         }
         list2[j] = x;
-        i += 1;
+        i++;
     }
 }
 
@@ -69,7 +69,7 @@ proc count_list2 value {
         if list2[i] == $value {
             count_list2 += 1;
         }
-        i += 1;
+        i++;
     }
 }
 
@@ -78,7 +78,7 @@ proc get_total_distance {
     local i = 1;
     repeat length(list1) {
         total_distance += abs(list1[i] - list2[i]);
-        i += 1;
+        i++;
     }
 }
 
@@ -88,7 +88,7 @@ proc get_similarity_score {
     repeat length(list1) {
         count_list2 list1[i];
         similarity_score += list1[i] * count_list2;
-        i += 1;
+        i++;
     }
 }
 
@@ -98,5 +98,5 @@ onflag {
     sort_list2;
     get_total_distance;
     get_similarity_score;
-    say "Total Distance: " & total_distance & ", Similarity Score: " & similarity_score;
+    say "Total Distance: " & total_distance & "\nSimilarity Score: " & similarity_score;
 }

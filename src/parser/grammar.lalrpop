@@ -64,7 +64,33 @@ Stmt: Stmt = {
     <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: false },
     LOCAL <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: true },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, value: v, type_: Type::Value, is_local: false },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "+=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: BinOp::Add.to_expr(l..r, Expr::Name(Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }).into(), v).into(), type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "+=" <v:Expr> ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: v },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "++" ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: Value::Int(1).to_expr(l..r).into() },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "--" ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: Value::Int(-1).to_expr(l..r).into() },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "-=" <v:Expr> ";" => {
+        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
+        Stmt::SetVar { name: name.clone(), value: BinOp::Sub.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+    },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "*=" <v:Expr> ";" => {
+        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
+        Stmt::SetVar { name: name.clone(), value: BinOp::Mul.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+    },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "/=" <v:Expr> ";" => {
+        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
+        Stmt::SetVar { name: name.clone(), value: BinOp::Div.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+    },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "//=" <v:Expr> ";" => {
+        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
+        Stmt::SetVar { name: name.clone(), value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+    },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "%=" <v:Expr> ";" => {
+        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
+        Stmt::SetVar { name: name.clone(), value: BinOp::Mod.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+    },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "&=" <v:Expr> ";" => {
+        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
+        Stmt::SetVar { name: name.clone(), value: BinOp::Join.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+    },
     SHOW <name:NameName> ";" => Stmt::Show (name),
     HIDE <name:NameName> ";" => Stmt::Hide (name),
     <l:@L> SHOW <r:@R> ";" => Stmt::Block { block: Block::Show, span: l..r, args: vec![] },
@@ -84,6 +110,14 @@ Stmt: Stmt = {
     <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "+=" <value:Expr> ";" => {
         let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
         Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "++" ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name.clone()).into(), index).into(), Value::Int(1).to_expr(name.span().clone()).into()).into() }
+    },
+    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "--" ";" => {
+        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name.clone()).into(), index).into(), Value::Int(1).to_expr(name.span().clone()).into()).into() }
     },
     <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "-=" <value:Expr> ";" => {
         let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
