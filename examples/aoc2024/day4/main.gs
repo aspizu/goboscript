@@ -2,13 +2,13 @@ costumes "blank.svg";
 
 list input = file ```input.txt```;
 
-proc count {
-    count = 0;
+proc count_xmas {
+    count_xmas = 0;
     local i = 1;
     repeat length(input) {
         local j = 1;
-        repeat length(input[0]) {
-            count += (
+        repeat length(input[1]) {
+            count_xmas += (
                     input[i][j    ] == "X"
                 and input[i][j + 1] == "M"
                 and input[i][j + 2] == "A"
@@ -62,48 +62,45 @@ proc count {
     }
 }
 
+proc count_x_mas {
+    count_x_mas = 0;
+    local i = 1;
+    repeat length(input) {
+        local j = 1;
+        repeat length(input[1]) {
+            local a = input[i    ][j    ];
+            local b = input[i    ][j + 2];
+            local c = input[i + 2][j    ];
+            local d = input[i + 2][j + 2];
+            count_x_mas += input[i + 1][j + 1] == "A" and ((
+                    a == "M"
+                and b == "S"
+                and c == "M"
+                and d == "S"
+            ) or (
+                    a == "S"
+                and b == "M"
+                and c == "S"
+                and d == "M"
+            ) or (
+                    a == "M"
+                and b == "M"
+                and c == "S"
+                and d == "S"
+            ) or (
+                    a == "S"
+                and b == "S"
+                and c == "M"
+                and d == "M"
+            ));
+            j++;
+        }
+        i++;
+    }
+}
+
 onflag {
-    # delete input;
-    # add "XMAS" to input;
-    # add "...." to input;
-    # add "...." to input;
-    # add "...." to input;
-
-    # add "SAMX" to input;
-    # add "...." to input;
-    # add "...." to input;
-    # add "...." to input;
-    
-    # add "X..." to input;
-    # add "M..." to input;
-    # add "A..." to input;
-    # add "S..." to input;
-
-    # add "S..." to input;
-    # add "A..." to input;
-    # add "M..." to input;
-    # add "X..." to input;
-
-    # add "X..." to input;
-    # add ".M.." to input;
-    # add "..A." to input;
-    # add "...S" to input;
-
-    # add "S..." to input;
-    # add ".A.." to input;
-    # add "..M." to input;
-    # add "...X" to input;
-
-    # add "...S" to input;
-    # add "..A." to input;
-    # add ".M.." to input;
-    # add "X..." to input;
-
-    # add "...X" to input;
-    # add "..M." to input;
-    # add ".A.." to input;
-    # add "S..." to input;
-
-    count;
-    say "Count: " & count;
+    count_xmas;
+    count_x_mas;
+    say "Count XMAS: " & count_xmas & "\nCount X-MAS: " & count_x_mas;
 }
