@@ -28,7 +28,7 @@ patterns:
   - name: keyword
     match: "\\b(costumes|sounds|global|list|nowarp|onflag|onkey|onbackdrop|onloudness|ontimer|on|onclone)\\b"
   - name: keyword.control
-    match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert|true|false|as)\\b"
+    match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert|true|false|as|struct)\\b"
   - name: keyword
     match: "\\b(error|warn|breakpoint|local|not|and|or|in|length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
   - name: support.function.builtin
@@ -38,7 +38,7 @@ patterns:
   - name: punctuation
     match: ",|;"
   - name: keyword.operator
-    match: "[+\\-*/%<>=&]"
+    match: "[+\\-*/%<>=&!]"
   - name: variable.parameter
     match: "\\$[_a-zA-Z0-9]+"
   - name: variable.parameter

@@ -1,94 +1,206 @@
 # Lists
 
-The same rules apply to lists as they do to variables. You can declare a list for all sprites in `stage.gs`, for this sprite only in the sprite's `.gs` file. There are no
-local lists.
+The same rules apply for lists as for variables regarding **for all sprites** and
+**for this sprite only**.
 
-## Delete all items from a list
-
-This statement is considered the declaration of a list.
+## Declaration
 
 ```goboscript
-delete list;
+list list_name;
 ```
-
-## Delete item at index from a list
 
 ```goboscript
-delete list[index];
+list type_name list_name;
 ```
 
-### Delete last item of list
+## Operations
+
+### Add item to list
 
 ```goboscript
-delete list["last"];
+add value to list_name;
 ```
 
-## Add item to list
+### Delete item from list at index
 
 ```goboscript
-add item to list;
+delete list_name[index];
 ```
 
-## Insert item at index in list
+### Delete all items from list
 
 ```goboscript
-insert item at list[index];
+delete list_name;
 ```
 
-## Replace item at index in list
+### Insert item at index in list
 
 ```goboscript
-list[index] = item;
+insert value at list_name[index];
 ```
 
-## Apply operator to item at index in list
+### Replace item at index in list
 
 ```goboscript
-list[index] += 1;
-list[index] -= 1;
-list[index] *= 1;
-list[index] /= 1;
-list[index] // = 1; # Floor Division
-list[index] %= 1;
-list[index] &= "suffix";
+list_name[index] = value;
 ```
 
-## Get item at index from list
+### Get item at index in list
 
 ```goboscript
-say list[index];
+value = list_name[index];
 ```
 
-### Get last item of list
-
-```goboscript
-say list["last"];
-```
-
-## Get length of list
-
-```goboscript
-say length list;
-```
-
-## Get index of item in list
+### Get index of item in list
 
 TODO
 
-## Check if list contains item
+### Get length of list
 
 ```goboscript
-say item in list;
+len = length list_name;
 ```
 
-## Show list monitor
+### Check if item is in list
 
 ```goboscript
-show list;
+if value in list_name {
+    ...
+}
 ```
 
-## Hide list monitor
+### Show/Hide List Monitor
 
 ```goboscript
-hide list;
+show list_name;
+```
+
+```goboscript
+hide list_name;
+```
+
+### Get random/last item in list
+
+```goboscript
+value = list_name["random"];
+```
+
+```goboscript
+value = list_name["last"];
+```
+
+## Compound Assignment
+
+| Operator               | Implementation                                 |
+|------------------------|------------------------------------------------|
+| `list_name[index]++;`  | ![](../assets/list_increment.png){width="400"} |
+| `list_name[index]--;`  | ![](../assets/list_decrement.png){width="400"} |
+| `list_name[index] += y;` | ![](../assets/list_add.png){width="400"} |
+| `list_name[index] -= y;` | ![](../assets/list_subtract.png){width="400"} |
+| `list_name[index] *= y;` | ![](../assets/list_multiply.png){width="400"} |
+| `list_name[index] /= y;` | ![](../assets/list_divide.png){width="400"} |
+| `list_name[index] //= y;` | ![](../assets/list_floor_divide.png){width="400"} |
+| `list_name[index] %= y;` | ![](../assets/list_mod.png){width="400"} |
+| `list_name[index] &= y;` | ![](../assets/list_join.png){width="400"} |
+
+## List Data
+
+Initial data for lists can be stored inside the project. This behaves the same way
+loading text files into lists works in the Scratch editor. In addition to loading text 
+files, you can also load data from various scripts and commands. This is useful for
+creating look-up tables or loading data from images or videos.
+
+
+### Loading data from text files
+
+Each line in the text file will be added to the list as a separate item.
+
+```goboscript
+list list_name = file ```path/to/file.txt```;
+```
+
+### Loading data from bash script
+
+The bash script enclosed in triple-backticks will be executed, and the standard output
+will be stored in the list, one item per line. The working directory will be set to the 
+project directory.
+
+```goboscript
+list list_name = ```cat path/to/file.txt```;
+```
+
+### Loading data from any other program
+
+The name of the program may be specified before the triple-backticks. This program will
+be executed with the standard input set to the script enclosed in the triple-backticks.
+The standard output will be stored in the list, one item per line. The working directory
+will be set to the project directory.
+
+Any program that accepts input from stdin and outputs to stdout can be used.
+
+For example, to load data from a python script:
+
+```goboscript
+list list_name = python ```
+import random
+for _ in range(5):
+    print(random.randint(-5, 5))
+```;
+```
+
+!!! tip
+    If your script takes a long time to run, you can use bash to cache the output of the
+    script.
+
+    Let's say that your script converts a file `DEPENDENCY.txt`. You wish to only
+    re-run the script if the file `DEPENDENCY.txt` has changed. We can use stat
+    to get the last modification time of the file.
+
+    ```bash
+    TIME=$(stat -c %Y DEPENDENCY.txt)
+    if [ $TIME -eq $(< DEPENDENCY.time)]; then
+        cat DEPENDENCY.cached
+        exit
+    fi
+    echo $TIME > DEPENDENCY.time
+    python convert_file.py DEPENDENCY.txt | tee DEPENDENCY.cached
+    ```
+
+### Struct List Data
+
+If the list's type is a struct, each field will be filled with the value of the
+corresponding line in the data.
+
+Example:
+
+```goboscript
+struct vec3d { x, y, z };
+list vec3d points = file ```file.txt```;
+```
+
+contents of `file.txt`:
+```
+10
+20
+30
+40
+50
+60
+```
+
+resulting in the following list:
+
+```goboscript
+[
+    vec3d {
+        x: 10,
+        y: 20,
+        z: 30
+    },
+    vec3d {
+        x: 40,
+        y: 50,
+        z: 60
+    }
+]
 ```

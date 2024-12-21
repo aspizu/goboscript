@@ -8,13 +8,17 @@ repeat n {
 }
 ```
 
+![](../assets/repeat.png){width="100"}
+
 ## repeat until condition
 
 ```goboscript
-until condition {
+until condition == true {
     # code
 }
 ```
+
+![](../assets/until.png){width="200"}
 
 ## forever loop
 
@@ -24,6 +28,8 @@ forever {
 }
 ```
 
+![](../assets/forever.png){width="100"}
+
 ## if
 
 ```goboscript
@@ -31,6 +37,8 @@ if condition {
     # code
 }
 ```
+
+![](../assets/if.png){width="200"}
 
 ## if else
 
@@ -43,6 +51,8 @@ else {
 }
 ```
 
+![](../assets/ifelse.png){width="200"}
+
 ## if elif
 
 ```goboscript
@@ -54,16 +64,4 @@ elif condition {
 }
 ```
 
-### if elif else
-
-```goboscript
-if condition {
-    # code
-}
-elif condition {
-    # code
-}
-else {
-    # code
-}
-```
+![](../assets/ifelif.png){width="200"}

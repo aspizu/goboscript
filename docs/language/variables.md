@@ -1,29 +1,33 @@
 # Variables
 
-## Variables for all sprites
+## Declaration/Assignment
 
-To declare a variable for all sprites, assign to it in `stage.gs`.
-
-```goboscript
-onflag {
-    pi = 3.14159265359;
-}
-```
-
-## Variables for this sprite only
-
-To declare a variable for this sprite only, assign to it in the sprite's `.gs` file.
+The first assignment to a variable is considered its declaration.
 
 ```goboscript
-onflag {
-    x = 0;
-}
+variable_name = value;
 ```
 
-## Local variables (for a procedure only)
+```goboscript
+type_name variable_name = value;
+```
 
-Local variables is a feature of goboscript, which lets you define a variable which can
-only be used inside a procedure and is not accessible outside of it.
+### Variables for all sprites
+
+If a variable is assigned to in `stage.gs`, it will be declared as **for all sprites**.
+
+### Variables for this sprite only
+
+Variables are by-default declared as **for this sprite only**. If you want to declare a
+variable **for all sprites**, assign to it in `stage.gs`.
+
+## Local Variables
+
+Local variables are accessible only within the procedure they are declared in.
+
+The first assignment with the `local` keyword will declare a local variable, all further
+uses of the variable will refer to the local variable. If a normal variable with the same
+name exists, it will be shadowed.
 
 ```goboscript
 proc my_procedure {
@@ -32,35 +36,32 @@ proc my_procedure {
 }
 ```
 
-In the compiled Scratch project, the variable `x` will be named as `my_procedure.x`.
+In the compiled Scratch project, the variable `x` will be named as `my_procedure:x`.
 
 !!! note
-    Local variables will have unexpected behavior if the procedure is recursive.
+    Local variables will have undefined behavior if the procedure is recursive, or
+    is NOT a run-without-screen-refresh procedure.
 
-## Set variable
+## Compound Assignment
+
+| Operator   | Implementation                                       |
+|------------|------------------------------------------------------|
+| `x++;`     | ![](../assets/increment.png){width="150"}            |
+| `x--;`     | ![](../assets/decrement.png){width="150"}            |
+| `x += y;`  | ![](../assets/assign_add.png){width="150"}           |
+| `x -= y;`  | ![](../assets/assign_subtract.png){width="150"}      |
+| `x *= y;`  | ![](../assets/assign_multiply.png){width="150"}      |
+| `x /= y;`  | ![](../assets/assign_divide.png){width="150"}        |
+| `x //= y;` | ![](../assets/assign_floor_divide.png){width="150"}  |
+| `x %= y;`  | ![](../assets/assign_mod.png){width="150"}           |
+| `x &= y;`  | ![](../assets/assign_join.png){width="150"}          |
+
+## Show/Hide Variable Monitor
 
 ```goboscript
-x = 10;
+show variable_name;
 ```
-
-## Change variable
 
 ```goboscript
-x += 1;
+hide variable_name;
 ```
-
-## Change variables using a operator
-
-```goboscript
-x += 1;
-x -= 1;
-x *= 2;
-x /= 2;
-x //= 2; # Floor Division
-x %= 2;
-x &= "str";
-x++; # Increment by 1
-x--; # Decrement by 1
-```
-
-The `-=` statement is implemented using the change variable block.

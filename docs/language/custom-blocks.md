@@ -3,7 +3,7 @@
 Custom blocks are called procedures.
 
 ```goboscript
-proc my_procedure arg1, arg2 {
+proc my_procedure arg1, arg2, type_name arg_name {
     # code
 }
 ```
