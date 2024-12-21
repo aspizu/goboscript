@@ -144,11 +144,15 @@ Stmt: Stmt = {
         Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Join.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
     },
     INSERT <value:Expr> AT <name:Name> "[" <index:Expr> "]" ";" => Stmt::InsertAtList { name, index, value },
-    <l:@L> <name:NAME> <r:@R> <a:Comma<Expr>> ";" => match Block::from_shape(&name, a.len()) {
+    <l:@L> <name:NAME> <r:@R> <a:Comma<Kwarg>> ";" => match Block::from_shape(&name, a.len()) {
         Some(block) => Stmt::Block { block, span: l..r, args: a },
         None => Stmt::ProcCall { name, span: l..r, args: a },
     },
 }
+
+Kwarg: Kwarg = <n:KwargName?> <v:Expr> => Kwarg { name: n, value: v.into() };
+
+KwargName: (SmolStr, Span) = <l:@L> <n:NAME> <r:@R> ":" => (n, l..r);
 
 If: Stmt = {
     IF <cond:IfExpr> <if_body:Stmts> => Stmt::Branch { cond, if_body, else_body: Default::default() },
@@ -286,7 +290,7 @@ Term: Rrc<Expr> = {
 }
 
 StructLiteral: Rrc<Expr> = <l:@L> <n:NAME> <r:@R> "{" <f:Comma<StructLiteralField>> "}" => Expr::StructLiteral { name: n, span: l..r, fields: f }.into();
-StructLiteralField: StructLiteralField = <l:@L> <n:NAME> <r:@R> "=" <v:Expr> => StructLiteralField { name: n, span: l..r, value: v };
+StructLiteralField: StructLiteralField = <l:@L> <n:NAME> <r:@R> ":" <v:Expr> => StructLiteralField { name: n, span: l..r, value: v };
 
 Name: Name = {
     <NameName>,
@@ -385,6 +389,7 @@ extern {
         "//"            => Token::FloorDiv,
         "%"            => Token::Percent,
         ";"            => Token::Semicolon,
+        ":"            => Token::Colon,
         LENGTH         => Token::Length,
         ROUND          => Token::Round,
         ABS            => Token::Abs,

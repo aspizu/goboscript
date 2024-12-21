@@ -9,7 +9,7 @@ use super::{
     sb3::{qualify_struct_var_name, QualifiedName, Sb3, D, S},
 };
 use crate::{
-    ast::{Expr, Name, Stmt, Type},
+    ast::{Expr, Kwarg, Name, Stmt, Type},
     blocks::Block,
     codegen::mutation::Mutation,
     diagnostic::DiagnosticKind,
@@ -298,7 +298,7 @@ where T: Write + Seek
         this_id: NodeID,
         block: &Block,
         span: &Span,
-        args: &Vec<Rrc<Expr>>,
+        args: &Vec<Kwarg>,
     ) -> io::Result<()> {
         if block.args().len() != args.len() {
             d.report(
@@ -316,7 +316,7 @@ where T: Write + Seek
         let mut menu_is_default = menu_id.is_some();
         for ((&arg_name, arg_value), &arg_id) in block.args().iter().zip(args).zip(&arg_ids) {
             if block.menu().is_some_and(|menu| menu.input == arg_name) {
-                if let Expr::Value { value, span: _ } = &*arg_value.borrow() {
+                if let Expr::Value { value, span: _ } = &*arg_value.value.borrow() {
                     menu_value = Some(value.clone());
                     continue;
                 } else {
@@ -325,13 +325,13 @@ where T: Write + Seek
                         s,
                         d,
                         arg_name,
-                        &arg_value.borrow(),
+                        &arg_value.value.borrow(),
                         arg_id,
                         menu_id.unwrap(),
                     )?;
                 }
             } else {
-                self.input(s, d, arg_name, &arg_value.borrow(), arg_id)?;
+                self.input(s, d, arg_name, &arg_value.value.borrow(), arg_id)?;
             }
         }
         if menu_is_default {
@@ -348,8 +348,8 @@ where T: Write + Seek
             write!(self, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
-        for (arg, arg_id) in args.iter().zip(arg_ids) {
-            self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+        for (kwarg, arg_id) in args.iter().zip(arg_ids) {
+            self.expr(s, d, &kwarg.value.borrow(), arg_id, this_id)?;
         }
         if let Some(menu) = block.menu() {
             self.begin_node(
@@ -374,7 +374,7 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &Vec<Rrc<Expr>>,
+        args: &Vec<Kwarg>,
     ) -> io::Result<()> {
         let Some(proc) = s.sprite.procs.get(name) else {
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
@@ -392,13 +392,13 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
         let mut qualified_arg_values: Vec<Rrc<Expr>> = Vec::new();
         self.begin_inputs()?;
-        for (arg, arg_value) in proc.args.iter().zip(args) {
+        for (arg, kwarg) in proc.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, &arg_value.borrow(), arg_id)?;
+                    self.input(s, d, &arg.name, &kwarg.value.borrow(), arg_id)?;
                     qualified_args.push((arg.name.clone(), arg_id));
-                    qualified_arg_values.push(arg_value.clone());
+                    qualified_arg_values.push(kwarg.value.clone());
                 }
                 Type::Struct {
                     name: type_name,
@@ -407,7 +407,7 @@ where T: Write + Seek
                     let Some(struct_) = s.sprite.structs.get(type_name) else {
                         continue;
                     };
-                    let arg_value = &*arg_value.borrow();
+                    let arg_value = &*kwarg.value.borrow();
                     let struct_literal_fields = match arg_value {
                         Expr::StructLiteral {
                             name: struct_literal_name,

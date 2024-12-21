@@ -27,7 +27,7 @@ proc parse_input {
     delete list2;
     local i = 1;
     repeat length(input) {
-        split_once input[i], " ";
+        split_once input[i], sep: " ";
         add split_once_left to list1;
         add split_once_right to list2;
         i++;

@@ -1,7 +1,7 @@
 use logos::Span;
 use smol_str::SmolStr;
 
-use super::{expr::Expr, type_::Type, Name};
+use super::{expr::Expr, type_::Type, Kwarg, Name};
 use crate::{blocks::Block, misc::Rrc};
 
 #[derive(Debug)]
@@ -57,12 +57,12 @@ pub enum Stmt {
     Block {
         block: Block,
         span: Span,
-        args: Vec<Rrc<Expr>>,
+        args: Vec<Kwarg>,
     },
     ProcCall {
         name: SmolStr,
         span: Span,
-        args: Vec<Rrc<Expr>>,
+        args: Vec<Kwarg>,
     },
 }
 

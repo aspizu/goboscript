@@ -40,14 +40,14 @@ proc parse_input {
     delete pages;
     local i = 1;
     repeat length(input) {
-        strfindchar input[i], "|";
+        strfindchar input[i], char: "|";
         if strfindchar > 0 {
             strsplitchar input[i], "|";
-            add Rule { left = strsplitchar[1], right = strsplitchar[2] } to rules;
+            add Rule { left: strsplitchar[1], right: strsplitchar[2] } to rules;
         } else {
-            strfindchar input[i], ",";
+            strfindchar input[i], char: ",";
             if strfindchar > 0 {
-                strsplitchar input[i], ",";
+                strsplitchar input[i], char: ",";
                 add length(strsplitchar) to pages;
                 local j = 1;
                 repeat length(strsplitchar) {
@@ -63,8 +63,8 @@ proc parse_input {
 proc page_find_idx page_ptr, value {
     page_find_idx = 0;
     local i = $page_ptr + 1;
-    repeat length(pages[$page_ptr]) {
-        if pages[$page_ptr] == $value {
+    repeat pages[$page_ptr] {
+        if pages[i] == $value {
             page_find_idx = i - $page_ptr;
             stop_this_script;
         }
@@ -108,9 +108,38 @@ proc main {
             middle_number i;
             sum += middle_number;
         }
-        i += pages[i];
+        i += pages[i] + 1;
     }
-    say "Result: " & sum;
+    local result = 0;
+    i = 1;
+    until i > length(pages) {
+        rules_in_page i;
+        if rule_in_page == false {
+            until rule_in_page == true {
+                local j = 1;
+                until j > length(rules) {
+                    page_find_idx i, rules[j].left;
+                    local left_idx = page_find_idx;
+                    page_find_idx i, rules[j].right;
+                    local right_idx = page_find_idx;
+                    if left_idx > 0 and right_idx > 0 {
+                        if left_idx > right_idx {
+                            local temp = pages[i + left_idx];
+                            pages[i + left_idx] = pages[i + right_idx];
+                            pages[i + right_idx] = temp;
+                            j = length(rules);
+                        }
+                    }
+                    j++;
+                }
+                rules_in_page i;
+            }
+            middle_number i;
+            result += middle_number;
+        }
+        i += pages[i] + 1;
+    }
+    say "Result 1: " & sum & "\nResult 2: " & result;
 }
 
 onflag {

@@ -207,8 +207,8 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for arg in args {
-                visit_expr(arg, s, d);
+            for kwarg in args {
+                visit_expr(&mut kwarg.value, s, d);
             }
         }
         Stmt::ProcCall {
@@ -216,8 +216,8 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for arg in args {
-                visit_expr(arg, s, d);
+            for kwarg in args {
+                visit_expr(&mut kwarg.value, s, d);
             }
         }
     }
