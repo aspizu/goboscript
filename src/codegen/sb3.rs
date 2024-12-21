@@ -69,14 +69,14 @@ impl<'a> S<'a> {
             .or_else(|| self.stage.and_then(|stage| stage.vars.get(name)))
     }
 
-    fn get_list(&self, name: &str) -> Option<&List> {
+    pub fn get_list(&self, name: &str) -> Option<&List> {
         self.sprite
             .lists
             .get(name)
             .or_else(|| self.stage.and_then(|stage| stage.lists.get(name)))
     }
 
-    fn get_struct(&self, name: &str) -> Option<&Struct> {
+    pub fn get_struct(&self, name: &str) -> Option<&Struct> {
         self.sprite
             .structs
             .get(name)

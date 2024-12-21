@@ -134,11 +134,11 @@ where T: Write + Seek
         opr: &Rrc<Expr>,
     ) -> io::Result<()> {
         if matches!(op, UnOp::Length) {
-            if let Expr::Name(Name::Name { name, span: _ }) = &*opr.borrow() {
+            if let Expr::Name(Name::Name { name, .. }) = &*opr.borrow() {
                 if s.sprite.lists.contains_key(name)
                     || s.stage.is_some_and(|stage| stage.lists.contains_key(name))
                 {
-                    return self.list_length(this_id, parent_id, name);
+                    return self.list_length(s, this_id, parent_id, name);
                 }
             }
         }
@@ -203,9 +203,22 @@ where T: Write + Seek
         self.expr(s, d, &index.borrow(), index_id, this_id)
     }
 
-    fn list_length(&mut self, this_id: NodeID, parent_id: NodeID, name: &str) -> io::Result<()> {
+    fn list_length(
+        &mut self,
+        s: S,
+        this_id: NodeID,
+        parent_id: NodeID,
+        name: &str,
+    ) -> io::Result<()> {
         self.begin_node(Node::new("data_lengthoflist", this_id).parent_id(parent_id))?;
-        self.single_field_id("LIST", name)?;
+        let list = s.get_list(name).unwrap();
+        if let Some((type_name, _type_span)) = list.type_.struct_() {
+            let struct_ = s.get_struct(type_name).unwrap();
+            let qualified_name = qualify_struct_var_name(&struct_.fields[0].name, name);
+            self.single_field_id("LIST", &qualified_name)?;
+        } else {
+            self.single_field_id("LIST", name)?;
+        }
         self.end_obj() // node
     }
 }
