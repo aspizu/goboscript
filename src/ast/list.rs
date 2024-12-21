@@ -13,6 +13,13 @@ pub struct List {
 
 #[derive(Debug)]
 pub struct Cmd {
+    pub program: Option<Program>,
     pub cmd: SmolStr,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub struct Program {
+    pub name: SmolStr,
     pub span: Span,
 }

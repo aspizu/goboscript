@@ -173,6 +173,9 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
         } => {
             visit_expr(value, s, d);
         }
+        Stmt::ChangeVar { name: _, value } => {
+            visit_expr(value, s, d);
+        }
         Stmt::Show(_) => {}
         Stmt::Hide(_) => {}
         Stmt::AddToList { name: _, value } => {

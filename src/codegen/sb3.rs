@@ -14,7 +14,8 @@ use smol_str::SmolStr;
 use zip::{write::SimpleFileOptions, ZipWriter};
 
 use super::{
-    node::Node, node_id::NodeID, node_id_factory::NodeIDFactory, turbowarp_config::TurbowarpConfig,
+    cmd::cmd_to_list, node::Node, node_id::NodeID, node_id_factory::NodeIDFactory,
+    turbowarp_config::TurbowarpConfig,
 };
 use crate::{
     ast::*,
@@ -195,6 +196,7 @@ impl Stmt {
             }
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
+            Stmt::ChangeVar { .. } => "data_changevariableby",
             Stmt::Show(name) => {
                 if s.is_name_list(name) {
                     "data_showlist"
@@ -506,32 +508,11 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = match &list.cmd {
-            Some(cmd) => {
-                let output = Command::new("/usr/bin/sh")
-                    .arg("-c")
-                    .arg(format!("set -e;cd {};{}", input.display(), cmd.cmd))
-                    .output()?;
-                if !output.status.success() {
-                    d.report(
-                        DiagnosticKind::CommandFailed {
-                            stderr: output.stderr,
-                        },
-                        &cmd.span,
-                    );
-                }
-                output.status.success().then(|| {
-                    let mut lines = output
-                        .stdout
-                        .split(|&b| b == b'\n')
-                        .map(|line| str::from_utf8(line).unwrap_or_default().to_owned())
-                        .collect::<Vec<_>>();
-                    lines.pop();
-                    lines
-                })
-            }
-            None => None,
-        };
+        let data = list.cmd.as_ref().and_then(|cmd| {
+            cmd_to_list(cmd, input)
+                .map_err(|err| d.diagnostics.push(err))
+                .ok()
+        });
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;
@@ -760,6 +741,7 @@ where T: Write + Seek
                 type_,
                 is_local,
             } => self.set_var(s, d, this_id, name, value, type_, is_local),
+            Stmt::ChangeVar { name, value } => self.change_var(s, d, this_id, name, value),
             Stmt::Show(name) => self.show(s, d, name),
             Stmt::Hide(name) => self.hide(s, d, name),
             Stmt::AddToList { name, value } => self.add_to_list(s, d, this_id, name, value),

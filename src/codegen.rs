@@ -1,3 +1,4 @@
+mod cmd;
 mod event;
 mod expr;
 mod input;
