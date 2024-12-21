@@ -1,6 +1,6 @@
 # Syntax
 
-goboscript has a syntax inspired from languages such as C, Rust, and Python.
+goboscript has a syntax inspired by languages such as C, Rust, and Python.
 
 ## Comments
 
@@ -10,7 +10,7 @@ goboscript has a syntax inspired from languages such as C, Rust, and Python.
 
 ## Whitespace & Indentation
 
-Whitespace & indentation has no semantic significance.
+Whitespace & indentation have no semantic significance.
 
 ## Numbers
 

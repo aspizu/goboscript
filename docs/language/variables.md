@@ -22,7 +22,7 @@ onflag {
 
 ## Local variables (for a procedure only)
 
-Local variables is a feature of goboscript, which lets you define a variable which can
+Local variables are a feature of goboscript, which allows you to define a variable that can
 only be used inside a procedure and is not accessible outside of it.
 
 ```goboscript
@@ -49,7 +49,7 @@ x = 10;
 x += 1;
 ```
 
-## Change variables using a operator
+## Change variables using an operator
 
 ```goboscript
 x += 1;

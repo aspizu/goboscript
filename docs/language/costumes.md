@@ -1,6 +1,6 @@
 # Costumes
 
-Costumes can be added to a sprite by refering to its path relative to the project
+Costumes can be added to a sprite by referring to its path relative to the project
 directory.
 
 ```goboscript
@@ -29,4 +29,4 @@ costumes "path/to/costume.svg" as "new name";
 
 Costumes are ordered in the order they are listed in the `costumes` statement.
 
-Costumes included from globs are sorted alphabetically.
+Costumes included in globs are sorted alphabetically.
