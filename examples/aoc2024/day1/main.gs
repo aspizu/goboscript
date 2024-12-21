@@ -2,10 +2,7 @@
 # The costume is named "blank" as it comes from "blank.svg".
 costumes "blank.svg";
 
-# Define two lists:
-# 'input' is populated by reading from "day1.txt".
-# 'list1' and 'list2' are empty and will be used later.
-list input = ``` cat day1.txt ```;
+list input = file ```input.txt```;
 list list1;
 list list2;
 
@@ -19,23 +16,20 @@ proc split_once string, sep {
 
     # Build the left part of the split until the separator is found or the end is reached.
     until $string[i] == $sep or i > length($string) {
-        split_once_left &= $string[i];  # Append the current character to the left part.
-        i += 1;  # Move to the next character.
+        split_once_left &= $string[i];
+        i++;
     }
-
-    i += 1;  # Skip over the separator.
-
-    # Skip any additional separators (if there are consecutive ones).
+    i++;
     until $string[i] != $sep or i > length($string) {
-        i += 1;
+        i++;
     }
 
     split_once_right = "";  # Initialize the right part of the split.
 
     # Build the right part of the split until the end of the string is reached.
     until i > length($string) {
-        split_once_right &= $string[i];  # Append the current character to the right part.
-        i += 1;  # Move to the next character.
+        split_once_right &= $string[i];
+        i++;
     }
 }
 
@@ -47,10 +41,10 @@ proc parse_input {
 
     # Loop through each item in the input list.
     repeat length(input) {
-        split_once input[i], " ";  # Split the current input item at the space character.
-        add split_once_left to list1;  # Add the left part to 'list1'.
-        add split_once_right to list2; # Add the right part to 'list2'.
-        i += 1;  # Move to the next input item.
+        split_once input[i], " ";
+        add split_once_left to list1;
+        add split_once_right to list2;
+        i++;
     }
 }
 
@@ -63,12 +57,11 @@ proc sort_list1 {
 
         # Shift larger elements one position to the right.
         until j <= 1 or list1[j - 1] <= x {
-            list1[j] = list1[j - 1];  # Move the larger element up.
-            j -= 1;  # Move to the previous position.
+            list1[j] = list1[j - 1];
+            j--;
         }
-
-        list1[j] = x;  # Insert the current item at the correct position.
-        i += 1;  # Move to the next item.
+        list1[j] = x;
+        i++;
     }
 }
 
@@ -81,12 +74,11 @@ proc sort_list2 {
 
         # Shift larger elements one position to the right.
         until j <= 1 or list2[j - 1] <= x {
-            list2[j] = list2[j - 1];  # Move the larger element up.
-            j -= 1;  # Move to the previous position.
+            list2[j] = list2[j - 1];
+            j--;
         }
-
-        list2[j] = x;  # Insert the current item at the correct position.
-        i += 1;  # Move to the next item.
+        list2[j] = x;
+        i++;
     }
 }
 
@@ -102,7 +94,7 @@ proc count_list2 value {
         if list2[i] == $value {  # If the current item matches the value:
             count_list2 += 1;  # Increment the counter.
         }
-        i += 1;  # Move to the next item.
+        i++;
     }
 }
 
@@ -113,8 +105,8 @@ proc get_total_distance {
 
     # Loop through each pair of elements in 'list1' and 'list2'.
     repeat length(list1) {
-        total_distance += abs(list1[i] - list2[i]);  # Add the absolute difference to the total.
-        i += 1;  # Move to the next pair.
+        total_distance += abs(list1[i] - list2[i]);
+        i++;
     }
 }
 
@@ -125,20 +117,18 @@ proc get_similarity_score {
 
     # Loop through each item in 'list1'.
     repeat length(list1) {
-        count_list2 list1[i];  # Count how many times the current item appears in 'list2'.
-        similarity_score += list1[i] * count_list2;  # Add the weighted value to the score.
-        i += 1;  # Move to the next item.
+        count_list2 list1[i];
+        similarity_score += list1[i] * count_list2;
+        i++;
     }
 }
 
 # Main program starts when the green flag is clicked.
 onflag {
-    parse_input;  # Split input into 'list1' and 'list2'.
-    sort_list1;   # Sort 'list1' in ascending order.
-    sort_list2;   # Sort 'list2' in ascending order.
-    get_total_distance;  # Calculate the total distance between elements of 'list1' and 'list2'.
-    get_similarity_score;  # Calculate the similarity score between 'list1' and 'list2'.
-
-    # Display the total distance and similarity score.
-    say "Total Distance: " & total_distance & ", Similarity Score: " & similarity_score;
+    parse_input;
+    sort_list1;
+    sort_list2;
+    get_total_distance;
+    get_similarity_score;
+    say "Total Distance: " & total_distance & "\nSimilarity Score: " & similarity_score;
 }

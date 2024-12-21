@@ -126,6 +126,34 @@ where T: Write + Seek
         self.expr(s, d, &value.borrow(), value_id, this_id)
     }
 
+    pub fn change_var(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        name: &Name,
+        value: &Rrc<Expr>,
+    ) -> io::Result<()> {
+        let value_id = self.id.new_id();
+        self.begin_inputs()?;
+        self.input(s, d, "VALUE", &value.borrow(), value_id)?;
+        self.end_obj()?; // inputs
+        match s.qualify_name(d, name) {
+            Some(QualifiedName::Var(qualified_name, _)) => {
+                self.single_field_id("VARIABLE", &qualified_name)?
+            }
+            Some(QualifiedName::List(..)) => {
+                d.report(
+                    DiagnosticKind::UnrecognizedVariable(name.basename().clone()),
+                    &name.span(),
+                );
+            }
+            None => {}
+        }
+        self.end_obj()?; // node
+        self.expr(s, d, &value.borrow(), value_id, this_id)
+    }
+
     pub fn show(&mut self, s: S, d: D, name: &Name) -> io::Result<()> {
         self.begin_inputs()?;
         self.end_obj()?; // inputs
