@@ -3,7 +3,6 @@ use std::{
     fs::File,
     io::{self, Seek, Write},
     path::Path,
-    process::Command,
 };
 
 use fxhash::FxHashMap;
@@ -659,7 +658,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp,)
+            Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp)
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, &proc.body, next_id, Some(this_id))
