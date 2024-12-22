@@ -1,6 +1,7 @@
 use std::io::{self, Seek, Write};
 
 use logos::Span;
+use serde_json::json;
 use smol_str::SmolStr;
 
 use super::{
@@ -105,6 +106,7 @@ where T: Write + Seek
         value: &Rrc<Expr>,
         _type: &Type,
         _is_local: &bool,
+        _is_cloud: &bool,
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
@@ -472,5 +474,30 @@ where T: Write + Seek
             self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
         }
         Ok(())
+    }
+
+    pub fn return_(&mut self, s: S, d: D, this_id: NodeID, value: &Rrc<Expr>) -> io::Result<()> {
+        let Some(func) = s.func else { panic!() };
+        let value_id = self.id.new_id();
+        self.begin_inputs()?;
+        self.input(s, d, "VALUE", &value.borrow(), value_id)?;
+        self.end_obj()?; // inputs
+        self.single_field_id("VARIABLE", &func.name)?;
+        self.end_obj()?; // node
+        self.expr(s, d, &value.borrow(), value_id, this_id)
+    }
+
+    pub fn set_call_site(&mut self, id: usize, func: &SmolStr) -> io::Result<()> {
+        self.begin_inputs()?;
+        write!(self, r#""VALUE":"#)?;
+        write!(
+            self,
+            r#"[3,[12,{},{}],[10, ""]]"#,
+            json!(**func),
+            json!(**func)
+        )?;
+        self.end_obj()?; // inputs
+        self.single_field_id("VARIABLE", &format!("c{id}"))?;
+        self.end_obj() // node
     }
 }

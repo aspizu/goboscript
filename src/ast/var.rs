@@ -8,4 +8,5 @@ pub struct Var {
     pub name: SmolStr,
     pub span: Span,
     pub type_: Type,
+    pub is_cloud: bool,
 }

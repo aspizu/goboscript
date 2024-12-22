@@ -16,6 +16,9 @@ pub enum Expr {
         span: Span,
     },
     Name(Name),
+    CallSite {
+        id: usize,
+    },
     Dot {
         lhs: Rrc<Expr>,
         rhs: SmolStr,
@@ -24,6 +27,11 @@ pub enum Expr {
     Arg(Name),
     Repr {
         repr: Repr,
+        span: Span,
+        args: Vec<Rrc<Expr>>,
+    },
+    FuncCall {
+        name: SmolStr,
         span: Span,
         args: Vec<Rrc<Expr>>,
     },
@@ -53,9 +61,11 @@ impl Expr {
             Self::Dot { lhs, rhs_span, .. } => lhs.borrow().span().start..rhs_span.end,
             Self::Arg(name) => name.span(),
             Self::Repr { span, .. } => span.clone(),
+            Self::FuncCall { span, .. } => span.clone(),
             Self::UnOp { span, .. } => span.clone(),
             Self::BinOp { span, .. } => span.clone(),
             Self::StructLiteral { span, .. } => span.clone(),
+            Self::CallSite { .. } => unreachable!(),
         }
     }
 }

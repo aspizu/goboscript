@@ -51,6 +51,7 @@ where T: Write + Seek
         match expr {
             Expr::Value { value, span: _ } => self.value_input(input_name, value),
             Expr::Name(name) => self.name_input(s, d, input_name, name, shadow_id),
+            Expr::CallSite { id } => self.call_site_input(input_name, *id),
             _ => self.node_input(input_name, this_id, shadow_id),
         }
     }
@@ -106,6 +107,16 @@ where T: Write + Seek
             None => {}
         }
         self.shadow_input(input_name, shadow_id)
+    }
+
+    fn call_site_input(&mut self, input_name: &str, id: usize) -> io::Result<()> {
+        write!(
+            self,
+            "[3,[12,{},{}],",
+            json!(format!("c{id}")),
+            json!(format!("c{id}"))
+        )?;
+        self.shadow_input(input_name, None)
     }
 
     fn node_input(

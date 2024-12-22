@@ -107,6 +107,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
         &mut sprites_diagnostics,
     );
     info!(target: "pass1", "{project:#?}");
+    visitor::pass2::visit_project(&mut project);
+    info!(target: "pass2", "{project:#?}");
     let mut sb3 = Sb3::new(BufWriter::new(File::create(output)?));
     sb3.project(
         &input,

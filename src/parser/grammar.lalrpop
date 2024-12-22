@@ -29,6 +29,9 @@ Declr: () = {
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n, l..r, a, b, w.is_none()));
     },
+    FUNC <t:Type> <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <b:Stmts> => {
+        sprite.funcs.insert(n.clone(), Func::new(n, l..r, t, a, b));
+    },
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),
     <l:@L> ONKEY <r:@R> <kl:@L> <key:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnKey { key, span: kl..kr }.to_event(l..r, b)),
     <l:@L> ONCLICK <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClick.to_event(l..r, b)),
@@ -55,41 +58,42 @@ Stmt: Stmt = {
     <l:@L> <n:NAME> <r:@R> "++" ";" => Stmt::ChangeVar { name: Name::Name { name: n.clone(), span: l..r }, value: Value::Int(1).to_expr(l..r).into() },
     <l:@L> <n:NAME> <r:@R> "--" ";" => Stmt::ChangeVar { name: Name::Name { name: n.clone(), span: l..r }, value: Value::Int(-1).to_expr(l..r).into() },
     <l:@L> <n:NAME> <r:@R> "+=" <v:Expr> ";" => Stmt::ChangeVar { name: Name::Name { name: n.clone(), span: l..r }, value: v },
-    <l:@L> <n:NAME> <r:@R> "-=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Sub.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
-    <l:@L> <n:NAME> <r:@R> "*=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mul.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
-    <l:@L> <n:NAME> <r:@R> "/=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Div.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
-    <l:@L> <n:NAME> <r:@R> "//=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
-    <l:@L> <n:NAME> <r:@R> "%=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mod.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
-    <l:@L> <n:NAME> <r:@R> "&=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Join.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false },
-    <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: false },
-    LOCAL <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: true },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, value: v, type_: Type::Value, is_local: false },
+    <l:@L> <n:NAME> <r:@R> "-=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Sub.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
+    <l:@L> <n:NAME> <r:@R> "*=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mul.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
+    <l:@L> <n:NAME> <r:@R> "/=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Div.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
+    <l:@L> <n:NAME> <r:@R> "//=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
+    <l:@L> <n:NAME> <r:@R> "%=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mod.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
+    <l:@L> <n:NAME> <r:@R> "&=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Join.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
+    <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: false, is_cloud: false },
+    LOCAL <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: true, is_cloud: false },
+    CLOUD <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: Type::Value, is_local: false, is_cloud: true },
+    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, value: v, type_: Type::Value, is_local: false, is_cloud: false },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "+=" <v:Expr> ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: v },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "++" ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: Value::Int(1).to_expr(l..r).into() },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "--" ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: Value::Int(-1).to_expr(l..r).into() },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "-=" <v:Expr> ";" => {
         let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Sub.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+        Stmt::SetVar { name: name.clone(), value: BinOp::Sub.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
     },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "*=" <v:Expr> ";" => {
         let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Mul.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+        Stmt::SetVar { name: name.clone(), value: BinOp::Mul.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
     },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "/=" <v:Expr> ";" => {
         let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Div.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+        Stmt::SetVar { name: name.clone(), value: BinOp::Div.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
     },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "//=" <v:Expr> ";" => {
         let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+        Stmt::SetVar { name: name.clone(), value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
     },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "%=" <v:Expr> ";" => {
         let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Mod.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+        Stmt::SetVar { name: name.clone(), value: BinOp::Mod.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
     },
     <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "&=" <v:Expr> ";" => {
         let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Join.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false }
+        Stmt::SetVar { name: name.clone(), value: BinOp::Join.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
     },
     SHOW <name:NameName> ";" => Stmt::Show (name),
     HIDE <name:NameName> ";" => Stmt::Hide (name),
@@ -150,6 +154,7 @@ Stmt: Stmt = {
         Some(block) => Stmt::Block { block, span: l..r, args: a },
         None => Stmt::ProcCall { name, span: l..r, args: a },
     },
+    RETURN <e:Expr> ";" => Stmt::Return { value: e },
 }
 
 Kwarg: Kwarg = <n:KwargName?> <v:Expr> => Kwarg { name: n, value: v.into() };
@@ -283,9 +288,9 @@ Term: Rrc<Expr> = {
     <l:@L> <v:STR>   <r:@R> => Value::from(v).to_expr(l..r).into(),
     <l:@L> <n:NAME>  <r:@R> => Expr::Name (Name::Name { name: n, span: l..r }).into(),
     <l:@L> <n:ARG>   <r:@R> => Expr::Arg (Name::Name { name: n, span: l..r }).into(),
-    <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" =>? match Repr::from_shape(&name, args.len()) {
-        Some(repr) => Ok(Expr::Repr { repr, span: l..r, args }.into()),
-        None => Err(ParseError::User { error: Diagnostic { kind: DiagnosticKind::UnrecognizedReporter(name), span: l..r } }),
+    <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" => match Repr::from_shape(&name, args.len()) {
+        Some(repr) => Expr::Repr { repr, span: l..r, args }.into(),
+        None => Expr::FuncCall { name: name, span: l..r, args: args }.into(),
     },
     <l:@L> <e:Term> "[" <i:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, e, i).into(),
     <v:Term> "." <l:@L> <n:NAME> <r:@R> => Expr::Dot { lhs: v, rhs: n, rhs_span: l..r }.into(),
@@ -340,6 +345,8 @@ extern {
         SOUNDS         => Token::Sounds,
         LOCAL          => Token::Local,
         PROC           => Token::Proc,
+        FUNC           => Token::Func,
+        RETURN         => Token::Return,
         NOWARP         => Token::NoWarp,
         ON             => Token::On,
         ONFLAG         => Token::OnFlag,
@@ -422,5 +429,6 @@ extern {
         TRUE           => Token::True,
         FALSE          => Token::False,
         LIST           => Token::List,
+        CLOUD          => Token::Cloud,
     }
 }

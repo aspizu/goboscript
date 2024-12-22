@@ -10,7 +10,10 @@ use logos::Span;
 use md5::{Digest, Md5};
 use serde_json::json;
 use smol_str::SmolStr;
-use zip::{write::SimpleFileOptions, ZipWriter};
+use zip::{
+    write::{FileOptions, SimpleFileOptions},
+    ZipWriter,
+};
 
 use super::{
     cmd::cmd_to_list, node::Node, node_id::NodeID, node_id_factory::NodeIDFactory,
@@ -32,6 +35,7 @@ pub struct S<'a> {
     pub stage: Option<&'a Sprite>,
     pub sprite: &'a Sprite,
     pub proc: Option<&'a Proc>,
+    pub func: Option<&'a Func>,
 }
 
 pub type D<'a> = &'a mut SpriteDiagnostics;
@@ -58,7 +62,9 @@ impl<'a> S<'a> {
     }
 
     fn get_local_var(&self, name: &str) -> Option<&Var> {
-        self.proc.and_then(|proc| proc.locals.get(name))
+        self.proc
+            .and_then(|proc| proc.locals.get(name))
+            .or_else(|| self.func.and_then(|func| func.locals.get(name)))
     }
 
     fn get_var(&self, name: &str) -> Option<&Var> {
@@ -143,7 +149,12 @@ impl<'a> S<'a> {
             );
         }
         if let Some(var) = self.get_local_var(basename) {
-            let qualified_var_name = qualify_local_var_name(&self.proc.unwrap().name, &var.name);
+            let qualified_var_name = qualify_local_var_name(
+                self.proc
+                    .map(|proc| &proc.name)
+                    .unwrap_or_else(|| &self.func.unwrap().name),
+                &var.name,
+            );
             return self.qualify_field(
                 d,
                 &name.span(),
@@ -195,6 +206,7 @@ impl Stmt {
             }
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
+            Stmt::SetCallSite { .. } => "data_setvariableto",
             Stmt::ChangeVar { .. } => "data_changevariableby",
             Stmt::Show(name) => {
                 if s.is_name_list(name) {
@@ -217,6 +229,8 @@ impl Stmt {
             Stmt::SetListIndex { .. } => "data_replaceitemoflist",
             Stmt::Block { block, .. } => block.opcode(),
             Stmt::ProcCall { .. } => "procedures_call",
+            Stmt::FuncCall { .. } => "procedures_call",
+            Stmt::Return { .. } => "data_setvariableto",
         }
     }
 }
@@ -255,6 +269,17 @@ where T: Write + Seek
             inputs_comma: false,
             costumes: FxHashMap::default(),
         }
+    }
+
+    fn assets(&mut self, input: &Path) -> io::Result<()> {
+        for (path, hash) in &self.costumes {
+            let (_, extension) = path.rsplit_once('.').unwrap();
+            self.zip
+                .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
+            let file = File::open(input.join(path.as_str()));
+            io::copy(&mut file?, &mut self.zip)?;
+        }
+        Ok(())
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
@@ -339,6 +364,7 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
+        self.assets(input)?;
         Ok(())
     }
 
@@ -376,7 +402,12 @@ where T: Write + Seek
         let mut comma = false;
         for proc in sprite.procs.values() {
             for var in proc.locals.values() {
-                self.local_var_declaration(sprite, proc, var, &mut comma, d)?;
+                self.local_var_declaration(sprite, &proc.name, var, &mut comma, d)?;
+            }
+        }
+        for func in sprite.funcs.values() {
+            for var in func.locals.values() {
+                self.local_var_declaration(sprite, &func.name, var, &mut comma, d)?;
             }
         }
         for var in sprite.vars.values() {
@@ -397,9 +428,22 @@ where T: Write + Seek
                     stage,
                     sprite,
                     proc: Some(proc),
+                    func: None,
                 },
                 d,
                 proc,
+            )?;
+        }
+        for func in sprite.funcs.values() {
+            self.func(
+                S {
+                    stage,
+                    sprite,
+                    proc: None,
+                    func: Some(func),
+                },
+                d,
+                func,
             )?;
         }
         for event in &sprite.events {
@@ -408,6 +452,7 @@ where T: Write + Seek
                     stage,
                     sprite,
                     proc: None,
+                    func: None,
                 },
                 d,
                 event,
@@ -427,9 +472,18 @@ where T: Write + Seek
         Ok(())
     }
 
-    pub fn json_var_declaration(&mut self, var_name: &str, comma: &mut bool) -> io::Result<()> {
+    pub fn json_var_declaration(
+        &mut self,
+        var_name: &str,
+        is_cloud: bool,
+        comma: &mut bool,
+    ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        write!(self, r#""{}":["{}",0]"#, var_name, var_name)
+        if is_cloud {
+            write!(self, "\"{}\":[\"\u{2601} {}\",0,true]", var_name, var_name)
+        } else {
+            write!(self, "\"{}\":[\"{}\",0]", var_name, var_name)
+        }
     }
 
     pub fn var_declaration(
@@ -441,7 +495,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         match &var.type_ {
             Type::Value => {
-                self.json_var_declaration(&var.name, comma)?;
+                self.json_var_declaration(&var.name, var.is_cloud, comma)?;
             }
             Type::Struct {
                 name: type_name,
@@ -456,7 +510,7 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
-                    self.json_var_declaration(&qualified_var_name, comma)?;
+                    self.json_var_declaration(&qualified_var_name, false, comma)?;
                 }
             }
         }
@@ -466,15 +520,15 @@ where T: Write + Seek
     pub fn local_var_declaration(
         &mut self,
         sprite: &Sprite,
-        proc: &Proc,
+        proc_name: &str,
         var: &Var,
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
         match &var.type_ {
             Type::Value => {
-                let qualified_var_name = qualify_local_var_name(&proc.name, &var.name);
-                self.json_var_declaration(&qualified_var_name, comma)?;
+                let qualified_var_name = qualify_local_var_name(proc_name, &var.name);
+                self.json_var_declaration(&qualified_var_name, false, comma)?;
             }
             Type::Struct {
                 name: type_name,
@@ -489,10 +543,10 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_local_var_name(
-                        &proc.name,
+                        proc_name,
                         &qualify_struct_var_name(&field.name, &var.name),
                     );
-                    self.json_var_declaration(&qualified_var_name, comma)?;
+                    self.json_var_declaration(&qualified_var_name, false, comma)?;
                 }
             }
         }
@@ -664,6 +718,80 @@ where T: Write + Seek
         self.stmts(s, d, &proc.body, next_id, Some(this_id))
     }
 
+    pub fn func(&mut self, s: S, d: D, func: &Func) -> io::Result<()> {
+        let this_id = self.id.new_id();
+        let prototype_id = self.id.new_id();
+        let next_id = self.id.new_id();
+        self.begin_node(
+            Node::new("procedures_definition", this_id)
+                .some_next_id((!func.body.is_empty()).then_some(next_id))
+                .top_level(true),
+        )?;
+        self.begin_inputs()?;
+        write!(self, r#""custom_block":[1,{prototype_id}]"#)?;
+        self.end_obj()?; // inputs
+        self.end_obj()?; // node
+        let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
+        for arg in &func.args {
+            match &arg.type_ {
+                Type::Value => {
+                    let arg_id = self.id.new_id();
+                    self.begin_node(
+                        Node::new("argument_reporter_string_number", arg_id)
+                            .parent_id(prototype_id)
+                            .shadow(true),
+                    )?;
+                    self.single_field("VALUE", &arg.name)?;
+                    self.end_obj()?; // node
+                    qualified_args.push((arg.name.clone(), arg_id));
+                }
+                Type::Struct {
+                    name: type_name,
+                    span: type_span,
+                } => {
+                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                        d.report(
+                            DiagnosticKind::UnrecognizedStruct(type_name.clone()),
+                            type_span,
+                        );
+                        continue;
+                    };
+                    for field in &struct_.fields {
+                        let qualified_arg_name = qualify_struct_var_name(&field.name, &arg.name);
+                        let arg_id = self.id.new_id();
+                        self.begin_node(
+                            Node::new("argument_reporter_string_number", arg_id)
+                                .parent_id(prototype_id)
+                                .shadow(true),
+                        )?;
+                        self.single_field("VALUE", &qualified_arg_name)?;
+                        self.end_obj()?; // node
+                        qualified_args.push((qualified_arg_name, arg_id));
+                    }
+                }
+            }
+        }
+        self.begin_node(
+            Node::new("procedures_prototype", prototype_id)
+                .parent_id(this_id)
+                .shadow(true),
+        )?;
+        self.begin_inputs()?;
+        let mut comma = false;
+        for (qualified_arg_name, arg_id) in &qualified_args {
+            write_comma_io(&mut self.zip, &mut comma)?;
+            write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
+        }
+        self.end_obj()?; // inputs
+        write!(
+            self,
+            "{}",
+            Mutation::prototype(func.name.clone(), &qualified_args, true)
+        )?;
+        self.end_obj()?; // node
+        self.stmts(s, d, &func.body, next_id, Some(this_id))
+    }
+
     pub fn event(&mut self, s: S, d: D, event: &Event) -> io::Result<()> {
         let this_id = self.id.new_id();
         let next_id = self.id.new_id();
@@ -739,7 +867,9 @@ where T: Write + Seek
                 value,
                 type_,
                 is_local,
-            } => self.set_var(s, d, this_id, name, value, type_, is_local),
+                is_cloud,
+            } => self.set_var(s, d, this_id, name, value, type_, is_local, is_cloud),
+            Stmt::SetCallSite { id, func } => self.set_call_site(*id, func),
             Stmt::ChangeVar { name, value } => self.change_var(s, d, this_id, name, value),
             Stmt::Show(name) => self.show(s, d, name),
             Stmt::Hide(name) => self.hide(s, d, name),
@@ -756,6 +886,8 @@ where T: Write + Seek
             }
             Stmt::Block { block, span, args } => self.block(s, d, this_id, block, span, args),
             Stmt::ProcCall { name, span, args } => self.proc_call(s, d, this_id, name, span, args),
+            Stmt::FuncCall { name, span, args } => self.func_call(s, d, this_id, name, span, args),
+            Stmt::Return { value } => self.return_(s, d, this_id, value),
         }
     }
 
@@ -768,11 +900,15 @@ where T: Write + Seek
         parent_id: NodeID,
     ) -> io::Result<()> {
         match expr {
+            Expr::CallSite { .. } => Ok(()),
             Expr::Value { .. } => Ok(()),
             Expr::Name { .. } => Ok(()),
             Expr::Arg(name) => self.arg(s, d, this_id, parent_id, name),
             Expr::Repr { repr, span, args } => {
                 self.repr(s, d, this_id, parent_id, repr, span, args)
+            }
+            Expr::FuncCall { name, .. } => {
+                unreachable!("attempted to codegen {name:#?}")
             }
             Expr::UnOp { op, span, opr } => self.un_op(s, d, this_id, parent_id, op, span, opr),
             Expr::BinOp { op, span, lhs, rhs } => {

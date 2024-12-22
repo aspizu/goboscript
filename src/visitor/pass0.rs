@@ -1,4 +1,5 @@
 use fxhash::FxHashMap;
+use glob::glob;
 use smol_str::SmolStr;
 
 use crate::ast::*;
@@ -28,6 +29,16 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
             },
         );
     }
+    for func in sprite.funcs.values_mut() {
+        visit_stmts(
+            &mut func.body,
+            &mut V {
+                locals: Some(&mut func.locals),
+                vars: &mut sprite.vars,
+                global_vars: stage.as_mut().map(|stage| &mut stage.vars),
+            },
+        );
+    }
     for event in &mut sprite.events {
         visit_stmts(
             &mut event.body,
@@ -49,6 +60,18 @@ fn visit_costumes(new: &mut Vec<Costume>) {
                 path: costume.path.clone(),
                 span: costume.span.clone(),
             }));
+        } else if costume.path.contains('*') {
+            let mut costumes: Vec<Costume> = glob(&costume.path)
+                .unwrap()
+                .map(Result::unwrap)
+                .map(|path| Costume {
+                    name: path.file_stem().unwrap().to_string_lossy().into(),
+                    path: path.to_string_lossy().into(),
+                    span: costume.span.clone(),
+                })
+                .collect();
+            costumes.sort_by(|a, b| a.name.cmp(&b.name));
+            new.extend(costumes);
         } else {
             new.push(costume);
         }
@@ -76,6 +99,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
             name,
             type_,
             is_local,
+            is_cloud,
             ..
         } => {
             let basename = name.basename();
@@ -83,6 +107,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
                 name: basename.clone(),
                 span: name.span(),
                 type_: type_.clone(),
+                is_cloud: *is_cloud,
             };
             if *is_local {
                 if let Some(locals) = &mut v.locals {

@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 
 use crate::{
     ast::*,
-    blocks::{BinOp, UnOp},
+    blocks::{BinOp, Block, UnOp},
     codegen::sb3::D,
     diagnostic::{DiagnosticKind, SpriteDiagnostics},
     misc::Rrc,
@@ -83,6 +83,26 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
                 global_structs: stage.map(|stage| &stage.structs),
             },
             d,
+            true,
+        );
+    }
+    for func in sprite.funcs.values_mut() {
+        visit_stmts(
+            &mut func.body,
+            S {
+                args: Some(&func.args),
+                local_vars: Some(&func.locals),
+                vars: &sprite.vars,
+                lists: &sprite.lists,
+                enums: &sprite.enums,
+                structs: &sprite.structs,
+                global_vars: stage.map(|stage| &stage.vars),
+                global_lists: stage.map(|stage| &stage.lists),
+                global_enums: stage.map(|stage| &stage.enums),
+                global_structs: stage.map(|stage| &stage.structs),
+            },
+            d,
+            true,
         );
     }
     for event in &mut sprite.events {
@@ -101,11 +121,12 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
                 global_structs: stage.map(|stage| &stage.structs),
             },
             d,
+            true,
         );
     }
 }
 
-fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D) {
+fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
     for stmt in &mut *stmts {
         visit_stmt(stmt, s, d);
     }
@@ -117,7 +138,8 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D) {
                 value,
                 type_,
                 is_local,
-            } => visit_stmt_set_var(s, d, name, value, type_, is_local),
+                is_cloud,
+            } => visit_stmt_set_var(s, d, name, value, type_, is_local, is_cloud),
             Stmt::SetListIndex { name, index, value } => {
                 visit_stmt_list_set(s, d, name, index, value)
             }
@@ -128,6 +150,14 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D) {
             }
             Stmt::InsertAtList { name, index, value } => {
                 visit_stmt_insert_at_list(s, d, name, index, value)
+            }
+            Stmt::Return { value } => {
+                // Don't add stop_this_script after return stmt if it's the last stmt.
+                if top_level && i == stmts.len() - 1 {
+                    None
+                } else {
+                    visit_stmt_return(value)
+                }
             }
             _ => None,
         };
@@ -147,10 +177,10 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
     match stmt {
         Stmt::Repeat { times, body } => {
             visit_expr(times, s, d);
-            visit_stmts(body, s, d);
+            visit_stmts(body, s, d, false);
         }
         Stmt::Forever { body, span: _ } => {
-            visit_stmts(body, s, d);
+            visit_stmts(body, s, d, false);
         }
         Stmt::Branch {
             cond,
@@ -158,21 +188,23 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             else_body,
         } => {
             visit_expr(cond, s, d);
-            visit_stmts(if_body, s, d);
-            visit_stmts(else_body, s, d);
+            visit_stmts(if_body, s, d, false);
+            visit_stmts(else_body, s, d, false);
         }
         Stmt::Until { cond, body } => {
             visit_expr(cond, s, d);
-            visit_stmts(body, s, d);
+            visit_stmts(body, s, d, false);
         }
         Stmt::SetVar {
             name: _,
             value,
             type_: _,
             is_local: _,
+            is_cloud: _,
         } => {
             visit_expr(value, s, d);
         }
+        Stmt::SetCallSite { id: _, func: _ } => {}
         Stmt::ChangeVar { name: _, value } => {
             visit_expr(value, s, d);
         }
@@ -220,11 +252,22 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
                 visit_expr(&mut kwarg.value, s, d);
             }
         }
+        Stmt::FuncCall {
+            name: _,
+            span: _,
+            args,
+        } => {
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+        }
+        Stmt::Return { value } => visit_expr(value, s, d),
     }
 }
 
 fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
     let replace: Option<Rrc<Expr>> = match &mut *expr.borrow_mut() {
+        Expr::CallSite { .. } => None,
         Expr::Value { value: _, span: _ } => None,
         Expr::Name(name) => visit_expr_name(s, name),
         Expr::Arg(name) => visit_expr_arg(s, name),
@@ -234,6 +277,16 @@ fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
         }
         Expr::Repr {
             repr: _,
+            span: _,
+            args,
+        } => {
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            None
+        }
+        Expr::FuncCall {
+            name: _,
             span: _,
             args,
         } => {
@@ -460,7 +513,8 @@ fn visit_stmt_set_var(
     name: &Name,
     value: &Rrc<Expr>,
     _type: &Type,
-    _is_local: &bool,
+    is_local: &bool,
+    is_cloud: &bool,
 ) -> Option<Vec<Stmt>> {
     let expr = &*value.borrow();
     let struct_literal_fields = get_struct_literal_for_type(s, d, name, expr, |basename| {
@@ -478,7 +532,8 @@ fn visit_stmt_set_var(
                 },
                 value: struct_literal_field.value.clone(),
                 type_: Type::Value,
-                is_local: false,
+                is_local: *is_local,
+                is_cloud: *is_cloud,
             })
             .collect(),
     )
@@ -667,4 +722,17 @@ where
         return None;
     }
     Some(struct_literal_fields)
+}
+
+fn visit_stmt_return(value: &Rrc<Expr>) -> Option<Vec<Stmt>> {
+    Some(vec![
+        Stmt::Return {
+            value: value.clone(),
+        },
+        Stmt::Block {
+            block: Block::StopThisScript,
+            span: 0..0,
+            args: vec![],
+        },
+    ])
 }
