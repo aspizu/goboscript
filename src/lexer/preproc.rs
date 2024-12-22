@@ -61,6 +61,8 @@ pub fn preproc(preproc: &PreProc) -> Vec<(usize, Token, usize)> {
                                     mac.args.iter().position(|arg| arg == name)
                                 {
                                     tokens.extend(args[index].iter().cloned());
+                                } else {
+                                    tokens.push((start, Token::Name(name.clone()), end));
                                 }
                             }
                             _ => {

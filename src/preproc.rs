@@ -131,7 +131,6 @@ impl PreProc {
     }
 
     pub fn translate_position(&self, position: usize) -> (usize, &Include) {
-        println!("{position}");
         for include in &self.includes {
             if include.range.contains(&position) {
                 return (position - include.range.start, include);
