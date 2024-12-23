@@ -45,10 +45,9 @@ pub fn preproc(preproc: &PreProc) -> Vec<(usize, Token, usize)> {
                                         break;
                                     }
                                 }
-                                _ => {
-                                    arg.push((start, token, end));
-                                }
+                                _ => {}
                             }
+                            arg.push((start, token, end));
                         }
                         args.push(arg);
                     }
