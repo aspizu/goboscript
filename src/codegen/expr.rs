@@ -330,4 +330,22 @@ where T: Write + Seek
         }
         Ok(())
     }
+
+    pub fn expr_dot(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        parent_id: NodeID,
+        lhs: &Expr,
+        rhs: &SmolStr,
+        rhs_span: Span,
+    ) -> io::Result<()> {
+        if let Expr::Name(name) = lhs {
+            if let Some(enum_) = s.get_enum(name.basename()) {
+                return Ok(());
+            }
+        }
+        panic!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}")
+    }
 }

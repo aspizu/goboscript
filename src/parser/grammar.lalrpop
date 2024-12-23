@@ -42,12 +42,20 @@ Declr: () = {
     STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:SpannedComma<NAME>> "}" => {
         sprite.structs.insert(name.clone(), Struct::new(name, l..r, fields));
     },
+    ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
+        sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
+    },
     LIST <t:Type> <l:@L> <name:NAME> <r:@R> ";" => {
         sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: None });
     },
     LIST <t:Type> <l:@L> <name:NAME> <r:@R> "=" <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> ";" => {
         sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: Some(Cmd { program: program.map(|program| Program { name: program, span: pl..pr }), cmd, span: cl..cr }) });
     },
+}
+
+EnumVariant: EnumVariant = {
+    <l:@L> <name:NAME> <r:@R> => EnumVariant { name, span: l..r, value: None },
+    <l:@L> <name:NAME> <r:@R> "=" <v:Value> => EnumVariant { name, span: l..r, value: Some(v) },
 }
 
 Stmt: Stmt = {
@@ -276,16 +284,20 @@ IfExpr: Rrc<Expr> = {
     <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
 }
 
+Value: (Value, Span) = { 
+    <l:@L> TRUE      <r:@R> => (Value::from(1), l..r),
+    <l:@L> FALSE     <r:@R> => (Value::from(0), l..r),
+    <l:@L> <v:INT>   <r:@R> => (Value::from(v), l..r),
+    <l:@L> <v:HEX>   <r:@R> => (Value::from(v), l..r),
+    <l:@L> <v:OCT>   <r:@R> => (Value::from(v), l..r),
+    <l:@L> <v:BIN>   <r:@R> => (Value::from(v), l..r),
+    <l:@L> <v:FLOAT> <r:@R> => (Value::from(v), l..r),
+    <l:@L> <v:STR>   <r:@R> => (Value::from(v), l..r),
+}
+
 Term: Rrc<Expr> = {
     "(" <Expr> ")",
-    <l:@L> TRUE      <r:@R> => Value::from(1).to_expr(l..r).into(),
-    <l:@L> FALSE     <r:@R> => Value::from(0).to_expr(l..r).into(),
-    <l:@L> <v:INT>   <r:@R> => Value::from(v).to_expr(l..r).into(),
-    <l:@L> <v:HEX>   <r:@R> => Value::from(v).to_expr(l..r).into(),
-    <l:@L> <v:OCT>   <r:@R> => Value::from(v).to_expr(l..r).into(),
-    <l:@L> <v:BIN>   <r:@R> => Value::from(v).to_expr(l..r).into(),
-    <l:@L> <v:FLOAT> <r:@R> => Value::from(v).to_expr(l..r).into(),
-    <l:@L> <v:STR>   <r:@R> => Value::from(v).to_expr(l..r).into(),
+    <v:Value> => v.0.to_expr(v.1).into(),
     <l:@L> <n:NAME>  <r:@R> => Expr::Name (Name::Name { name: n, span: l..r }).into(),
     <l:@L> <n:ARG>   <r:@R> => Expr::Arg (Name::Name { name: n, span: l..r }).into(),
     <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" => match Repr::from_shape(&name, args.len()) {

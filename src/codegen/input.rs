@@ -8,6 +8,7 @@ use super::{
 };
 use crate::{
     ast::{Expr, Name, Value},
+    diagnostic::DiagnosticKind,
     misc::write_comma_io,
 };
 
@@ -49,11 +50,31 @@ where T: Write + Seek
         write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
         write!(self, r#""{input_name}":"#)?;
         match expr {
-            Expr::Value { value, span: _ } => self.value_input(input_name, value),
-            Expr::Name(name) => self.name_input(s, d, input_name, name, shadow_id),
-            Expr::CallSite { id } => self.call_site_input(input_name, *id),
-            _ => self.node_input(input_name, this_id, shadow_id),
+            Expr::Value { value, span: _ } => return self.value_input(input_name, value),
+            Expr::Name(name) => return self.name_input(s, d, input_name, name, shadow_id),
+            Expr::CallSite { id } => return self.call_site_input(input_name, *id),
+            Expr::Dot { lhs, rhs, rhs_span } => {
+                if let Expr::Name(lhs_name) = &*lhs.borrow() {
+                    if let Some(enum_) = s.get_enum(lhs_name.basename()) {
+                        if let Some(variant) =
+                            enum_.variants.iter().find(|variant| &variant.name == rhs)
+                        {
+                            return self
+                                .value_input(input_name, &variant.value.as_ref().unwrap().0);
+                        } else {
+                            d.report(
+                                DiagnosticKind::UnrecognizedEnumVariant(
+                                    lhs_name.basename().clone(),
+                                ),
+                                rhs_span,
+                            );
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
+        self.node_input(input_name, this_id, shadow_id)
     }
 
     fn value_input(&mut self, name: &str, value: &Value) -> io::Result<()> {

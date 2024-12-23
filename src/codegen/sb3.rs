@@ -88,6 +88,13 @@ impl<'a> S<'a> {
             .or_else(|| self.stage.and_then(|stage| stage.structs.get(name)))
     }
 
+    pub fn get_enum(&self, name: &str) -> Option<&Enum> {
+        self.sprite
+            .enums
+            .get(name)
+            .or_else(|| self.stage.and_then(|stage| stage.enums.get(name)))
+    }
+
     fn qualify_field<T>(
         &self,
         d: D,
@@ -927,7 +934,15 @@ where T: Write + Seek
                 );
                 Ok(())
             }
-            Expr::Dot { .. } => panic!("Attempted to codegen {expr:#?}"),
+            Expr::Dot { lhs, rhs, rhs_span } => self.expr_dot(
+                s,
+                d,
+                this_id,
+                parent_id,
+                &lhs.borrow(),
+                rhs,
+                rhs_span.clone(),
+            ),
         }
     }
 }

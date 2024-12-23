@@ -19,6 +19,9 @@ pub fn visit_project(project: &mut Project) {
 
 fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
     visit_costumes(&mut sprite.costumes);
+    for enum_ in sprite.enums.values_mut() {
+        visit_enum(enum_);
+    }
     for proc in sprite.procs.values_mut() {
         visit_stmts(
             &mut proc.body,
@@ -48,6 +51,20 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
         );
+    }
+}
+
+fn visit_enum(enum_: &mut Enum) {
+    let mut index = 0;
+    for variant in &mut enum_.variants {
+        if let Some((value, _)) = &variant.value {
+            if let Value::Int(int_value) = value {
+                index = *int_value;
+            }
+        } else {
+            variant.value = Some((Value::Int(index), variant.span.clone()));
+            index += 1;
+        }
     }
 }
 
