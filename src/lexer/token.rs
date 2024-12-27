@@ -35,6 +35,10 @@ pub enum Token {
     Local,
     #[token("proc")]
     Proc,
+    #[token("func")]
+    Func,
+    #[token("return")]
+    Return,
     #[token("nowarp")]
     NoWarp,
     #[token("on")]
@@ -137,6 +141,8 @@ pub enum Token {
     Percent,
     #[token(";")]
     Semicolon,
+    #[token(":")]
+    Colon,
     #[token("length")]
     Length,
     #[token("round")]
@@ -197,4 +203,6 @@ pub enum Token {
     False,
     #[token("list")]
     List,
+    #[token("cloud")]
+    Cloud,
 }

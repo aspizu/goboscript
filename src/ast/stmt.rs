@@ -1,7 +1,7 @@
 use logos::Span;
 use smol_str::SmolStr;
 
-use super::{expr::Expr, type_::Type, Name};
+use super::{expr::Expr, type_::Type, Arg, Kwarg, Name};
 use crate::{blocks::Block, misc::Rrc};
 
 #[derive(Debug)]
@@ -28,6 +28,11 @@ pub enum Stmt {
         value: Rrc<Expr>,
         type_: Type,
         is_local: bool,
+        is_cloud: bool,
+    },
+    SetCallSite {
+        id: usize,
+        func: SmolStr,
     },
     ChangeVar {
         name: Name,
@@ -57,12 +62,20 @@ pub enum Stmt {
     Block {
         block: Block,
         span: Span,
-        args: Vec<Rrc<Expr>>,
+        args: Vec<Kwarg>,
     },
     ProcCall {
         name: SmolStr,
         span: Span,
+        args: Vec<Kwarg>,
+    },
+    FuncCall {
+        name: SmolStr,
+        span: Span,
         args: Vec<Rrc<Expr>>,
+    },
+    Return {
+        value: Rrc<Expr>,
     },
 }
 

@@ -1,16 +1,13 @@
 use std::io::{self, Seek, Write};
 
-use logos::Span;
 use serde_json::json;
-use smol_str::SmolStr;
 
 use super::{
     node_id::NodeID,
     sb3::{QualifiedName, Sb3, D, S},
 };
 use crate::{
-    ast::{Expr, Name, Type, Value},
-    codegen::sb3::qualify_struct_var_name,
+    ast::{Expr, Name, Value},
     diagnostic::DiagnosticKind,
     misc::write_comma_io,
 };
@@ -53,13 +50,34 @@ where T: Write + Seek
         write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
         write!(self, r#""{input_name}":"#)?;
         match expr {
-            Expr::Value { value, span: _ } => self.value_input(s, d, input_name, value),
-            Expr::Name(name) => self.name_input(s, d, input_name, name, shadow_id),
-            _ => self.node_input(s, d, input_name, this_id, shadow_id),
+            Expr::Value { value, span: _ } => return self.value_input(input_name, value),
+            Expr::Name(name) => return self.name_input(s, d, input_name, name, shadow_id),
+            Expr::CallSite { id } => return self.call_site_input(input_name, *id),
+            Expr::Dot { lhs, rhs, rhs_span } => {
+                if let Expr::Name(lhs_name) = &*lhs.borrow() {
+                    if let Some(enum_) = s.get_enum(lhs_name.basename()) {
+                        if let Some(variant) =
+                            enum_.variants.iter().find(|variant| &variant.name == rhs)
+                        {
+                            return self
+                                .value_input(input_name, &variant.value.as_ref().unwrap().0);
+                        } else {
+                            d.report(
+                                DiagnosticKind::UnrecognizedEnumVariant(
+                                    lhs_name.basename().clone(),
+                                ),
+                                rhs_span,
+                            );
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
+        self.node_input(input_name, this_id, shadow_id)
     }
 
-    fn value_input(&mut self, _s: S, _d: D, name: &str, value: &Value) -> io::Result<()> {
+    fn value_input(&mut self, name: &str, value: &Value) -> io::Result<()> {
         match value {
             Value::Int(int_value) => {
                 write!(self, "[1,[4,{}]]", json!(int_value))
@@ -109,13 +127,21 @@ where T: Write + Seek
             }
             None => {}
         }
-        self.shadow_input(s, input_name, shadow_id)
+        self.shadow_input(input_name, shadow_id)
+    }
+
+    fn call_site_input(&mut self, input_name: &str, id: usize) -> io::Result<()> {
+        write!(
+            self,
+            "[3,[12,{},{}],",
+            json!(format!("c{id}")),
+            json!(format!("c{id}"))
+        )?;
+        self.shadow_input(input_name, None)
     }
 
     fn node_input(
         &mut self,
-        s: S,
-        _d: D,
         input_name: &str,
         node_id: NodeID,
         shadow_id: Option<NodeID>,
@@ -124,15 +150,10 @@ where T: Write + Seek
             return write!(self, "[2,{node_id}]");
         }
         write!(self, "[3,{node_id},")?;
-        self.shadow_input(s, input_name, shadow_id)
+        self.shadow_input(input_name, shadow_id)
     }
 
-    fn shadow_input(
-        &mut self,
-        _s: S,
-        input_name: &str,
-        shadow_id: Option<NodeID>,
-    ) -> io::Result<()> {
+    fn shadow_input(&mut self, input_name: &str, shadow_id: Option<NodeID>) -> io::Result<()> {
         if let Some(shadow_id) = shadow_id {
             write!(self, "{shadow_id}]")
         } else if input_name == "BROADCAST_INPUT" {

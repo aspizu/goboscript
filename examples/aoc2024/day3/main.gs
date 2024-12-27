@@ -84,9 +84,9 @@ proc run text, enable_do_donts {
 
 onflag {
     join_input;
-    run join_input, false;
+    run join_input, enable_do_donts: false;
     without_do_donts = run;
-    run join_input, true;
+    run join_input, enable_do_donts: true;
     say
         "Without do() and don't() enabled: "
         & without_do_donts

@@ -9,3 +9,13 @@ pub struct Enum {
     pub span: Span,
     pub variants: Vec<EnumVariant>,
 }
+
+impl Enum {
+    pub fn new(name: SmolStr, span: Span, variants: Vec<EnumVariant>) -> Self {
+        Self {
+            name,
+            span,
+            variants,
+        }
+    }
+}

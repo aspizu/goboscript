@@ -23,6 +23,7 @@ pub enum DiagnosticKind {
     UnrecognizedEnum(SmolStr),
     UnrecognizedStruct(SmolStr),
     UnrecognizedProcedure(SmolStr),
+    UnrecognizedFunction(SmolStr),
     UnrecognizedArgument(SmolStr),
     UnrecognizedStructField(SmolStr),
     UnrecognizedEnumVariant(SmolStr),
@@ -83,6 +84,7 @@ impl DiagnosticKind {
             DiagnosticKind::UnrecognizedEnum(name) => format!("unrecognized enum {name}"),
             DiagnosticKind::UnrecognizedStruct(name) => format!("unrecognized struct {name}"),
             DiagnosticKind::UnrecognizedProcedure(name) => format!("unrecognized procedure {name}"),
+            DiagnosticKind::UnrecognizedFunction(name) => format!("unrecognized function {name}"),
             DiagnosticKind::UnrecognizedArgument(name) => format!("unrecognized argument {name}"),
             DiagnosticKind::UnrecognizedStructField(name) => {
                 format!("unrecognized struct field {name}")
@@ -153,6 +155,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedEnum(_)
             | DiagnosticKind::UnrecognizedStruct(_)
             | DiagnosticKind::UnrecognizedProcedure(_)
+            | DiagnosticKind::UnrecognizedFunction(_)
             | DiagnosticKind::UnrecognizedArgument(_)
             | DiagnosticKind::UnrecognizedStructField(_)
             | DiagnosticKind::UnrecognizedEnumVariant(_)

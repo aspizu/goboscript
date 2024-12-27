@@ -2,7 +2,7 @@
 
 ## Install from source
 
-You will need `git`, and the rust toolchain installed.
+You will need `git`, and the [rust toolchain](https://rustup.rs/) installed.
 
 ```shell
 git clone https://github.com/aspizu/goboscript

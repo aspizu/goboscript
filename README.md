@@ -2,6 +2,8 @@
 
 ![image](https://shields.io/crates/l/goboscript)
 
+![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
+
 [**Installation and documentation**](https://aspizu.github.io/goboscript)
 
 goboscript is a text-based programming language which compiles to Scratch. It allows
@@ -24,10 +26,6 @@ goboscript is more than just an 1:1 mapping of Scratch blocks to text, it also h
 additional features like local variables for procedures (custom blocks).
 
 goboscript also performs optimizations, detects problems and unused code.
-
-|goboscript|Scratch|
-|---|---|
-|![](https://media.discordapp.net/attachments/1129589844637667431/1221342945160986674/image.png?ex=66123b41&is=65ffc641&hm=7a9e2dc6d578bb23215bb870a5a9a2297b6b93aa7259dcb3c57030c112c73f23&=&format=webp&quality=lossless)|![](https://media.discordapp.net/attachments/1129589844637667431/1221343388117372980/image.png?ex=66123bab&is=65ffc6ab&hm=94597db42e084f4740f4134489cb8aa437611240f75d6125263d20163e94181b&=&format=webp&quality=lossless)|
 
 # Contributing
 

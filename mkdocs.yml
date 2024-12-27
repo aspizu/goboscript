@@ -1,96 +1,98 @@
 site_name: goboscript
 nav:
-  - README: index.md
-  - Install: install.md
-  - Getting Started: getting-started.md
-  - Configuration: configuration.md
-  - Language:
-      - Syntax: language/syntax.md
-      - Costumes: language/costumes.md
-      - Variables: language/variables.md
-      - Lists: language/lists.md
-      - Motion: language/motion.md
-      - Control Flow: language/control-flow.md
-      - Hat Blocks: language/hat-blocks.md
-      - Blocks: language/blocks.md
-      - Reporters: language/reporters.md
-      - Custom Blocks: language/custom-blocks.md
-      - Enums: language/enums.md
-  - Editor Integration:
-      - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
-      - Visual Studio Code: editor-integration/vscode.md
-      - Sublime Text: editor-integration/sublime-text.md
+    - README: index.md
+    - Install: install.md
+    - Getting Started: getting-started.md
+    - Configuration: configuration.md
+    - Language:
+          - Syntax: language/syntax.md
+          - Costumes: language/costumes.md
+          - Variables: language/variables.md
+          - Lists: language/lists.md
+          - Operators: language/operators.md
+          - Control Flow: language/control-flow.md
+          - Hat Blocks: language/hat-blocks.md
+          - Blocks: language/blocks.md
+          - Reporters: language/reporters.md
+          - Custom Blocks: language/custom-blocks.md
+          - Enums: language/enums.md
+          - Structs: language/structs.md
+          - Macros: language/macros.md
+    - Editor Integration:
+          - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
+          - Visual Studio Code: editor-integration/vscode.md
+          - Sublime Text: editor-integration/sublime-text.md
 theme:
-  name: material
-  features:
-    - navigation.instant
-    - navigation.instant.prefetch
-    - navigation.instant.progress
-    - navigation.instant.preview
-    - navigation.tracking
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - navigation.expand
-    - content.code.annotate
-    - toc.follow
-    - navigation.path
-    - navigation.top
-    - content.code.copy
-    - content.tabs.link
-  font:
-    text: Inter Tight
-    code: Source Code Pro
-  palette:
-    # Note: Using the system theme works with the insiders version
-    # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
-    - media: '(prefers-color-scheme)'
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
-    - media: '(prefers-color-scheme: light)'
-      scheme: default
-      primary: white
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: '(prefers-color-scheme: dark)'
-      scheme: slate
-      primary: black
-      toggle:
-        icon: material/brightness-4
-        name: Switch to system preference
+    name: material
+    features:
+        - navigation.instant
+        - navigation.instant.prefetch
+        - navigation.instant.progress
+        - navigation.instant.preview
+        - navigation.tracking
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - navigation.expand
+        - content.code.annotate
+        - toc.follow
+        - navigation.path
+        - navigation.top
+        - content.code.copy
+        - content.tabs.link
+    font:
+        text: Inter Tight
+        code: Source Code Pro
+    palette:
+        # Note: Using the system theme works with the insiders version
+        # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
+        - media: "(prefers-color-scheme)"
+          toggle:
+              icon: material/brightness-auto
+              name: Switch to light mode
+        - media: "(prefers-color-scheme: light)"
+          scheme: default
+          primary: white
+          toggle:
+              icon: material/brightness-7
+              name: Switch to dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          primary: black
+          toggle:
+              icon: material/brightness-4
+              name: Switch to system preference
 repo_url: https://github.com/aspizu/goboscript
 repo_name: goboscript
 site_author: Priyanshu Dangare
 site_url: https://aspizu.github.io/goboscript
 markdown_extensions:
-  - admonition
-  - pymdownx.details
-  - toc:
-      permalink: '#'
-  - pymdownx.snippets
-  - pymdownx.magiclink
-  - attr_list
-  - md_in_html
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.inlinehilite
-  - pymdownx.superfences
-  - markdown.extensions.attr_list
-  - pymdownx.keys
-  - pymdownx.tasklist:
-      custom_checkbox: true
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.tabbed:
-      alternate_style: true
+    - admonition
+    - pymdownx.details
+    - toc:
+          permalink: "#"
+    - pymdownx.snippets
+    - pymdownx.magiclink
+    - attr_list
+    - md_in_html
+    - pymdownx.highlight:
+          anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.superfences
+    - markdown.extensions.attr_list
+    - pymdownx.keys
+    - pymdownx.tasklist:
+          custom_checkbox: true
+    - pymdownx.highlight:
+          anchor_linenums: true
+    - pymdownx.tabbed:
+          alternate_style: true
 plugins:
-  - search
+    - search
 extra_css:
-  - stylesheets/extra.css
+    - stylesheets/extra.css
 extra:
-  social:
-    - icon: fontawesome/brands/github
-      link: https://github.com/aspizu
-    - icon: fontawesome/brands/discord
-      link: https://discord.gg/W9ZWy6ZMA3
+    social:
+        - icon: fontawesome/brands/github
+          link: https://github.com/aspizu
+        - icon: fontawesome/brands/discord
+          link: https://discord.gg/W9ZWy6ZMA3

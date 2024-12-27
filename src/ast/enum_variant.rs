@@ -7,5 +7,5 @@ use super::value::Value;
 pub struct EnumVariant {
     pub name: SmolStr,
     pub span: Span,
-    pub value: Value,
+    pub value: Option<(Value, Span)>,
 }

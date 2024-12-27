@@ -7,6 +7,7 @@ mod frontend;
 mod lexer;
 mod misc;
 mod parser;
+mod preproc;
 mod visitor;
 use std::{process::ExitCode, time::Instant};
 

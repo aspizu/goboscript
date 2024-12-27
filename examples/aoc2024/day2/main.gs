@@ -27,7 +27,7 @@ proc parse_input {
     delete reports;
     local i = 1;
     repeat length(input) {
-        split input[i], " ";
+        split input[i], sep: " ";
         add length(split) to reports;
         local j = 1;
         repeat length(split) {
@@ -79,7 +79,7 @@ proc count_safe_reports {
     count_safe_reports = 0;
     local i = 1;
     until i > length(reports) {
-        is_report_safe i, 0;
+        is_report_safe i, skip_idx: 0;
         if is_report_safe == true {
             count_safe_reports++;
         }
@@ -91,7 +91,7 @@ proc count_safe_reports_with_problem_dampener {
     count_safe_reports_with_problem_dampener = 0;
     local i = 1;
     until i > length(reports) {
-        is_report_safe i, 0;
+        is_report_safe i, skip_idx: 0;
         if is_report_safe == false {
             is_report_safe_with_problem_dampener i;
         }

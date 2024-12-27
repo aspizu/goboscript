@@ -1,8 +1,10 @@
 use std::io::{self, Seek, Write};
 
 use logos::Span;
+use smol_str::SmolStr;
 
 use super::{
+    mutation::Mutation,
     node::Node,
     node_id::NodeID,
     sb3::{qualify_struct_var_name, QualifiedName, Sb3, D, S},
@@ -26,20 +28,20 @@ where T: Write + Seek
         name: &Name,
     ) -> io::Result<()> {
         let basename = name.basename();
-        let Some(proc) = s.proc else {
-            d.report(
-                DiagnosticKind::UnrecognizedArgument(basename.clone()),
-                &name.span(),
-            );
-            return Ok(());
-        };
-        if !proc.args.iter().any(|arg| &arg.name == basename) {
+
+        if !(s
+            .proc
+            .is_some_and(|proc| proc.args.iter().any(|arg| &arg.name == basename))
+            || s.func
+                .is_some_and(|func| func.args.iter().any(|arg| &arg.name == basename)))
+        {
             d.report(
                 DiagnosticKind::UnrecognizedArgument(basename.clone()),
                 &name.span(),
             );
             return Ok(());
         }
+
         let qualified_name = match name.fieldname() {
             Some(fieldname) => qualify_struct_var_name(fieldname, basename),
             None => basename.clone(),
@@ -134,11 +136,11 @@ where T: Write + Seek
         opr: &Rrc<Expr>,
     ) -> io::Result<()> {
         if matches!(op, UnOp::Length) {
-            if let Expr::Name(Name::Name { name, span: _ }) = &*opr.borrow() {
+            if let Expr::Name(Name::Name { name, .. }) = &*opr.borrow() {
                 if s.sprite.lists.contains_key(name)
                     || s.stage.is_some_and(|stage| stage.lists.contains_key(name))
                 {
-                    return self.list_length(this_id, parent_id, name);
+                    return self.list_length(s, this_id, parent_id, name);
                 }
             }
         }
@@ -203,9 +205,147 @@ where T: Write + Seek
         self.expr(s, d, &index.borrow(), index_id, this_id)
     }
 
-    fn list_length(&mut self, this_id: NodeID, parent_id: NodeID, name: &str) -> io::Result<()> {
+    fn list_length(
+        &mut self,
+        s: S,
+        this_id: NodeID,
+        parent_id: NodeID,
+        name: &str,
+    ) -> io::Result<()> {
         self.begin_node(Node::new("data_lengthoflist", this_id).parent_id(parent_id))?;
-        self.single_field_id("LIST", name)?;
+        let list = s.get_list(name).unwrap();
+        if let Some((type_name, _type_span)) = list.type_.struct_() {
+            let struct_ = s.get_struct(type_name).unwrap();
+            let qualified_name = qualify_struct_var_name(&struct_.fields[0].name, name);
+            self.single_field_id("LIST", &qualified_name)?;
+        } else {
+            self.single_field_id("LIST", name)?;
+        }
         self.end_obj() // node
+    }
+
+    pub fn func_call(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        name: &SmolStr,
+        span: &Span,
+        args: &Vec<Rrc<Expr>>,
+    ) -> io::Result<()> {
+        let Some(func) = s.sprite.funcs.get(name) else {
+            d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
+            return Ok(());
+        };
+        if func.args.len() != args.len() {
+            d.report(
+                DiagnosticKind::ProcArgsCountMismatch {
+                    proc: name.clone(),
+                    given: args.len(),
+                },
+                span,
+            )
+        }
+        let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
+        let mut qualified_arg_values: Vec<Rrc<Expr>> = Vec::new();
+        self.begin_inputs()?;
+        for (arg, kwarg) in func.args.iter().zip(args) {
+            match &arg.type_ {
+                Type::Value => {
+                    let arg_id = self.id.new_id();
+                    self.input(s, d, &arg.name, &kwarg.borrow(), arg_id)?;
+                    qualified_args.push((arg.name.clone(), arg_id));
+                    qualified_arg_values.push(kwarg.clone());
+                }
+                Type::Struct {
+                    name: type_name,
+                    span: type_span,
+                } => {
+                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                        continue;
+                    };
+                    let arg_value = &*kwarg.borrow();
+                    let struct_literal_fields = match arg_value {
+                        Expr::StructLiteral {
+                            name: struct_literal_name,
+                            span: struct_literal_span,
+                            fields: struct_literal_fields,
+                        } => {
+                            if struct_literal_name != &struct_.name {
+                                d.report(
+                                    DiagnosticKind::TypeMismatch {
+                                        expected: arg.type_.clone(),
+                                        given: Type::Struct {
+                                            name: struct_literal_name.clone(),
+                                            span: struct_literal_span.clone(),
+                                        },
+                                    },
+                                    type_span,
+                                );
+                                continue;
+                            }
+                            if struct_literal_fields.len() != struct_.fields.len() {
+                                panic!()
+                            }
+                            for (struct_field, struct_literal_field) in
+                                struct_.fields.iter().zip(struct_literal_fields)
+                            {
+                                if struct_field.name != struct_literal_field.name {
+                                    panic!()
+                                }
+                            }
+                            struct_literal_fields
+                        }
+                        _ => {
+                            continue;
+                        }
+                    };
+                    for (field, struct_literal_field) in
+                        struct_.fields.iter().zip(struct_literal_fields)
+                    {
+                        let qualified_arg_name = qualify_struct_var_name(&field.name, &arg.name);
+                        let arg_id = self.id.new_id();
+                        self.input(
+                            s,
+                            d,
+                            &qualified_arg_name,
+                            &struct_literal_field.value.borrow(),
+                            arg_id,
+                        )?;
+                        qualified_args.push((qualified_arg_name, arg_id));
+                        qualified_arg_values.push(struct_literal_field.value.clone());
+                    }
+                }
+            }
+        }
+        self.end_obj()?; // inputs
+        write!(
+            self,
+            "{}",
+            Mutation::call(func.name.clone(), &qualified_args, true)
+        )?;
+        self.end_obj()?; // node
+        for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {
+            self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+        }
+        Ok(())
+    }
+
+    pub fn expr_dot(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        parent_id: NodeID,
+        lhs: &Expr,
+        rhs: &SmolStr,
+        rhs_span: Span,
+    ) -> io::Result<()> {
+        if let Expr::Name(name) = lhs {
+            if let Some(enum_) = s.get_enum(name.basename()) {
+                return Ok(());
+            }
+        }
+        panic!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}")
     }
 }

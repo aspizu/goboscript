@@ -150,7 +150,7 @@ impl BinOp {
             Self::And => "OPERAND1",
             Self::Or => "OPERAND1",
             Self::Join => "STRING1",
-            Self::In => "STRING1",
+            Self::In => "STRING2",
             Self::Of => "STRING",
             _ => unreachable!(),
         }
@@ -169,7 +169,7 @@ impl BinOp {
             Self::And => "OPERAND2",
             Self::Or => "OPERAND2",
             Self::Join => "STRING2",
-            Self::In => "STRING2",
+            Self::In => "STRING1",
             Self::Of => "LETTER",
             _ => unreachable!(),
         }
