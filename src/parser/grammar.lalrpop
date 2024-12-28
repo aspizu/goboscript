@@ -193,7 +193,7 @@ Expr: Rrc<Expr> = {
     #[precedence(level="1")]
     StructLiteral,
     Term,
-    #[precedence(level="2")] #[assoc(side="right")]
+    #[precedence(level="2")] #[assoc(side="left")]
     <l:@L> "-"     <e:Expr> <r:@R> => UnOp::Minus  .to_expr(l..r, e).into(),
     <l:@L> NOT     <e:Expr> <r:@R> => UnOp::Not    .to_expr(l..r, e).into(),
     <l:@L> LENGTH  <e:Expr> <r:@R> => UnOp::Length .to_expr(l..r, e).into(),
@@ -212,35 +212,35 @@ Expr: Rrc<Expr> = {
     <l:@L> LOG     <e:Expr> <r:@R> => UnOp::Log    .to_expr(l..r, e).into(),
     <l:@L> ANTILN  <e:Expr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e).into(),
     <l:@L> ANTILOG <e:Expr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e).into(),
-    #[precedence(level="3")] #[assoc(side="left")]
+    #[precedence(level="3")] #[assoc(side="right")]
     <l:@L> <lhs:Expr> "*" <rhs:Expr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "/" <rhs:Expr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "//"<rhs:Expr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "%" <rhs:Expr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="4")] #[assoc(side="left")]
+    #[precedence(level="4")] #[assoc(side="right")]
     <l:@L> <lhs:Expr> "+" <rhs:Expr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "-" <rhs:Expr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="5")] #[assoc(side="left")]
+    #[precedence(level="5")] #[assoc(side="right")]
     <l:@L> <lhs:Expr> "<" <rhs:Expr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="6")] #[assoc(side="right")]
+    #[precedence(level="6")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="7")] #[assoc(side="left")]
+    #[precedence(level="7")] #[assoc(side="right")]
     <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "=="<rhs:Expr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:Expr> "!="<rhs:Expr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="8")] #[assoc(side="left")]
+    #[precedence(level="8")] #[assoc(side="right")]
     <l:@L> <lhs:Expr> AND <rhs:Expr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="9")] #[assoc(side="left")]
+    #[precedence(level="9")] #[assoc(side="right")]
     <l:@L> <lhs:Expr> OR  <rhs:Expr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
 }
 
 IfExpr: Rrc<Expr> = {
     #[precedence(level="1")]
     Term,
-    #[precedence(level="2")] #[assoc(side="right")]
+    #[precedence(level="2")] #[assoc(side="left")]
     <l:@L> "-"     <e:IfExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e).into(),
     <l:@L> NOT     <e:IfExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e).into(),
     <l:@L> LENGTH  <e:IfExpr> <r:@R> => UnOp::Length .to_expr(l..r, e).into(),
@@ -259,28 +259,28 @@ IfExpr: Rrc<Expr> = {
     <l:@L> LOG     <e:IfExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e).into(),
     <l:@L> ANTILN  <e:IfExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e).into(),
     <l:@L> ANTILOG <e:IfExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e).into(),
-    #[precedence(level="3")] #[assoc(side="left")]
+    #[precedence(level="3")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr> "*" <rhs:IfExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "/" <rhs:IfExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "//"<rhs:IfExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "%" <rhs:IfExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="4")] #[assoc(side="left")]
+    #[precedence(level="4")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr> "+" <rhs:IfExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "-" <rhs:IfExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="5")] #[assoc(side="left")]
+    #[precedence(level="5")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr> "<" <rhs:IfExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "<="<rhs:IfExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> ">" <rhs:IfExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> ">="<rhs:IfExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="6")] #[assoc(side="right")]
+    #[precedence(level="6")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> "&" <rhs:IfExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="7")] #[assoc(side="left")]
+    #[precedence(level="7")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr>  IN <rhs:IfExpr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "=="<rhs:IfExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs).into(),
     <l:@L> <lhs:IfExpr> "!="<rhs:IfExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="8")] #[assoc(side="left")]
+    #[precedence(level="8")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr> AND <rhs:IfExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="9")] #[assoc(side="left")]
+    #[precedence(level="9")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
 }
 
