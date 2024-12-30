@@ -2,7 +2,6 @@ use logos::Span;
 use smol_str::SmolStr;
 
 use super::{expr::Expr, Event, Stmt};
-use crate::misc::Rrc;
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]
@@ -11,8 +10,8 @@ pub enum EventKind {
     OnKey { key: SmolStr, span: Span },
     OnClick,
     OnBackdrop { backdrop: SmolStr, span: Span },
-    OnLoudnessGt { value: Rrc<Expr> },
-    OnTimerGt { value: Rrc<Expr> },
+    OnLoudnessGt { value: Box<Expr> },
+    OnTimerGt { value: Box<Expr> },
     OnClone,
 }
 

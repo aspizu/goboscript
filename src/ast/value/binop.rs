@@ -25,70 +25,106 @@ impl Value {
     }
 
     fn add(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        match (self, rhs) {
+            (Value::Int(a), Value::Int(b)) => Some(Value::Int(a + b)),
+            (Value::Float(a), Value::Float(b)) => Some(Value::Float(a + b)),
+            (Value::Int(a), Value::Float(b)) => Some(Value::Float(*a as f64 + b)),
+            (Value::Float(a), Value::Int(b)) => Some(Value::Float(a + *b as f64)),
+            _ => None,
+        }
     }
 
     fn sub(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        match (self, rhs) {
+            (Value::Int(a), Value::Int(b)) => Some(Value::Int(a - b)),
+            (Value::Float(a), Value::Float(b)) => Some(Value::Float(a - b)),
+            (Value::Int(a), Value::Float(b)) => Some(Value::Float(*a as f64 - b)),
+            (Value::Float(a), Value::Int(b)) => Some(Value::Float(a - *b as f64)),
+            _ => None,
+        }
     }
 
     fn mul(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        match (self, rhs) {
+            (Value::Int(a), Value::Int(b)) => Some(Value::Int(a * b)),
+            (Value::Float(a), Value::Float(b)) => Some(Value::Float(a * b)),
+            (Value::Int(a), Value::Float(b)) => Some(Value::Float(*a as f64 * b)),
+            (Value::Float(a), Value::Int(b)) => Some(Value::Float(a * *b as f64)),
+            _ => None,
+        }
     }
 
     fn div(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        match (self, rhs) {
+            (Value::Int(a), Value::Int(b)) => {
+                if *b == 0 {
+                    None
+                } else {
+                    Some(Value::Int(a / b))
+                }
+            }
+            (Value::Float(a), Value::Float(b)) => Some(Value::Float(a / b)),
+            (Value::Int(a), Value::Float(b)) => Some(Value::Float(*a as f64 / b)),
+            (Value::Float(a), Value::Int(b)) => {
+                if *b == 0 {
+                    None
+                } else {
+                    Some(Value::Float(a / *b as f64))
+                }
+            }
+            _ => None,
+        }
     }
 
     fn mod_(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn lt(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn gt(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn eq(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn and(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn or(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn join(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn in_(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn of(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn le(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn ge(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn ne(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 
     fn floor_div(&self, rhs: &Value) -> Option<Value> {
-        todo!()
+        None
     }
 }

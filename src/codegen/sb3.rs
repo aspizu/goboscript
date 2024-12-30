@@ -642,7 +642,7 @@ where T: Write + Seek
                 self.costumes.insert(costume.path.clone(), hash.clone());
                 Ok(hash)
             })?;
-        let (_, extension) = costume.path.rsplit_once('.').unwrap();
+        let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(*costume.name))?;
         write!(self, r#","assetId":"{hash}""#)?;
@@ -934,15 +934,9 @@ where T: Write + Seek
                 );
                 Ok(())
             }
-            Expr::Dot { lhs, rhs, rhs_span } => self.expr_dot(
-                s,
-                d,
-                this_id,
-                parent_id,
-                &lhs.borrow(),
-                rhs,
-                rhs_span.clone(),
-            ),
+            Expr::Dot { lhs, rhs, rhs_span } => {
+                self.expr_dot(s, d, this_id, parent_id, lhs, rhs, rhs_span.clone())
+            }
         }
     }
 }

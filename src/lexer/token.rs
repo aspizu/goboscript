@@ -141,8 +141,6 @@ pub enum Token {
     Percent,
     #[token(";")]
     Semicolon,
-    #[token(":")]
-    Colon,
     #[token("length")]
     Length,
     #[token("round")]
@@ -205,4 +203,6 @@ pub enum Token {
     List,
     #[token("cloud")]
     Cloud,
+    #[token("|>")]
+    Pipe,
 }

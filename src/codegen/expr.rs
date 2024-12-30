@@ -13,7 +13,7 @@ use crate::{
     ast::*,
     blocks::{BinOp, Repr, UnOp},
     diagnostic::DiagnosticKind,
-    misc::{write_comma_io, Rrc},
+    misc::write_comma_io,
 };
 
 impl<T> Sb3<T>
@@ -61,7 +61,7 @@ where T: Write + Seek
         parent_id: NodeID,
         repr: &Repr,
         span: &Span,
-        args: &Vec<Rrc<Expr>>,
+        args: &[Expr],
     ) -> io::Result<()> {
         if args.len() != repr.args().len() {
             todo!()
@@ -74,22 +74,15 @@ where T: Write + Seek
         self.begin_inputs()?;
         for ((&arg_name, arg_value), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
             if repr.menu().is_some_and(|menu| menu.input == arg_name) {
-                if let Expr::Value { value, span: _ } = &*arg_value.borrow() {
+                if let Expr::Value { value, span: _ } = arg_value {
                     menu_value = Some(value.clone());
                     continue;
                 } else {
                     menu_is_default = false;
-                    self.input_with_shadow(
-                        s,
-                        d,
-                        arg_name,
-                        &arg_value.borrow(),
-                        arg_id,
-                        menu_id.unwrap(),
-                    )?;
+                    self.input_with_shadow(s, d, arg_name, arg_value, arg_id, menu_id.unwrap())?;
                 }
             } else {
-                self.input(s, d, arg_name, &arg_value.borrow(), arg_id)?;
+                self.input(s, d, arg_name, arg_value, arg_id)?;
             }
         }
         if menu_is_default {
@@ -107,7 +100,7 @@ where T: Write + Seek
         }
         self.end_obj()?; // node
         for (arg, arg_id) in args.iter().zip(arg_ids) {
-            self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+            self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = repr.menu() {
             self.begin_node(
@@ -133,10 +126,10 @@ where T: Write + Seek
         parent_id: NodeID,
         op: &UnOp,
         _span: &Span,
-        opr: &Rrc<Expr>,
+        opr: &Expr,
     ) -> io::Result<()> {
         if matches!(op, UnOp::Length) {
-            if let Expr::Name(Name::Name { name, .. }) = &*opr.borrow() {
+            if let Expr::Name(Name::Name { name, .. }) = opr {
                 if s.sprite.lists.contains_key(name)
                     || s.stage.is_some_and(|stage| stage.lists.contains_key(name))
                 {
@@ -147,13 +140,13 @@ where T: Write + Seek
         let opr_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, op.input(), &opr.borrow(), opr_id)?;
+        self.input(s, d, op.input(), opr, opr_id)?;
         self.end_obj()?; // inputs
         if let Some(fields) = op.fields() {
             write!(self, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
-        self.expr(s, d, &opr.borrow(), opr_id, this_id)
+        self.expr(s, d, opr, opr_id, this_id)
     }
 
     pub fn bin_op(
@@ -164,11 +157,11 @@ where T: Write + Seek
         parent_id: NodeID,
         op: &BinOp,
         _span: &Span,
-        lhs: &Rrc<Expr>,
-        rhs: &Rrc<Expr>,
+        lhs: &Expr,
+        rhs: &Expr,
     ) -> io::Result<()> {
         if let BinOp::Of = op {
-            if let Expr::Name(name) = &*lhs.borrow() {
+            if let Expr::Name(name) = lhs {
                 if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(d, name) {
                     return self.list_index(s, d, this_id, parent_id, &qualified_name, rhs);
                 }
@@ -178,12 +171,12 @@ where T: Write + Seek
         let rhs_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, op.lhs(), &lhs.borrow(), lhs_id)?;
-        self.input(s, d, op.rhs(), &rhs.borrow(), rhs_id)?;
+        self.input(s, d, op.lhs(), lhs, lhs_id)?;
+        self.input(s, d, op.rhs(), rhs, rhs_id)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
-        self.expr(s, d, &lhs.borrow(), lhs_id, this_id)?;
-        self.expr(s, d, &rhs.borrow(), rhs_id, this_id)
+        self.expr(s, d, lhs, lhs_id, this_id)?;
+        self.expr(s, d, rhs, rhs_id, this_id)
     }
 
     pub fn list_index(
@@ -193,16 +186,16 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
         name: &str,
-        index: &Rrc<Expr>,
+        index: &Expr,
     ) -> io::Result<()> {
         let index_id = self.id.new_id();
         self.begin_node(Node::new("data_itemoflist", this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", &index.borrow(), index_id)?;
+        self.input(s, d, "INDEX", index, index_id)?;
         self.end_obj()?; // inputs
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
-        self.expr(s, d, &index.borrow(), index_id, this_id)
+        self.expr(s, d, index, index_id, this_id)
     }
 
     fn list_length(
@@ -231,7 +224,7 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &Vec<Rrc<Expr>>,
+        args: &[Expr],
     ) -> io::Result<()> {
         let Some(func) = s.sprite.funcs.get(name) else {
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
@@ -246,14 +239,14 @@ where T: Write + Seek
                 span,
             )
         }
-        let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
-        let mut qualified_arg_values: Vec<Rrc<Expr>> = Vec::new();
+        let mut qualified_args: Vec<(SmolStr, NodeID)> = vec![];
+        let mut qualified_arg_values: Vec<Expr> = vec![];
         self.begin_inputs()?;
         for (arg, kwarg) in func.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, &kwarg.borrow(), arg_id)?;
+                    self.input(s, d, &arg.name, kwarg, arg_id)?;
                     qualified_args.push((arg.name.clone(), arg_id));
                     qualified_arg_values.push(kwarg.clone());
                 }
@@ -264,7 +257,7 @@ where T: Write + Seek
                     let Some(struct_) = s.sprite.structs.get(type_name) else {
                         continue;
                     };
-                    let arg_value = &*kwarg.borrow();
+                    let arg_value = kwarg;
                     let struct_literal_fields = match arg_value {
                         Expr::StructLiteral {
                             name: struct_literal_name,
@@ -309,11 +302,11 @@ where T: Write + Seek
                             s,
                             d,
                             &qualified_arg_name,
-                            &struct_literal_field.value.borrow(),
+                            &struct_literal_field.value,
                             arg_id,
                         )?;
                         qualified_args.push((qualified_arg_name, arg_id));
-                        qualified_arg_values.push(struct_literal_field.value.clone());
+                        qualified_arg_values.push(struct_literal_field.value.as_ref().clone());
                     }
                 }
             }
@@ -326,7 +319,7 @@ where T: Write + Seek
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {
-            self.expr(s, d, &arg.borrow(), arg_id, this_id)?;
+            self.expr(s, d, arg, arg_id, this_id)?;
         }
         Ok(())
     }

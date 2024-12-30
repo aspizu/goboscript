@@ -28,6 +28,26 @@ pub struct PreProc {
     pub macros: FxHashMap<String, Macro>,
 }
 
+fn parse_line(slice: &mut [u8]) -> (String, usize) {
+    let mut result = None;
+    let mut newlines = vec![];
+    for i in 0..slice.len() {
+        if slice[i] == b'\n' {
+            if i != 0 && slice[i - 1] == b'\\' {
+                slice[i - 1] = b' ';
+                newlines.push(i);
+            } else {
+                result = Some((std::str::from_utf8(&slice[..i]).unwrap().to_owned(), i));
+                break;
+            }
+        }
+    }
+    for newline in newlines {
+        slice[newline + 1] = b'#';
+    }
+    result.unwrap_or_default()
+}
+
 impl PreProc {
     pub fn new(basepath: PathBuf) -> Self {
         Self {
@@ -41,7 +61,11 @@ impl PreProc {
     }
 
     pub fn include_relative(&mut self, path: PathBuf) -> io::Result<()> {
-        self.include(self.basepath.join(path))
+        self.include(if path.starts_with("std/") {
+            path
+        } else {
+            self.basepath.join(path)
+        })
     }
 
     pub fn include(&mut self, path: PathBuf) -> io::Result<()> {
@@ -49,9 +73,20 @@ impl PreProc {
             return Ok(());
         }
         let length = self.buffer.len();
-        let file = File::open(&path)?;
-        let mut reader = BufReader::new(file);
-        reader.read_to_end(&mut self.buffer)?;
+        let p = path.to_str().unwrap();
+        if p.starts_with("std/") {
+            match p {
+                "std/math" => include_bytes!("../std/math.gs").as_slice(),
+                "std/string" => include_bytes!("../std/string.gs").as_slice(),
+                "std/algo" => include_bytes!("../std/algo.gs").as_slice(),
+                _ => unreachable!(),
+            }
+            .read_to_end(&mut self.buffer)?;
+        } else {
+            let file = File::open(&path)?;
+            let mut reader = BufReader::new(file);
+            reader.read_to_end(&mut self.buffer)?;
+        }
         self.includes.push(Include {
             range: length..self.buffer.len(),
             path,
@@ -81,6 +116,7 @@ impl PreProc {
                         .next()
                         .unwrap();
                     i += name.len();
+                    let name = std::str::from_utf8(name).unwrap().to_owned();
                     if self.buffer[i] == b'(' {
                         i += 1;
                         let mut args = vec![];
@@ -96,10 +132,8 @@ impl PreProc {
                             args.push(std::str::from_utf8(arg).unwrap().to_string());
                         }
                         i += 1;
-                        let substitution = self.buffer[i..].split(|&c| c == b'\n').next().unwrap();
-                        i += substitution.len();
-                        let name = std::str::from_utf8(name).unwrap();
-                        let substitution = std::str::from_utf8(substitution).unwrap();
+                        let (substitution, len) = parse_line(&mut self.buffer[i..]);
+                        i += len;
                         self.macros.insert(
                             name.to_string(),
                             Macro {
@@ -109,10 +143,8 @@ impl PreProc {
                         );
                     } else {
                         i += 1;
-                        let value = self.buffer[i..].split(|&c| c == b'\n').next().unwrap();
-                        i += value.len();
-                        let name = std::str::from_utf8(name).unwrap();
-                        let value = std::str::from_utf8(value).unwrap();
+                        let (value, len) = parse_line(&mut self.buffer[i..]);
+                        i += len;
                         self.defines.insert(name.to_string(), value.to_string());
                     }
                 }

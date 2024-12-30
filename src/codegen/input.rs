@@ -54,7 +54,7 @@ where T: Write + Seek
             Expr::Name(name) => return self.name_input(s, d, input_name, name, shadow_id),
             Expr::CallSite { id } => return self.call_site_input(input_name, *id),
             Expr::Dot { lhs, rhs, rhs_span } => {
-                if let Expr::Name(lhs_name) = &*lhs.borrow() {
+                if let Expr::Name(lhs_name) = &**lhs {
                     if let Some(enum_) = s.get_enum(lhs_name.basename()) {
                         if let Some(variant) =
                             enum_.variants.iter().find(|variant| &variant.name == rhs)

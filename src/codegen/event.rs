@@ -7,7 +7,7 @@ use super::{
     node_id::NodeID,
     sb3::{Sb3, D, S},
 };
-use crate::{ast::Expr, misc::Rrc};
+use crate::ast::Expr;
 
 impl<T> Sb3<T>
 where T: Write + Seek
@@ -44,34 +44,22 @@ where T: Write + Seek
         self.end_obj() // node
     }
 
-    pub fn on_loudness_gt(
-        &mut self,
-        s: S,
-        d: D,
-        this_id: NodeID,
-        value: &Rrc<Expr>,
-    ) -> io::Result<()> {
+    pub fn on_loudness_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", &value.borrow(), this_id)?;
+        self.input(s, d, "VALUE", value, this_id)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "LOUDNESS")?;
         self.end_obj()?; // node
-        self.expr(s, d, &value.borrow(), this_id, this_id)
+        self.expr(s, d, value, this_id, this_id)
     }
 
-    pub fn on_timer_gt(
-        &mut self,
-        s: S,
-        d: D,
-        this_id: NodeID,
-        value: &Rrc<Expr>,
-    ) -> io::Result<()> {
+    pub fn on_timer_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", &value.borrow(), this_id)?;
+        self.input(s, d, "VALUE", value, this_id)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "TIMER")?;
         self.end_obj()?; // node
-        self.expr(s, d, &value.borrow(), this_id, this_id)
+        self.expr(s, d, value, this_id, this_id)
     }
 
     pub fn on_clone(&mut self, _s: S, _d: D, _this_id: NodeID) -> io::Result<()> {

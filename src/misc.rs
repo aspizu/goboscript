@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{cell::RefCell, io, rc::Rc};
+use std::io;
 
 pub fn write_comma_io<T>(mut file: T, comma: &mut bool) -> io::Result<()>
 where T: io::Write {
@@ -18,5 +18,3 @@ where T: fmt::Write {
     *comma = true;
     Ok(())
 }
-
-pub type Rrc<T> = Rc<RefCell<T>>;

@@ -1,15 +1,10 @@
-use std::cell::RefCell;
-
 use logos::Span;
 use smol_str::SmolStr;
 
 use super::{value::Value, Name, StructLiteralField};
-use crate::{
-    blocks::{BinOp, Repr, UnOp},
-    misc::Rrc,
-};
+use crate::blocks::{BinOp, Repr, UnOp};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Value {
         value: Value,
@@ -20,7 +15,7 @@ pub enum Expr {
         id: usize,
     },
     Dot {
-        lhs: Rrc<Expr>,
+        lhs: Box<Expr>,
         rhs: SmolStr,
         rhs_span: Span,
     },
@@ -28,23 +23,23 @@ pub enum Expr {
     Repr {
         repr: Repr,
         span: Span,
-        args: Vec<Rrc<Expr>>,
+        args: Vec<Expr>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<Rrc<Expr>>,
+        args: Vec<Expr>,
     },
     UnOp {
         op: UnOp,
         span: Span,
-        opr: Rrc<Expr>,
+        opr: Box<Expr>,
     },
     BinOp {
         op: BinOp,
         span: Span,
-        lhs: Rrc<Expr>,
-        rhs: Rrc<Expr>,
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
     },
     StructLiteral {
         name: SmolStr,
@@ -58,7 +53,7 @@ impl Expr {
         match self {
             Self::Value { span, .. } => span.clone(),
             Self::Name(name) => name.span(),
-            Self::Dot { lhs, rhs_span, .. } => lhs.borrow().span().start..rhs_span.end,
+            Self::Dot { lhs, rhs_span, .. } => lhs.span().start..rhs_span.end,
             Self::Arg(name) => name.span(),
             Self::Repr { span, .. } => span.clone(),
             Self::FuncCall { span, .. } => span.clone(),
@@ -71,28 +66,22 @@ impl Expr {
 }
 
 impl UnOp {
-    pub fn to_expr(self, span: Span, expr: Rrc<Expr>) -> Expr {
+    pub fn to_expr(self, span: Span, expr: Expr) -> Expr {
         Expr::UnOp {
             op: self,
             span,
-            opr: expr,
+            opr: Box::new(expr),
         }
     }
 }
 
 impl BinOp {
-    pub fn to_expr(self, span: Span, lhs: Rrc<Expr>, rhs: Rrc<Expr>) -> Expr {
+    pub fn to_expr(self, span: Span, lhs: Expr, rhs: Expr) -> Expr {
         Expr::BinOp {
             op: self,
             span,
-            lhs,
-            rhs,
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
         }
-    }
-}
-
-impl From<Expr> for Rrc<Expr> {
-    fn from(value: Expr) -> Self {
-        RefCell::new(value).into()
     }
 }

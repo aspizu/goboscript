@@ -1,4 +1,4 @@
-use crate::{ast::*, misc::Rrc};
+use crate::ast::*;
 
 pub fn visit_project(project: &mut Project) {
     let mut callsites = 0;
@@ -112,8 +112,8 @@ fn visit_stmt(stmt: &mut Stmt, callsites: &mut usize) -> Vec<Stmt> {
             span: _,
             args,
         } => {
-            for kwarg in args {
-                visit_expr(&mut kwarg.value, &mut before, callsites);
+            for arg in args {
+                visit_expr(arg, &mut before, callsites);
             }
         }
         Stmt::ProcCall {
@@ -121,8 +121,8 @@ fn visit_stmt(stmt: &mut Stmt, callsites: &mut usize) -> Vec<Stmt> {
             span: _,
             args,
         } => {
-            for kwarg in args {
-                visit_expr(&mut kwarg.value, &mut before, callsites);
+            for arg in args {
+                visit_expr(arg, &mut before, callsites);
             }
         }
         Stmt::FuncCall {
@@ -141,9 +141,9 @@ fn visit_stmt(stmt: &mut Stmt, callsites: &mut usize) -> Vec<Stmt> {
     before
 }
 
-fn visit_expr(expr: &mut Rrc<Expr>, before: &mut Vec<Stmt>, callsites: &mut usize) {
-    let replace: Option<Rrc<Expr>> = match &mut *expr.borrow_mut() {
-        Expr::CallSite { .. } => None,
+fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, callsites: &mut usize) {
+    let replace: Option<Expr> = match expr {
+        Expr::CallSite { id: _ } => None,
         Expr::Value { value: _, span: _ } => None,
         Expr::Name(_name) => None,
         Expr::Dot {
@@ -176,7 +176,7 @@ fn visit_expr(expr: &mut Rrc<Expr>, before: &mut Vec<Stmt>, callsites: &mut usiz
                 id: *callsites,
                 func: name.clone(),
             });
-            Some(Expr::CallSite { id: *callsites }.into())
+            Some(Expr::CallSite { id: *callsites })
         }
         Expr::UnOp {
             op: _,

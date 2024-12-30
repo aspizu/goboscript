@@ -2,11 +2,10 @@ use logos::Span;
 use smol_str::SmolStr;
 
 use super::Expr;
-use crate::misc::Rrc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StructLiteralField {
     pub name: SmolStr,
     pub span: Span,
-    pub value: Rrc<Expr>,
+    pub value: Box<Expr>,
 }

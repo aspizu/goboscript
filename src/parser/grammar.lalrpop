@@ -12,20 +12,8 @@ grammar<'a>(sprite: &'a mut Sprite);
 
 pub Sprite = Declr*;
 
-#[inline]
-Type: Type = {
-    <l:@L> <n:NAME> <r:@R> => Type::Struct { name: n, span: l..r },
-    => Type::Value,
-}
-
-Arg: Arg = {
-    <t:Type> <l:@L> <n:NAME> <r:@R> => Arg { name: n, span: l..r, type_: t },
-}
-
-Stmts: Vec<Stmt> = "{" <Stmt*> "}";
-
 Declr: () = {
-    COSTUMES Comma<Costume> ";" => {},
+    COSTUMES Comma<Costume> ";",
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n, l..r, a, b, w.is_none()));
     },
@@ -36,8 +24,8 @@ Declr: () = {
     <l:@L> ONKEY <r:@R> <kl:@L> <key:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnKey { key, span: kl..kr }.to_event(l..r, b)),
     <l:@L> ONCLICK <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClick.to_event(l..r, b)),
     <l:@L> ONBACKDROP <r:@R> <kl:@L> <backdrop:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnBackdrop { backdrop, span: kl..kr }.to_event(l..r, b)),
-    <l:@L> ONLOUDNESS <r:@R> ">" <value:IfExpr> <b:Stmts> => sprite.events.push(EventKind::OnLoudnessGt { value }.to_event(l..r, b)),
-    <l:@L> ONTIMER <r:@R> ">" <value:IfExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
+    <l:@L> ONLOUDNESS <r:@R> ">" <value:BoxedExpr> <b:Stmts> => sprite.events.push(EventKind::OnLoudnessGt { value }.to_event(l..r, b)),
+    <l:@L> ONTIMER <r:@R> ">" <value:BoxedExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
     <l:@L> ONCLONE <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClone.to_event(l..r, b)),
     STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:SpannedComma<NAME>> "}" => {
         sprite.structs.insert(name.clone(), Struct::new(name, l..r, fields));
@@ -45,140 +33,31 @@ Declr: () = {
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
-    LIST <t:Type> <l:@L> <name:NAME> <r:@R> ";" => {
-        sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: None });
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
+        sprite.lists.insert(name.clone(), List { name, span: l..r, type_, cmd: None });
     },
-    LIST <t:Type> <l:@L> <name:NAME> <r:@R> "=" <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> ";" => {
-        sprite.lists.insert(name.clone(), List { name, span: l..r, type_: t, cmd: Some(Cmd { program: program.map(|program| Program { name: program, span: pl..pr }), cmd, span: cl..cr }) });
-    },
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> ";" => {
+        sprite.lists.insert(
+            name.clone(),
+            List {
+                name,
+                span: l..r,
+                type_,
+                cmd: Some(
+                    Cmd {
+                        program: program.map(|program| Program { name: program, span: pl..pr }),
+                        cmd,
+                        span: cl..cr 
+                    }
+                )
+            }
+        );
+    }
 }
 
 EnumVariant: EnumVariant = {
     <l:@L> <name:NAME> <r:@R> => EnumVariant { name, span: l..r, value: None },
     <l:@L> <name:NAME> <r:@R> "=" <v:Value> => EnumVariant { name, span: l..r, value: Some(v) },
-}
-
-Stmt: Stmt = {
-    <If>,
-    REPEAT <t:IfExpr> <b:Stmts> => Stmt::Repeat { times: t, body: b },
-    <l:@L> FOREVER <r:@R> <b:Stmts> => Stmt::Forever { body: b, span: l..r },
-    UNTIL <c:IfExpr> <b:Stmts> => Stmt::Until { cond: c, body: b },
-    <l:@L> <n:NAME> <r:@R> "++" ";" => Stmt::ChangeVar { name: Name::Name { name: n.clone(), span: l..r }, value: Value::Int(1).to_expr(l..r).into() },
-    <l:@L> <n:NAME> <r:@R> "--" ";" => Stmt::ChangeVar { name: Name::Name { name: n.clone(), span: l..r }, value: Value::Int(-1).to_expr(l..r).into() },
-    <l:@L> <n:NAME> <r:@R> "+=" <v:Expr> ";" => Stmt::ChangeVar { name: Name::Name { name: n.clone(), span: l..r }, value: v },
-    <l:@L> <n:NAME> <r:@R> "-=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Sub.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
-    <l:@L> <n:NAME> <r:@R> "*=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mul.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
-    <l:@L> <n:NAME> <r:@R> "/=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Div.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
-    <l:@L> <n:NAME> <r:@R> "//=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
-    <l:@L> <n:NAME> <r:@R> "%=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Mod.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
-    <l:@L> <n:NAME> <r:@R> "&=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n.clone(), span: l..r }, value: BinOp::Join.to_expr(l..r, Expr::Name(Name::Name { name: n, span: l..r }).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false },
-    <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: false, is_cloud: false },
-    LOCAL <t:Type> <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: t, is_local: true, is_cloud: false },
-    CLOUD <l:@L> <n:NAME> <r:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::Name { name: n, span: l..r }, value: v, type_: Type::Value, is_local: false, is_cloud: true },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "=" <v:Expr> ";" => Stmt::SetVar { name: Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, value: v, type_: Type::Value, is_local: false, is_cloud: false },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "+=" <v:Expr> ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: v },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "++" ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: Value::Int(1).to_expr(l..r).into() },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "--" ";" => Stmt::ChangeVar { name: Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf }, value: Value::Int(-1).to_expr(l..r).into() },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "-=" <v:Expr> ";" => {
-        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Sub.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
-    },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "*=" <v:Expr> ";" => {
-        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Mul.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
-    },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "/=" <v:Expr> ";" => {
-        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Div.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
-    },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "//=" <v:Expr> ";" => {
-        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::FloorDiv.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
-    },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "%=" <v:Expr> ";" => {
-        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Mod.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
-    },
-    <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> "&=" <v:Expr> ";" => {
-        let name = Name::DotName { lhs: n.clone(), lhs_span: l..r, rhs: f.clone(), rhs_span: lf..rf };
-        Stmt::SetVar { name: name.clone(), value: BinOp::Join.to_expr(l..r, Expr::Name(name).into(), v).into(), type_: Type::Value, is_local: false, is_cloud: false }
-    },
-    SHOW <name:NameName> ";" => Stmt::Show (name),
-    HIDE <name:NameName> ";" => Stmt::Hide (name),
-    <l:@L> SHOW <r:@R> ";" => Stmt::Block { block: Block::Show, span: l..r, args: vec![] },
-    <l:@L> HIDE <r:@R> ";" => Stmt::Block { block: Block::Hide, span: l..r, args: vec![] },
-    ADD <v:Expr> TO <n:NameName> ";" => Stmt::AddToList { name: n, value: v },
-    DELETE <name:NameName> ";" => Stmt::DeleteList (name),
-    DELETE <name:NameName> "[" <index:Expr> "]" ";" => Stmt::DeleteListIndex { name, index },
-    <name:NameName> "[" <index:Expr> "]" "=" <value:Expr> ";" => Stmt::SetListIndex { name, index, value },
-    <name:NameName> "[" <index:Expr> "]" "+=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <name:NameName> "[" <index:Expr> "]" "++" ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name.clone()).into(), index).into(), Value::Int(1).to_expr(name.span().clone()).into()).into() },
-    <name:NameName> "[" <index:Expr> "]" "--" ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name.clone()).into(), index).into(), Value::Int(1).to_expr(name.span().clone()).into()).into() },
-    <name:NameName> "[" <index:Expr> "]" "-=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <name:NameName> "[" <index:Expr> "]" "*=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mul.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <name:NameName> "[" <index:Expr> "]" "/=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Div.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <name:NameName> "[" <index:Expr> "]" "//=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::FloorDiv.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <name:NameName> "[" <index:Expr> "]" "%=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mod.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <name:NameName> "[" <index:Expr> "]" "&=" <value:Expr> ";" => Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Join.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "=" <value:Expr> ";" => Stmt::SetListIndex { name: Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf }, index, value },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "+=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "++" ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Add.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name.clone()).into(), index).into(), Value::Int(1).to_expr(name.span().clone()).into()).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "--" ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name.clone()).into(), index).into(), Value::Int(1).to_expr(name.span().clone()).into()).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "-=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Sub.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "*=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mul.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "/=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Div.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "//=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::FloorDiv.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "%=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Mod.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    <l:@L> <name:NAME> <r:@R> "[" <index:Expr> "]" "." <lf:@L> <f:NAME> <rf:@R> "&=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs: name, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
-        Stmt::SetListIndex { name: name.clone(), index: index.clone(), value: BinOp::Join.to_expr(name.span().clone(), BinOp::Of.to_expr(name.span().clone(), Expr::Name(name).into(), index).into(), value).into() }
-    },
-    INSERT <value:Expr> AT <name:Name> "[" <index:Expr> "]" ";" => Stmt::InsertAtList { name, index, value },
-    <l:@L> <name:NAME> <r:@R> <a:Comma<Kwarg>> ";" => match Block::from_shape(&name, a.len()) {
-        Some(block) => Stmt::Block { block, span: l..r, args: a },
-        None => Stmt::ProcCall { name, span: l..r, args: a },
-    },
-    RETURN <e:Expr> ";" => Stmt::Return { value: e },
-}
-
-Kwarg: Kwarg = <n:KwargName?> <v:Expr> => Kwarg { name: n, value: v.into() };
-
-KwargName: (SmolStr, Span) = <l:@L> <n:NAME> <r:@R> ":" => (n, l..r);
-
-If: Stmt = {
-    IF <cond:IfExpr> <if_body:Stmts> => Stmt::Branch { cond, if_body, else_body: Default::default() },
-    IF <cond:IfExpr> <if_body:Stmts> ELSE <else_body:Stmts> => Stmt::Branch { cond, if_body, else_body },
-    IF <cond:IfExpr> <if_body:Stmts> <else_body:Elif> => Stmt::Branch { cond, if_body, else_body: vec![else_body] },
-}
-
-Elif: Stmt = {
-    ELIF <cond:IfExpr> <body:Stmts> => Stmt::Branch { cond, if_body: body, else_body: Default::default() },
-    ELIF <cond:IfExpr> <body:Stmts> <else_body:Elif> => Stmt::Branch { cond, if_body: body, else_body: vec![else_body] },
-    ELIF <cond:IfExpr> <body:Stmts> ELSE <else_body:Stmts> => Stmt::Branch { cond, if_body: body, else_body },
 }
 
 Costume: () = {
@@ -187,102 +66,307 @@ Costume: () = {
     }
 }
 
-Exprs: Vec<Rrc<Expr>> = <Comma<Expr>>;
+Stmts: Vec<Stmt> = "{" <Stmt*> "}";
 
-Expr: Rrc<Expr> = {
-    #[precedence(level="1")]
-    StructLiteral,
-    Term,
-    #[precedence(level="2")] #[assoc(side="left")]
-    <l:@L> "-"     <e:Expr> <r:@R> => UnOp::Minus  .to_expr(l..r, e).into(),
-    <l:@L> NOT     <e:Expr> <r:@R> => UnOp::Not    .to_expr(l..r, e).into(),
-    <l:@L> LENGTH  <e:Expr> <r:@R> => UnOp::Length .to_expr(l..r, e).into(),
-    <l:@L> ROUND   <e:Expr> <r:@R> => UnOp::Round  .to_expr(l..r, e).into(),
-    <l:@L> ABS     <e:Expr> <r:@R> => UnOp::Abs    .to_expr(l..r, e).into(),
-    <l:@L> FLOOR   <e:Expr> <r:@R> => UnOp::Floor  .to_expr(l..r, e).into(),
-    <l:@L> CEIL    <e:Expr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e).into(),
-    <l:@L> SQRT    <e:Expr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e).into(),
-    <l:@L> SIN     <e:Expr> <r:@R> => UnOp::Sin    .to_expr(l..r, e).into(),
-    <l:@L> COS     <e:Expr> <r:@R> => UnOp::Cos    .to_expr(l..r, e).into(),
-    <l:@L> TAN     <e:Expr> <r:@R> => UnOp::Tan    .to_expr(l..r, e).into(),
-    <l:@L> ASIN    <e:Expr> <r:@R> => UnOp::Asin   .to_expr(l..r, e).into(),
-    <l:@L> ACOS    <e:Expr> <r:@R> => UnOp::Acos   .to_expr(l..r, e).into(),
-    <l:@L> ATAN    <e:Expr> <r:@R> => UnOp::Atan   .to_expr(l..r, e).into(),
-    <l:@L> LN      <e:Expr> <r:@R> => UnOp::Ln     .to_expr(l..r, e).into(),
-    <l:@L> LOG     <e:Expr> <r:@R> => UnOp::Log    .to_expr(l..r, e).into(),
-    <l:@L> ANTILN  <e:Expr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e).into(),
-    <l:@L> ANTILOG <e:Expr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e).into(),
-    #[precedence(level="3")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr> "*" <rhs:Expr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "/" <rhs:Expr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "//"<rhs:Expr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "%" <rhs:Expr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="4")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr> "+" <rhs:Expr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "-" <rhs:Expr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="5")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr> "<" <rhs:Expr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="6")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="7")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "=="<rhs:Expr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:Expr> "!="<rhs:Expr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="8")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr> AND <rhs:Expr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs).into(),
-    #[precedence(level="9")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr> OR  <rhs:Expr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
+Stmt: Stmt = {
+    RETURN <value:BoxedExpr> ";" => Stmt::Return { value },
+    IF <cond:BoxedExpr> <if_body:Stmts> => {
+        Stmt::Branch { cond, if_body, else_body: vec![] }
+    },
+    IF <cond:BoxedExpr> <if_body:Stmts> ELSE <else_body:Stmts> => {
+        Stmt::Branch { cond, if_body, else_body }
+    },
+    IF <cond:BoxedExpr> <if_body:Stmts> <else_body:Elif> => {
+        Stmt::Branch { cond, if_body, else_body: vec![else_body] }
+    },
+    REPEAT <times:BoxedExpr> <body:Stmts> => Stmt::Repeat { times, body },
+    <l:@L> FOREVER <r:@R> <body:Stmts> => Stmt::Forever { body, span: l..r },
+    UNTIL <cond:BoxedExpr> <body:Stmts> => Stmt::Until { cond, body },
+    <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" => {
+        Stmt::SetVar {
+            name: Name::Name { name, span: l..r },
+            value,
+            type_,
+            is_local: false,
+            is_cloud: false,
+        }
+    },
+    LOCAL <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" => {
+        Stmt::SetVar {
+            name: Name::Name { name, span: l..r },
+            value,
+            type_,
+            is_local: true,
+            is_cloud: false,
+        }
+    },
+    CLOUD <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" => {
+        Stmt::SetVar {
+            name: Name::Name { name, span: l..r },
+            value,
+            type_: Type::Value,
+            is_local: false,
+            is_cloud: true,
+        }
+    },
+    <l:@L> <name:NAME> <r:@R> "++" ";" => Stmt::increment(Name::Name { name, span: l..r }),
+    <l:@L> <name:NAME> <r:@R> "--" ";" => Stmt::decrement(Name::Name { name, span: l..r }),
+    <l:@L> <name:NAME> <r:@R> "+=" <value:BoxedExpr> ";" => {
+        Stmt::ChangeVar { name: Name::Name { name, span: l..r }, value }
+    },
+    <l:@L> <name:NAME> <r:@R> "-=" <value:Expr> ";" => {
+        Stmt::augmented_assign(BinOp::Sub, name, l..r, value)
+    },
+    <l:@L> <name:NAME> <r:@R> "*=" <value:Expr> ";" => {
+        Stmt::augmented_assign(BinOp::Mul, name, l..r, value)
+    },
+    <l:@L> <name:NAME> <r:@R> "/=" <value:Expr> ";" => {
+        Stmt::augmented_assign(BinOp::Div, name, l..r, value)
+    },
+    <l:@L> <name:NAME> <r:@R> "//=" <value:Expr> ";" => {
+        Stmt::augmented_assign(BinOp::FloorDiv, name, l..r, value)
+    },
+    <l:@L> <name:NAME> <r:@R> "%=" <value:Expr> ";" => {
+        Stmt::augmented_assign(BinOp::Mod, name, l..r, value)
+    },
+    <l:@L> <name:NAME> <r:@R> "&=" <value:Expr> ";" => {
+        Stmt::augmented_assign(BinOp::Join, name, l..r, value)
+    },
+    <l:@L> <name:NAME> <r:@R> "." <fl:@L> <field:NAME> <fr:@R> "++" ";" => {
+        Stmt::increment(Name::DotName {
+            lhs: name,
+            lhs_span: l..r,
+            rhs: field,
+            rhs_span: fl..fr
+        })
+    },
+    <l:@L> <name:NAME> <r:@R> "." <fl:@L> <field:NAME> <fr:@R> "--" ";" => {
+        Stmt::decrement(Name::DotName {
+            lhs: name,
+            lhs_span: l..r,
+            rhs: field,
+            rhs_span: fl..fr
+        })
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "+=" <value:BoxedExpr> ";" => {
+        Stmt::ChangeVar {
+            name: Name::DotName {
+                lhs,
+                lhs_span: l..r,
+                rhs,
+                rhs_span: fl..fr
+            },
+            value,
+        }
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "-=" <value:Expr> ";" => {
+        Stmt::augmented_field_assign(BinOp::Sub, lhs, l..r, rhs, fl..fr, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "*=" <value:Expr> ";" => {
+        Stmt::augmented_field_assign(BinOp::Mul, lhs, l..r, rhs, fl..fr, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "/=" <value:Expr> ";" => {
+        Stmt::augmented_field_assign(BinOp::Div, lhs, l..r, rhs, fl..fr, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "//=" <value:Expr> ";" => {
+        Stmt::augmented_field_assign(BinOp::FloorDiv, lhs, l..r, rhs, fl..fr, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "%=" <value:Expr> ";" => {
+        Stmt::augmented_field_assign(BinOp::Mod, lhs, l..r, rhs, fl..fr, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "&=" <value:Expr> ";" => {
+        Stmt::augmented_field_assign(BinOp::Join, lhs, l..r, rhs, fl..fr, value)
+    },
+    SHOW <name:NameName> ";" => Stmt::Show(name),
+    HIDE <name:NameName> ";" => Stmt::Hide(name),
+    <l:@L> SHOW <r:@R> ";" => Stmt::Block { block: Block::Show, span: l..r, args: vec![] },
+    <l:@L> HIDE <r:@R> ";" => Stmt::Block { block: Block::Hide, span: l..r, args: vec![] },
+    ADD <value:BoxedExpr> TO <name:NameName> ";" => Stmt::AddToList { name, value },
+    INSERT <value:BoxedExpr> AT <name:NameName> "[" <index:BoxedExpr> "]" ";" => {
+        Stmt::InsertAtList { name, index, value }
+    },
+    DELETE <name:NameName> ";" => Stmt::DeleteList(name),
+    DELETE <name:NameName> "[" <index:BoxedExpr> "]" ";" => {
+        Stmt::DeleteListIndex { name, index }
+    },
+    <name:NameName> "[" <index:BoxedExpr> "]" "=" <value:BoxedExpr> ";" => {
+        Stmt::SetListIndex { name, index, value }
+    },
+    <name:NameName> "[" <index:Expr> "]" "++" ";" => Stmt::increment_index(name, index),
+    <name:NameName> "[" <index:Expr> "]" "--" ";" => Stmt::decrement_index(name, index),
+    <name:NameName> "[" <index:Expr> "]" "+=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::Add, name, index, value)
+    },
+    <name:NameName> "[" <index:Expr> "]" "-=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::Sub, name, index, value)
+    },
+    <name:NameName> "[" <index:Expr> "]" "*=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::Mul, name, index, value)
+    },
+    <name:NameName> "[" <index:Expr> "]" "/=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::Div, name, index, value)
+    },
+    <name:NameName> "[" <index:Expr> "]" "//=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::FloorDiv, name, index, value)
+    },
+    <name:NameName> "[" <index:Expr> "]" "%=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::Mod, name, index, value)
+    },
+    <name:NameName> "[" <index:Expr> "]" "&=" <value:Expr> ";" => {
+        Stmt::augmented_index_assign(BinOp::Join, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:BoxedExpr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "=" <value:BoxedExpr> ";" => {
+        Stmt::SetListIndex {
+            name: Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr },
+            index,
+            value
+        }
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "++" ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::increment_index(name, index)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "--" ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::decrement_index(name, index)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "+=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::Add, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "-=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::Sub, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "*=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::Mul, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "/=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::Div, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "//=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::FloorDiv, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "%=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::Mod, name, index, value)
+    },
+    <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "&=" <value:Expr> ";" => {
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        Stmt::augmented_index_assign(BinOp::Join, name, index, value)
+    },
+    <l:@L> <name:NAME> <r:@R> <args:Exprs> ";" => match Block::from_shape(&name, args.len()) {
+        Some(block) => Stmt::Block { block, span: l..r, args },
+        None => Stmt::ProcCall { name, span: l..r, args },
+    },
 }
 
-IfExpr: Rrc<Expr> = {
+Elif: Stmt = {
+    ELIF <cond:BoxedExpr> <if_body:Stmts> => {
+        Stmt::Branch { cond, if_body, else_body: vec![] }
+    },
+    ELIF <cond:BoxedExpr> <if_body:Stmts> <else_body:Elif> => {
+        Stmt::Branch { cond, if_body, else_body: vec![else_body] }
+    },
+    ELIF <cond:BoxedExpr> <if_body:Stmts> ELSE <else_body:Stmts> => {
+        Stmt::Branch { cond, if_body, else_body }
+    },
+}
+
+#[inline]
+BoxedExpr: Box<Expr> = <expr:Expr> => Box::new(expr);
+
+Exprs: Vec<Expr> = <Comma<Expr>>;
+
+Expr: Expr = {
     #[precedence(level="1")]
     Term,
     #[precedence(level="2")] #[assoc(side="left")]
-    <l:@L> "-"     <e:IfExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e).into(),
-    <l:@L> NOT     <e:IfExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e).into(),
-    <l:@L> LENGTH  <e:IfExpr> <r:@R> => UnOp::Length .to_expr(l..r, e).into(),
-    <l:@L> ROUND   <e:IfExpr> <r:@R> => UnOp::Round  .to_expr(l..r, e).into(),
-    <l:@L> ABS     <e:IfExpr> <r:@R> => UnOp::Abs    .to_expr(l..r, e).into(),
-    <l:@L> FLOOR   <e:IfExpr> <r:@R> => UnOp::Floor  .to_expr(l..r, e).into(),
-    <l:@L> CEIL    <e:IfExpr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e).into(),
-    <l:@L> SQRT    <e:IfExpr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e).into(),
-    <l:@L> SIN     <e:IfExpr> <r:@R> => UnOp::Sin    .to_expr(l..r, e).into(),
-    <l:@L> COS     <e:IfExpr> <r:@R> => UnOp::Cos    .to_expr(l..r, e).into(),
-    <l:@L> TAN     <e:IfExpr> <r:@R> => UnOp::Tan    .to_expr(l..r, e).into(),
-    <l:@L> ASIN    <e:IfExpr> <r:@R> => UnOp::Asin   .to_expr(l..r, e).into(),
-    <l:@L> ACOS    <e:IfExpr> <r:@R> => UnOp::Acos   .to_expr(l..r, e).into(),
-    <l:@L> ATAN    <e:IfExpr> <r:@R> => UnOp::Atan   .to_expr(l..r, e).into(),
-    <l:@L> LN      <e:IfExpr> <r:@R> => UnOp::Ln     .to_expr(l..r, e).into(),
-    <l:@L> LOG     <e:IfExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e).into(),
-    <l:@L> ANTILN  <e:IfExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e).into(),
-    <l:@L> ANTILOG <e:IfExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e).into(),
+    <l:@L> "-"     <e:Expr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
+    <l:@L> NOT     <e:Expr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
+    <l:@L> LENGTH  <e:Expr> <r:@R> => UnOp::Length .to_expr(l..r, e),
+    <l:@L> ROUND   <e:Expr> <r:@R> => UnOp::Round  .to_expr(l..r, e),
+    <l:@L> ABS     <e:Expr> <r:@R> => UnOp::Abs    .to_expr(l..r, e),
+    <l:@L> FLOOR   <e:Expr> <r:@R> => UnOp::Floor  .to_expr(l..r, e),
+    <l:@L> CEIL    <e:Expr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e),
+    <l:@L> SQRT    <e:Expr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e),
+    <l:@L> SIN     <e:Expr> <r:@R> => UnOp::Sin    .to_expr(l..r, e),
+    <l:@L> COS     <e:Expr> <r:@R> => UnOp::Cos    .to_expr(l..r, e),
+    <l:@L> TAN     <e:Expr> <r:@R> => UnOp::Tan    .to_expr(l..r, e),
+    <l:@L> ASIN    <e:Expr> <r:@R> => UnOp::Asin   .to_expr(l..r, e),
+    <l:@L> ACOS    <e:Expr> <r:@R> => UnOp::Acos   .to_expr(l..r, e),
+    <l:@L> ATAN    <e:Expr> <r:@R> => UnOp::Atan   .to_expr(l..r, e),
+    <l:@L> LN      <e:Expr> <r:@R> => UnOp::Ln     .to_expr(l..r, e),
+    <l:@L> LOG     <e:Expr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
+    <l:@L> ANTILN  <e:Expr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
+    <l:@L> ANTILOG <e:Expr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
     #[precedence(level="3")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr> "*" <rhs:IfExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "/" <rhs:IfExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "//"<rhs:IfExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "%" <rhs:IfExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "*" <rhs:Expr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> "/" <rhs:Expr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> "//"<rhs:Expr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> "%" <rhs:Expr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
     #[precedence(level="4")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr> "+" <rhs:IfExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "-" <rhs:IfExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "+" <rhs:Expr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> "-" <rhs:Expr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
     #[precedence(level="5")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr> "<" <rhs:IfExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "<="<rhs:IfExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> ">" <rhs:IfExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> ">="<rhs:IfExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "<" <rhs:Expr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
     #[precedence(level="6")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr> "&" <rhs:IfExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
+    <lhs:Expr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
+        args.insert(0, lhs);
+        if let Some(repr) = Repr::from_shape(&name, args.len()) {
+            Expr::Repr { repr, span: l..r, args }
+        } else {
+            Expr::FuncCall { name: name, span: l..r, args: args }
+        }
+    },
     #[precedence(level="7")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr>  IN <rhs:IfExpr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "=="<rhs:IfExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs).into(),
-    <l:@L> <lhs:IfExpr> "!="<rhs:IfExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> NOT IN <rhs:Expr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
+    <l:@L> <lhs:Expr> "=="<rhs:Expr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:Expr> "!="<rhs:Expr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
     #[precedence(level="8")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr> AND <rhs:IfExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> AND <rhs:Expr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
     #[precedence(level="9")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs).into(),
+    <l:@L> <lhs:Expr> OR  <rhs:Expr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
 }
+
+Term: Expr = {
+    "(" <Expr> ")",
+    <v:Value> => v.0.to_expr(v.1),
+    <l:@L> <n:NAME> <r:@R> => Expr::Name(Name::Name { name: n, span: l..r }),
+    <l:@L> <n:ARG> <r:@R> => Expr::Arg(Name::Name { name: n, span: l..r }),
+
+    <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" => {
+        if let Some(repr) = Repr::from_shape(&name, args.len()) {
+            Expr::Repr { repr, span: l..r, args }
+        } else {
+            Expr::FuncCall { name: name, span: l..r, args: args }
+        }
+    },
+    <l:@L> <term:Term> "[" <index:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, term, index),
+    <lhs:Term> "." <l:@L> <rhs:NAME> <r:@R> => {
+        Expr::Dot { lhs: Box::new(lhs), rhs, rhs_span: l..r }
+    },
+    // TODO: Remove ":" from struct literal syntax.
+    // This requires banning struct literals from appearing before the "{" from a
+    // statement stack.
+    <l:@L> <name:NAME> <r:@R> "=" "{" <fields:Comma<StructLiteralField>> "}" => {
+        Expr::StructLiteral { name, span: l..r, fields }
+    }
+}
+
+StructLiteralField: StructLiteralField = {
+    <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> => {
+        StructLiteralField { name, span: l..r, value }
+    }
+};
 
 Value: (Value, Span) = { 
     <l:@L> TRUE      <r:@R> => (Value::from(1), l..r),
@@ -295,31 +379,24 @@ Value: (Value, Span) = {
     <l:@L> <v:STR>   <r:@R> => (Value::from(v), l..r),
 }
 
-Term: Rrc<Expr> = {
-    "(" <Expr> ")",
-    <v:Value> => v.0.to_expr(v.1).into(),
-    <l:@L> <n:NAME>  <r:@R> => Expr::Name (Name::Name { name: n, span: l..r }).into(),
-    <l:@L> <n:ARG>   <r:@R> => Expr::Arg (Name::Name { name: n, span: l..r }).into(),
-    <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" => match Repr::from_shape(&name, args.len()) {
-        Some(repr) => Expr::Repr { repr, span: l..r, args }.into(),
-        None => Expr::FuncCall { name: name, span: l..r, args: args }.into(),
-    },
-    <l:@L> <e:Term> "[" <i:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, e, i).into(),
-    <v:Term> "." <l:@L> <n:NAME> <r:@R> => Expr::Dot { lhs: v, rhs: n, rhs_span: l..r }.into(),
-}
-
-StructLiteral: Rrc<Expr> = <l:@L> <n:NAME> <r:@R> "{" <f:Comma<StructLiteralField>> "}" => Expr::StructLiteral { name: n, span: l..r, fields: f }.into();
-StructLiteralField: StructLiteralField = <l:@L> <n:NAME> <r:@R> ":" <v:Expr> => StructLiteralField { name: n, span: l..r, value: v };
-
-Name: Name = {
-    <NameName>,
-    <NameDotName>,
-}
-
 #[inline]
 NameName: Name = <l:@L> <n:NAME> <r:@R> => Name::Name { name: n, span: l..r };
+
 #[inline]
-NameDotName: Name = <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> => Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf };
+NameDotName: Name = <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> => {
+    Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }
+};
+
+#[inline]
+Type: Type = {
+    <l:@L> <name:NAME> <r:@R> => Type::Struct { name, span: l..r },
+    => Type::Value,
+}
+
+#[inline]
+Arg: Arg = {
+    <type_:Type> <l:@L> <name:NAME> <r:@R> => Arg { name, span: l..r, type_ },
+}
 
 SpannedComma<T>: Vec<(T, Span)> = {
     <mut v:SpannedComma<T>> "," <l:@L> <e:T> <r:@R> => {
@@ -387,7 +464,7 @@ extern {
         "-="           => Token::AssignSubtract,
         "*="           => Token::AssignMultiply,
         "/="           => Token::AssignDivide,
-        "//="           => Token::AssignFloorDiv,
+        "//="          => Token::AssignFloorDiv,
         "%="           => Token::AssignModulo,
         "&="           => Token::AssignJoin,
         "["            => Token::LBracket,
@@ -407,10 +484,9 @@ extern {
         "-"            => Token::Minus,
         "*"            => Token::Star,
         "/"            => Token::Slash,
-        "//"            => Token::FloorDiv,
+        "//"           => Token::FloorDiv,
         "%"            => Token::Percent,
         ";"            => Token::Semicolon,
-        ":"            => Token::Colon,
         LENGTH         => Token::Length,
         ROUND          => Token::Round,
         ABS            => Token::Abs,
@@ -442,5 +518,6 @@ extern {
         FALSE          => Token::False,
         LIST           => Token::List,
         CLOUD          => Token::Cloud,
+        "|>"           => Token::Pipe,
     }
 }

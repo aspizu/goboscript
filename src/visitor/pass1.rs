@@ -3,30 +3,30 @@ use log::info;
 use logos::Span;
 use smol_str::SmolStr;
 
+use super::transformations;
 use crate::{
     ast::*,
     blocks::{BinOp, Block, UnOp},
     codegen::sb3::D,
     diagnostic::{DiagnosticKind, SpriteDiagnostics},
-    misc::Rrc,
 };
 
 #[derive(Copy, Clone)]
-struct S<'a> {
-    args: Option<&'a Vec<Arg>>,
-    local_vars: Option<&'a FxHashMap<SmolStr, Var>>,
-    vars: &'a FxHashMap<SmolStr, Var>,
-    lists: &'a FxHashMap<SmolStr, List>,
-    enums: &'a FxHashMap<SmolStr, Enum>,
-    structs: &'a FxHashMap<SmolStr, Struct>,
-    global_vars: Option<&'a FxHashMap<SmolStr, Var>>,
-    global_lists: Option<&'a FxHashMap<SmolStr, List>>,
-    global_enums: Option<&'a FxHashMap<SmolStr, Enum>>,
-    global_structs: Option<&'a FxHashMap<SmolStr, Struct>>,
+pub struct S<'a> {
+    pub args: Option<&'a Vec<Arg>>,
+    pub local_vars: Option<&'a FxHashMap<SmolStr, Var>>,
+    pub vars: &'a FxHashMap<SmolStr, Var>,
+    pub lists: &'a FxHashMap<SmolStr, List>,
+    pub enums: &'a FxHashMap<SmolStr, Enum>,
+    pub structs: &'a FxHashMap<SmolStr, Struct>,
+    pub global_vars: Option<&'a FxHashMap<SmolStr, Var>>,
+    pub global_lists: Option<&'a FxHashMap<SmolStr, List>>,
+    pub global_enums: Option<&'a FxHashMap<SmolStr, Enum>>,
+    pub global_structs: Option<&'a FxHashMap<SmolStr, Struct>>,
 }
 
 impl<'a> S<'a> {
-    fn get_var(&self, name: &str) -> Option<&Var> {
+    pub fn get_var(&self, name: &str) -> Option<&Var> {
         self.local_vars
             .and_then(|local_vars| local_vars.get(name))
             .or_else(|| self.vars.get(name))
@@ -36,14 +36,14 @@ impl<'a> S<'a> {
             })
     }
 
-    fn get_list(&self, name: &str) -> Option<&List> {
+    pub fn get_list(&self, name: &str) -> Option<&List> {
         self.lists.get(name).or_else(|| {
             self.global_lists
                 .and_then(|global_lists| global_lists.get(name))
         })
     }
 
-    fn get_struct(&self, name: &str) -> Option<&Struct> {
+    pub fn get_struct(&self, name: &str) -> Option<&Struct> {
         self.structs.get(name).or_else(|| {
             self.global_structs
                 .and_then(|global_structs| global_structs.get(name))
@@ -239,8 +239,8 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for kwarg in args {
-                visit_expr(&mut kwarg.value, s, d);
+            for arg in args {
+                visit_expr(arg, s, d);
             }
         }
         Stmt::ProcCall {
@@ -248,8 +248,8 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for kwarg in args {
-                visit_expr(&mut kwarg.value, s, d);
+            for arg in args {
+                visit_expr(arg, s, d);
             }
         }
         Stmt::FuncCall {
@@ -265,15 +265,18 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
     }
 }
 
-fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
-    let replace: Option<Rrc<Expr>> = match &mut *expr.borrow_mut() {
-        Expr::CallSite { .. } => None,
-        Expr::Value { value: _, span: _ } => None,
-        Expr::Name(name) => visit_expr_name(s, name),
-        Expr::Arg(name) => visit_expr_arg(s, name),
-        Expr::Dot { lhs, rhs, rhs_span } => {
+fn visit_expr(expr: &mut Expr, s: S, d: D) {
+    match expr {
+        Expr::CallSite { id: _ } => {}
+        Expr::Value { value: _, span: _ } => {}
+        Expr::Name(_) => {}
+        Expr::Arg(_) => {}
+        Expr::Dot {
+            lhs,
+            rhs: _,
+            rhs_span: _,
+        } => {
             visit_expr(lhs, s, d);
-            visit_expr_dot(d, lhs, rhs, rhs_span)
         }
         Expr::Repr {
             repr: _,
@@ -283,7 +286,6 @@ fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
             for arg in args {
                 visit_expr(arg, s, d);
             }
-            None
         }
         Expr::FuncCall {
             name: _,
@@ -293,7 +295,6 @@ fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
             for arg in args {
                 visit_expr(arg, s, d);
             }
-            None
         }
         Expr::UnOp {
             op: _,
@@ -301,66 +302,15 @@ fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
             opr,
         } => {
             visit_expr(opr, s, d);
-            None
         }
-        Expr::BinOp { op, span, lhs, rhs } => {
+        Expr::BinOp {
+            op: _,
+            span: _,
+            lhs,
+            rhs,
+        } => {
             visit_expr(lhs, s, d);
             visit_expr(rhs, s, d);
-            match op {
-                BinOp::Add => None,
-                BinOp::Sub => None,
-                BinOp::Mul => None,
-                BinOp::Div => None,
-                BinOp::Mod => None,
-                BinOp::Lt => None,
-                BinOp::Gt => None,
-                BinOp::Eq => None,
-                BinOp::And => None,
-                BinOp::Or => None,
-                BinOp::Join => None,
-                BinOp::In => None,
-                BinOp::Of => visit_expr_bin_op_of(s, span, lhs, rhs),
-                BinOp::Le => Some(
-                    UnOp::Not
-                        .to_expr(
-                            span.clone(),
-                            BinOp::Gt
-                                .to_expr(span.clone(), lhs.clone(), rhs.clone())
-                                .into(),
-                        )
-                        .into(),
-                ),
-                BinOp::Ge => Some(
-                    UnOp::Not
-                        .to_expr(
-                            span.clone(),
-                            BinOp::Lt
-                                .to_expr(span.clone(), lhs.clone(), rhs.clone())
-                                .into(),
-                        )
-                        .into(),
-                ),
-                BinOp::Ne => Some(
-                    UnOp::Not
-                        .to_expr(
-                            span.clone(),
-                            BinOp::Eq
-                                .to_expr(span.clone(), lhs.clone(), rhs.clone())
-                                .into(),
-                        )
-                        .into(),
-                ),
-                BinOp::FloorDiv => Some(
-                    UnOp::Floor
-                        .to_expr(
-                            span.clone(),
-                            BinOp::Div
-                                .to_expr(span.clone(), lhs.clone(), rhs.clone())
-                                .into(),
-                        )
-                        .into(),
-                ),
-            }
         }
         Expr::StructLiteral {
             name: _,
@@ -370,153 +320,33 @@ fn visit_expr(expr: &mut Rrc<Expr>, s: S, d: D) {
             for field in fields {
                 visit_expr(&mut field.value, s, d);
             }
-            None
         }
-    };
-    if let Some(replace) = replace {
-        *expr = replace;
     }
-}
-
-fn visit_expr_name(s: S, name: &Name) -> Option<Rrc<Expr>> {
-    info!(target: "pass1", "visit_expr_name {name:#?}");
-    if name.fieldname().is_some() {
-        return None;
-    }
-    let basename = name.basename();
-    let span = name.span();
-    let var = &s.get_var(basename)?;
-    info!(target: "pass1", "var {var:#?}");
-    let (type_name, type_span) = var.type_.struct_()?;
-    info!(target: "pass1", "type_name {type_name:#?}");
-    let struct_ = s.get_struct(type_name)?;
-    info!(target: "pass1", "struct_ {struct_:#?}");
-    Some(
-        Expr::StructLiteral {
-            name: type_name.clone(),
-            span: type_span.clone(),
-            fields: struct_
-                .fields
-                .iter()
-                .map(|field| StructLiteralField {
-                    name: field.name.clone(),
-                    span: field.span.clone(),
-                    value: Expr::Name(Name::DotName {
-                        lhs: var.name.clone(),
-                        lhs_span: span.clone(),
-                        rhs: field.name.clone(),
-                        rhs_span: field.span.clone(),
-                    })
-                    .into(),
-                })
-                .collect(),
-        }
-        .into(),
-    )
-}
-
-fn visit_expr_arg(s: S, name: &Name) -> Option<Rrc<Expr>> {
-    if name.fieldname().is_some() {
-        return None;
-    }
-    let basename = name.basename();
-    let span = name.span();
-    let arg = s.args?.iter().find(|arg| &arg.name == basename)?;
-    let (type_name, type_span) = arg.type_.struct_()?;
-    let struct_ = s.get_struct(type_name)?;
-    Some(
-        Expr::StructLiteral {
-            name: type_name.clone(),
-            span: type_span.clone(),
-            fields: struct_
-                .fields
-                .iter()
-                .map(|field| StructLiteralField {
-                    name: field.name.clone(),
-                    span: field.span.clone(),
-                    value: Expr::Arg(Name::DotName {
-                        lhs: arg.name.clone(),
-                        lhs_span: span.clone(),
-                        rhs: field.name.clone(),
-                        rhs_span: field.span.clone(),
-                    })
-                    .into(),
-                })
-                .collect(),
-        }
-        .into(),
-    )
-}
-
-fn visit_expr_bin_op_of(s: S, span: &Span, lhs: &Rrc<Expr>, rhs: &Rrc<Expr>) -> Option<Rrc<Expr>> {
-    let Expr::Name(Name::Name { name, span }) = &*lhs.borrow() else {
-        return None;
-    };
-    let list = s.get_list(name)?;
-    let (type_name, type_span) = list.type_.struct_()?;
-    let struct_ = s.get_struct(type_name)?;
-    Some(
-        Expr::StructLiteral {
-            name: type_name.clone(),
-            span: type_span.clone(),
-            fields: struct_
-                .fields
-                .iter()
-                .map(|field| StructLiteralField {
-                    name: field.name.clone(),
-                    span: field.span.clone(),
-                    value: BinOp::Of
-                        .to_expr(
-                            span.clone(),
-                            Expr::Name(Name::DotName {
-                                lhs: name.clone(),
-                                lhs_span: span.clone(),
-                                rhs: field.name.clone(),
-                                rhs_span: field.span.clone(),
-                            })
-                            .into(),
-                            rhs.clone(),
-                        )
-                        .into(),
-                })
-                .collect(),
-        }
-        .into(),
-    )
-}
-
-fn visit_expr_dot(d: D, lhs: &Rrc<Expr>, rhs: &SmolStr, rhs_span: &Span) -> Option<Rrc<Expr>> {
-    let Expr::StructLiteral {
-        name: lhs_name,
-        span: _,
-        fields,
-    } = &*lhs.borrow()
-    else {
-        return None;
-    };
-    let Some(field) = fields.iter().find(|field| &field.name == rhs) else {
-        d.report(
-            DiagnosticKind::StructDoesNotHaveField {
-                type_name: lhs_name.clone(),
-                field_name: rhs.clone(),
-            },
-            rhs_span,
-        );
-        return None;
-    };
-    Some(field.value.clone())
+    transformations::apply(expr, transformations::minus);
+    transformations::apply(expr, transformations::less_than_equal);
+    transformations::apply(expr, transformations::greater_than_equal);
+    transformations::apply(expr, transformations::not_equal);
+    transformations::apply(expr, transformations::floor_div);
+    transformations::apply(expr, transformations::bin_op);
+    transformations::apply(expr, transformations::un_op);
+    transformations::apply(expr, |expr| transformations::variable_field_access(expr, s));
+    transformations::apply(expr, |expr| transformations::arg_field_access(expr, s));
+    transformations::apply(expr, |expr| transformations::list_field_access(expr, s));
+    transformations::apply(expr, |expr| {
+        transformations::struct_literal_field_access(expr, d)
+    });
 }
 
 fn visit_stmt_set_var(
     s: S,
     d: D,
     name: &Name,
-    value: &Rrc<Expr>,
+    value: &Expr,
     _type: &Type,
     is_local: &bool,
     is_cloud: &bool,
 ) -> Option<Vec<Stmt>> {
-    let expr = &*value.borrow();
+    let expr = value;
     let struct_literal_fields = get_struct_literal_for_type(s, d, name, expr, |basename| {
         s.get_var(basename).map(|var| &var.type_)
     })?;
@@ -539,14 +369,8 @@ fn visit_stmt_set_var(
     )
 }
 
-fn visit_stmt_list_set(
-    s: S,
-    d: D,
-    name: &Name,
-    index: &Rrc<Expr>,
-    value: &Rrc<Expr>,
-) -> Option<Vec<Stmt>> {
-    let expr = &*value.borrow();
+fn visit_stmt_list_set(s: S, d: D, name: &Name, index: &Expr, value: &Expr) -> Option<Vec<Stmt>> {
+    let expr = value;
     let struct_literal_fields = get_struct_literal_for_type(s, d, name, expr, |basename| {
         s.get_list(basename).map(|list| &list.type_)
     })?;
@@ -560,15 +384,15 @@ fn visit_stmt_list_set(
                     rhs: struct_literal_field.name.clone(),
                     rhs_span: struct_literal_field.span.clone(),
                 },
-                index: index.clone(),
+                index: Box::new(index.clone()),
                 value: struct_literal_field.value.clone(),
             })
             .collect(),
     )
 }
 
-fn visit_stmt_list_add(s: S, d: D, name: &Name, value: &Rrc<Expr>) -> Option<Vec<Stmt>> {
-    let expr = &*value.borrow();
+fn visit_stmt_list_add(s: S, d: D, name: &Name, value: &Expr) -> Option<Vec<Stmt>> {
+    let expr = value;
     let struct_literal_fields = get_struct_literal_for_type(s, d, name, expr, |basename| {
         s.get_list(basename).map(|list| &list.type_)
     })?;
@@ -616,10 +440,10 @@ fn visit_stmt_insert_at_list(
     s: S,
     d: D,
     name: &Name,
-    index: &Rrc<Expr>,
-    value: &Rrc<Expr>,
+    index: &Expr,
+    value: &Expr,
 ) -> Option<Vec<Stmt>> {
-    let expr = &*value.borrow();
+    let expr = value;
     let struct_literal_fields = get_struct_literal_for_type(s, d, name, expr, |basename| {
         s.get_list(basename).map(|list| &list.type_)
     })?;
@@ -633,14 +457,14 @@ fn visit_stmt_insert_at_list(
                     rhs: struct_literal_field.name.clone(),
                     rhs_span: struct_literal_field.span.clone(),
                 },
-                index: index.clone(),
+                index: Box::new(index.clone()),
                 value: struct_literal_field.value.clone(),
             })
             .collect(),
     )
 }
 
-fn visit_stmt_delete_list_index(s: S, _d: D, name: &Name, index: &Rrc<Expr>) -> Option<Vec<Stmt>> {
+fn visit_stmt_delete_list_index(s: S, _d: D, name: &Name, index: &Expr) -> Option<Vec<Stmt>> {
     if name.fieldname().is_some() {
         return None;
     }
@@ -659,7 +483,7 @@ fn visit_stmt_delete_list_index(s: S, _d: D, name: &Name, index: &Rrc<Expr>) -> 
                     rhs: struct_field.name.clone(),
                     rhs_span: struct_field.span.clone(),
                 },
-                index: index.clone(),
+                index: Box::new(index.clone()),
             })
             .collect(),
     )
@@ -724,10 +548,10 @@ where
     Some(struct_literal_fields)
 }
 
-fn visit_stmt_return(value: &Rrc<Expr>) -> Option<Vec<Stmt>> {
+fn visit_stmt_return(value: &Expr) -> Option<Vec<Stmt>> {
     Some(vec![
         Stmt::Return {
-            value: value.clone(),
+            value: Box::new(value.clone()),
         },
         Stmt::Block {
             block: Block::StopThisScript,
