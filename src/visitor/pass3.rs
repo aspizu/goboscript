@@ -5,7 +5,7 @@ use crate::ast::*;
 
 struct Scope<'a> {
     used_procs: &'a mut FxHashSet<SmolStr>,
-    use_funcs: &'a mut FxHashSet<SmolStr>,
+    used_funcs: &'a mut FxHashSet<SmolStr>,
     vars: &'a mut FxHashMap<SmolStr, Var>,
     lists: &'a mut FxHashMap<SmolStr, List>,
     structs: &'a mut FxHashMap<SmolStr, Struct>,
@@ -20,7 +20,7 @@ pub fn visit_project(project: &mut Project) {
         resolve_references(
             &mut Scope {
                 used_procs: &mut project.stage.used_procs,
-                use_funcs: &mut project.stage.used_funcs,
+                used_funcs: &mut project.stage.used_funcs,
                 vars: &mut project.stage.vars,
                 lists: &mut project.stage.lists,
                 structs: &mut project.stage.structs,
@@ -40,7 +40,7 @@ pub fn visit_project(project: &mut Project) {
             resolve_references(
                 &mut Scope {
                     used_procs: &mut sprite.used_procs,
-                    use_funcs: &mut sprite.used_funcs,
+                    used_funcs: &mut sprite.used_funcs,
                     vars: &mut sprite.vars,
                     lists: &mut sprite.lists,
                     structs: &mut sprite.structs,
@@ -113,7 +113,7 @@ fn resolve_references(
         }
     }
     for func in &references.funcs {
-        if scope.used_procs.insert(func.clone()) {
+        if scope.used_funcs.insert(func.clone()) {
             if let Some(proc) = funcs.get(func) {
                 resolve_references(scope, procs, funcs, &proc.references);
             }
