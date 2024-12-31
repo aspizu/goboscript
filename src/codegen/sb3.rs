@@ -10,10 +10,7 @@ use logos::Span;
 use md5::{Digest, Md5};
 use serde_json::json;
 use smol_str::SmolStr;
-use zip::{
-    write::{FileOptions, SimpleFileOptions},
-    ZipWriter,
-};
+use zip::{write::SimpleFileOptions, ZipWriter};
 
 use super::{
     cmd::cmd_to_list, node::Node, node_id::NodeID, node_id_factory::NodeIDFactory,
@@ -429,7 +426,11 @@ where T: Write + Seek
         write!(self, "}}")?; // lists
         write!(self, r#","blocks":{{"#)?;
         self.node_comma = false;
-        for proc in sprite.procs.values() {
+        for proc in sprite
+            .procs
+            .values()
+            .filter(|proc| sprite.used_procs.contains(&proc.name))
+        {
             self.proc(
                 S {
                     stage,
@@ -441,7 +442,11 @@ where T: Write + Seek
                 proc,
             )?;
         }
-        for func in sprite.funcs.values() {
+        for func in sprite
+            .funcs
+            .values()
+            .filter(|func| sprite.used_funcs.contains(&func.name))
+        {
             self.func(
                 S {
                     stage,

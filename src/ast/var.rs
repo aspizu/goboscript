@@ -9,4 +9,5 @@ pub struct Var {
     pub span: Span,
     pub type_: Type,
     pub is_cloud: bool,
+    pub is_used: bool,
 }

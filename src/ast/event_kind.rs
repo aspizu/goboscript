@@ -33,6 +33,7 @@ impl EventKind {
             kind: self,
             body,
             span,
+            references: Default::default(),
         }
     }
 }

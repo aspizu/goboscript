@@ -8,6 +8,7 @@ pub struct Enum {
     pub name: SmolStr,
     pub span: Span,
     pub variants: Vec<EnumVariant>,
+    pub is_used: bool,
 }
 
 impl Enum {
@@ -16,6 +17,7 @@ impl Enum {
             name,
             span,
             variants,
+            is_used: false,
         }
     }
 }

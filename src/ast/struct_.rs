@@ -8,6 +8,7 @@ pub struct Struct {
     pub name: SmolStr,
     pub span: Span,
     pub fields: Vec<StructField>,
+    pub is_used: bool,
 }
 
 impl Struct {
@@ -17,8 +18,13 @@ impl Struct {
             span,
             fields: fields
                 .into_iter()
-                .map(|(name, span)| StructField { name, span })
+                .map(|(name, span)| StructField {
+                    name,
+                    span,
+                    is_used: false,
+                })
                 .collect(),
+            is_used: false,
         }
     }
 }

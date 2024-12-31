@@ -1,4 +1,4 @@
-use fxhash::FxHashMap;
+use fxhash::{FxHashMap, FxHashSet};
 use smol_str::SmolStr;
 
 use super::{
@@ -16,4 +16,6 @@ pub struct Sprite {
     pub vars: FxHashMap<SmolStr, Var>,
     pub lists: FxHashMap<SmolStr, List>,
     pub events: Vec<Event>,
+    pub used_procs: FxHashSet<SmolStr>,
+    pub used_funcs: FxHashSet<SmolStr>,
 }

@@ -5,4 +5,5 @@ use smol_str::SmolStr;
 pub struct StructField {
     pub name: SmolStr,
     pub span: Span,
+    pub is_used: bool,
 }

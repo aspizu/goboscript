@@ -34,30 +34,29 @@ Declr: () = {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
-        sprite.lists.insert(name.clone(), List { name, span: l..r, type_, cmd: None });
+        sprite.lists.insert(name.clone(), List::new(name, l..r, type_, None));
     },
-    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> ";" => {
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <cmd:Cmd> ";" => {
         sprite.lists.insert(
             name.clone(),
-            List {
-                name,
-                span: l..r,
-                type_,
-                cmd: Some(
-                    Cmd {
-                        program: program.map(|program| Program { name: program, span: pl..pr }),
-                        cmd,
-                        span: cl..cr 
-                    }
-                )
-            }
+            List::new(name, l..r, type_, Some(cmd)),
         );
     }
 }
 
+Cmd: Cmd = {
+    <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> => {
+        Cmd {
+            program: program.map(|program| Program { name: program, span: pl..pr }),
+            cmd,
+            span: cl..cr 
+        }
+    }
+}
+
 EnumVariant: EnumVariant = {
-    <l:@L> <name:NAME> <r:@R> => EnumVariant { name, span: l..r, value: None },
-    <l:@L> <name:NAME> <r:@R> "=" <v:Value> => EnumVariant { name, span: l..r, value: Some(v) },
+    <l:@L> <name:NAME> <r:@R> => EnumVariant::new(name, l..r, None),
+    <l:@L> <name:NAME> <r:@R> "=" <v:Value> => EnumVariant::new(name, l..r, Some(v)),
 }
 
 Costume: () = {
@@ -395,7 +394,7 @@ Type: Type = {
 
 #[inline]
 Arg: Arg = {
-    <type_:Type> <l:@L> <name:NAME> <r:@R> => Arg { name, span: l..r, type_ },
+    <type_:Type> <l:@L> <name:NAME> <r:@R> => Arg::new(name, l..r, type_),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {

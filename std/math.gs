@@ -17,3 +17,4 @@
 %define TANH(X) ((antiln(X)-antiln(-(X)))/(antiln(X)+antiln(-(X))))
 %define PI 3.141592653589793
 %define E 2.718281828459045
+%define BIT(N, V) (((V) // antiln((N) * ln 2) % 2)

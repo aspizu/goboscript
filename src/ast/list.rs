@@ -9,6 +9,7 @@ pub struct List {
     pub span: Span,
     pub type_: Type,
     pub cmd: Option<Cmd>,
+    pub is_used: bool,
 }
 
 #[derive(Debug)]
@@ -22,4 +23,16 @@ pub struct Cmd {
 pub struct Program {
     pub name: SmolStr,
     pub span: Span,
+}
+
+impl List {
+    pub fn new(name: SmolStr, span: Span, type_: Type, cmd: Option<Cmd>) -> Self {
+        Self {
+            name,
+            span,
+            type_,
+            cmd,
+            is_used: false,
+        }
+    }
 }

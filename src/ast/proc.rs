@@ -2,7 +2,7 @@ use fxhash::FxHashMap;
 use logos::Span;
 use smol_str::SmolStr;
 
-use super::{arg::Arg, stmt::Stmt, var::Var};
+use super::{arg::Arg, stmt::Stmt, var::Var, References};
 
 #[derive(Debug)]
 pub struct Proc {
@@ -12,6 +12,7 @@ pub struct Proc {
     pub locals: FxHashMap<SmolStr, Var>,
     pub body: Vec<Stmt>,
     pub warp: bool,
+    pub references: References,
 }
 
 impl Proc {
@@ -23,6 +24,7 @@ impl Proc {
             locals: FxHashMap::default(),
             body,
             warp,
+            references: References::default(),
         }
     }
 }

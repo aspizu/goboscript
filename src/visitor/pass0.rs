@@ -125,6 +125,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
                 span: name.span(),
                 type_: type_.clone(),
                 is_cloud: *is_cloud,
+                is_used: false,
             };
             if *is_local {
                 if let Some(locals) = &mut v.locals {
