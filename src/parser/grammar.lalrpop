@@ -20,6 +20,7 @@ Declr: () = {
     FUNC <t:Type> <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <b:Stmts> => {
         sprite.funcs.insert(n.clone(), Func::new(n, l..r, t, a, b));
     },
+    <l:@L> ON <r:@R> <event:STR> <b:Stmts> => sprite.events.push(EventKind::On { event }.to_event(l..r, b)),
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),
     <l:@L> ONKEY <r:@R> <kl:@L> <key:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnKey { key, span: kl..kr }.to_event(l..r, b)),
     <l:@L> ONCLICK <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClick.to_event(l..r, b)),

@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use fxhash::FxHashMap;
+use fxhash::{FxHashMap, FxHashSet};
 use logos::Span;
 use md5::{Digest, Md5};
 use serde_json::json;
@@ -329,6 +329,19 @@ where T: Write + Seek
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
     ) -> io::Result<()> {
+        let broadcasts: FxHashSet<_> = project
+            .stage
+            .events
+            .iter()
+            .chain(project.sprites.values().flat_map(|sprite| &sprite.events))
+            .filter_map(|event| {
+                if let EventKind::On { event } = &event.kind {
+                    Some(event.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
         // TODO: switch to deflate compression
         // this should be configurable, use store in debug (because it would be
         // faster?), use deflate in release (because it would be smaller?)
@@ -343,6 +356,7 @@ where T: Write + Seek
             None,
             config,
             stage_diagnostics,
+            Some(broadcasts),
         )?;
         for (sprite_name, sprite) in &project.sprites {
             write!(self, r#","#)?;
@@ -353,6 +367,7 @@ where T: Write + Seek
                 Some(&project.stage),
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
+                None,
             )?;
         }
         write!(self, "]")?; // targets
@@ -380,6 +395,7 @@ where T: Write + Seek
         stage: Option<&Sprite>,
         config: &Config,
         d: D,
+        broadcasts: Option<FxHashSet<SmolStr>>,
     ) -> io::Result<()> {
         self.id.reset();
         write!(self, "{{")?;
@@ -402,25 +418,40 @@ where T: Write + Seek
             write!(self, "}}")?; // twconfig
             write!(self, "}}")?; // comments
         }
+        write!(self, r#","broadcasts":{{"#)?;
+        let mut comma = false;
+        for broadcast in broadcasts.unwrap_or_default() {
+            write_comma_io(&mut self.zip, &mut comma)?;
+            write!(self, r#"{}:{}"#, json!(*broadcast), json!(*broadcast))?;
+        }
+        write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;
         let mut comma = false;
-        for proc in sprite.procs.values() {
+        for proc in sprite
+            .procs
+            .values()
+            .filter(|proc| sprite.used_procs.contains(&proc.name))
+        {
             for var in proc.locals.values() {
                 self.local_var_declaration(sprite, &proc.name, var, &mut comma, d)?;
             }
         }
-        for func in sprite.funcs.values() {
+        for func in sprite
+            .funcs
+            .values()
+            .filter(|func| sprite.used_funcs.contains(&func.name))
+        {
             for var in func.locals.values() {
                 self.local_var_declaration(sprite, &func.name, var, &mut comma, d)?;
             }
         }
-        for var in sprite.vars.values() {
+        for var in sprite.vars.values().filter(|var| var.is_used) {
             self.var_declaration(sprite, var, &mut comma, d)?;
         }
         write!(self, "}}")?; // variables
         write!(self, r#","lists":{{"#)?;
         let mut comma = false;
-        for list in sprite.lists.values() {
+        for list in sprite.lists.values().filter(|list| list.is_used) {
             self.list_declaration(input, sprite, list, &mut comma, d)?;
         }
         write!(self, "}}")?; // lists
@@ -813,7 +844,8 @@ where T: Write + Seek
                 .top_level(true),
         )?;
         match &event.kind {
-            EventKind::OnFlag => self.on_flag(s, d, this_id),
+            EventKind::On { event } => self.on(event),
+            EventKind::OnFlag => self.on_flag(),
             EventKind::OnKey { key, span } => self.on_key(s, d, this_id, key, span),
             EventKind::OnClick => self.on_click(s, d, this_id),
             EventKind::OnBackdrop { backdrop, span } => {

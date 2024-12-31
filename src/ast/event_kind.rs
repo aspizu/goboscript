@@ -13,6 +13,7 @@ pub enum EventKind {
     OnLoudnessGt { value: Box<Expr> },
     OnTimerGt { value: Box<Expr> },
     OnClone,
+    On { event: SmolStr },
 }
 
 impl EventKind {
@@ -24,6 +25,7 @@ impl EventKind {
             EventKind::OnBackdrop { .. } => "event_whenbackdropswitchesto",
             EventKind::OnLoudnessGt { .. } | EventKind::OnTimerGt { .. } => "event_whengreaterthan",
             EventKind::OnClone => "control_start_as_clone",
+            EventKind::On { .. } => "event_whenbroadcastreceived",
         }
     }
 

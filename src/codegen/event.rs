@@ -12,7 +12,12 @@ use crate::ast::Expr;
 impl<T> Sb3<T>
 where T: Write + Seek
 {
-    pub fn on_flag(&mut self, _s: S, _d: D, _this_id: NodeID) -> io::Result<()> {
+    pub fn on(&mut self, event: &SmolStr) -> io::Result<()> {
+        self.single_field("BROADCAST_OPTION", event)?;
+        self.end_obj() // node
+    }
+
+    pub fn on_flag(&mut self) -> io::Result<()> {
         self.end_obj() // node
     }
 
