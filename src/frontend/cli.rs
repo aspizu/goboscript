@@ -66,6 +66,17 @@ pub enum Command {
         #[arg(short = 'H', long, alias = "height")]
         stage_height: Option<u64>,
     },
+
+    /// Format a goboscript project.
+    #[command()]
+    Fmt {
+        /// Project directory or file, if not given, the current directory is used.
+        #[arg(short, long)]
+        input: Option<PathBuf>,
+    },
+
+    /// Generate completions for a shell.
+    #[command()]
     Completions {
         /// The shell to generate the completions for.
         #[arg(value_enum)]

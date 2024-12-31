@@ -1,5 +1,6 @@
 mod build;
 mod cli;
+mod fmt;
 mod new;
 
 use std::process::ExitCode;
@@ -7,6 +8,7 @@ use std::process::ExitCode;
 use clap::{CommandFactory, Parser};
 use cli::{Cli, Command};
 use colored::Colorize;
+use fmt::FmtError;
 use new::NewError;
 
 use crate::config::Config;
@@ -70,5 +72,12 @@ pub fn frontend() -> ExitCode {
                 Ok(_) => ExitCode::SUCCESS,
             }
         }
+        Command::Fmt { input } => match fmt::fmt(input) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(FmtError::AnyhowError(err)) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+        },
     }
 }

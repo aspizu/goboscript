@@ -90,3 +90,25 @@
         i++;                                                                           \
         j--;                                                                           \
     }
+
+%define COPY(SRC,DEST)                                                                 \
+    delete DEST;                                                                       \
+    local i = 1;                                                                       \
+    repeat length(SRC) {                                                               \
+        add SRC[i] to DEST;                                                            \
+        i++;                                                                           \
+    }
+
+%define UNIQUE(LIST)                                                                   \
+    local i = 1;                                                                       \
+    until i > length(LIST) {                                                           \
+        local j = i + 1;                                                               \
+        until j > length(LIST) {                                                       \
+            if LIST[i] == LIST[j] {                                                    \
+                delete LIST[j];                                                        \
+            } else {                                                                   \
+                j++;                                                                   \
+            }                                                                          \
+        }                                                                              \
+        i++;                                                                           \
+    }
