@@ -132,6 +132,20 @@ Stmt: Stmt = {
     <l:@L> <name:NAME> <r:@R> "&=" <value:Expr> ";" => {
         Stmt::augmented_assign(BinOp::Join, name, l..r, value)
     },
+    <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "=" <value:BoxedExpr> ";" => {
+        Stmt::SetVar {
+            name: Name::DotName {
+                lhs,
+                lhs_span: l..r,
+                rhs,
+                rhs_span: fl..fr,
+            },
+            value,
+            type_: Type::Value,
+            is_local: false,
+            is_cloud: false,
+        }
+    },
     <l:@L> <name:NAME> <r:@R> "." <fl:@L> <field:NAME> <fr:@R> "++" ";" => {
         Stmt::increment(Name::DotName {
             lhs: name,
