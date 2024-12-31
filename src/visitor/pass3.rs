@@ -88,22 +88,24 @@ fn resolve_references(
         }
     }
     for (struct_name, field_name) in &references.struct_fields {
-        let struct_ = &mut scope.structs.get_mut(struct_name).unwrap();
-        let struct_field = &mut struct_
-            .fields
-            .iter_mut()
-            .find(|field| &field.name == field_name)
-            .unwrap();
-        struct_field.is_used = true;
+        if let Some(struct_) = &mut scope.structs.get_mut(struct_name) {
+            let struct_field = &mut struct_
+                .fields
+                .iter_mut()
+                .find(|field| &field.name == field_name)
+                .unwrap();
+            struct_field.is_used = true;
+        }
     }
     for (enum_name, variant_name) in &references.enum_variants {
-        let enum_ = &mut scope.enums.get_mut(enum_name).unwrap();
-        let enum_variant = &mut enum_
-            .variants
-            .iter_mut()
-            .find(|variant| &variant.name == variant_name)
-            .unwrap();
-        enum_variant.is_used = true;
+        if let Some(enum_) = &mut scope.enums.get_mut(enum_name) {
+            let enum_variant = &mut enum_
+                .variants
+                .iter_mut()
+                .find(|variant| &variant.name == variant_name)
+                .unwrap();
+            enum_variant.is_used = true;
+        }
     }
     for proc in &references.procs {
         if scope.used_procs.insert(proc.clone()) {
