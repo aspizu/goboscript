@@ -1,6 +1,4 @@
 use fxhash::FxHashMap;
-use log::info;
-use logos::Span;
 use smol_str::SmolStr;
 
 use super::transformations;
@@ -176,7 +174,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
 fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
     match stmt {
         Stmt::Repeat { times, body } => {
-            visit_expr(times, s, d);
+            visit_expr(times, s, d, false);
             visit_stmts(body, s, d, false);
         }
         Stmt::Forever { body, span: _ } => {
@@ -187,12 +185,12 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             if_body,
             else_body,
         } => {
-            visit_expr(cond, s, d);
+            visit_expr(cond, s, d, true);
             visit_stmts(if_body, s, d, false);
             visit_stmts(else_body, s, d, false);
         }
         Stmt::Until { cond, body } => {
-            visit_expr(cond, s, d);
+            visit_expr(cond, s, d, true);
             visit_stmts(body, s, d, false);
         }
         Stmt::SetVar {
@@ -202,36 +200,36 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             is_local: _,
             is_cloud: _,
         } => {
-            visit_expr(value, s, d);
+            visit_expr(value, s, d, false);
         }
         Stmt::SetCallSite { id: _, func: _ } => {}
         Stmt::ChangeVar { name: _, value } => {
-            visit_expr(value, s, d);
+            visit_expr(value, s, d, false);
         }
         Stmt::Show(_) => {}
         Stmt::Hide(_) => {}
         Stmt::AddToList { name: _, value } => {
-            visit_expr(value, s, d);
+            visit_expr(value, s, d, false);
         }
         Stmt::DeleteList(_) => {}
         Stmt::DeleteListIndex { name: _, index } => {
-            visit_expr(index, s, d);
+            visit_expr(index, s, d, false);
         }
         Stmt::InsertAtList {
             name: _,
             index,
             value,
         } => {
-            visit_expr(value, s, d);
-            visit_expr(index, s, d);
+            visit_expr(value, s, d, false);
+            visit_expr(index, s, d, false);
         }
         Stmt::SetListIndex {
             name: _,
             index,
             value,
         } => {
-            visit_expr(value, s, d);
-            visit_expr(index, s, d);
+            visit_expr(value, s, d, false);
+            visit_expr(index, s, d, false);
         }
 
         Stmt::Block {
@@ -240,7 +238,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             args,
         } => {
             for arg in args {
-                visit_expr(arg, s, d);
+                visit_expr(arg, s, d, false);
             }
         }
         Stmt::ProcCall {
@@ -249,7 +247,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             args,
         } => {
             for arg in args {
-                visit_expr(arg, s, d);
+                visit_expr(arg, s, d, false);
             }
         }
         Stmt::FuncCall {
@@ -258,14 +256,14 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             args,
         } => {
             for arg in args {
-                visit_expr(arg, s, d);
+                visit_expr(arg, s, d, false);
             }
         }
-        Stmt::Return { value } => visit_expr(value, s, d),
+        Stmt::Return { value } => visit_expr(value, s, d, false),
     }
 }
 
-fn visit_expr(expr: &mut Expr, s: S, d: D) {
+fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
     match expr {
         Expr::CallSite { id: _ } => {}
         Expr::Value { value: _, span: _ } => {}
@@ -276,7 +274,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             rhs: _,
             rhs_span: _,
         } => {
-            visit_expr(lhs, s, d);
+            visit_expr(lhs, s, d, false);
         }
         Expr::Repr {
             repr: _,
@@ -284,7 +282,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             args,
         } => {
             for arg in args {
-                visit_expr(arg, s, d);
+                visit_expr(arg, s, d, false);
             }
         }
         Expr::FuncCall {
@@ -293,24 +291,20 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             args,
         } => {
             for arg in args {
-                visit_expr(arg, s, d);
+                visit_expr(arg, s, d, false);
             }
         }
-        Expr::UnOp {
-            op: _,
-            span: _,
-            opr,
-        } => {
-            visit_expr(opr, s, d);
+        Expr::UnOp { op, span: _, opr } => {
+            visit_expr(opr, s, d, matches!(op, UnOp::Not));
         }
         Expr::BinOp {
-            op: _,
+            op,
             span: _,
             lhs,
             rhs,
         } => {
-            visit_expr(lhs, s, d);
-            visit_expr(rhs, s, d);
+            visit_expr(lhs, s, d, matches!(op, BinOp::And | BinOp::Or));
+            visit_expr(rhs, s, d, matches!(op, BinOp::And | BinOp::Or));
         }
         Expr::StructLiteral {
             name: _,
@@ -318,7 +312,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             fields,
         } => {
             for field in fields {
-                visit_expr(&mut field.value, s, d);
+                visit_expr(&mut field.value, s, d, false);
             }
         }
     }
@@ -335,6 +329,9 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, |expr| {
         transformations::struct_literal_field_access(expr, d)
     });
+    if coerce_condition {
+        transformations::apply(expr, transformations::coerce_condition);
+    }
 }
 
 fn visit_stmt_set_var(

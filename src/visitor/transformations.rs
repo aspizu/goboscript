@@ -1,7 +1,7 @@
 use super::pass1::S;
 use crate::{
     ast::{Expr, Name, StructLiteralField, Value},
-    blocks::{BinOp, UnOp},
+    blocks::{BinOp, Repr, UnOp},
     codegen::sb3::D,
     diagnostic::DiagnosticKind,
 };
@@ -258,5 +258,40 @@ pub fn floor_div(expr: &Expr) -> Option<Expr> {
     Some(UnOp::Floor.to_expr(
         span.clone(),
         BinOp::Div.to_expr(span.clone(), lhs.as_ref().clone(), rhs.as_ref().clone()),
+    ))
+}
+
+pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
+    if matches!(
+        expr,
+        Expr::UnOp { op: UnOp::Not, .. }
+            | Expr::BinOp {
+                op: BinOp::Eq
+                    | BinOp::Ne
+                    | BinOp::Lt
+                    | BinOp::Le
+                    | BinOp::Gt
+                    | BinOp::Ge
+                    | BinOp::And
+                    | BinOp::Or,
+                ..
+            }
+            | Expr::Repr {
+                repr: Repr::ColorIsTouchingColor
+                    | Repr::KeyPressed
+                    | Repr::MouseDown
+                    | Repr::Touching
+                    | Repr::TouchingColor
+                    | Repr::TouchingEdge
+                    | Repr::TouchingMousePointer,
+                ..
+            }
+    ) {
+        return None;
+    }
+    Some(BinOp::Eq.to_expr(
+        expr.span(),
+        expr.clone(),
+        Value::Int(1).to_expr(expr.span()),
     ))
 }
