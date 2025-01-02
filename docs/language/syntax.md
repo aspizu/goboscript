@@ -34,3 +34,23 @@ and indentation has no semantic significance. Statements end in semicolons.
 `true` is replaced with `1` during compilation.
 
 `false` is replaced with `0` during compilation.
+
+## Boolean Coercion
+
+Scratch does not allow placing a non-boolean block inside a boolean input. (With the
+exception of **item # of list** and **item of list**). goboscript will automatically
+coerce non-boolean blocks into conditions by wrapping them in a comparison with `1`.
+
+```goboscript
+if timer() {
+    ...
+}
+```
+
+is equivalent to
+
+```goboscript
+if timer() == 1 {
+    ...
+}
+```

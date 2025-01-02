@@ -53,7 +53,9 @@ value = list_name[index];
 
 ### Get index of item in list
 
-TODO
+```goboscript
+index in item
+```
 
 ### Get length of list
 

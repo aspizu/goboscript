@@ -42,6 +42,7 @@
 | `x == true and y == true`| ![](../assets/and.png){width="400"} |
 | `x == true or y == true`| ![](../assets/or.png){width="400"} |
 | `x in y` | ![](../assets/in.png){width="125"} |
+| `x not in y` | ![](../assets/notin.png){width="125"} |
 | `x[y]` | ![](../assets/letterof.png){width="125"} |
 
 ## Random
