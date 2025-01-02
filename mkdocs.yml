@@ -15,9 +15,11 @@ nav:
           - Blocks: language/blocks.md
           - Reporters: language/reporters.md
           - Custom Blocks: language/custom-blocks.md
+          - Functions: language/functions.md
           - Enums: language/enums.md
           - Structs: language/structs.md
           - Macros: language/macros.md
+    - Standard Library: standard-library.md
     - Editor Integration:
           - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
           - Visual Studio Code: editor-integration/vscode.md

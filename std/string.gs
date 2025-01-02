@@ -105,11 +105,11 @@ func capitalize(text) {
 }
 
 # Conditional macro to check if $text starts with $prefix.
-%define ENDSWITH(TEXT,SUFFIX) \
+%define ENDSWITH(TEXT,SUFFIX)                                                          \
     (slice((TEXT), 1 + length(TEXT) - length(SUFFIX), length(TEXT)) == (SUFFIX))
 
 # Conditional macro to check if $text starts with $prefix.
-%define STARTSWITH(TEXT,PREFIX) \
+%define STARTSWITH(TEXT,PREFIX)                                                        \
     (slice((TEXT), 1, length(PREFIX)) == (PREFIX))
 
 # Remove $prefix from the beginning of $text.
@@ -302,14 +302,14 @@ func repeatstr(text, count) {
     return result;
 }
 
-# Join `LIST` elements into a string, separated by `SEP`.
-%define JOIN(LIST,SEP)                                                                 \
-    local result = "";                                                                 \
+# Join `LIST` elements into a string, separated by `SEP` and store the result in `STORE`.
+%define JOIN(LIST,SEP,STORE)                                                           \
+    local STORE = "";                                                                  \
     local i = 1;                                                                       \
     repeat length(LIST) {                                                              \
-        result &= LIST[i];                                                             \
+        STORE &= LIST[i];                                                              \
         if i < length(LIST) {                                                          \
-            result &= SEP;                                                             \
+            STORE &= SEP;                                                              \
         }                                                                              \
         i++;                                                                           \
     }

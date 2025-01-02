@@ -1,9 +1,9 @@
-'use strict'
-const fs = require('fs')
-const definitions = require('./sb3_definitions.json')
-const schema = require('./sb3_schema.json')
-const betterAjvErrors = require('better-ajv-errors').default
-const Ajv = require('ajv')
+"use strict"
+const fs = require("fs")
+const definitions = require("./sb3_definitions.json")
+const schema = require("./sb3_schema.json")
+const betterAjvErrors = require("better-ajv-errors").default
+const Ajv = require("ajv")
 const ajv = new Ajv({ strict: false })
 ajv.addSchema(definitions)
 let jsonData

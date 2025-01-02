@@ -79,6 +79,7 @@ impl PreProc {
                 "std/math" => include_bytes!("../std/math.gs").as_slice(),
                 "std/string" => include_bytes!("../std/string.gs").as_slice(),
                 "std/algo" => include_bytes!("../std/algo.gs").as_slice(),
+                "std/emoji" => include_bytes!("../std/emoji.gs").as_slice(),
                 _ => unreachable!(),
             }
             .read_to_end(&mut self.buffer)?;

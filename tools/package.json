@@ -1,6 +1,16 @@
 {
-    "dependencies": {
-        "ajv": "^8.12.0",
-        "better-ajv-errors": "^1.2.0"
-    }
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "better-ajv-errors": "^1.2.0",
+    "discord-emoji-converter": "^1.2.10"
+  },
+  "name": "tools",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
 }
