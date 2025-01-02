@@ -323,10 +323,10 @@ where T: Write + Seek
                     continue;
                 } else {
                     menu_is_default = false;
-                    self.input_with_shadow(s, d, arg_name, &arg_value, arg_id, menu_id.unwrap())?;
+                    self.input_with_shadow(s, d, arg_name, arg_value, arg_id, menu_id.unwrap())?;
                 }
             } else {
-                self.input(s, d, arg_name, &arg_value, arg_id)?;
+                self.input(s, d, arg_name, arg_value, arg_id)?;
             }
         }
         if menu_is_default {
@@ -344,7 +344,7 @@ where T: Write + Seek
         }
         self.end_obj()?; // node
         for (arg, arg_id) in args.iter().zip(arg_ids) {
-            self.expr(s, d, &arg, arg_id, this_id)?;
+            self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = block.menu() {
             self.begin_node(
@@ -391,7 +391,7 @@ where T: Write + Seek
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, &arg_value, arg_id)?;
+                    self.input(s, d, &arg.name, arg_value, arg_id)?;
                     qualified_args.push((arg.name.clone(), arg_id));
                     qualified_arg_values.push(arg_value);
                 }

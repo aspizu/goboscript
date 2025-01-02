@@ -604,11 +604,21 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = list.cmd.as_ref().and_then(|cmd| {
-            cmd_to_list(cmd, input)
-                .map_err(|err| d.diagnostics.push(err))
-                .ok()
-        });
+        let data = list
+            .cmd()
+            .and_then(|cmd| {
+                cmd_to_list(cmd, input)
+                    .map_err(|err| d.diagnostics.push(err))
+                    .ok()
+            })
+            .or_else(|| {
+                list.array().map(|array| {
+                    array
+                        .iter()
+                        .map(|(value, _)| value.to_string())
+                        .collect::<Vec<_>>()
+                })
+            });
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;

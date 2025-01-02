@@ -167,6 +167,13 @@ where T: Write + Seek
                 }
             }
         }
+        if let BinOp::In = op {
+            if let Expr::Name(name) = rhs {
+                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(d, name) {
+                    return self.list_contains(s, d, this_id, parent_id, &qualified_name, lhs);
+                }
+            }
+        }
         let lhs_id = self.id.new_id();
         let rhs_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
@@ -196,6 +203,25 @@ where T: Write + Seek
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
         self.expr(s, d, index, index_id, this_id)
+    }
+
+    pub fn list_contains(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        parent_id: NodeID,
+        name: &str,
+        item: &Expr,
+    ) -> io::Result<()> {
+        let index_id = self.id.new_id();
+        self.begin_node(Node::new("data_itemnumoflist", this_id).parent_id(parent_id))?;
+        self.begin_inputs()?;
+        self.input(s, d, "ITEM", item, index_id)?;
+        self.end_obj()?; // inputs
+        self.single_field_id("LIST", name)?;
+        self.end_obj()?; // node
+        self.expr(s, d, item, index_id, this_id)
     }
 
     fn list_length(

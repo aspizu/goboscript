@@ -13,6 +13,7 @@ grammar<'a>(sprite: &'a mut Sprite);
 pub Sprite = Declr*;
 
 Declr: () = {
+    ";",
     COSTUMES Comma<Costume> ";",
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n, l..r, a, b, w.is_none()));
@@ -35,13 +36,13 @@ Declr: () = {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
-        sprite.lists.insert(name.clone(), List::new(name, l..r, type_, None));
+        sprite.lists.insert(name.clone(), List::new(name, l..r, type_));
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <cmd:Cmd> ";" => {
-        sprite.lists.insert(
-            name.clone(),
-            List::new(name, l..r, type_, Some(cmd)),
-        );
+        sprite.lists.insert(name.clone(), List::new_cmd(name, l..r, type_, cmd));
+    },
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<Value>> "]" ";" => {
+        sprite.lists.insert(name.clone(), List::new_array(name, l..r, type_, default));
     }
 }
 
@@ -66,7 +67,7 @@ Costume: () = {
     }
 }
 
-Stmts: Vec<Stmt> = "{" <Stmt*> "}";
+Stmts: Vec<Stmt> = "{" <(<Stmt> ";"*)*> "}";
 
 Stmt: Stmt = {
     RETURN <value:BoxedExpr> ";" => Stmt::Return { value },
