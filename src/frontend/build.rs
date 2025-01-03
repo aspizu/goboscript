@@ -46,7 +46,6 @@ pub fn build(
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
-    let output = output.canonicalize()?;
     let config_path = input.join("goboscript.toml");
     let config_src = fs::read_to_string(&config_path).unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
