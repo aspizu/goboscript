@@ -15,7 +15,11 @@ use crate::config::Config;
 
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
-        Command::Build { input, output } => match build::build(input, output) {
+        Command::Build {
+            input,
+            output,
+            srcpkg,
+        } => match build::build(input, output, srcpkg) {
             Ok(()) => ExitCode::SUCCESS,
             Err(build::BuildError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);

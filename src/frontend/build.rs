@@ -37,11 +37,16 @@ impl From<ProjectDiagnostics> for BuildError {
     }
 }
 
-pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), BuildError> {
+pub fn build(
+    input: Option<PathBuf>,
+    output: Option<PathBuf>,
+    srcpkg: bool,
+) -> Result<(), BuildError> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
+    let output = output.canonicalize()?;
     let config_path = input.join("goboscript.toml");
     let config_src = fs::read_to_string(&config_path).unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
@@ -110,13 +115,15 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
     visitor::pass2::visit_project(&mut project);
     info!(target: "pass2", "{project:#?}");
     visitor::pass3::visit_project(&mut project);
-    let mut sb3 = Sb3::new(BufWriter::new(File::create(output)?));
+    let mut sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     sb3.project(
         &input,
+        &output,
         &project,
         &config,
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
+        srcpkg,
     )?;
     if !(stage_diagnostics.diagnostics.is_empty()
         && sprites_diagnostics

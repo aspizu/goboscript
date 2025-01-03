@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Download goboscript srcpkg</title>
+    </head>
+    <body>
+        <form id="form">
+            <h3>Download the source-code from a goboscript srcpkg svg file.</h3>
+            <span id="error"></span>
+            <input type="file" id="input" required accept="image/svg+xml" />
+            <button id="download">Download</button>
+        </form>
+        <script>
+            const calculateBase64Length = (n) => ((4 * n) / 3 + 3) & ~3
+            const $ = document.querySelector.bind(document)
+            const form = $("#form")
+            const input = $("#input")
+            const download = $("#download")
+            const error = $("#error")
+            input.onchange = async (e) => {
+                error.textContent = ""
+            }
+            form.onsubmit = async (e) => {
+                e.preventDefault()
+                const file = input.files.item(0)
+                const text = await file.text()
+                if (!text.startsWith("<!--")) {
+                    error.textContent = "Does not contain a goboscript srcpkg."
+                    return
+                }
+                const data = text.slice("<!--".length)
+                const length = parseInt(data.slice(0, 8), 16)
+                const encoded = data.slice(8, 8 + calculateBase64Length(length))
+                const blob = await (
+                    await fetch(`data:application/zip;base64,${encoded}`)
+                ).blob()
+                const url = URL.createObjectURL(blob)
+                const downloadLink = document.createElement("a")
+                downloadLink.href = url
+                downloadLink.download = file.name.replace(".svg", ".zip")
+                downloadLink.click()
+                URL.revokeObjectURL(url)
+                downloadLink.remove()
+            }
+        </script>
+        <style>
+            :root {
+                font-family: sans-serif;
+            }
+            #error {
+                color: #720000;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    color-scheme: dark;
+                }
+                #error {
+                    color: #ff6b6b;
+                }
+            }
+            form {
+                display: flex;
+                flex-direction: column;
+                max-width: min(300px, 100vw);
+                padding: 8px;
+                gap: 8px;
+            }
+            button,
+            input[type="file"] {
+                transition: scale 0.2s;
+                &:hover {
+                    scale: 1.01;
+                }
+                &:active {
+                    scale: 0.99;
+                }
+            }
+        </style>
+    </body>
+</html>

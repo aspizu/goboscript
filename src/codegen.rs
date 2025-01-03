@@ -7,5 +7,6 @@ mod node;
 mod node_id;
 mod node_id_factory;
 pub mod sb3;
+mod srcpkg;
 mod stmt;
 pub mod turbowarp_config;

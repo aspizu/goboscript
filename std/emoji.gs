@@ -1,4 +1,7 @@
+# Return the emoji for the shortcode `NAME`.
 %define EMOJI(NAME) emojis[(NAME) in emoji_names]
+
+# List of all emoji shortcodes.
 list emoji_names = [
     "100",
     "1234",
@@ -5722,6 +5725,8 @@ list emoji_names = [
     "bridge_at_night",
     "foggy"
 ];
+
+# List of all emojis.
 list emojis = [
     "💯",
     "🔢",
