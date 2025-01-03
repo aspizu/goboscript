@@ -280,7 +280,12 @@ where T: Write + Seek
     }
 
     fn assets(&mut self, input: &Path) -> io::Result<()> {
+        let mut added = FxHashSet::default();
         for (path, hash) in &self.costumes {
+            if added.contains(hash) {
+                continue;
+            }
+            added.insert(hash);
             let (_, extension) = path.rsplit_once('.').unwrap();
             self.zip
                 .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
