@@ -42,6 +42,12 @@ where T: io::Write + io::Seek
 }
 
 fn create_zipped_srcpkg(input: &Path, output: &Path) -> io::Result<Vec<u8>> {
+    let output = output
+        .parent()
+        .unwrap()
+        .canonicalize()
+        .unwrap()
+        .join(output.file_name().unwrap());
     let mut zip = ZipWriter::new(Cursor::new(Vec::new()));
     for entry in WalkDir::new(input).into_iter().flatten() {
         if !entry.metadata().is_ok_and(|metadata| metadata.is_file()) {
