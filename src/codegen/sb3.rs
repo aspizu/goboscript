@@ -525,6 +525,9 @@ where T: Write + Seek
             )?;
         }
         write!(self, "}}")?; // blocks
+        if sprite.costumes.is_empty() {
+            d.report(DiagnosticKind::NoCostumes, &(0..0));
+        }
         write!(self, r#","costumes":["#)?;
         let mut comma = false;
         for costume in &sprite.costumes {
