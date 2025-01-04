@@ -7,9 +7,9 @@ pub fn preproc(preproc: &PreProc) -> Vec<(usize, Token, usize)> {
     while let Some((start, token, end)) = lex.next() {
         match &token {
             Token::Name(name) => {
-                if let Some(value) = preproc.defines.get(name.as_str()) {
+                if let Some(value) = preproc.defines.get(&**name) {
                     tokens.extend(Lexer::new(value).flatten());
-                } else if let Some(mac) = preproc.macros.get(name.as_str()) {
+                } else if let Some(mac) = preproc.macros.get(&**name) {
                     if let Some((start, token, end)) = lex.next() {
                         if let Token::LParen = &token {
                         } else {
@@ -51,13 +51,13 @@ pub fn preproc(preproc: &PreProc) -> Vec<(usize, Token, usize)> {
                         }
                         args.push(arg);
                     }
-                    for (start, token, end) in Lexer::new(mac.substitution.as_str()).flatten() {
+                    for (start, token, end) in Lexer::new(&mac.substitution).flatten() {
                         match &token {
                             Token::Name(name) => {
-                                if let Some(value) = preproc.defines.get(name.as_str()) {
+                                if let Some(value) = preproc.defines.get(&**name) {
                                     tokens.extend(Lexer::new(value).flatten());
                                 } else if let Some(index) =
-                                    mac.args.iter().position(|arg| arg == name)
+                                    mac.args.iter().position(|arg| **arg == **name)
                                 {
                                     tokens.extend(args[index].iter().cloned());
                                 } else {

@@ -1,7 +1,7 @@
 use logos::Logos;
-use smol_str::SmolStr;
 
 use super::literal::{arg, bin, cmd, float, hex, int, mac, name, oct, string};
+use crate::misc::SmolStr;
 
 #[derive(Debug, Logos, Clone)]
 #[logos(skip r"[ \t\n\f]+")]

@@ -1,5 +1,5 @@
 use fxhash::FxHashMap;
-use smol_str::SmolStr;
+use crate::misc::SmolStr;
 
 use super::transformations;
 use crate::{

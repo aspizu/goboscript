@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use logos::Span;
-use smol_str::SmolStr;
+
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct Costume {
@@ -13,7 +14,7 @@ pub struct Costume {
 impl Costume {
     pub fn new(path: SmolStr, alias: Option<SmolStr>, span: Span) -> Self {
         let name = alias.unwrap_or_else(|| {
-            Path::new(&path)
+            Path::new(&*path)
                 .file_stem()
                 .unwrap()
                 .to_str()

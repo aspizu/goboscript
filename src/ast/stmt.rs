@@ -1,8 +1,10 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::{expr::Expr, type_::Type, Name, Value};
-use crate::blocks::{BinOp, Block};
+use crate::{
+    blocks::{BinOp, Block},
+    misc::SmolStr,
+};
 
 #[derive(Debug)]
 pub enum Stmt {

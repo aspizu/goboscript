@@ -1,7 +1,7 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::struct_field::StructField;
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct Struct {

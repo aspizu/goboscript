@@ -8,13 +8,13 @@ use std::{
 use anyhow::{anyhow, Context};
 use fxhash::FxHashMap;
 use log::info;
-use smol_str::SmolStr;
 
 use crate::{
     ast::{Project, Sprite},
     codegen::sb3::Sb3,
     config::Config,
     diagnostic::{ProjectDiagnostics, SpriteDiagnostics},
+    misc::SmolStr,
     parser, visitor,
 };
 

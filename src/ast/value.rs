@@ -3,9 +3,9 @@ mod unop;
 use std::fmt::{self, Display};
 
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::Expr;
+use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]
 pub enum Value {

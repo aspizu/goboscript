@@ -1,7 +1,7 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::{expr::Expr, Event, Stmt};
+use crate::misc::SmolStr;
 
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug)]

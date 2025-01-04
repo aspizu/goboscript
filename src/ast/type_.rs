@@ -2,7 +2,8 @@ use core::fmt;
 use std::fmt::Display;
 
 use logos::Span;
-use smol_str::SmolStr;
+
+use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]
 pub enum Type {

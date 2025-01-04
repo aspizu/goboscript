@@ -1,7 +1,7 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::Expr;
+use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]
 pub struct StructLiteralField {

@@ -1,7 +1,6 @@
 use fxhash::{FxHashMap, FxHashSet};
-use smol_str::SmolStr;
 
-use crate::ast::*;
+use crate::{ast::*, misc::SmolStr};
 
 struct Scope<'a> {
     used_procs: &'a mut FxHashSet<SmolStr>,

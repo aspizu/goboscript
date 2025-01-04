@@ -1,9 +1,8 @@
 use annotate_snippets::Renderer;
 use fxhash::FxHashMap;
-use smol_str::SmolStr;
 
 use super::SpriteDiagnostics;
-use crate::ast::Project;
+use crate::{ast::Project, misc::SmolStr};
 
 pub struct ProjectDiagnostics {
     pub project: Project,

@@ -1,8 +1,10 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::{value::Value, Name, StructLiteralField};
-use crate::blocks::{BinOp, Repr, UnOp};
+use crate::{
+    blocks::{BinOp, Repr, UnOp},
+    misc::SmolStr,
+};
 
 #[derive(Debug, Clone)]
 pub enum Expr {

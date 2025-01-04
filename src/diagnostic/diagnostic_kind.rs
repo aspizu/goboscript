@@ -1,11 +1,11 @@
 use annotate_snippets::Level;
-use smol_str::SmolStr;
 
 use super::SpriteDiagnostics;
 use crate::{
     ast::{Project, Type},
     blocks::{Block, Repr},
     lexer::token::Token,
+    misc::SmolStr,
 };
 
 #[derive(Debug)]

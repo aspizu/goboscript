@@ -1,5 +1,6 @@
 use fxhash::FxHashSet;
-use smol_str::SmolStr;
+
+use crate::misc::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct References {

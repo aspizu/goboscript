@@ -1,6 +1,8 @@
 use core::fmt;
 use std::io;
 
+use arcstr::ArcStr;
+
 pub fn write_comma_io<T>(mut file: T, comma: &mut bool) -> io::Result<()>
 where T: io::Write {
     if *comma {
@@ -18,3 +20,5 @@ where T: fmt::Write {
     *comma = true;
     Ok(())
 }
+
+pub type SmolStr = ArcStr;

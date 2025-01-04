@@ -1,8 +1,7 @@
 use fxhash::FxHashMap;
 use glob::glob;
-use smol_str::SmolStr;
 
-use crate::ast::*;
+use crate::{ast::*, misc::SmolStr};
 
 struct V<'a> {
     locals: Option<&'a mut FxHashMap<SmolStr, Var>>,

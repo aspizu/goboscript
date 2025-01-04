@@ -1,7 +1,6 @@
 use std::io::{self, Seek, Write};
 
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::{
     mutation::Mutation,
@@ -13,7 +12,7 @@ use crate::{
     ast::*,
     blocks::{BinOp, Repr, UnOp},
     diagnostic::DiagnosticKind,
-    misc::write_comma_io,
+    misc::{write_comma_io, SmolStr},
 };
 
 impl<T> Sb3<T>

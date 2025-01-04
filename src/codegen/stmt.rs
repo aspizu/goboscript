@@ -2,7 +2,6 @@ use std::io::{self, Seek, Write};
 
 use logos::Span;
 use serde_json::json;
-use smol_str::SmolStr;
 
 use super::{
     node::Node,
@@ -14,7 +13,7 @@ use crate::{
     blocks::Block,
     codegen::mutation::Mutation,
     diagnostic::DiagnosticKind,
-    misc::write_comma_io,
+    misc::{write_comma_io, SmolStr},
 };
 
 impl<T> Sb3<T>
@@ -417,7 +416,7 @@ where T: Write + Seek
                                             span: struct_literal_span.clone(),
                                         },
                                     },
-                                    type_span,
+                                    &type_span,
                                 );
                                 continue;
                             }

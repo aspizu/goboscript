@@ -1,7 +1,7 @@
 use fxhash::FxHashMap;
-use smol_str::SmolStr;
 
 use super::sprite::Sprite;
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct Project {

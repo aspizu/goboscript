@@ -1,5 +1,6 @@
 use logos::Span;
-use smol_str::SmolStr;
+
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct StructField {

@@ -9,7 +9,6 @@ use fxhash::{FxHashMap, FxHashSet};
 use logos::Span;
 use md5::{Digest, Md5};
 use serde_json::json;
-use smol_str::SmolStr;
 use zip::{write::SimpleFileOptions, ZipWriter};
 
 use super::{
@@ -22,7 +21,7 @@ use crate::{
     codegen::mutation::Mutation,
     config::Config,
     diagnostic::{DiagnosticKind, SpriteDiagnostics},
-    misc::write_comma_io,
+    misc::{write_comma_io, SmolStr},
 };
 
 const STAGE_NAME: &str = "Stage";
@@ -289,7 +288,7 @@ where T: Write + Seek
             let (_, extension) = path.rsplit_once('.').unwrap();
             self.zip
                 .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = File::open(input.join(path.as_str()));
+            let file = File::open(input.join(&**path));
             io::copy(&mut file?, &mut self.zip)?;
         }
         if self.srcpkg_hash.is_some() {
@@ -695,7 +694,7 @@ where T: Write + Seek
     }
 
     pub fn costume(&mut self, input: &Path, costume: &Costume, d: D) -> io::Result<()> {
-        let path = input.join(&costume.path);
+        let path = input.join(&*costume.path);
         let hash = self
             .costumes
             .get(&costume.path)

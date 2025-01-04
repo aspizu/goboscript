@@ -16,9 +16,9 @@ pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
     if cmd
         .program
         .as_ref()
-        .is_some_and(|program| program.name == "file")
+        .is_some_and(|program| &*program.name == "file")
     {
-        let Ok(file) = File::open(input.join(&cmd.cmd)) else {
+        let Ok(file) = File::open(input.join(&*cmd.cmd)) else {
             return Err(Diagnostic {
                 kind: DiagnosticKind::FileNotFound(cmd.cmd.clone()),
                 span: cmd.span.clone(),
@@ -29,7 +29,7 @@ pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
         return Ok(lines);
     }
     let mut child = if let Some(program) = &cmd.program {
-        let command = Command::new(&program.name)
+        let command = Command::new(&*program.name)
             .current_dir(input)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

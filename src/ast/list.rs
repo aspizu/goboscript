@@ -1,7 +1,7 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::{type_::Type, Value};
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct List {

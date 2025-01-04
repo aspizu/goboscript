@@ -1,10 +1,10 @@
 use fxhash::{FxHashMap, FxHashSet};
-use smol_str::SmolStr;
 
 use super::{
     costume::Costume, enum_::Enum, event::Event, list::List, proc::Proc, struct_::Struct, var::Var,
     Func,
 };
+use crate::misc::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct Sprite {

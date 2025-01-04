@@ -1,8 +1,8 @@
 use fxhash::FxHashMap;
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::{arg::Arg, stmt::Stmt, var::Var, References};
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct Proc {

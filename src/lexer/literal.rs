@@ -1,7 +1,7 @@
 use logos::Lexer;
-use smol_str::SmolStr;
 
 use super::token::Token;
+use crate::misc::SmolStr;
 
 pub fn name(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(lex.slice())

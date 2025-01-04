@@ -1,7 +1,7 @@
 use logos::Span;
-use smol_str::SmolStr;
 
 use super::value::Value;
+use crate::misc::SmolStr;
 
 #[derive(Debug)]
 pub struct EnumVariant {
