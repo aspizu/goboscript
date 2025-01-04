@@ -52,7 +52,6 @@ where T: Write + Seek
         match expr {
             Expr::Value { value, span: _ } => return self.value_input(input_name, value),
             Expr::Name(name) => return self.name_input(s, d, input_name, name, shadow_id),
-            Expr::CallSite { id } => return self.call_site_input(input_name, *id),
             Expr::Dot { lhs, rhs, rhs_span } => {
                 if let Expr::Name(lhs_name) = &**lhs {
                     if let Some(enum_) = s.get_enum(lhs_name.basename()) {
@@ -128,16 +127,6 @@ where T: Write + Seek
             None => {}
         }
         self.shadow_input(input_name, shadow_id)
-    }
-
-    fn call_site_input(&mut self, input_name: &str, id: usize) -> io::Result<()> {
-        write!(
-            self,
-            "[3,[12,{},{}],",
-            json!(format!("c{id}")),
-            json!(format!("c{id}"))
-        )?;
-        self.shadow_input(input_name, None)
     }
 
     fn node_input(

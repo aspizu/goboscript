@@ -152,7 +152,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
             Stmt::Return { value } => {
                 // Don't add stop_this_script after return stmt if it's the last stmt.
                 if top_level && i == stmts.len() - 1 {
-                    None
+                    Some(vec![])
                 } else {
                     visit_stmt_return(value)
                 }
@@ -202,7 +202,6 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
         } => {
             visit_expr(value, s, d, false);
         }
-        Stmt::SetCallSite { id: _, func: _ } => {}
         Stmt::ChangeVar { name: _, value } => {
             visit_expr(value, s, d, false);
         }
@@ -265,7 +264,6 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
 
 fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
     match expr {
-        Expr::CallSite { id: _ } => {}
         Expr::Value { value: _, span: _ } => {}
         Expr::Name(_) => {}
         Expr::Arg(_) => {}
@@ -545,15 +543,10 @@ where
     Some(struct_literal_fields)
 }
 
-fn visit_stmt_return(value: &Expr) -> Option<Vec<Stmt>> {
-    Some(vec![
-        Stmt::Return {
-            value: Box::new(value.clone()),
-        },
-        Stmt::Block {
-            block: Block::StopThisScript,
-            span: 0..0,
-            args: vec![],
-        },
-    ])
+fn visit_stmt_return(_value: &Expr) -> Option<Vec<Stmt>> {
+    Some(vec![Stmt::Block {
+        block: Block::StopThisScript,
+        span: 0..0,
+        args: vec![],
+    }])
 }

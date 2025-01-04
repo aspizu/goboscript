@@ -18,7 +18,7 @@ Declr: () = {
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n, l..r, a, b, w.is_none()));
     },
-    FUNC <t:Type> <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <b:Stmts> => {
+    FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
         sprite.funcs.insert(n.clone(), Func::new(n, l..r, t, a, b));
     },
     <l:@L> ON <r:@R> <event:STR> <b:Stmts> => sprite.events.push(EventKind::On { event }.to_event(l..r, b)),

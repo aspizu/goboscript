@@ -1,9 +1,14 @@
-use crate::ast::*;
+use fxhash::FxHashMap;
+
+use crate::{ast::*, misc::SmolStr};
 
 struct S<'a> {
     references: &'a mut References,
     args: Option<&'a mut Vec<Arg>>,
+    vars: &'a mut FxHashMap<SmolStr, Var>,
     callsites: &'a mut usize,
+    functable: Ft<'a>,
+    funcname: Option<SmolStr>,
 }
 
 pub fn visit_project(project: &mut Project) {
@@ -15,50 +20,81 @@ pub fn visit_project(project: &mut Project) {
 }
 
 fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
+    let functable = sprite
+        .funcs
+        .iter()
+        .map(|(name, func)| (name.clone(), func.type_.clone()))
+        .collect::<FxHashMap<_, _>>();
     let old_callsites = *callsites;
     for proc in sprite.procs.values_mut() {
-        visit_proc(proc, callsites);
+        visit_proc(proc, &mut sprite.vars, &functable, callsites);
     }
     for func in sprite.funcs.values_mut() {
-        visit_func(func, callsites);
+        visit_func(func, &mut sprite.vars, &functable, callsites);
     }
     for event in &mut sprite.events {
-        visit_event(event, callsites);
+        visit_event(event, &mut sprite.vars, &functable, callsites);
     }
     if *callsites != old_callsites {
         visit_sprite(sprite, callsites);
     }
 }
 
-fn visit_proc(proc: &mut Proc, callsites: &mut usize) {
+type Ft<'a> = &'a FxHashMap<SmolStr, Type>;
+
+fn visit_proc(
+    proc: &mut Proc,
+    vars: &mut FxHashMap<SmolStr, Var>,
+    functable: Ft,
+    callsites: &mut usize,
+) {
     visit_stmts(
         &mut proc.body,
         &mut S {
             references: &mut proc.references,
             args: Some(&mut proc.args),
+            vars,
             callsites,
+            functable,
+            funcname: None,
         },
     );
 }
 
-fn visit_func(func: &mut Func, callsites: &mut usize) {
+fn visit_func(
+    func: &mut Func,
+    vars: &mut FxHashMap<SmolStr, Var>,
+    functable: Ft,
+    callsites: &mut usize,
+) {
     visit_stmts(
         &mut func.body,
         &mut S {
             references: &mut func.references,
             args: Some(&mut func.args),
+            vars,
             callsites,
+            functable,
+            funcname: Some(func.name.clone()),
         },
     );
 }
 
-fn visit_event(event: &mut Event, callsites: &mut usize) {
+fn visit_event(
+    event: &mut Event,
+    vars: &mut FxHashMap<SmolStr, Var>,
+    functable: Ft,
+    callsites: &mut usize,
+) {
     visit_stmts(
         &mut event.body,
         &mut S {
             references: &mut event.references,
             args: None,
+            vars,
             callsites,
+            functable,
+            funcname: None,
         },
     );
 }
@@ -105,7 +141,6 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
         } => {
             visit_expr(value, &mut before, s);
         }
-        Stmt::SetCallSite { id: _, func: _ } => {}
         Stmt::ChangeVar { name: _, value } => {
             visit_expr(value, &mut before, s);
         }
@@ -164,6 +199,18 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             }
         }
         Stmt::Return { value } => {
+            if let Some(funcname) = &s.funcname {
+                before.push(Stmt::SetVar {
+                    name: Name::Name {
+                        name: format!("__return_{}__", funcname).into(),
+                        span: 0..0,
+                    },
+                    value: value.clone(),
+                    type_: Type::Value,
+                    is_local: false,
+                    is_cloud: false,
+                })
+            }
             visit_expr(value, &mut before, s);
         }
     }
@@ -172,7 +219,6 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
 
 fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
     let replace: Option<Expr> = match expr {
-        Expr::CallSite { id: _ } => None,
         Expr::Value { value: _, span: _ } => None,
         Expr::Name(name) => {
             s.references.names.insert(name.basename().clone());
@@ -205,17 +251,41 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             None
         }
         Expr::FuncCall { name, span, args } => {
-            *s.callsites += 1;
-            before.push(Stmt::FuncCall {
-                name: name.clone(),
-                span: span.clone(),
-                args: args.clone(),
-            });
-            before.push(Stmt::SetCallSite {
-                id: *s.callsites,
-                func: name.clone(),
-            });
-            Some(Expr::CallSite { id: *s.callsites })
+            if let Some(type_) = s.functable.get(name) {
+                *s.callsites += 1;
+                before.push(Stmt::FuncCall {
+                    name: name.clone(),
+                    span: span.clone(),
+                    args: args.clone(),
+                });
+                let callsite = Name::Name {
+                    name: format!("__callsite{}__", *s.callsites).into(),
+                    span: span.clone(),
+                };
+                s.vars.insert(
+                    callsite.basename().clone(),
+                    Var {
+                        name: callsite.basename().clone(),
+                        span: callsite.basespan().clone(),
+                        type_: type_.clone(),
+                        is_cloud: false,
+                        is_used: true,
+                    },
+                );
+                before.push(Stmt::SetVar {
+                    name: callsite.clone(),
+                    value: Box::new(Expr::Name(Name::Name {
+                        name: format!("__return_{}__", name).into(),
+                        span: span.clone(),
+                    })),
+                    type_: Type::Value,
+                    is_local: false,
+                    is_cloud: false,
+                });
+                Some(Expr::Name(callsite))
+            } else {
+                None
+            }
         }
         Expr::UnOp {
             op: _,

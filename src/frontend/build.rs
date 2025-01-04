@@ -102,18 +102,15 @@ pub fn build(
         }
         .into());
     }
-    info!(target: "parse", "{project:#?}");
     visitor::pass0::visit_project(&mut project);
-    info!(target: "pass0", "{project:#?}");
+    visitor::pass2::visit_project(&mut project);
     visitor::pass1::visit_project(
         &mut project,
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     );
-    info!(target: "pass1", "{project:#?}");
-    visitor::pass2::visit_project(&mut project);
-    info!(target: "pass2", "{project:#?}");
     visitor::pass3::visit_project(&mut project);
+    log::info!("{:#?}", project);
     let mut sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     sb3.project(
         &input,

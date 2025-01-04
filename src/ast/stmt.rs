@@ -32,10 +32,6 @@ pub enum Stmt {
         is_local: bool,
         is_cloud: bool,
     },
-    SetCallSite {
-        id: usize,
-        func: SmolStr,
-    },
     ChangeVar {
         name: Name,
         value: Box<Expr>,

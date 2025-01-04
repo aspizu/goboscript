@@ -212,7 +212,6 @@ impl Stmt {
             }
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
-            Stmt::SetCallSite { .. } => "data_setvariableto",
             Stmt::ChangeVar { .. } => "data_changevariableby",
             Stmt::Show(name) => {
                 if s.is_name_list(name) {
@@ -960,7 +959,6 @@ where T: Write + Seek
                 is_local,
                 is_cloud,
             } => self.set_var(s, d, this_id, name, value, type_, is_local, is_cloud),
-            Stmt::SetCallSite { id, func } => self.set_call_site(*id, func),
             Stmt::ChangeVar { name, value } => self.change_var(s, d, this_id, name, value),
             Stmt::Show(name) => self.show(s, d, name),
             Stmt::Hide(name) => self.hide(s, d, name),
@@ -978,7 +976,7 @@ where T: Write + Seek
             Stmt::Block { block, span, args } => self.block(s, d, this_id, block, span, args),
             Stmt::ProcCall { name, span, args } => self.proc_call(s, d, this_id, name, span, args),
             Stmt::FuncCall { name, span, args } => self.func_call(s, d, this_id, name, span, args),
-            Stmt::Return { value } => self.return_(s, d, this_id, value),
+            Stmt::Return { .. } => panic!(),
         }
     }
 
@@ -991,7 +989,6 @@ where T: Write + Seek
         parent_id: NodeID,
     ) -> io::Result<()> {
         match expr {
-            Expr::CallSite { .. } => Ok(()),
             Expr::Value { .. } => Ok(()),
             Expr::Name { .. } => Ok(()),
             Expr::Arg(name) => self.arg(s, d, this_id, parent_id, name),

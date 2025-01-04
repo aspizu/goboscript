@@ -13,9 +13,6 @@ pub enum Expr {
         span: Span,
     },
     Name(Name),
-    CallSite {
-        id: usize,
-    },
     Dot {
         lhs: Box<Expr>,
         rhs: SmolStr,
@@ -62,7 +59,6 @@ impl Expr {
             Self::UnOp { span, .. } => span.clone(),
             Self::BinOp { span, .. } => span.clone(),
             Self::StructLiteral { span, .. } => span.clone(),
-            Self::CallSite { .. } => unreachable!(),
         }
     }
 }
