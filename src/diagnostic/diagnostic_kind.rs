@@ -2,7 +2,7 @@ use annotate_snippets::Level;
 
 use super::SpriteDiagnostics;
 use crate::{
-    ast::{Project, Type},
+    ast::{Project, Sprite, Type},
     blocks::{Block, Repr},
     lexer::token::Token,
     misc::SmolStr,
@@ -41,6 +41,10 @@ pub enum DiagnosticKind {
         proc: SmolStr,
         given: usize,
     },
+    FuncArgsCountMismatch {
+        func: SmolStr,
+        given: usize,
+    },
     CommandFailed {
         stderr: Vec<u8>,
     },
@@ -66,7 +70,7 @@ pub enum DiagnosticKind {
 }
 
 impl DiagnosticKind {
-    pub fn to_string(&self, project: &Project, sprite_diagnostics: &SpriteDiagnostics) -> String {
+    pub fn to_string(&self, sprite: &Sprite) -> String {
         match self {
             DiagnosticKind::InvalidToken => "invalid token".to_string(),
             DiagnosticKind::UnrecognizedEof(expected) => {
@@ -122,8 +126,16 @@ impl DiagnosticKind {
             }
             DiagnosticKind::ProcArgsCountMismatch { proc, given } => {
                 format!(
-                    "proc {:?} expects unknown arguments, but {} were given",
-                    proc, given
+                    "procedure expects {} arguments, but {} were given",
+                    sprite.procs[proc].args.len(),
+                    given
+                )
+            }
+            DiagnosticKind::FuncArgsCountMismatch { func, given } => {
+                format!(
+                    "function expects {} arguments, but {} were given",
+                    sprite.funcs[func].args.len(),
+                    given
                 )
             }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
@@ -149,11 +161,7 @@ impl DiagnosticKind {
         }
     }
 
-    pub fn help(
-        &self,
-        project: &Project,
-        sprite_diagnostics: &SpriteDiagnostics,
-    ) -> Option<String> {
+    pub fn help(&self) -> Option<String> {
         match self {
             DiagnosticKind::NoCostumes => {
                 Some("if this is a header, move it inside a directory such as `lib/`".to_string())
@@ -187,6 +195,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::BlockArgsCountMismatch { .. }
             | DiagnosticKind::ReprArgsCountMismatch { .. }
             | DiagnosticKind::ProcArgsCountMismatch { .. }
+            | DiagnosticKind::FuncArgsCountMismatch { .. }
             | DiagnosticKind::CommandFailed { .. }
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct

@@ -252,13 +252,13 @@ where T: Write + Seek
         args: &[Expr],
     ) -> io::Result<()> {
         let Some(func) = s.sprite.funcs.get(name) else {
-            d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
+            d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
             return Ok(());
         };
         if func.args.len() != args.len() {
             d.report(
-                DiagnosticKind::ProcArgsCountMismatch {
-                    proc: name.clone(),
+                DiagnosticKind::FuncArgsCountMismatch {
+                    func: name.clone(),
                     given: args.len(),
                 },
                 span,

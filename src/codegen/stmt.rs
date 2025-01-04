@@ -416,7 +416,7 @@ where T: Write + Seek
                                             span: struct_literal_span.clone(),
                                         },
                                     },
-                                    &type_span,
+                                    type_span,
                                 );
                                 continue;
                             }

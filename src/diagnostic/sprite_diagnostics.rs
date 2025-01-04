@@ -1,6 +1,6 @@
 use std::{io, path::PathBuf};
 
-use annotate_snippets::{Annotation, Level, Renderer, Snippet};
+use annotate_snippets::{Level, Renderer, Snippet};
 use colored::Colorize;
 use logos::Span;
 
@@ -25,6 +25,10 @@ impl SpriteDiagnostics {
         })
     }
 
+    pub fn sprite_name(&self) -> &str {
+        self.path.file_stem().unwrap().to_str().unwrap()
+    }
+
     pub fn report(&mut self, kind: DiagnosticKind, span: &Span) {
         self.diagnostics.push(Diagnostic {
             kind,
@@ -36,8 +40,10 @@ impl SpriteDiagnostics {
         let src = self.preproc.get_translation_unit();
         for diagnostic in &self.diagnostics {
             let level: Level = (&diagnostic.kind).into();
-            let title = diagnostic.kind.to_string(project, self);
-            let help = diagnostic.kind.help(project, self);
+            let title = diagnostic
+                .kind
+                .to_string(&project.sprites[self.sprite_name()]);
+            let help = diagnostic.kind.help();
             let help = help.as_ref();
             let (start, include) = self.preproc.translate_position(diagnostic.span.start);
             if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
