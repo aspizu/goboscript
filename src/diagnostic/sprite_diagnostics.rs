@@ -1,6 +1,6 @@
 use std::{io, path::PathBuf};
 
-use annotate_snippets::{Level, Renderer, Snippet};
+use annotate_snippets::{Annotation, Level, Renderer, Snippet};
 use colored::Colorize;
 use logos::Span;
 
@@ -37,16 +37,33 @@ impl SpriteDiagnostics {
         for diagnostic in &self.diagnostics {
             let level: Level = (&diagnostic.kind).into();
             let title = diagnostic.kind.to_string(project, self);
+            let help = diagnostic.kind.help(project, self);
+            let help = help.as_ref();
             let (start, include) = self.preproc.translate_position(diagnostic.span.start);
-            let (end, _) = self.preproc.translate_position(diagnostic.span.end - 1);
-            let end = end + 1;
-            let message = level.title(&title).snippet(
-                Snippet::source(&src[include.range.clone()])
-                    .origin(include.path.to_str().unwrap())
-                    .fold(true)
-                    .annotation(level.span(start..end)),
-            );
-            eprintln!("{}", renderer.render(message));
+            if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
+                let mut message = level.title(&title).snippet(
+                    Snippet::source(&src[include.range.clone()])
+                        .origin(include.path.to_str().unwrap())
+                        .fold(true),
+                );
+                if let Some(help) = help {
+                    message = message.footer(Level::Help.title(help));
+                }
+                eprintln!("{}", renderer.render(message));
+            } else {
+                let (end, _) = self.preproc.translate_position(diagnostic.span.end - 1);
+                let end = end + 1;
+                let mut message = level.title(&title).snippet(
+                    Snippet::source(&src[include.range.clone()])
+                        .origin(include.path.to_str().unwrap())
+                        .fold(true)
+                        .annotation(level.span(start..end)),
+                );
+                if let Some(help) = help {
+                    message = message.footer(Level::Help.title(help));
+                }
+                eprintln!("{}", renderer.render(message));
+            }
             if let DiagnosticKind::CommandFailed { stderr } = &diagnostic.kind {
                 eprintln!("{}:", "stderr".red().bold());
                 for line in stderr.split(|&b| b == b'\n') {

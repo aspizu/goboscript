@@ -138,6 +138,19 @@ impl DiagnosticKind {
             }
         }
     }
+
+    pub fn help(
+        &self,
+        project: &Project,
+        sprite_diagnostics: &SpriteDiagnostics,
+    ) -> Option<String> {
+        match self {
+            DiagnosticKind::NoCostumes => {
+                Some("if this is a header, move it inside a directory such as `lib/`".to_string())
+            }
+            _ => None,
+        }
+    }
 }
 
 impl From<&DiagnosticKind> for Level {
