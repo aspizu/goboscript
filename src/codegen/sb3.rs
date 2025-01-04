@@ -115,7 +115,10 @@ impl<'a> S<'a> {
                 name: type_name,
                 span: type_span,
             } => match field_name {
-                None => panic!("attempted to qualify struct var without field name, type error?"),
+                None => {
+                    eprintln!("attempted to qualify field without field name: {qualified_var_name} with type: {type_}");
+                    None
+                }
                 Some(field_name) => {
                     let struct_ = self.get_struct(type_name)?;
                     if !struct_.fields.iter().any(|field| field.name == field_name) {

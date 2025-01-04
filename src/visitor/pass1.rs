@@ -1,5 +1,4 @@
 use fxhash::FxHashMap;
-use crate::misc::SmolStr;
 
 use super::transformations;
 use crate::{
@@ -7,6 +6,7 @@ use crate::{
     blocks::{BinOp, Block, UnOp},
     codegen::sb3::D,
     diagnostic::{DiagnosticKind, SpriteDiagnostics},
+    misc::SmolStr,
 };
 
 #[derive(Copy, Clone)]
@@ -165,7 +165,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
             for replace in replace.into_iter().rev() {
                 stmts.insert(i, replace);
             }
-            i += len - 1;
+            i += len.saturating_sub(1);
         }
         i += 1;
     }
