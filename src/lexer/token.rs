@@ -1,6 +1,8 @@
+use std::fmt::{self, Display, Formatter};
+
 use logos::Logos;
 
-use super::literal::{arg, bin, cmd, float, hex, int, mac, name, oct, string};
+use super::literal::*;
 use crate::misc::SmolStr;
 
 #[derive(Debug, Logos, Clone)]
@@ -11,8 +13,6 @@ pub enum Token {
     Name(SmolStr),
     #[regex(r"\$[_a-zA-Z0-9]+", arg)]
     Arg(SmolStr),
-    #[regex(r"[_a-zA-Z0-9]+!", mac)]
-    Mac(SmolStr),
     #[regex(r"0b[0-1][_0-1]*", bin)]
     Bin(i64),
     #[regex(r"0o[0-7][_0-7]*", oct)]

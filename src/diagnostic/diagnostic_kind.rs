@@ -69,30 +69,40 @@ impl DiagnosticKind {
     pub fn to_string(&self, project: &Project, sprite_diagnostics: &SpriteDiagnostics) -> String {
         match self {
             DiagnosticKind::InvalidToken => "invalid token".to_string(),
-            DiagnosticKind::UnrecognizedEof(vec) => {
-                format!("unrecognized eof, expected one of {:?}", vec)
+            DiagnosticKind::UnrecognizedEof(expected) => {
+                format!(
+                    "unrecognized end of file, expected one of {}",
+                    expected
+                        .iter()
+                        .map(|expected| format!("`{}`", expected.replace("\"", "")))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
             }
-            DiagnosticKind::UnrecognizedToken(token, vec) => {
-                format!("unrecognized token {:?}, expected one of {:?}", token, vec)
+            DiagnosticKind::UnrecognizedToken(_, expected) => {
+                format!(
+                    "unrecognized token, expected one of {}",
+                    expected
+                        .iter()
+                        .map(|expected| format!("`{}`", expected.replace("\"", "")))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
             }
-            DiagnosticKind::ExtraToken(token) => format!("extra token {:?}", token),
-            DiagnosticKind::FileNotFound(smol_str) => format!("file not found: {:?}", smol_str),
-            DiagnosticKind::UnrecognizedReporter(name) => format!("unrecognized reporter `{name}`"),
-            DiagnosticKind::UnrecognizedBlock(name) => format!("unrecognized block `{name}`"),
-            DiagnosticKind::UnrecognizedVariable(name) => format!("unrecognized variable `{name}`"),
-            DiagnosticKind::UnrecognizedList(name) => format!("unrecognized list {name}"),
-            DiagnosticKind::UnrecognizedEnum(name) => format!("unrecognized enum {name}"),
-            DiagnosticKind::UnrecognizedStruct(name) => format!("unrecognized struct {name}"),
-            DiagnosticKind::UnrecognizedProcedure(name) => format!("unrecognized procedure {name}"),
-            DiagnosticKind::UnrecognizedFunction(name) => format!("unrecognized function {name}"),
-            DiagnosticKind::UnrecognizedArgument(name) => format!("unrecognized argument {name}"),
-            DiagnosticKind::UnrecognizedStructField(name) => {
-                format!("unrecognized struct field {name}")
-            }
-            DiagnosticKind::UnrecognizedEnumVariant(name) => {
-                format!("unrecognized enum variant {name}")
-            }
-            DiagnosticKind::UnrecognizedKey(name) => format!("unrecognized key {name}"),
+            DiagnosticKind::ExtraToken(_) => "extra token".to_string(),
+            DiagnosticKind::FileNotFound(_) => "file not found".to_string(),
+            DiagnosticKind::UnrecognizedReporter(_) => "unrecognized reporter".to_string(),
+            DiagnosticKind::UnrecognizedBlock(_) => "unrecognized block".to_string(),
+            DiagnosticKind::UnrecognizedVariable(_) => "unrecognized variable".to_string(),
+            DiagnosticKind::UnrecognizedList(_) => "unrecognized list".to_string(),
+            DiagnosticKind::UnrecognizedEnum(_) => "unrecognized enum".to_string(),
+            DiagnosticKind::UnrecognizedStruct(_) => "unrecognized struct".to_string(),
+            DiagnosticKind::UnrecognizedProcedure(_) => "unrecognized procedure".to_string(),
+            DiagnosticKind::UnrecognizedFunction(_) => "unrecognized function".to_string(),
+            DiagnosticKind::UnrecognizedArgument(_) => "unrecognized argument".to_string(),
+            DiagnosticKind::UnrecognizedStructField(_) => "unrecognized struct field".to_string(),
+            DiagnosticKind::UnrecognizedEnumVariant(_) => "unrecognized enum variant".to_string(),
+            DiagnosticKind::UnrecognizedKey(_) => "unrecognized key".to_string(),
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(

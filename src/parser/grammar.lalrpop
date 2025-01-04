@@ -437,7 +437,6 @@ extern {
     enum Token {
         NAME           => Token::Name(<SmolStr>),
         ARG            => Token::Arg(<SmolStr>),
-        MAC            => Token::Mac(<SmolStr>),
         BIN            => Token::Bin(<i64>),
         OCT            => Token::Oct(<i64>),
         INT            => Token::Int(<i64>),

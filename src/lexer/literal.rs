@@ -19,10 +19,6 @@ pub fn arg(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(&lex.slice()[1..])
 }
 
-pub fn mac(lex: &mut Lexer<Token>) -> SmolStr {
-    SmolStr::from(&lex.slice()[..lex.slice().len() - 1])
-}
-
 pub fn bin(lex: &mut Lexer<Token>) -> i64 {
     let mut neg = false;
     let mut value = 0;
