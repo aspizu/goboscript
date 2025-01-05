@@ -28,7 +28,11 @@ pub fn frontend() -> ExitCode {
             Err(build::BuildError::ProjectDiagnostics(diagnostics)) => {
                 diagnostics.eprint();
                 eprintln!();
-                ExitCode::FAILURE
+                if diagnostics.failure() {
+                    ExitCode::FAILURE
+                } else {
+                    ExitCode::SUCCESS
+                }
             }
         },
         Command::Completions { shell } => {

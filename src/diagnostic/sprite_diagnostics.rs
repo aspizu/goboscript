@@ -46,6 +46,10 @@ impl SpriteDiagnostics {
             let help = diagnostic.kind.help();
             let help = help.as_ref();
             let (start, include) = self.preproc.translate_position(diagnostic.span.start);
+            // Do not display diagnostics for standard library headers.
+            if include.path.starts_with("std/") {
+                continue;
+            }
             if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
                 let mut message = level.title(&title).snippet(
                     Snippet::source(&src[include.range.clone()])

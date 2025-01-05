@@ -422,6 +422,51 @@ where T: Write + Seek
         broadcasts: Option<FxHashSet<SmolStr>>,
         srcpkg: bool,
     ) -> io::Result<()> {
+        for proc in sprite.procs.values() {
+            if !sprite.used_procs.contains(&proc.name) {
+                d.report(DiagnosticKind::UnusedProc(proc.name.clone()), &proc.span);
+            } else {
+                for arg in &proc.args {
+                    if !sprite
+                        .proc_used_args
+                        .get(&proc.name)
+                        .unwrap()
+                        .contains(&arg.name)
+                    {
+                        d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
+                    }
+                }
+            }
+        }
+        for func in sprite.funcs.values() {
+            if !sprite.used_funcs.contains(&func.name) {
+                d.report(DiagnosticKind::UnusedFunc(func.name.clone()), &func.span);
+            } else {
+                for arg in &func.args {
+                    if !sprite
+                        .func_used_args
+                        .get(&func.name)
+                        .unwrap()
+                        .contains(&arg.name)
+                    {
+                        d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
+                    }
+                }
+            }
+        }
+        for struct_ in sprite.structs.values() {
+            if !struct_.is_used {
+                d.report(
+                    DiagnosticKind::UnusedStruct(struct_.name.clone()),
+                    &struct_.span,
+                );
+            }
+        }
+        for enum_ in sprite.enums.values() {
+            if !enum_.is_used {
+                d.report(DiagnosticKind::UnusedEnum(enum_.name.clone()), &enum_.span);
+            }
+        }
         self.id.reset();
         write!(self, "{{")?;
         write!(self, r#""isStage":{}"#, name == STAGE_NAME)?;
@@ -487,6 +532,7 @@ where T: Write + Seek
             .values()
             .filter(|proc| sprite.used_procs.contains(&proc.name))
         {
+            let proc_definition = sprite.proc_definitions.get(&proc.name).unwrap();
             self.proc(
                 S {
                     stage,
@@ -496,6 +542,7 @@ where T: Write + Seek
                 },
                 d,
                 proc,
+                proc_definition,
             )?;
         }
         for func in sprite
@@ -503,6 +550,7 @@ where T: Write + Seek
             .values()
             .filter(|func| sprite.used_funcs.contains(&func.name))
         {
+            let func_definition = sprite.func_definitions.get(&func.name).unwrap();
             self.func(
                 S {
                     stage,
@@ -512,6 +560,7 @@ where T: Write + Seek
                 },
                 d,
                 func,
+                func_definition,
             )?;
         }
         for event in &sprite.events {
@@ -733,13 +782,13 @@ where T: Write + Seek
         write!(self, "}}") // costume
     }
 
-    pub fn proc(&mut self, s: S, d: D, proc: &Proc) -> io::Result<()> {
+    pub fn proc(&mut self, s: S, d: D, proc: &Proc, definition: &[Stmt]) -> io::Result<()> {
         let this_id = self.id.new_id();
         let prototype_id = self.id.new_id();
         let next_id = self.id.new_id();
         self.begin_node(
             Node::new("procedures_definition", this_id)
-                .some_next_id((!proc.body.is_empty()).then_some(next_id))
+                .some_next_id((!definition.is_empty()).then_some(next_id))
                 .top_level(true),
         )?;
         self.begin_inputs()?;
@@ -804,16 +853,16 @@ where T: Write + Seek
             Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp)
         )?;
         self.end_obj()?; // node
-        self.stmts(s, d, &proc.body, next_id, Some(this_id))
+        self.stmts(s, d, definition, next_id, Some(this_id))
     }
 
-    pub fn func(&mut self, s: S, d: D, func: &Func) -> io::Result<()> {
+    pub fn func(&mut self, s: S, d: D, func: &Func, definition: &[Stmt]) -> io::Result<()> {
         let this_id = self.id.new_id();
         let prototype_id = self.id.new_id();
         let next_id = self.id.new_id();
         self.begin_node(
             Node::new("procedures_definition", this_id)
-                .some_next_id((!func.body.is_empty()).then_some(next_id))
+                .some_next_id((!definition.is_empty()).then_some(next_id))
                 .top_level(true),
         )?;
         self.begin_inputs()?;
@@ -878,7 +927,7 @@ where T: Write + Seek
             Mutation::prototype(func.name.clone(), &qualified_args, true)
         )?;
         self.end_obj()?; // node
-        self.stmts(s, d, &func.body, next_id, Some(this_id))
+        self.stmts(s, d, definition, next_id, Some(this_id))
     }
 
     pub fn event(&mut self, s: S, d: D, event: &Event) -> io::Result<()> {

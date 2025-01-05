@@ -22,12 +22,12 @@ pub enum Expr {
     Repr {
         repr: Repr,
         span: Span,
-        args: Vec<Expr>,
+        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<Expr>,
+        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
     },
     UnOp {
         op: UnOp,

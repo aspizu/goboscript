@@ -66,8 +66,9 @@ pub fn visit_project(
 
 fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
     for proc in sprite.procs.values_mut() {
+        let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
         visit_stmts(
-            &mut proc.body,
+            proc_definition,
             S {
                 args: Some(&proc.args),
                 local_vars: Some(&proc.locals),
@@ -85,8 +86,9 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
         );
     }
     for func in sprite.funcs.values_mut() {
+        let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
         visit_stmts(
-            &mut func.body,
+            func_definition,
             S {
                 args: Some(&func.args),
                 local_vars: Some(&func.locals),
@@ -149,7 +151,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
             Stmt::InsertAtList { name, index, value } => {
                 visit_stmt_insert_at_list(s, d, name, index, value)
             }
-            Stmt::Return { value } => {
+            Stmt::Return { value, .. } => {
                 // Don't add stop_this_script after return stmt if it's the last stmt.
                 if top_level && i == stmts.len() - 1 {
                     Some(vec![])
@@ -236,7 +238,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for arg in args {
+            for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
         }
@@ -245,7 +247,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for arg in args {
+            for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
         }
@@ -254,11 +256,11 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            for arg in args {
+            for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
         }
-        Stmt::Return { value } => visit_expr(value, s, d, false),
+        Stmt::Return { value, .. } => visit_expr(value, s, d, false),
     }
 }
 
@@ -279,7 +281,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             span: _,
             args,
         } => {
-            for arg in args {
+            for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
         }
@@ -288,7 +290,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             span: _,
             args,
         } => {
-            for arg in args {
+            for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
         }

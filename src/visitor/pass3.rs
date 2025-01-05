@@ -28,7 +28,9 @@ pub fn visit_project(project: &mut Project) {
                 global_lists: None,
             },
             &project.stage.procs,
+            &project.stage.proc_references,
             &project.stage.funcs,
+            &project.stage.func_references,
             &event.references,
         );
     }
@@ -48,7 +50,9 @@ pub fn visit_project(project: &mut Project) {
                     global_lists: Some(&mut project.stage.lists),
                 },
                 &sprite.procs,
+                &sprite.proc_references,
                 &sprite.funcs,
+                &sprite.func_references,
                 &event.references,
             );
         }
@@ -58,7 +62,9 @@ pub fn visit_project(project: &mut Project) {
 fn resolve_references(
     scope: &mut Scope,
     procs: &FxHashMap<SmolStr, Proc>,
+    proc_references: &FxHashMap<SmolStr, References>,
     funcs: &FxHashMap<SmolStr, Func>,
+    func_references: &FxHashMap<SmolStr, References>,
     references: &References,
 ) {
     for name in &references.names {
@@ -109,14 +115,28 @@ fn resolve_references(
     for proc in &references.procs {
         if scope.used_procs.insert(proc.clone()) {
             if let Some(proc) = procs.get(proc) {
-                resolve_references(scope, procs, funcs, &proc.references);
+                resolve_references(
+                    scope,
+                    procs,
+                    proc_references,
+                    funcs,
+                    func_references,
+                    proc_references.get(&proc.name).unwrap(),
+                );
             }
         }
     }
     for func in &references.funcs {
         if scope.used_funcs.insert(func.clone()) {
-            if let Some(proc) = funcs.get(func) {
-                resolve_references(scope, procs, funcs, &proc.references);
+            if let Some(func) = funcs.get(func) {
+                resolve_references(
+                    scope,
+                    procs,
+                    proc_references,
+                    funcs,
+                    func_references,
+                    func_references.get(&func.name).unwrap(),
+                );
             }
         }
     }

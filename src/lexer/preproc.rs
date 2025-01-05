@@ -2,14 +2,22 @@ use super::{adaptor::Lexer, token::Token};
 use crate::preproc::PreProc;
 
 pub fn preproc(preproc: &PreProc) -> Vec<(usize, Token, usize)> {
+    let lex = Lexer::new(preproc.get_translation_unit()).flatten();
+    _preproc(preproc, lex)
+}
+
+fn _preproc<T>(preproc: &PreProc, mut lex: T) -> Vec<(usize, Token, usize)>
+where T: Iterator<Item = (usize, Token, usize)> {
+    let mut dirty = false;
     let mut tokens = vec![];
-    let mut lex = Lexer::new(preproc.get_translation_unit()).flatten();
     while let Some((start, token, end)) = lex.next() {
         match &token {
             Token::Name(name) => {
                 if let Some(value) = preproc.defines.get(&**name) {
                     tokens.extend(Lexer::new(value).flatten());
+                    dirty = true;
                 } else if let Some(mac) = preproc.macros.get(&**name) {
+                    dirty = true;
                     if let Some((start, token, end)) = lex.next() {
                         if let Token::LParen = &token {
                         } else {
@@ -78,5 +86,9 @@ pub fn preproc(preproc: &PreProc) -> Vec<(usize, Token, usize)> {
             }
         }
     }
-    tokens
+    if dirty {
+        _preproc(preproc, tokens.into_iter())
+    } else {
+        tokens
+    }
 }

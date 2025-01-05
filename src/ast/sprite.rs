@@ -1,16 +1,19 @@
 use fxhash::{FxHashMap, FxHashSet};
 
-use super::{
-    costume::Costume, enum_::Enum, event::Event, list::List, proc::Proc, struct_::Struct, var::Var,
-    Func,
-};
+use super::*;
 use crate::misc::SmolStr;
 
 #[derive(Debug, Default)]
 pub struct Sprite {
     pub costumes: Vec<Costume>,
     pub procs: FxHashMap<SmolStr, Proc>,
+    pub proc_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
+    pub proc_references: FxHashMap<SmolStr, References>,
+    pub proc_used_args: FxHashMap<SmolStr, FxHashSet<SmolStr>>,
     pub funcs: FxHashMap<SmolStr, Func>,
+    pub func_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
+    pub func_references: FxHashMap<SmolStr, References>,
+    pub func_used_args: FxHashMap<SmolStr, FxHashSet<SmolStr>>,
     pub enums: FxHashMap<SmolStr, Enum>,
     pub structs: FxHashMap<SmolStr, Struct>,
     pub vars: FxHashMap<SmolStr, Var>,

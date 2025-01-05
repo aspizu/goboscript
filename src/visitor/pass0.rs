@@ -22,8 +22,9 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
         visit_enum(enum_);
     }
     for proc in sprite.procs.values_mut() {
+        let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
         visit_stmts(
-            &mut proc.body,
+            proc_definition,
             &mut V {
                 locals: Some(&mut proc.locals),
                 vars: &mut sprite.vars,
@@ -43,8 +44,9 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
                 is_used: true,
             },
         );
+        let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
         visit_stmts(
-            &mut func.body,
+            func_definition,
             &mut V {
                 locals: Some(&mut func.locals),
                 vars: &mut sprite.vars,

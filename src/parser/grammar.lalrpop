@@ -16,10 +16,16 @@ Declr: () = {
     ";",
     COSTUMES Comma<Costume> ";",
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
-        sprite.procs.insert(n.clone(), Proc::new(n, l..r, a, b, w.is_none()));
+        sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, w.is_none()));
+        sprite.proc_definitions.insert(n.clone(), b);
+        sprite.proc_references.insert(n.clone(), Default::default());
+        sprite.proc_used_args.insert(n.clone(), Default::default());
     },
     FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
-        sprite.funcs.insert(n.clone(), Func::new(n, l..r, t, a, b));
+        sprite.funcs.insert(n.clone(), Func::new(n.clone(), l..r, t, a));
+        sprite.func_definitions.insert(n.clone(), b);
+        sprite.func_references.insert(n.clone(), Default::default());
+        sprite.func_used_args.insert(n.clone(), Default::default());
     },
     <l:@L> ON <r:@R> <event:STR> <b:Stmts> => sprite.events.push(EventKind::On { event }.to_event(l..r, b)),
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),
@@ -70,7 +76,7 @@ Costume: () = {
 Stmts: Vec<Stmt> = "{" <(<Stmt> ";"*)*> "}";
 
 Stmt: Stmt = {
-    RETURN <value:BoxedExpr> ";" => Stmt::Return { value },
+    RETURN <value:BoxedExpr> ";" => Stmt::Return { value, visited: false },
     IF <cond:BoxedIfExpr> <if_body:Stmts> => {
         Stmt::Branch { cond, if_body, else_body: vec![] }
     },
@@ -273,7 +279,7 @@ Stmt: Stmt = {
         let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
         Stmt::augmented_index_assign(BinOp::Join, name, index, value)
     },
-    <l:@L> <name:NAME> <r:@R> <args:Exprs> ";" => match Block::from_shape(&name, args.len()) {
+    <l:@L> <name:NAME> <r:@R> <args:Kwargs> ";" => match Block::from_shape(&name, args.len()) {
         Some(block) => Stmt::Block { block, span: l..r, args },
         None => Stmt::ProcCall { name, span: l..r, args },
     },
@@ -297,7 +303,18 @@ BoxedExpr: Box<Expr> = <expr:Expr> => Box::new(expr);
 #[inline]
 BoxedIfExpr: Box<Expr> = <expr:IfExpr> => Box::new(expr);
 
+#[inline]
 Exprs: Vec<Expr> = <Comma<Expr>>;
+
+#[inline]
+Kwargs: Vec<(Option<(SmolStr, Span)>, Expr)> = <Comma<Kwarg>>;
+
+#[inline]
+Kwarg: (Option<(SmolStr, Span)>, Expr) = {
+    <l:@L> <name:(<NAME> ":")?> <r:@R> <value:Expr> => {
+        (name.map(|name| (name, l..r)), value)
+    }
+}
 
 Expr: Expr = {
     #[precedence(level="1")]
@@ -337,14 +354,14 @@ Expr: Expr = {
     <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
     #[precedence(level="6")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
-    <lhs:Expr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
-        args.insert(0, lhs);
-        if let Some(repr) = Repr::from_shape(&name, args.len()) {
-            Expr::Repr { repr, span: l..r, args }
-        } else {
-            Expr::FuncCall { name: name, span: l..r, args: args }
-        }
-    },
+    // <lhs:Expr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
+    //     args.insert(0, lhs);
+    //     if let Some(repr) = Repr::from_shape(&name, args.len()) {
+    //         Expr::Repr { repr, span: l..r, args }
+    //     } else {
+    //         Expr::FuncCall { name: name, span: l..r, args: args }
+    //     }
+    // },
     #[precedence(level="7")] #[assoc(side="right")]
     <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> NOT IN <rhs:Expr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
@@ -393,14 +410,14 @@ IfExpr: Expr = {
     <l:@L> <lhs:IfExpr> ">="<rhs:IfExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
     #[precedence(level="6")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> "&" <rhs:IfExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
-    <lhs:IfExpr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
-        args.insert(0, lhs);
-        if let Some(repr) = Repr::from_shape(&name, args.len()) {
-            Expr::Repr { repr, span: l..r, args }
-        } else {
-            Expr::FuncCall { name: name, span: l..r, args: args }
-        }
-    },
+    // <lhs:IfExpr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
+    //     args.insert(0, lhs);
+    //     if let Some(repr) = Repr::from_shape(&name, args.len()) {
+    //         Expr::Repr { repr, span: l..r, args }
+    //     } else {
+    //         Expr::FuncCall { name: name, span: l..r, args: args }
+    //     }
+    // },
     #[precedence(level="7")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr>  IN <rhs:IfExpr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> NOT IN <rhs:IfExpr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
@@ -418,11 +435,11 @@ Term: Expr = {
     <l:@L> <n:NAME> <r:@R> => Expr::Name(Name::Name { name: n, span: l..r }),
     <l:@L> <n:ARG> <r:@R> => Expr::Arg(Name::Name { name: n, span: l..r }),
 
-    <l:@L> <name:NAME> <r:@R> "(" <args:Exprs> ")" => {
+    <l:@L> <name:NAME> <r:@R> "(" <args:Kwargs> ")" => {
         if let Some(repr) = Repr::from_shape(&name, args.len()) {
             Expr::Repr { repr, span: l..r, args }
         } else {
-            Expr::FuncCall { name: name, span: l..r, args: args }
+            Expr::FuncCall { name: name, span: l..r, args }
         }
     },
     <l:@L> <term:Term> "[" <index:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, term, index),
@@ -470,7 +487,7 @@ Type: Type = {
 
 #[inline]
 Arg: Arg = {
-    <type_:Type> <l:@L> <name:NAME> <r:@R> => Arg::new(name, l..r, type_),
+    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <IfExpr>)?> => Arg::new(name, l..r, type_, default),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {

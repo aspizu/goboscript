@@ -60,20 +60,21 @@ pub enum Stmt {
     Block {
         block: Block,
         span: Span,
-        args: Vec<Expr>,
+        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
     },
     ProcCall {
         name: SmolStr,
         span: Span,
-        args: Vec<Expr>,
+        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<Expr>,
+        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
     },
     Return {
         value: Box<Expr>,
+        visited: bool,
     },
 }
 

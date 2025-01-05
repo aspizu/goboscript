@@ -60,10 +60,20 @@ where T: Write + Seek
         parent_id: NodeID,
         repr: &Repr,
         span: &Span,
-        args: &[Expr],
+        args: &[(Option<(SmolStr, Span)>, Expr)],
     ) -> io::Result<()> {
+        if args.iter().any(|(keyword, _)| keyword.is_some()) {
+            panic!("repr's do not support keyword args yet.")
+        }
         if args.len() != repr.args().len() {
-            todo!()
+            d.report(
+                DiagnosticKind::ReprArgsCountMismatch {
+                    repr: repr.clone(),
+                    given: args.len(),
+                },
+                span,
+            );
+            return Ok(());
         }
         self.begin_node(Node::new(repr.opcode(), this_id).parent_id(parent_id))?;
         let arg_ids: Vec<NodeID> = (&mut self.id).take(args.len()).collect();
@@ -71,7 +81,7 @@ where T: Write + Seek
         let mut menu_value = None;
         let mut menu_is_default = menu_id.is_some();
         self.begin_inputs()?;
-        for ((&arg_name, arg_value), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
+        for ((&arg_name, (_, arg_value)), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
             if repr.menu().is_some_and(|menu| menu.input == arg_name) {
                 if let Expr::Value { value, span: _ } = arg_value {
                     menu_value = Some(value.clone());
@@ -98,7 +108,7 @@ where T: Write + Seek
             write!(self, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
-        for (arg, arg_id) in args.iter().zip(arg_ids) {
+        for ((_, arg), arg_id) in args.iter().zip(arg_ids) {
             self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = repr.menu() {
@@ -249,12 +259,15 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &[Expr],
+        args: &[(Option<(SmolStr, Span)>, Expr)],
     ) -> io::Result<()> {
         let Some(func) = s.sprite.funcs.get(name) else {
             d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
             return Ok(());
         };
+        if args.iter().any(|(keyword, _)| keyword.is_some()) {
+            panic!("func's do not support keyword args yet.")
+        }
         if func.args.len() != args.len() {
             d.report(
                 DiagnosticKind::FuncArgsCountMismatch {
@@ -267,7 +280,7 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = vec![];
         let mut qualified_arg_values: Vec<Expr> = vec![];
         self.begin_inputs()?;
-        for (arg, kwarg) in func.args.iter().zip(args) {
+        for (arg, (_, kwarg)) in func.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();

@@ -1,4 +1,4 @@
-use annotate_snippets::Renderer;
+use annotate_snippets::{Level, Renderer};
 use fxhash::FxHashMap;
 
 use super::SpriteDiagnostics;
@@ -17,5 +17,18 @@ impl ProjectDiagnostics {
         for sprite_diagnostics in self.sprites_diagnostics.values() {
             sprite_diagnostics.eprint(&renderer, &self.project);
         }
+    }
+
+    pub fn failure(&self) -> bool {
+        self.stage_diagnostics
+            .diagnostics
+            .iter()
+            .any(|diag| matches!(Level::from(&diag.kind), Level::Error))
+            || self.sprites_diagnostics.values().any(|sprite_diagnostics| {
+                sprite_diagnostics
+                    .diagnostics
+                    .iter()
+                    .any(|diag| matches!(Level::from(&diag.kind), Level::Error))
+            })
     }
 }

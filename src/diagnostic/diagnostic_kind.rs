@@ -63,8 +63,9 @@ pub enum DiagnosticKind {
     UnusedList(SmolStr),
     UnusedEnum(SmolStr),
     UnusedStruct(SmolStr),
-    UnusedProcedure(SmolStr),
-    UnusedArgument(SmolStr),
+    UnusedProc(SmolStr),
+    UnusedFunc(SmolStr),
+    UnusedArg(SmolStr),
     UnusedStructField(SmolStr),
     UnusedEnumVariant(SmolStr),
 }
@@ -147,8 +148,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnusedList(name) => format!("unused list {name}"),
             DiagnosticKind::UnusedEnum(name) => format!("unused enum {name}"),
             DiagnosticKind::UnusedStruct(name) => format!("unused struct {name}"),
-            DiagnosticKind::UnusedProcedure(name) => format!("unused procedure {name}"),
-            DiagnosticKind::UnusedArgument(name) => format!("unused argument {name}"),
+            DiagnosticKind::UnusedProc(name) => format!("unused procedure {name}"),
+            DiagnosticKind::UnusedFunc(name) => format!("unused function {name}"),
+            DiagnosticKind::UnusedArg(name) => format!("unused argument {name}"),
             DiagnosticKind::UnusedStructField(name) => format!("unused struct field {name}"),
             DiagnosticKind::UnusedEnumVariant(name) => format!("unused enum variant {name}"),
             DiagnosticKind::NotStruct => "not a struct".to_string(),
@@ -206,8 +208,9 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnusedList(_)
             | DiagnosticKind::UnusedEnum(_)
             | DiagnosticKind::UnusedStruct(_)
-            | DiagnosticKind::UnusedProcedure(_)
-            | DiagnosticKind::UnusedArgument(_)
+            | DiagnosticKind::UnusedProc(_)
+            | DiagnosticKind::UnusedFunc(_)
+            | DiagnosticKind::UnusedArg(_)
             | DiagnosticKind::UnusedStructField(_)
             | DiagnosticKind::UnusedEnumVariant(_) => Level::Warning,
         }

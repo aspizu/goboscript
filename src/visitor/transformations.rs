@@ -1,9 +1,12 @@
+use logos::Span;
+
 use super::pass1::S;
 use crate::{
     ast::{Expr, Name, StructLiteralField, Value},
     blocks::{BinOp, Repr, UnOp},
     codegen::sb3::D,
     diagnostic::DiagnosticKind,
+    misc::SmolStr,
 };
 
 pub fn apply<T, F>(value: &mut T, transformer: F)
@@ -295,3 +298,5 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
         Value::Int(1).to_expr(expr.span()),
     ))
 }
+
+pub fn func_keyword_args(args: &mut [(Option<(SmolStr, Span)>, Expr)], s: S, d: D) {}
