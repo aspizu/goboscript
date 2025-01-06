@@ -12,18 +12,18 @@
         i++;                                                                           \
     }
 
-# Sort `LIST` in ascending order of the value of `FIELD` using the insertion sorting
-# algorithm.
-%define INSERTION_SORT_BY_FIELD(LIST,FIELD)                                            \
+# Sort `LIST` of type `TYPE` in ascending order of the value of `FIELD` using the
+# insertion sorting algorithm.
+%define INSERTION_SORT_BY_FIELD(TYPE,LIST,FIELD)                                       \
     local i = 2;                                                                       \
     until i > length(LIST) {                                                           \
-        local x = LIST.FIELD[i];                                                       \
+        local TYPE x = LIST[i];                                                        \
         local j = i;                                                                   \
-        until j <= 1 or LIST.FIELD[j - 1] <= x {                                       \
-            LIST.FIELD[j] = LIST.FIELD[j - 1];                                         \
+        until j <= 1 or LIST[j - 1].FIELD <= x.FIELD {                                 \
+            LIST[j] = LIST[j - 1];                                                     \
             j--;                                                                       \
         }                                                                              \
-        LIST.FIELD[j] = x;                                                             \
+        LIST[j] = x;                                                                   \
         i++;                                                                           \
     }
 
@@ -53,7 +53,7 @@
 
 # Find the largest element in `LIST` that satisfies `CMP`, and store the result in
 # `STORE`. local `i` is the index of the current element.
-%define AMAX(LIST,CMP,STORE)                                                           \
+%define FINDMAX(LIST,CMP,STORE)                                                        \
     local STORE = LIST[1];                                                             \
     local i = 1;                                                                       \
     repeat length(LIST) {                                                              \
@@ -67,7 +67,7 @@
 
 # Find the smallest element in `LIST` that satisfies `CMP`, and store the result in
 # `STORE`. local `i` is the index of the current element.
-%define AMIN(LIST,CMP,STORE)                                                           \
+%define FINDMIN(LIST,CMP,STORE)                                                        \
     local STORE = LIST[1];                                                             \
     local i = 1;                                                                       \
     repeat length(LIST) {                                                              \
@@ -91,6 +91,7 @@
         j--;                                                                           \
     }
 
+# Copy `SRC` to `DEST`.
 %define COPY(SRC,DEST)                                                                 \
     delete DEST;                                                                       \
     local i = 1;                                                                       \
@@ -99,12 +100,68 @@
         i++;                                                                           \
     }
 
+# Remove duplicate elements from `LIST`.
 %define UNIQUE(LIST)                                                                   \
     local i = 1;                                                                       \
     until i > length(LIST) {                                                           \
         local j = i + 1;                                                               \
         until j > length(LIST) {                                                       \
             if LIST[i] == LIST[j] {                                                    \
+                delete LIST[j];                                                        \
+            } else {                                                                   \
+                j++;                                                                   \
+            }                                                                          \
+        }                                                                              \
+        i++;                                                                           \
+    }
+
+# Sum the field `FIELD` in `LIST` of type `TYPE` that satisfy `CMP`, and store the
+# result in `STORE`.
+%define SUM_BY_FIELD(TYPE,LIST,FIELD,CMP,STORE)                                        \
+    local STORE = 0;                                                                   \
+    local i = 1;                                                                       \
+    repeat length(LIST) {                                                              \
+        if CMP {                                                                       \
+            STORE += LIST[i].FIELD;                                                    \
+        }                                                                              \
+        i++;                                                                           \
+    }
+
+# Find the largest `FIELD` value in `LIST` of type `TYPE` that satisfies `CMP` and store
+# the result in `STORE`.
+%define FINDMAX_BY_FIELD(TYPE,LIST,FIELD,CMP,STORE)                                    \
+    local TYPE STORE = LIST[1];                                                        \
+    local i = 1;                                                                       \
+    repeat length(LIST) {                                                              \
+        if CMP {                                                                       \
+            if LIST[i].FIELD > STORE.FIELD {                                           \
+                STORE = LIST[i];                                                       \
+            }                                                                          \
+        }                                                                              \
+        i++;                                                                           \
+    }
+
+# Find the smallest `FIELD` value in `LIST` of type `TYPE` that satisfies `CMP` and
+# store the result in `STORE`.
+%define FINDMIN_BY_FIELD(TYPE,LIST,FIELD,CMP,STORE)                                    \
+    local TYPE STORE = LIST[1];                                                        \
+    local i = 1;                                                                       \
+    repeat length(LIST) {                                                              \
+        if CMP {                                                                       \
+            if LIST[i].FIELD < STORE.FIELD {                                           \
+                STORE = LIST[i];                                                       \
+            }                                                                          \
+        }                                                                              \
+        i++;                                                                           \
+    }
+
+# Remove duplicate elements from `LIST` by field `FIELD`.
+%define UNIQUE_BY_FIELD(LIST,FIELD)                                                    \ 
+    local i = 1;                                                                       \
+    until i > length(LIST) {                                                           \
+        local j = i + 1;                                                               \
+        until j > length(LIST) {                                                       \
+            if LIST[i].FIELD == LIST[j].FIELD {                                        \
                 delete LIST[j];                                                        \
             } else {                                                                   \
                 j++;                                                                   \
