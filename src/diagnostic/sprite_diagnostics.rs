@@ -37,12 +37,15 @@ impl SpriteDiagnostics {
     }
 
     pub fn eprint(&self, renderer: &Renderer, project: &Project) {
+        let sprite = match self.sprite_name() {
+            "stage" => &project.stage,
+            name => &project.sprites[name],
+        };
         let src = self.preproc.get_translation_unit();
         for diagnostic in &self.diagnostics {
             let level: Level = (&diagnostic.kind).into();
-            let title = diagnostic
-                .kind
-                .to_string(&project.sprites[self.sprite_name()]);
+            println!("{}", self.sprite_name());
+            let title = diagnostic.kind.to_string(sprite);
             let help = diagnostic.kind.help();
             let help = help.as_ref();
             let (start, include) = self.preproc.translate_position(diagnostic.span.start);
