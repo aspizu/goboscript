@@ -22,12 +22,6 @@ pub enum Command {
         #[arg(short, long)]
         /// Output file, if not given, it will be the project directory's name + `.sb3`
         output: Option<PathBuf>,
-        /// Create a source package, which embeds the contents of the project
-        /// directory zipped into the output file. This is useful for distributing
-        /// goboscript projects as a .sb3 with it's source code. Source packages
-        /// can be extracted with the `goboscript extract` command.
-        #[arg(short, long)]
-        srcpkg: bool,
     },
 
     /// Create a new goboscript project with a blank backdrop, a main sprite with a

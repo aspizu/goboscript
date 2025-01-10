@@ -7,7 +7,6 @@ use std::{
 
 use anyhow::{anyhow, Context};
 use fxhash::FxHashMap;
-use log::info;
 
 use crate::{
     ast::{Project, Sprite},
@@ -37,11 +36,7 @@ impl From<ProjectDiagnostics> for BuildError {
     }
 }
 
-pub fn build(
-    input: Option<PathBuf>,
-    output: Option<PathBuf>,
-    srcpkg: bool,
-) -> Result<(), BuildError> {
+pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), BuildError> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
@@ -114,12 +109,10 @@ pub fn build(
     let mut sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     sb3.project(
         &input,
-        &output,
         &project,
         &config,
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
-        srcpkg,
     )?;
     if !(stage_diagnostics.diagnostics.is_empty()
         && sprites_diagnostics
