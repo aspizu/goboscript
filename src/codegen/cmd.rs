@@ -62,11 +62,7 @@ pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
     drop(stdin);
     let output = child.wait_with_output().unwrap();
     if output.status.success() {
-        let mut lines: Vec<String> = output
-            .stdout
-            .split(|&b| b == b'\n')
-            .map(|line| str::from_utf8(line).unwrap_or_default().to_owned())
-            .collect();
+        let mut lines: Vec<String> = output.stdout.lines().map_while(Result::ok).collect();
         if lines.last().is_some_and(|line| line.is_empty()) {
             lines.pop();
         }
