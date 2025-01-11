@@ -1,4 +1,4 @@
-mod build;
+pub mod build;
 mod cli;
 mod fmt;
 mod new;
@@ -15,11 +15,7 @@ use crate::config::Config;
 
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
-        Command::Build {
-            input,
-            output,
-            srcpkg,
-        } => match build::build(input, output, srcpkg) {
+        Command::Build { input, output } => match build::build(input, output) {
             Ok(()) => ExitCode::SUCCESS,
             Err(build::BuildError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);

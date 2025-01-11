@@ -341,16 +341,11 @@ where T: Write + Seek
     pub fn project(
         &mut self,
         input: &Path,
-        output: &Path,
         project: &Project,
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-        srcpkg: bool,
     ) -> io::Result<()> {
-        if srcpkg {
-            self.srcpkg(input, output)?;
-        }
         let broadcasts: FxHashSet<_> = project
             .stage
             .events
@@ -379,7 +374,6 @@ where T: Write + Seek
             config,
             stage_diagnostics,
             Some(broadcasts),
-            srcpkg,
         )?;
         for (sprite_name, sprite) in &project.sprites {
             write!(self, r#","#)?;
@@ -391,7 +385,6 @@ where T: Write + Seek
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
                 None,
-                false,
             )?;
         }
         write!(self, "]")?; // targets
@@ -420,7 +413,6 @@ where T: Write + Seek
         config: &Config,
         d: D,
         broadcasts: Option<FxHashSet<SmolStr>>,
-        srcpkg: bool,
     ) -> io::Result<()> {
         for proc in sprite.procs.values() {
             if !sprite.used_procs.contains(&proc.name) {
@@ -584,10 +576,6 @@ where T: Write + Seek
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
             self.costume(input, costume, d)?;
-        }
-        if srcpkg {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            self.srcpkg_entry()?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
