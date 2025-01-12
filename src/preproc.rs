@@ -106,7 +106,7 @@ impl PreProc {
                     i += b"%include ".len();
                     let path = self.buffer[i..].split(|&c| c == b'\n').next().unwrap();
                     i += path.len();
-                    let path = std::str::from_utf8(path).unwrap();
+                    let path = std::str::from_utf8(path).unwrap().trim();
                     let path = PathBuf::from(path);
                     includes.push(path);
                 } else if self.buffer[i..].starts_with(b"%define ") {
