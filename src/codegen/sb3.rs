@@ -764,6 +764,9 @@ where T: Write + Seek
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(name))?;
         write!(self, r#","assetId":"{hash}""#)?;
+        if extension == "png" || extension == "bmp" {
+            write!(self, r#","bitmapResolution":1"#)?;
+        }
         write!(self, r#","dataFormat":"{extension}""#)?;
         write!(self, r#","md5ext":"{hash}.{extension}""#)?;
         write!(self, "}}") // costume
