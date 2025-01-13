@@ -49,8 +49,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
     if !stage_path.is_file() {
         return Err(anyhow!("{} not found", stage_path.display()).into());
     }
-    let mut stage_diagnostics = SpriteDiagnostics::new(stage_path)?;
-    let stage = parser::parse(&stage_diagnostics.preproc)
+    let mut stage_diagnostics = SpriteDiagnostics::new(stage_path);
+    let stage = parser::parse(&stage_diagnostics.translation_unit)
         .map_err(|err| {
             stage_diagnostics.diagnostics.push(err);
         })
@@ -77,8 +77,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
             .to_str()
             .unwrap()
             .into();
-        let mut sprite_diagnostics = SpriteDiagnostics::new(sprite_path)?;
-        let sprite = parser::parse(&sprite_diagnostics.preproc)
+        let mut sprite_diagnostics = SpriteDiagnostics::new(sprite_path);
+        let sprite = parser::parse(&sprite_diagnostics.translation_unit)
             .map_err(|err| sprite_diagnostics.diagnostics.push(err))
             .unwrap_or_default();
         sprites_diagnostics.insert(sprite_name.clone(), sprite_diagnostics);

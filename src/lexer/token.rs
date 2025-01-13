@@ -1,14 +1,18 @@
-use std::fmt::{self, Display, Formatter};
-
 use logos::Logos;
 
 use super::literal::*;
 use crate::misc::SmolStr;
 
 #[derive(Debug, Logos, Clone)]
-#[logos(skip r"[ \t\n\f]+")]
+#[logos(skip r"[ \t\f]+")]
 #[logos(skip r"#[^\n]*\n")]
 pub enum Token {
+    #[token("%define")]
+    Define,
+    #[token("\n")]
+    Newline,
+    #[token("\\")]
+    Backslash,
     #[regex(r"[_a-zA-Z][_a-zA-Z0-9]*", name)]
     Name(SmolStr),
     #[regex(r"\$[_a-zA-Z0-9]+", arg)]

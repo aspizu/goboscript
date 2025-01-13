@@ -1,8 +1,9 @@
+use std::io;
+
 use annotate_snippets::Level;
 
-use super::SpriteDiagnostics;
 use crate::{
-    ast::{Project, Sprite, Type},
+    ast::{Sprite, Type},
     blocks::{Block, Repr},
     lexer::token::Token,
     misc::SmolStr,
@@ -15,7 +16,7 @@ pub enum DiagnosticKind {
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
     ExtraToken(Token),
-    FileNotFound(SmolStr),
+    IOError(io::Error),
     UnrecognizedReporter(SmolStr),
     UnrecognizedBlock(SmolStr),
     UnrecognizedVariable(SmolStr),
@@ -95,7 +96,7 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::ExtraToken(_) => "extra token".to_string(),
-            DiagnosticKind::FileNotFound(_) => "file not found".to_string(),
+            DiagnosticKind::IOError(error) => format!("{error}"),
             DiagnosticKind::UnrecognizedReporter(_) => "unrecognized reporter".to_string(),
             DiagnosticKind::UnrecognizedBlock(_) => "unrecognized block".to_string(),
             DiagnosticKind::UnrecognizedVariable(_) => "unrecognized variable".to_string(),
@@ -180,7 +181,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedEof(_)
             | DiagnosticKind::UnrecognizedToken(_, _)
             | DiagnosticKind::ExtraToken(_)
-            | DiagnosticKind::FileNotFound(_)
+            | DiagnosticKind::IOError(_)
             | DiagnosticKind::UnrecognizedReporter(_)
             | DiagnosticKind::UnrecognizedBlock(_)
             | DiagnosticKind::UnrecognizedVariable(_)

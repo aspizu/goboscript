@@ -1,10 +1,9 @@
 use std::{
     env::consts::OS,
     fs::File,
-    io::{self, BufRead, BufReader, Write},
+    io::{BufRead, BufReader, Write},
     path::Path,
     process::{Command, Stdio},
-    str,
 };
 
 use crate::{
@@ -18,11 +17,14 @@ pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
         .as_ref()
         .is_some_and(|program| &*program.name == "file")
     {
-        let Ok(file) = File::open(input.join(&*cmd.cmd)) else {
-            return Err(Diagnostic {
-                kind: DiagnosticKind::FileNotFound(cmd.cmd.clone()),
-                span: cmd.span.clone(),
-            });
+        let file = match File::open(input.join(&*cmd.cmd)) {
+            Ok(file) => file,
+            Err(error) => {
+                return Err(Diagnostic {
+                    kind: DiagnosticKind::IOError(error),
+                    span: cmd.span.clone(),
+                });
+            }
         };
         let reader = BufReader::new(file);
         let lines: Vec<String> = reader.lines().map_while(Result::ok).collect();
@@ -35,13 +37,11 @@ pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn();
-        if let Err(err) = &command {
-            if err.kind() == io::ErrorKind::NotFound {
-                return Err(Diagnostic {
-                    kind: DiagnosticKind::FileNotFound(program.name.clone()),
-                    span: program.span.clone(),
-                });
-            };
+        if let Err(error) = command {
+            return Err(Diagnostic {
+                kind: DiagnosticKind::IOError(error),
+                span: program.span.clone(),
+            });
         }
         command.unwrap()
     } else if OS == "windows" {

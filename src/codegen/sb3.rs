@@ -743,14 +743,13 @@ where T: Write + Seek
             .cloned()
             .map(Ok::<_, io::Error>)
             .unwrap_or_else(|| {
-                if !path.is_file() {
-                    d.report(
-                        DiagnosticKind::FileNotFound(costume.path.clone()),
-                        &costume.span,
-                    );
-                    return Ok(Default::default());
-                }
-                let mut file = File::open(&path)?;
+                let mut file = match File::open(&path) {
+                    Ok(file) => file,
+                    Err(error) => {
+                        d.report(DiagnosticKind::IOError(error), &costume.span);
+                        return Ok(Default::default());
+                    }
+                };
                 let mut hasher = Md5::new();
                 io::copy(&mut file, &mut hasher)?;
                 let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
@@ -1032,8 +1031,9 @@ where T: Write + Seek
             Expr::Repr { repr, span, args } => {
                 self.repr(s, d, this_id, parent_id, repr, span, args)
             }
-            Expr::FuncCall { name, .. } => {
-                unreachable!("attempted to codegen {name:#?}")
+            Expr::FuncCall { name, span, .. } => {
+                d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
+                Ok(())
             }
             Expr::UnOp { op, span, opr } => self.un_op(s, d, this_id, parent_id, op, span, opr),
             Expr::BinOp { op, span, lhs, rhs } => {

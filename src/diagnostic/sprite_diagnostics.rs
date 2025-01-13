@@ -1,28 +1,30 @@
-use std::{io, path::PathBuf};
+use std::path::PathBuf;
 
 use annotate_snippets::{Level, Renderer, Snippet};
 use colored::Colorize;
 use logos::Span;
 
 use super::{diagnostic_kind::DiagnosticKind, Diagnostic};
-use crate::{ast::Project, preproc::PreProc};
+use crate::{ast::Project, translation_unit::TranslationUnit};
 
 pub struct SpriteDiagnostics {
     pub path: PathBuf,
-    pub preproc: PreProc,
+    pub translation_unit: TranslationUnit,
     pub diagnostics: Vec<Diagnostic>,
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf) -> io::Result<Self> {
-        let mut preproc = PreProc::new(path.parent().unwrap().to_path_buf());
-        preproc.include(path.clone())?;
-        preproc.process()?;
-        Ok(Self {
+    pub fn new(path: PathBuf) -> Self {
+        let mut translation_unit = TranslationUnit::new(path.clone());
+        let mut diagnostics = vec![];
+        if let Err(diagnostic) = translation_unit.pre_process() {
+            diagnostics.push(diagnostic);
+        }
+        Self {
+            translation_unit,
             path,
-            preproc,
-            diagnostics: Vec::new(),
-        })
+            diagnostics,
+        }
     }
 
     pub fn sprite_name(&self) -> &str {
@@ -41,22 +43,24 @@ impl SpriteDiagnostics {
             "stage" => &project.stage,
             name => &project.sprites[name],
         };
-        let src = self.preproc.get_translation_unit();
+        let text = self.translation_unit.get_text();
         for diagnostic in &self.diagnostics {
             let level: Level = (&diagnostic.kind).into();
-            println!("{}", self.sprite_name());
             let title = diagnostic.kind.to_string(sprite);
             let help = diagnostic.kind.help();
             let help = help.as_ref();
-            let (start, include) = self.preproc.translate_position(diagnostic.span.start);
+            let (start, include) = self
+                .translation_unit
+                .translate_position(diagnostic.span.start);
             // Do not display diagnostics for standard library headers.
-            if include.path.starts_with("std/") {
+            let Some(include_path) = &include.path else {
                 continue;
-            }
+            };
+            let include_path = include_path.to_str().unwrap();
             if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
                 let mut message = level.title(&title).snippet(
-                    Snippet::source(&src[include.range.clone()])
-                        .origin(include.path.to_str().unwrap())
+                    Snippet::source(&text[include.range.clone()])
+                        .origin(include_path)
                         .fold(true),
                 );
                 if let Some(help) = help {
@@ -64,11 +68,13 @@ impl SpriteDiagnostics {
                 }
                 eprintln!("{}", renderer.render(message));
             } else {
-                let (end, _) = self.preproc.translate_position(diagnostic.span.end - 1);
+                let (end, _) = self
+                    .translation_unit
+                    .translate_position(diagnostic.span.end - 1);
                 let end = end + 1;
                 let mut message = level.title(&title).snippet(
-                    Snippet::source(&src[include.range.clone()])
-                        .origin(include.path.to_str().unwrap())
+                    Snippet::source(&text[include.range.clone()])
+                        .origin(include_path)
                         .fold(true)
                         .annotation(level.span(start..end)),
                 );
