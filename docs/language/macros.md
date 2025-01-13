@@ -16,6 +16,8 @@ Include the contents of a file.
 %include path/to/file.gs
 ```
 
+The `.gs` extension is optional.
+
 ## Define
 
 Define a macro. That identifier will be substituted with the subsequent text.
