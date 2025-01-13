@@ -39,7 +39,7 @@ costumes "blank.svg";
 ```
 
 This is used to add a costume to a sprite (or the Stage), see
-[language/costumes](/goboscript/language/costumes) for more information.
+[language/costumes](./language/costumes.md) for more information.
 
 ## Compile the project
 
