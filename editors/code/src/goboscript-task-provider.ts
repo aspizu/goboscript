@@ -14,7 +14,7 @@ export class GoboscriptTaskProvider implements vscode.TaskProvider {
       this.workspaceRoot,
       "goboscript-build",
       "goboscript",
-      new vscode.ShellExecution("goboscript build --compact"),
+      new vscode.ShellExecution("goboscript build"),
       ["goboscript"],
     )
     return [task]
