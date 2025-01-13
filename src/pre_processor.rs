@@ -75,6 +75,23 @@ pub fn pre_processor(tokens: &mut Vec<SpannedToken>) -> Result<(), Diagnostic> {
             } else {
                 defines.insert(name.clone(), definition);
             }
+        } else if matches!(tokens[i].1, Token::Undef) {
+            tokens.remove(i);
+            if i >= tokens.len() {
+                return Err(Diagnostic {
+                    kind: DiagnosticKind::UnrecognizedEof(vec!["NAME".to_owned()]),
+                    span: span(&tokens[i - 1]),
+                });
+            }
+            let (begin, token, end) = tokens.remove(i);
+            let Token::Name(name) = token else {
+                return Err(Diagnostic {
+                    kind: DiagnosticKind::UnrecognizedToken(token, vec!["NAME".to_owned()]),
+                    span: begin..end,
+                });
+            };
+            defines.remove(&name);
+            functions.remove(&name);
         } else if matches!(tokens[i].1, Token::Name(_)) {
             let Token::Name(name) = tokens[i].1.clone() else {
                 unreachable!()

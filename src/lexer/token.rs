@@ -9,6 +9,8 @@ use crate::misc::SmolStr;
 pub enum Token {
     #[token("%define")]
     Define,
+    #[token("%undef")]
+    Undef,
     #[token("\n")]
     Newline,
     #[token("\\")]
