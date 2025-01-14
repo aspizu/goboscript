@@ -35,6 +35,7 @@ pub enum DiagnosticKind {
     UnrecognizedStructField(SmolStr),
     UnrecognizedEnumVariant(SmolStr),
     UnrecognizedKey(SmolStr),
+    UnrecognizedStandardLibraryHeader,
     NoCostumes,
     BlockArgsCountMismatch {
         block: Block,
@@ -115,6 +116,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnrecognizedStructField(_) => "unrecognized struct field".to_string(),
             DiagnosticKind::UnrecognizedEnumVariant(_) => "unrecognized enum variant".to_string(),
             DiagnosticKind::UnrecognizedKey(_) => "unrecognized key".to_string(),
+            DiagnosticKind::UnrecognizedStandardLibraryHeader => {
+                "unrecognized standard library header".to_string()
+            }
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(
@@ -200,6 +204,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedStructField(_)
             | DiagnosticKind::UnrecognizedEnumVariant(_)
             | DiagnosticKind::UnrecognizedKey(_)
+            | DiagnosticKind::UnrecognizedStandardLibraryHeader
             | DiagnosticKind::NoCostumes
             | DiagnosticKind::BlockArgsCountMismatch { .. }
             | DiagnosticKind::ReprArgsCountMismatch { .. }

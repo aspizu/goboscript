@@ -180,7 +180,12 @@ impl TranslationUnit {
                 "emoji" => include_bytes!("../std/emoji.gs").as_slice(),
                 "math" => include_bytes!("../std/math.gs").as_slice(),
                 "string" => include_bytes!("../std/string.gs").as_slice(),
-                _ => todo!("{path}"),
+                _ => {
+                    return Err(Diagnostic {
+                        kind: DiagnosticKind::UnrecognizedStandardLibraryHeader,
+                        span: path_span,
+                    });
+                }
             };
             (file, None)
         } else {
