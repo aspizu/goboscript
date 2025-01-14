@@ -85,7 +85,7 @@ where T: Write + Seek
         if args.len() != repr.args().len() {
             d.report(
                 DiagnosticKind::ReprArgsCountMismatch {
-                    repr: repr.clone(),
+                    repr: *repr,
                     given: args.len(),
                 },
                 span,

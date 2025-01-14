@@ -30,7 +30,7 @@ pub struct S<'a> {
     pub global_structs: Option<&'a FxHashMap<SmolStr, Struct>>,
 }
 
-impl<'a> S<'a> {
+impl S<'_> {
     pub fn get_var(&self, name: &str) -> Option<&Var> {
         self.local_vars
             .and_then(|local_vars| local_vars.get(name))

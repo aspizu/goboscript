@@ -36,7 +36,7 @@ impl<'a> Mutation<'a> {
     }
 }
 
-impl<'a> Display for Mutation<'a> {
+impl Display for Mutation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, r#","mutation":{{"tagName":"mutation","children":[]"#)?;
         write!(f, r#","warp":"{}""#, self.warp)?;

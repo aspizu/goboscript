@@ -71,7 +71,7 @@ pub fn qualify_struct_var_name(field_name: &str, var_name: &str) -> SmolStr {
     format!("{}.{}", var_name, field_name).into()
 }
 
-impl<'a> S<'a> {
+impl S<'_> {
     pub fn is_name_list(&self, name: &Name) -> bool {
         self.sprite.lists.contains_key(name.basename())
             || self

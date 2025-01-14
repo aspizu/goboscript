@@ -75,9 +75,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
         if sprite_path.file_stem().is_some_and(|stem| stem == "stage") {
             continue;
         }
-        if !sprite_path
-            .extension()
-            .is_some_and(|extension| extension == "gs")
+        if sprite_path
+            .extension().is_none_or(|extension| extension != "gs")
         {
             continue;
         }
