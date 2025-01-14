@@ -5,8 +5,14 @@ mod new;
 
 use std::process::ExitCode;
 
-use clap::{CommandFactory, Parser};
-use cli::{Cli, Command};
+use clap::{
+    CommandFactory,
+    Parser,
+};
+use cli::{
+    Cli,
+    Command,
+};
 use colored::Colorize;
 use fmt::FmtError;
 use new::NewError;

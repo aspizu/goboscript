@@ -1,7 +1,13 @@
-use logos::{Logos, SpannedIter};
+use logos::{
+    Logos,
+    SpannedIter,
+};
 
 use super::token::Token;
-use crate::diagnostic::{Diagnostic, DiagnosticKind};
+use crate::diagnostic::{
+    Diagnostic,
+    DiagnosticKind,
+};
 
 pub struct Lexer<'source> {
     token_stream: SpannedIter<'source, Token>,

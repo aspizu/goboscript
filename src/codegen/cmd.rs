@@ -1,14 +1,24 @@
 use std::{
     env::consts::OS,
     fs::File,
-    io::{BufRead, BufReader, Write},
+    io::{
+        BufRead,
+        BufReader,
+        Write,
+    },
     path::Path,
-    process::{Command, Stdio},
+    process::{
+        Command,
+        Stdio,
+    },
 };
 
 use crate::{
     ast::Cmd,
-    diagnostic::{Diagnostic, DiagnosticKind},
+    diagnostic::{
+        Diagnostic,
+        DiagnosticKind,
+    },
 };
 
 pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {

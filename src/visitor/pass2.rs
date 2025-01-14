@@ -1,6 +1,12 @@
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::{
+    FxHashMap,
+    FxHashSet,
+};
 
-use crate::{ast::*, misc::SmolStr};
+use crate::{
+    ast::*,
+    misc::SmolStr,
+};
 
 struct S<'a> {
     references: &'a mut References,

@@ -1,8 +1,16 @@
 use logos::Span;
 
-use super::{expr::Expr, type_::Type, Name, Value};
+use super::{
+    expr::Expr,
+    type_::Type,
+    Name,
+    Value,
+};
 use crate::{
-    blocks::{BinOp, Block},
+    blocks::{
+        BinOp,
+        Block,
+    },
     misc::SmolStr,
 };
 

@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use clap_derive::{Parser, Subcommand};
+use clap_derive::{
+    Parser,
+    Subcommand,
+};
 
 #[derive(Debug, Parser)]
 #[command(

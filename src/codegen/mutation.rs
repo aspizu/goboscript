@@ -1,7 +1,13 @@
-use std::fmt::{self, Display};
+use std::fmt::{
+    self,
+    Display,
+};
 
 use super::node_id::NodeID;
-use crate::misc::{write_comma_fmt, SmolStr};
+use crate::misc::{
+    write_comma_fmt,
+    SmolStr,
+};
 
 pub struct Mutation<'a> {
     name: SmolStr,

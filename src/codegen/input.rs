@@ -1,13 +1,26 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use serde_json::json;
 
 use super::{
     node_id::NodeID,
-    sb3::{QualifiedName, Sb3, D, S},
+    sb3::{
+        QualifiedName,
+        Sb3,
+        D,
+        S,
+    },
 };
 use crate::{
-    ast::{Expr, Name, Value},
+    ast::{
+        Expr,
+        Name,
+        Value,
+    },
     diagnostic::DiagnosticKind,
     misc::write_comma_io,
 };

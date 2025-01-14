@@ -1,4 +1,8 @@
-use std::{env, fs, path::PathBuf};
+use std::{
+    env,
+    fs,
+    path::PathBuf,
+};
 
 use crate::config::Config;
 

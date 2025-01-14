@@ -1,20 +1,33 @@
 use std::{
     env,
-    fs::{self, File},
+    fs::{
+        self,
+        File,
+    },
     io::BufWriter,
     path::PathBuf,
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::{
+    anyhow,
+    Context,
+};
 use fxhash::FxHashMap;
 
 use crate::{
-    ast::{Project, Sprite},
+    ast::{
+        Project,
+        Sprite,
+    },
     codegen::sb3::Sb3,
     config::Config,
-    diagnostic::{ProjectDiagnostics, SpriteDiagnostics},
+    diagnostic::{
+        ProjectDiagnostics,
+        SpriteDiagnostics,
+    },
     misc::SmolStr,
-    parser, visitor,
+    parser,
+    visitor,
 };
 
 pub enum BuildError {

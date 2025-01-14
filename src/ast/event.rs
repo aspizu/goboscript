@@ -1,6 +1,10 @@
 use logos::Span;
 
-use super::{event_kind::EventKind, stmt::Stmt, References};
+use super::{
+    event_kind::EventKind,
+    stmt::Stmt,
+    References,
+};
 
 #[derive(Debug)]
 pub struct Event {

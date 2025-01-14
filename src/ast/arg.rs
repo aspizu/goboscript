@@ -1,6 +1,9 @@
 use logos::Span;
 
-use super::{type_::Type, Expr};
+use super::{
+    type_::Type,
+    Expr,
+};
 use crate::misc::SmolStr;
 
 #[derive(Debug)]

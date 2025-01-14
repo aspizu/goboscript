@@ -1,4 +1,7 @@
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::{
+    FxHashMap,
+    FxHashSet,
+};
 
 use super::*;
 use crate::misc::SmolStr;

@@ -1,6 +1,9 @@
 mod binop;
 mod unop;
-use std::fmt::{self, Display};
+use std::fmt::{
+    self,
+    Display,
+};
 
 use logos::Span;
 

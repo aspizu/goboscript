@@ -2,7 +2,10 @@ use grammar::SpriteParser;
 use lalrpop_util::lalrpop_mod;
 
 use crate::{
-    ast::Sprite, diagnostic::Diagnostic, lexer::adaptor, pre_processor::pre_processor,
+    ast::Sprite,
+    diagnostic::Diagnostic,
+    lexer::adaptor,
+    pre_processor::pre_processor,
     translation_unit::TranslationUnit,
 };
 

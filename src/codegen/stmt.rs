@@ -1,19 +1,36 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use logos::Span;
-use serde_json::json;
 
 use super::{
     node::Node,
     node_id::NodeID,
-    sb3::{qualify_struct_var_name, QualifiedName, Sb3, D, S},
+    sb3::{
+        qualify_struct_var_name,
+        QualifiedName,
+        Sb3,
+        D,
+        S,
+    },
 };
 use crate::{
-    ast::{Expr, Name, Stmt, Type},
+    ast::{
+        Expr,
+        Name,
+        Stmt,
+        Type,
+    },
     blocks::Block,
     codegen::mutation::Mutation,
     diagnostic::DiagnosticKind,
-    misc::{write_comma_io, SmolStr},
+    misc::{
+        write_comma_io,
+        SmolStr,
+    },
 };
 
 impl<T> Sb3<T>

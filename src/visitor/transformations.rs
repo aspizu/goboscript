@@ -2,8 +2,17 @@ use logos::Span;
 
 use super::pass1::S;
 use crate::{
-    ast::{Expr, Name, StructLiteralField, Value},
-    blocks::{BinOp, Repr, UnOp},
+    ast::{
+        Expr,
+        Name,
+        StructLiteralField,
+        Value,
+    },
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     codegen::sb3::D,
     diagnostic::DiagnosticKind,
     misc::SmolStr,

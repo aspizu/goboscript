@@ -1,4 +1,8 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use logos::Span;
 
@@ -6,13 +10,26 @@ use super::{
     mutation::Mutation,
     node::Node,
     node_id::NodeID,
-    sb3::{qualify_struct_var_name, QualifiedName, Sb3, D, S},
+    sb3::{
+        qualify_struct_var_name,
+        QualifiedName,
+        Sb3,
+        D,
+        S,
+    },
 };
 use crate::{
     ast::*,
-    blocks::{BinOp, Repr, UnOp},
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     diagnostic::DiagnosticKind,
-    misc::{write_comma_io, SmolStr},
+    misc::{
+        write_comma_io,
+        SmolStr,
+    },
 };
 
 impl<T> Sb3<T>

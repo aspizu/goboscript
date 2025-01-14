@@ -2,7 +2,10 @@ use fxhash::FxHashMap;
 use logos::Span;
 
 use crate::{
-    diagnostic::{Diagnostic, DiagnosticKind},
+    diagnostic::{
+        Diagnostic,
+        DiagnosticKind,
+    },
     lexer::token::Token,
     misc::SmolStr,
 };

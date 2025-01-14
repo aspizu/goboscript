@@ -3,8 +3,14 @@ use std::io;
 use annotate_snippets::Level;
 
 use crate::{
-    ast::{Sprite, Type},
-    blocks::{Block, Repr},
+    ast::{
+        Sprite,
+        Type,
+    },
+    blocks::{
+        Block,
+        Repr,
+    },
     lexer::token::Token,
     misc::SmolStr,
 };

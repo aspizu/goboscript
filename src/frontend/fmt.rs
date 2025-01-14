@@ -1,4 +1,7 @@
-use std::{env, path::PathBuf};
+use std::{
+    env,
+    path::PathBuf,
+};
 
 use glob::glob;
 

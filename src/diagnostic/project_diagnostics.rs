@@ -1,8 +1,14 @@
-use annotate_snippets::{Level, Renderer};
+use annotate_snippets::{
+    Level,
+    Renderer,
+};
 use fxhash::FxHashMap;
 
 use super::SpriteDiagnostics;
-use crate::{ast::Project, misc::SmolStr};
+use crate::{
+    ast::Project,
+    misc::SmolStr,
+};
 
 pub struct ProjectDiagnostics {
     pub project: Project,

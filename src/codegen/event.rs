@@ -1,12 +1,23 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use logos::Span;
 
 use super::{
     node_id::NodeID,
-    sb3::{Sb3, D, S},
+    sb3::{
+        Sb3,
+        D,
+        S,
+    },
 };
-use crate::{ast::Expr, misc::SmolStr};
+use crate::{
+    ast::Expr,
+    misc::SmolStr,
+};
 
 impl<T> Sb3<T>
 where T: Write + Seek

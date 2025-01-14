@@ -1,6 +1,10 @@
 use logos::Span;
 
-use super::{expr::Expr, Event, Stmt};
+use super::{
+    expr::Expr,
+    Event,
+    Stmt,
+};
 use crate::misc::SmolStr;
 
 #[allow(clippy::enum_variant_names)]

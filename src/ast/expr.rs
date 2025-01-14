@@ -1,8 +1,16 @@
 use logos::Span;
 
-use super::{value::Value, Name, StructLiteralField};
+use super::{
+    value::Value,
+    Name,
+    StructLiteralField,
+};
 use crate::{
-    blocks::{BinOp, Repr, UnOp},
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     misc::SmolStr,
 };
 
