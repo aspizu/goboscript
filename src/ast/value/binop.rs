@@ -1,3 +1,4 @@
+/// Implements the binary operators for constant folding optimization.
 use super::Value;
 use crate::blocks::BinOp;
 
@@ -101,7 +102,10 @@ impl Value {
     }
 
     fn join(&self, rhs: &Value) -> Option<Value> {
-        None
+        match (self, rhs) {
+            (Value::String(a), Value::String(b)) => Some(format!("{a}{b}").into()),
+            _ => None,
+        }
     }
 
     fn in_(&self, rhs: &Value) -> Option<Value> {
