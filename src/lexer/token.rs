@@ -4,7 +4,7 @@ use super::literal::*;
 use crate::misc::SmolStr;
 
 #[derive(Debug, Logos, Clone)]
-#[logos(skip r"[ \t\f]+")]
+#[logos(skip r"[ \r\t\f]+")]
 #[logos(skip r"#[^\n]*\n")]
 pub enum Token {
     #[token("%define")]
