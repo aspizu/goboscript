@@ -143,6 +143,10 @@ set_pen_hue                       setPenColorParamTo VALUE       |              
 set_pen_saturation                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
 set_pen_brightness                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
 set_pen_transparency              setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
+change_pen_hue                    changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=color
+change_pen_saturation             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
+change_pen_brightness             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
+change_pen_transparency           changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
 [music]==========================================================|==========================|
 rest                              restForBeats      BEATS        |                          |
 set_tempo                         setTempo          TEMPO        |                          |
