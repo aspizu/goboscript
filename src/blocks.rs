@@ -2,6 +2,7 @@ pub struct Menu {
     pub input: &'static str,
     pub opcode: &'static str,
     pub default: &'static str,
+    pub field: &'static str,
 }
 #[derive(Debug, Copy, Clone)]
 pub enum UnOp {
@@ -262,6 +263,10 @@ pub enum Block {
     SetPenColor,
     ChangePenSize,
     SetPenSize,
+    SetPenHue,
+    SetPenSaturation,
+    SetPenBrightness,
+    SetPenTransparency,
     Rest,
     SetTempo,
     ChangeTempo,
@@ -273,77 +278,116 @@ impl Block {
             Self::GotoRandomPosition => Some(Menu {
                 opcode: "motion_goto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::GotoMousePointer => Some(Menu {
                 opcode: "motion_goto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_mouse_",
             }),
             Self::Goto1 => Some(Menu {
                 opcode: "motion_goto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::Glide2 => Some(Menu {
                 opcode: "motion_glideto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::GlideToRandomPosition => Some(Menu {
                 opcode: "motion_glideto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::GlideToMousePointer => Some(Menu {
                 opcode: "motion_glideto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_mouse_",
             }),
             Self::PointTowardsMousePointer => Some(Menu {
                 opcode: "motion_pointtowards_menu",
                 input: "TOWARDS",
+                field: "TOWARDS",
                 default: "_mouse_",
             }),
             Self::PointTowardsRandomDirection => Some(Menu {
                 opcode: "motion_pointtowards_menu",
                 input: "TOWARDS",
+                field: "TOWARDS",
                 default: "_random_",
             }),
             Self::PointTowards => Some(Menu {
                 opcode: "motion_pointtowards_menu",
                 input: "TOWARDS",
+                field: "TOWARDS",
                 default: "_random_",
             }),
             Self::SwitchCostume => Some(Menu {
                 opcode: "looks_costume",
                 input: "COSTUME",
+                field: "COSTUME",
                 default: "make gh issue if this bothers u",
             }),
             Self::SwitchBackdrop => Some(Menu {
                 opcode: "looks_backdrops",
                 input: "BACKDROP",
+                field: "BACKDROP",
                 default: "make gh issue if this bothers u",
             }),
             Self::PlaySoundUntilDone => Some(Menu {
                 opcode: "sound_sounds_menu",
                 input: "SOUND_MENU",
+                field: "SOUND_MENU",
                 default: "make gh issue if this bothers u",
             }),
             Self::StartSound => Some(Menu {
                 opcode: "sound_sounds_menu",
                 input: "SOUND_MENU",
+                field: "SOUND_MENU",
                 default: "make gh issue if this bothers u",
             }),
             Self::Clone0 => Some(Menu {
                 opcode: "control_create_clone_of_menu",
                 input: "CLONE_OPTION",
+                field: "CLONE_OPTION",
                 default: "_myself_",
             }),
             Self::Clone1 => Some(Menu {
                 opcode: "control_create_clone_of_menu",
                 input: "CLONE_OPTION",
+                field: "CLONE_OPTION",
                 default: "_myself_",
+            }),
+            Self::SetPenHue => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "color",
+            }),
+            Self::SetPenSaturation => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "saturation",
+            }),
+            Self::SetPenBrightness => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "brightness",
+            }),
+            Self::SetPenTransparency => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "transparency",
             }),
             _ => None,
         }
@@ -452,6 +496,10 @@ impl Block {
             ("set_pen_color", _) => Some(Self::SetPenColor),
             ("change_pen_size", _) => Some(Self::ChangePenSize),
             ("set_pen_size", _) => Some(Self::SetPenSize),
+            ("set_pen_hue", _) => Some(Self::SetPenHue),
+            ("set_pen_saturation", _) => Some(Self::SetPenSaturation),
+            ("set_pen_brightness", _) => Some(Self::SetPenBrightness),
+            ("set_pen_transparency", _) => Some(Self::SetPenTransparency),
             ("rest", _) => Some(Self::Rest),
             ("set_tempo", _) => Some(Self::SetTempo),
             ("change_tempo", _) => Some(Self::ChangeTempo),
@@ -546,6 +594,10 @@ impl Block {
             Self::SetPenColor => "set_pen_color",
             Self::ChangePenSize => "change_pen_size",
             Self::SetPenSize => "set_pen_size",
+            Self::SetPenHue => "set_pen_hue",
+            Self::SetPenSaturation => "set_pen_saturation",
+            Self::SetPenBrightness => "set_pen_brightness",
+            Self::SetPenTransparency => "set_pen_transparency",
             Self::Rest => "rest",
             Self::SetTempo => "set_tempo",
             Self::ChangeTempo => "change_tempo",
@@ -634,6 +686,10 @@ impl Block {
             "set_pen_color",
             "change_pen_size",
             "set_pen_size",
+            "set_pen_hue",
+            "set_pen_saturation",
+            "set_pen_brightness",
+            "set_pen_transparency",
             "rest",
             "set_tempo",
             "change_tempo",
@@ -727,6 +783,10 @@ impl Block {
             Self::SetPenColor => "pen_setPenColorToColor",
             Self::ChangePenSize => "pen_changePenSizeBy",
             Self::SetPenSize => "pen_setPenSizeTo",
+            Self::SetPenHue => "pen_setPenColorParamTo",
+            Self::SetPenSaturation => "pen_setPenColorParamTo",
+            Self::SetPenBrightness => "pen_setPenColorParamTo",
+            Self::SetPenTransparency => "pen_setPenColorParamTo",
             Self::Rest => "music_restForBeats",
             Self::SetTempo => "music_setTempo",
             Self::ChangeTempo => "music_changeTempo",
@@ -820,6 +880,10 @@ impl Block {
             Self::SetPenColor => &["COLOR"],
             Self::ChangePenSize => &["SIZE"],
             Self::SetPenSize => &["SIZE"],
+            Self::SetPenHue => &["VALUE"],
+            Self::SetPenSaturation => &["VALUE"],
+            Self::SetPenBrightness => &["VALUE"],
+            Self::SetPenTransparency => &["VALUE"],
             Self::Rest => &["BEATS"],
             Self::SetTempo => &["TEMPO"],
             Self::ChangeTempo => &["TEMPO"],
@@ -915,6 +979,10 @@ impl Block {
             Self::SetPenColor => None,
             Self::ChangePenSize => None,
             Self::SetPenSize => None,
+            Self::SetPenHue => None,
+            Self::SetPenSaturation => None,
+            Self::SetPenBrightness => None,
+            Self::SetPenTransparency => None,
             Self::Rest => None,
             Self::SetTempo => None,
             Self::ChangeTempo => None,
@@ -962,21 +1030,25 @@ impl Repr {
             Self::TouchingMousePointer => Some(Menu {
                 opcode: "sensing_touchingobjectmenu",
                 input: "TOUCHINGOBJECTMENU",
+                field: "TOUCHINGOBJECTMENU",
                 default: "_mouse_",
             }),
             Self::TouchingEdge => Some(Menu {
                 opcode: "sensing_touchingobjectmenu",
                 input: "TOUCHINGOBJECTMENU",
+                field: "TOUCHINGOBJECTMENU",
                 default: "_edge_",
             }),
             Self::Touching => Some(Menu {
                 opcode: "sensing_touchingobjectmenu",
                 input: "TOUCHINGOBJECTMENU",
+                field: "TOUCHINGOBJECTMENU",
                 default: "_mouse_",
             }),
             Self::KeyPressed => Some(Menu {
                 opcode: "sensing_keyoptions",
                 input: "KEY_OPTION",
+                field: "KEY_OPTION",
                 default: "any",
             }),
             _ => None,
@@ -984,7 +1056,9 @@ impl Repr {
     }
 
     pub fn overloads(name: &str) -> &'static [Self] {
-        &[]
+        match name {
+            _ => &[],
+        }
     }
 
     pub fn from_shape(name: &str, args: usize) -> Option<Self> {

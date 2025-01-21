@@ -22,6 +22,7 @@ class BinOp:
 @dataclass
 class Menu:
     input: str
+    field: str
     opcode: str
     default: str
 
@@ -130,8 +131,13 @@ def parse():
                     input_opcode = old_menu
                 old_menu = input_opcode
                 input, opcode = input_opcode.split(":")
+                if "@" in input:
+                    input, field = input.split("@")
+                else:
+                    field = input
                 menu = Menu(
                     input=input,
+                    field=field,
                     opcode=opcode,
                     default=default,
                 )
@@ -184,6 +190,7 @@ pub struct Menu {
     pub input: &'static str,
     pub opcode: &'static str,
     pub default: &'static str,
+    pub field: &'static str,
 }
 """)
 f.write("#[derive(Debug, Copy, Clone)]\npub enum UnOp {")
@@ -218,7 +225,7 @@ for variant, op in un_ops.items():
         f.write(f"Self::{variant} => None,")
     else:
         f.write(
-            f"Self::{variant} => Some({json.dumps(json.dumps({k:[v,None] for k,v in op.fields.items()}))}),"
+            f"Self::{variant} => Some({json.dumps(json.dumps({k: [v, None] for k, v in op.fields.items()}))}),"
         )
 f.write("_ => unreachable!()")
 f.write("}")
@@ -277,11 +284,11 @@ def write_blocks(typename: str, blocks: dict[str, Block | list[Block]]):
                 avariant = f"{variant}{len(block.args)}"
                 if block.menu:
                     f.write(
-                        f"Self::{avariant} => Some(Menu {{ opcode: {json.dumps(block.menu.opcode)}, input: {json.dumps(block.menu.input)}, default: {json.dumps(block.menu.default)} }}),"
+                        f"Self::{avariant} => Some(Menu {{ opcode: {json.dumps(block.menu.opcode)}, input: {json.dumps(block.menu.input)}, field: {json.dumps(block.menu.field)}, default: {json.dumps(block.menu.default)} }}),"
                     )
         elif block.menu:
             f.write(
-                f"Self::{variant} => Some(Menu {{ opcode: {json.dumps(block.menu.opcode)}, input: {json.dumps(block.menu.input)}, default: {json.dumps(block.menu.default)} }}),"
+                f"Self::{variant} => Some(Menu {{ opcode: {json.dumps(block.menu.opcode)}, input: {json.dumps(block.menu.input)}, field: {json.dumps(block.menu.field)}, default: {json.dumps(block.menu.default)} }}),"
             )
     f.write("_ => None }")
     f.write("}\n\n")
@@ -371,14 +378,14 @@ def write_blocks(typename: str, blocks: dict[str, Block | list[Block]]):
                     f.write(f"Self::{variant}{len(block.args)} => None,")
                     continue
                 f.write(
-                    f"Self::{variant}{len(block.args)} => Some({json.dumps(json.dumps({k:[v,None] for k,v in block.fields.items()}))}),"
+                    f"Self::{variant}{len(block.args)} => Some({json.dumps(json.dumps({k: [v, None] for k, v in block.fields.items()}))}),"
                 )
         else:
             if len(block.fields) == 0:
                 f.write(f"Self::{variant} => None,")
                 continue
             f.write(
-                f"Self::{variant} => Some({json.dumps(json.dumps({k:[v,None] for k,v in block.fields.items()}))}),"
+                f"Self::{variant} => Some({json.dumps(json.dumps({k: [v, None] for k, v in block.fields.items()}))}),"
             )
     f.write("}")
     f.write("}\n\n")
@@ -390,12 +397,12 @@ write_blocks("Repr", reporters)
 
 print(
     json.dumps(
-        f'\\b({"|".join(block.name if isinstance(block, Block) else block[0].name for block in blocks.values() )})\\b'
+        f"\\b({'|'.join(block.name if isinstance(block, Block) else block[0].name for block in blocks.values())})\\b"
     )
 )
 print()
 print(
     json.dumps(
-        f'\\b({"|".join(block.name if isinstance(block, Block) else block[0].name for block in reporters.values() )})\\b'
+        f"\\b({'|'.join(block.name if isinstance(block, Block) else block[0].name for block in reporters.values())})\\b"
     )
 )

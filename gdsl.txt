@@ -139,6 +139,10 @@ pen_up                            penUp                          |              
 set_pen_color                     setPenColorToColor COLOR       |                          |
 change_pen_size                   changePenSizeBy   SIZE         |                          |
 set_pen_size                      setPenSizeTo      ...          |                          |
+set_pen_hue                       setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=color
+set_pen_saturation                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
+set_pen_brightness                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
+set_pen_transparency              setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
 [music]==========================================================|==========================|
 rest                              restForBeats      BEATS        |                          |
 set_tempo                         setTempo          TEMPO        |                          |

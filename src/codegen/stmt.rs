@@ -372,9 +372,9 @@ where T: Write + Seek
                     .shadow(true),
             )?;
             if let Some(menu_value) = menu_value {
-                self.single_field(menu.input, &menu_value.to_string())?;
+                self.single_field(menu.field, &menu_value.to_string())?;
             } else {
-                self.single_field(menu.input, menu.default)?;
+                self.single_field(menu.field, menu.default)?;
             }
             self.end_obj()?; // node
         }
