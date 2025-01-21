@@ -169,6 +169,8 @@ backdrop_name                     ...                            | ...=name     
 [sound]==========================================================|====================|=
 volume                            volume                         |                    | 
 [sensing]========================================================|====================|=
+distance_to_mouse_pointer         distanceto                     |                    | DISTANCETOMENU:sensing_distancetomenu=_mouse_
+distance_to                       distanceto  DISTANCETOMENU     |                    | DISTANCETOMENU:sensing_distancetomenu=_mouse_
 touching_mouse_pointer            touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
 touching_edge                     touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_edge_
 touching                          touchingobject TOUCHINGOBJECTMENU|                  | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
