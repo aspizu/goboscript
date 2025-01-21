@@ -76,7 +76,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
             continue;
         }
         if sprite_path
-            .extension().is_none_or(|extension| extension != "gs")
+            .extension()
+            .is_none_or(|extension| extension != "gs")
         {
             continue;
         }
