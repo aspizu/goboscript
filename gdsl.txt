@@ -194,3 +194,4 @@ color_is_touching_color           coloristouchingcolor COLOR,COLOR2|            
 answer                            answer                         |                    | 
 [operator]=======================================================|====================|=
 random                            random            FROM,TO      |                    | 
+contains                          contains          STRING1,STRING2|                  |

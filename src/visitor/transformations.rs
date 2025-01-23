@@ -295,7 +295,8 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
                     | Repr::Touching
                     | Repr::TouchingColor
                     | Repr::TouchingEdge
-                    | Repr::TouchingMousePointer,
+                    | Repr::TouchingMousePointer
+                    | Repr::Contains,
                 ..
             }
     ) {

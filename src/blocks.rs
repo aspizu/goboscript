@@ -1076,6 +1076,7 @@ pub enum Repr {
     ColorIsTouchingColor,
     Answer,
     Random,
+    Contains,
 }
 
 impl Repr {
@@ -1162,6 +1163,7 @@ impl Repr {
             ("color_is_touching_color", _) => Some(Self::ColorIsTouchingColor),
             ("answer", _) => Some(Self::Answer),
             ("random", _) => Some(Self::Random),
+            ("contains", _) => Some(Self::Contains),
             _ => None,
         }
     }
@@ -1201,6 +1203,7 @@ impl Repr {
             Self::ColorIsTouchingColor => "color_is_touching_color",
             Self::Answer => "answer",
             Self::Random => "random",
+            Self::Contains => "contains",
         }
     }
 
@@ -1239,6 +1242,7 @@ impl Repr {
             "color_is_touching_color",
             "answer",
             "random",
+            "contains",
         ]
     }
 
@@ -1277,6 +1281,7 @@ impl Repr {
             Self::ColorIsTouchingColor => "sensing_coloristouchingcolor",
             Self::Answer => "sensing_answer",
             Self::Random => "operator_random",
+            Self::Contains => "operator_contains",
         }
     }
 
@@ -1315,6 +1320,7 @@ impl Repr {
             Self::ColorIsTouchingColor => &["COLOR", "COLOR2"],
             Self::Answer => &[],
             Self::Random => &["FROM", "TO"],
+            Self::Contains => &["STRING1", "STRING2"],
         }
     }
 
@@ -1353,6 +1359,7 @@ impl Repr {
             Self::ColorIsTouchingColor => None,
             Self::Answer => None,
             Self::Random => None,
+            Self::Contains => None,
         }
     }
 }
