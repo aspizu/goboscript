@@ -12,10 +12,7 @@ mod pre_processor;
 mod translation_unit;
 mod visitor;
 
-use std::{
-    process::ExitCode,
-    time::Instant,
-};
+use std::{process::ExitCode, time::Instant};
 
 use colored::Colorize;
 

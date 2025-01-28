@@ -285,7 +285,8 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
                     | BinOp::Gt
                     | BinOp::Ge
                     | BinOp::And
-                    | BinOp::Or,
+                    | BinOp::Or
+                    | BinOp::In,
                 ..
             }
             | Expr::Repr {
