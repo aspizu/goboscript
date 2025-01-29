@@ -11,6 +11,9 @@ patterns:
   - name: comment.line
     begin: "#"
     end: "$"
+  - name: keyword.control.directive
+    begin: "%(include|define|undef|if|else|endif|if\\snot\\s)"
+    end: "\\b"
   - name: string.quoted.double
     match: "\"([^\"\\\\]|\\\\[\"\\\\bnfrt]|u[a-fA-F0-9]{4})*\""
   - begin: "\\b(proc|func)[\\s\\n]+([a-zA-Z_][_a-zA-Z0-9]*)"
