@@ -23,7 +23,7 @@ until condition == true {
 ## for loop
 
 ```goboscript
-for x n {
+for x in n {
     # code
 }
 ```

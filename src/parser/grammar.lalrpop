@@ -87,7 +87,7 @@ Stmt: Stmt = {
         Stmt::Branch { cond, if_body, else_body: vec![else_body] }
     },
     REPEAT <times:BoxedIfExpr> <body:Stmts> => Stmt::Repeat { times, body },
-    FOR <l:@L> <name:NAME> <r:@R> <times:BoxedIfExpr> <body:Stmts> => { 
+    FOR <l:@L> <name:NAME> <r:@R> IN <times:BoxedIfExpr> <body:Stmts> => { 
         Stmt::For { 
             name: Name::Name { name, span: l..r }, 
             times, 
