@@ -100,7 +100,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             visit_expr(times, &mut before, s);
             visit_stmts(body, s);
         }
-        Stmt::For { name, times, body } => {
+        Stmt::For { name: _, times, body } => {
             visit_expr(times, &mut before, s);
             visit_stmts(body, s);
         }
