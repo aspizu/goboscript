@@ -1,0 +1,9 @@
+name: check
+on: [pull_request]
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions-rust-lang/setup-rust-toolchain@v1
+            - run: cargo check
