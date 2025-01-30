@@ -224,6 +224,7 @@ impl Stmt {
     fn opcode(&self, s: S) -> &'static str {
         match self {
             Stmt::Repeat { .. } => "control_repeat",
+            Stmt::For { .. } => "control_for_each",
             Stmt::Forever { .. } => "control_forever",
             Stmt::Branch { else_body, .. } => {
                 if else_body.is_empty() {
@@ -1006,6 +1007,11 @@ where T: Write + Seek
         )?;
         match stmt {
             Stmt::Repeat { times, body } => self.repeat(s, d, this_id, times, body),
+            Stmt::For { 
+                name, 
+                times, 
+                body 
+            } => self.r#for(s, d, this_id, name, times, body),
             Stmt::Forever { body, span } => self.forever(s, d, this_id, body, span),
             Stmt::Branch {
                 cond,

@@ -186,6 +186,10 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             visit_expr(times, s, d, false);
             visit_stmts(body, s, d, false);
         }
+        Stmt::For { name, times, body } => {
+            visit_expr(times, s, d, false);
+            visit_stmts(body, s, d, false);
+        }
         Stmt::Forever { body, span: _ } => {
             visit_stmts(body, s, d, false);
         }
