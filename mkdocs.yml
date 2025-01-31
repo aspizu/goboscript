@@ -24,6 +24,7 @@ nav:
           - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
           - Visual Studio Code: editor-integration/vscode.md
           - Sublime Text: editor-integration/sublime-text.md
+          - Notepad++: editor-integration/notepad++.md
 theme:
     name: material
     features:
