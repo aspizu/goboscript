@@ -115,6 +115,9 @@ impl TranslationUnit {
                             self.include(&path, path_span, i)?;
                             self.included.insert(path);
                         }
+                        if self.text[i..].starts_with(b"%") {
+                            i -= 1;
+                        }
                     } else if self.text[i..].starts_with(b"define") {
                         i += b"define".len();
                         let name = self.text[i..]
