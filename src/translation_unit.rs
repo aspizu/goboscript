@@ -193,6 +193,10 @@ impl TranslationUnit {
             (file, None)
         } else {
             let mut path = self.path.parent().unwrap().join(path);
+            if path.is_dir() {
+                let file_name = path.file_name().unwrap().to_owned();
+                path.push(file_name);
+            }
             path.set_extension("gs");
             let mut file = File::open(&path).map_err(|error| Diagnostic {
                 kind: DiagnosticKind::IOError(error),
