@@ -21,6 +21,11 @@ pub enum Stmt {
         body: Vec<Stmt>,
     },
     For {
+        cond: Box<Expr>,
+        incr: Box<Stmt>,
+        body: Vec<Stmt>,
+    },
+    ForEach {
         name: Name,
         times: Box<Expr>,
         body: Vec<Stmt>,

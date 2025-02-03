@@ -23,6 +23,16 @@ until condition == true {
 ## for loop
 
 ```goboscript
+for x = 1; x > 10; x++; {
+    # code
+}
+```
+
+![](../assets/for.png){width="100"}
+
+## for each loop
+
+```goboscript
 for x in n {
     # code
 }

@@ -60,6 +60,28 @@ where T: Write + Seek
         s: S,
         d: D,
         this_id: NodeID,
+        cond: &Expr,
+        incr: &Stmt,
+        body: &[Stmt],
+    ) -> io::Result<()> {
+        let cond_id = self.id.new_id();
+        let incr_id = self.id.new_id();
+        let body_id = self.id.new_id();
+        self.begin_inputs()?;
+        self.input(s, d, "CONDITION", cond, cond_id)?;
+        self.substack("SUBSTACK", Some(incr_id))?;
+        self.end_obj()?; // inputs
+        self.end_obj()?; // node
+        self.expr(s, d, cond, cond_id, this_id)?;
+        self.stmt(s, d, incr, incr_id, Some(body_id), Some(this_id))?;
+        self.stmts(s, d, body, body_id, Some(incr_id))
+    }
+
+    pub fn foreach(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
         name: &Name,
         times: &Expr,
         body: &[Stmt],
