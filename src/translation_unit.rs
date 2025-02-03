@@ -115,6 +115,9 @@ impl TranslationUnit {
                             self.include(&path, path_span, i)?;
                             self.included.insert(path);
                         }
+                        if self.text[i..].starts_with(b"%") {
+                            i -= 1;
+                        }
                     } else if self.text[i..].starts_with(b"define") {
                         i += b"define".len();
                         let name = self.text[i..]
@@ -190,6 +193,10 @@ impl TranslationUnit {
             (file, None)
         } else {
             let mut path = self.path.parent().unwrap().join(path);
+            if path.is_dir() {
+                let file_name = path.file_name().unwrap().to_owned();
+                path.push(file_name);
+            }
             path.set_extension("gs");
             let mut file = File::open(&path).map_err(|error| Diagnostic {
                 kind: DiagnosticKind::IOError(error),
