@@ -354,6 +354,17 @@ where T: Write + Seek
         )
     }
 
+    pub fn stmts(
+        &mut self,
+        s: S,
+        d: D,
+        stmts: &[Stmt],
+        this_id: NodeID,
+        parent_id: Option<NodeID>,
+    ) -> io::Result<()> {
+        self.stmts_with_next(s, d, stmts, this_id, parent_id, None)
+    }
+
     pub fn substack(&mut self, name: &str, this_id: Option<NodeID>) -> io::Result<()> {
         let Some(this_id) = this_id else {
             return Ok(());
@@ -967,18 +978,20 @@ where T: Write + Seek
         self.stmts(s, d, &event.body, next_id, Some(this_id))
     }
 
-    pub fn stmts(
+    pub fn stmts_with_next(
         &mut self,
         s: S,
         d: D,
         stmts: &[Stmt],
         mut this_id: NodeID,
         mut parent_id: Option<NodeID>,
+        last_id: Option<NodeID>,
     ) -> io::Result<()> {
         for (i, stmt) in stmts.iter().enumerate() {
             let is_last = i == stmts.len() - 1;
             if is_last || stmt.is_terminator() {
-                self.stmt(s, d, stmt, this_id, None, parent_id)?;
+                let next_id = last_id;
+                self.stmt(s, d, stmt, this_id, next_id, parent_id)?;
                 if !is_last {
                     d.report(DiagnosticKind::FollowedByUnreachableCode, stmt.span());
                 }

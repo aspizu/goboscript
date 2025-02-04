@@ -69,12 +69,12 @@ where T: Write + Seek
         let body_id = self.id.new_id();
         self.begin_inputs()?;
         self.input(s, d, "CONDITION", cond, cond_id)?;
-        self.substack("SUBSTACK", Some(incr_id))?;
+        self.substack("SUBSTACK", Some((!body.is_empty()).then_some(body_id).unwrap_or(incr_id)))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         self.expr(s, d, cond, cond_id, this_id)?;
-        self.stmt(s, d, incr, incr_id, Some(body_id), Some(this_id))?;
-        self.stmts(s, d, body, body_id, Some(incr_id))
+        self.stmts_with_next(s, d, body, body_id, Some(this_id), Some(incr_id))?;
+        self.stmt(s, d, incr, incr_id, None, Some(body_id))
     }
 
     pub fn foreach(
