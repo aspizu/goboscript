@@ -354,17 +354,6 @@ where T: Write + Seek
         )
     }
 
-    pub fn stmts(
-        &mut self,
-        s: S,
-        d: D,
-        stmts: &[Stmt],
-        this_id: NodeID,
-        parent_id: Option<NodeID>,
-    ) -> io::Result<()> {
-        self.stmts_with_next(s, d, stmts, this_id, parent_id, None)
-    }
-
     pub fn substack(&mut self, name: &str, this_id: Option<NodeID>) -> io::Result<()> {
         let Some(this_id) = this_id else {
             return Ok(());
@@ -978,6 +967,17 @@ where T: Write + Seek
         self.stmts(s, d, &event.body, next_id, Some(this_id))
     }
 
+    pub fn stmts(
+        &mut self,
+        s: S,
+        d: D,
+        stmts: &[Stmt],
+        this_id: NodeID,
+        parent_id: Option<NodeID>,
+    ) -> io::Result<()> {
+        self.stmts_with_next(s, d, stmts, this_id, parent_id, None)
+    }
+
     pub fn stmts_with_next(
         &mut self,
         s: S,
@@ -1022,10 +1022,13 @@ where T: Write + Seek
         match stmt {
             Stmt::Repeat { times, body } => self.repeat(s, d, this_id, times, body),
             Stmt::For {
+                name,
+                value,
+                type_,
                 cond,
                 incr,
                 body
-            } => self.r#for(s, d, this_id, cond, incr, body),
+            } => self.r#for(s, d, this_id, name, value, type_, cond, incr, body),
             Stmt::ForEach { 
                 name, 
                 times, 

@@ -21,6 +21,9 @@ pub enum Stmt {
         body: Vec<Stmt>,
     },
     For {
+        name: Name,
+        value: Box<Expr>,
+        type_: Type,
         cond: Box<Expr>,
         incr: Box<Stmt>,
         body: Vec<Stmt>,

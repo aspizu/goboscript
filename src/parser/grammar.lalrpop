@@ -88,14 +88,10 @@ Stmt: Stmt = {
     },
     REPEAT <times:BoxedIfExpr> <body:Stmts> => Stmt::Repeat { times, body },
     FOR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" <cond:BoxedIfExpr> ";" <incr:BoxedStmt> <body:Stmts> => {
-        Stmt::SetVar {
+        Stmt::For {
             name: Name::Name { name, span: l..r },
             value,
             type_,
-            is_local: false,
-            is_cloud: false,
-        };
-        Stmt::For {
             cond,
             incr,
             body,

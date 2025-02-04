@@ -186,7 +186,8 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             visit_expr(times, s, d, false);
             visit_stmts(body, s, d, false);
         }
-        Stmt::For { incr, cond, body } => {
+        Stmt::For { name: _, value, type_: _, incr, cond, body } => {
+            visit_expr(value, s, d, false);
             visit_stmt(incr, s, d);
             visit_expr(cond, s, d, true);
             visit_stmts(body, s, d, false);
