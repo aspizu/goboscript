@@ -224,6 +224,8 @@ impl Stmt {
     fn opcode(&self, s: S) -> &'static str {
         match self {
             Stmt::Repeat { .. } => "control_repeat",
+            Stmt::For { .. } => "control_repeat_until",
+            Stmt::ForEach { .. } => "control_for_each",
             Stmt::Forever { .. } => "control_forever",
             Stmt::Branch { else_body, .. } => {
                 if else_body.is_empty() {
@@ -970,13 +972,26 @@ where T: Write + Seek
         s: S,
         d: D,
         stmts: &[Stmt],
+        this_id: NodeID,
+        parent_id: Option<NodeID>,
+    ) -> io::Result<()> {
+        self.stmts_with_next(s, d, stmts, this_id, parent_id, None)
+    }
+
+    pub fn stmts_with_next(
+        &mut self,
+        s: S,
+        d: D,
+        stmts: &[Stmt],
         mut this_id: NodeID,
         mut parent_id: Option<NodeID>,
+        last_id: Option<NodeID>,
     ) -> io::Result<()> {
         for (i, stmt) in stmts.iter().enumerate() {
             let is_last = i == stmts.len() - 1;
             if is_last || stmt.is_terminator() {
-                self.stmt(s, d, stmt, this_id, None, parent_id)?;
+                let next_id = last_id;
+                self.stmt(s, d, stmt, this_id, next_id, parent_id)?;
                 if !is_last {
                     d.report(DiagnosticKind::FollowedByUnreachableCode, stmt.span());
                 }
@@ -1006,6 +1021,19 @@ where T: Write + Seek
         )?;
         match stmt {
             Stmt::Repeat { times, body } => self.repeat(s, d, this_id, times, body),
+            Stmt::For {
+                name,
+                value,
+                type_,
+                cond,
+                incr,
+                body
+            } => self.r#for(s, d, this_id, name, value, type_, cond, incr, body),
+            Stmt::ForEach { 
+                name, 
+                times, 
+                body 
+            } => self.foreach(s, d, this_id, name, times, body),
             Stmt::Forever { body, span } => self.forever(s, d, this_id, body, span),
             Stmt::Branch {
                 cond,
