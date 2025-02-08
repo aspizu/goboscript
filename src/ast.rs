@@ -1,4 +1,5 @@
 mod arg;
+mod const_expr;
 mod costume;
 mod enum_;
 mod enum_variant;
@@ -21,6 +22,7 @@ mod value;
 mod var;
 
 pub use arg::*;
+pub use const_expr::*;
 pub use costume::*;
 pub use enum_::*;
 pub use enum_variant::*;

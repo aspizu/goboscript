@@ -21,7 +21,7 @@ impl Value {
             UnOp::Log => None,
             UnOp::AntiLn => None,
             UnOp::AntiLog => None,
-            UnOp::Minus => None,
+            UnOp::Minus => self.minus(),
         }
     }
 
@@ -43,6 +43,14 @@ impl Value {
                     Some(float.round().into())
                 }
             }
+            _ => None,
+        }
+    }
+
+    fn minus(&self) -> Option<Value> {
+        match self {
+            Self::Int(int) => Some((-*int).into()),
+            Self::Float(float) => Some((-*float).into()),
             _ => None,
         }
     }

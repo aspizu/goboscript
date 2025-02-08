@@ -1,9 +1,6 @@
 use logos::Span;
 
-use super::{
-    type_::Type,
-    Value,
-};
+use super::{type_::Type, ConstExpr, Value};
 use crate::misc::SmolStr;
 
 #[derive(Debug)]
@@ -17,7 +14,7 @@ pub struct List {
 
 #[derive(Debug)]
 pub enum ListDefault {
-    Literal(Vec<(Value, Span)>),
+    ConstExprs(Vec<ConstExpr>),
     Cmd(Cmd),
 }
 
@@ -55,12 +52,12 @@ impl List {
         }
     }
 
-    pub fn new_array(name: SmolStr, span: Span, type_: Type, default: Vec<(Value, Span)>) -> Self {
+    pub fn new_array(name: SmolStr, span: Span, type_: Type, default: Vec<ConstExpr>) -> Self {
         Self {
             name,
             span,
             type_,
-            default: Some(ListDefault::Literal(default)),
+            default: Some(ListDefault::ConstExprs(default)),
             is_used: false,
         }
     }
@@ -72,9 +69,9 @@ impl List {
         }
     }
 
-    pub fn array(&self) -> Option<&[(Value, Span)]> {
+    pub fn array(&self) -> Option<&[ConstExpr]> {
         match &self.default {
-            Some(ListDefault::Literal(array)) => Some(array),
+            Some(ListDefault::ConstExprs(array)) => Some(array),
             _ => None,
         }
     }

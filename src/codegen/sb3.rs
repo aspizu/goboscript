@@ -1,34 +1,18 @@
 use core::str;
 use std::{
     fs::File,
-    io::{
-        self,
-        Seek,
-        Write,
-    },
+    io::{self, Seek, Write},
     path::Path,
 };
 
-use fxhash::{
-    FxHashMap,
-    FxHashSet,
-};
+use fxhash::{FxHashMap, FxHashSet};
 use logos::Span;
-use md5::{
-    Digest,
-    Md5,
-};
+use md5::{Digest, Md5};
 use serde_json::json;
-use zip::{
-    write::SimpleFileOptions,
-    ZipWriter,
-};
+use zip::{write::SimpleFileOptions, ZipWriter};
 
 use super::{
-    cmd::cmd_to_list,
-    node::Node,
-    node_id::NodeID,
-    node_id_factory::NodeIDFactory,
+    cmd::cmd_to_list, node::Node, node_id::NodeID, node_id_factory::NodeIDFactory,
     turbowarp_config::TurbowarpConfig,
 };
 use crate::{
@@ -36,14 +20,8 @@ use crate::{
     blocks::Block,
     codegen::mutation::Mutation,
     config::Config,
-    diagnostic::{
-        DiagnosticKind,
-        SpriteDiagnostics,
-    },
-    misc::{
-        write_comma_io,
-        SmolStr,
-    },
+    diagnostic::{DiagnosticKind, SpriteDiagnostics},
+    misc::{write_comma_io, SmolStr},
 };
 
 const STAGE_NAME: &str = "Stage";
@@ -264,7 +242,8 @@ impl Stmt {
 
 #[derive(Debug)]
 pub struct Sb3<T>
-where T: Write + Seek
+where
+    T: Write + Seek,
 {
     pub zip: ZipWriter<T>,
     pub id: NodeIDFactory,
@@ -276,7 +255,8 @@ where T: Write + Seek
 }
 
 impl<T> Write for Sb3<T>
-where T: Write + Seek
+where
+    T: Write + Seek,
 {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.zip.write(buf)
@@ -288,7 +268,8 @@ where T: Write + Seek
 }
 
 impl<T> Sb3<T>
-where T: Write + Seek
+where
+    T: Write + Seek,
 {
     pub fn new(file: T) -> Self {
         Self {
@@ -706,7 +687,7 @@ where T: Write + Seek
                 list.array().map(|array| {
                     array
                         .iter()
-                        .map(|(value, _)| value.to_string())
+                        .map(|const_expr| const_expr.evaluate().to_string())
                         .collect::<Vec<_>>()
                 })
             });

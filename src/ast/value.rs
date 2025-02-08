@@ -1,13 +1,10 @@
 mod binop;
 mod unop;
-use std::fmt::{
-    self,
-    Display,
-};
+use std::fmt::{self, Display};
 
 use logos::Span;
 
-use super::Expr;
+use super::{ConstExpr, Expr};
 use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]
@@ -79,5 +76,10 @@ impl Value {
     #[allow(clippy::wrong_self_convention)]
     pub fn to_expr(self, span: Span) -> Expr {
         Expr::Value { value: self, span }
+    }
+
+    #[allow(clippy::wrong_self_convention)]
+    pub fn to_const_expr(self, span: Span) -> ConstExpr {
+        ConstExpr::Value { value: self, span }
     }
 }
