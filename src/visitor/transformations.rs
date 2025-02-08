@@ -306,6 +306,7 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
 pub fn keyword_arguments(
     args: &mut Vec<(Option<(SmolStr, Span)>, Expr)>,
     arg_names: Option<&Vec<Arg>>,
+    d: D,
 ) {
     let mut i = 0;
     if let Some(arg_names) = arg_names {
@@ -328,6 +329,8 @@ pub fn keyword_arguments(
         }
     }
     for (arg_name, _) in args {
-        arg_name.take();
+        if let Some((arg_name, arg_span)) = arg_name.take() {
+            d.report(DiagnosticKind::UnrecognizedArgument(arg_name), &arg_span);
+        }
     }
 }

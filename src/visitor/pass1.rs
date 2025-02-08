@@ -256,7 +256,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            keyword_arguments(args, s.procs.get(name).map(|proc| &proc.args));
+            keyword_arguments(args, s.procs.get(name).map(|proc| &proc.args), d);
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
@@ -266,7 +266,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             span: _,
             args,
         } => {
-            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args));
+            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args), d);
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
@@ -301,7 +301,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             span: _,
             args,
         } => {
-            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args));
+            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args), d);
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
