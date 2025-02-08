@@ -1,13 +1,7 @@
-use std::fmt::{
-    self,
-    Display,
-};
+use std::fmt::{self, Display};
 
 use super::node_id::NodeID;
-use crate::misc::{
-    write_comma_fmt,
-    SmolStr,
-};
+use crate::misc::{write_comma_fmt, SmolStr};
 
 pub struct Mutation<'a> {
     name: SmolStr,
@@ -41,8 +35,8 @@ impl Display for Mutation<'_> {
         write!(f, r#","mutation":{{"tagName":"mutation","children":[]"#)?;
         write!(f, r#","warp":"{}""#, self.warp)?;
         write!(f, r#","proccode":"{}"#, self.name)?;
-        for _ in 0..self.args.len() {
-            write!(f, " %s")?;
+        for (arg_name, _) in self.args {
+            write!(f, " {arg_name}: %s")?;
         }
         write!(f, "\"")?;
         write!(f, r#","argumentids":"["#)?;

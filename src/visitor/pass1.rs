@@ -1,18 +1,12 @@
 use fxhash::FxHashMap;
+use logos::Span;
 
-use super::transformations;
+use super::transformations::{self, keyword_arguments};
 use crate::{
     ast::*,
-    blocks::{
-        BinOp,
-        Block,
-        UnOp,
-    },
+    blocks::{BinOp, Block, UnOp},
     codegen::sb3::D,
-    diagnostic::{
-        DiagnosticKind,
-        SpriteDiagnostics,
-    },
+    diagnostic::{DiagnosticKind, SpriteDiagnostics},
     misc::SmolStr,
 };
 
@@ -24,6 +18,8 @@ pub struct S<'a> {
     pub lists: &'a FxHashMap<SmolStr, List>,
     pub enums: &'a FxHashMap<SmolStr, Enum>,
     pub structs: &'a FxHashMap<SmolStr, Struct>,
+    pub procs: &'a FxHashMap<SmolStr, Proc>,
+    pub funcs: &'a FxHashMap<SmolStr, Func>,
     pub global_vars: Option<&'a FxHashMap<SmolStr, Var>>,
     pub global_lists: Option<&'a FxHashMap<SmolStr, List>>,
     pub global_enums: Option<&'a FxHashMap<SmolStr, Enum>>,
@@ -72,7 +68,7 @@ pub fn visit_project(
 }
 
 fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
-    for proc in sprite.procs.values_mut() {
+    for proc in sprite.procs.values() {
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
         visit_stmts(
             proc_definition,
@@ -83,6 +79,8 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
                 lists: &sprite.lists,
                 enums: &sprite.enums,
                 structs: &sprite.structs,
+                procs: &sprite.procs,
+                funcs: &sprite.funcs,
                 global_vars: stage.map(|stage| &stage.vars),
                 global_lists: stage.map(|stage| &stage.lists),
                 global_enums: stage.map(|stage| &stage.enums),
@@ -92,7 +90,7 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
             true,
         );
     }
-    for func in sprite.funcs.values_mut() {
+    for func in sprite.funcs.values() {
         let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
         visit_stmts(
             func_definition,
@@ -103,6 +101,8 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
                 lists: &sprite.lists,
                 enums: &sprite.enums,
                 structs: &sprite.structs,
+                procs: &sprite.procs,
+                funcs: &sprite.funcs,
                 global_vars: stage.map(|stage| &stage.vars),
                 global_lists: stage.map(|stage| &stage.lists),
                 global_enums: stage.map(|stage| &stage.enums),
@@ -122,6 +122,8 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
                 lists: &sprite.lists,
                 enums: &sprite.enums,
                 structs: &sprite.structs,
+                procs: &sprite.procs,
+                funcs: &sprite.funcs,
                 global_vars: stage.map(|stage| &stage.vars),
                 global_lists: stage.map(|stage| &stage.lists),
                 global_enums: stage.map(|stage| &stage.enums),
@@ -250,19 +252,21 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             }
         }
         Stmt::ProcCall {
-            name: _,
+            name,
             span: _,
             args,
         } => {
+            keyword_arguments(args, s.procs.get(name).map(|proc| &proc.args));
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
         }
         Stmt::FuncCall {
-            name: _,
+            name,
             span: _,
             args,
         } => {
+            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args));
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }
@@ -293,10 +297,11 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             }
         }
         Expr::FuncCall {
-            name: _,
+            name,
             span: _,
             args,
         } => {
+            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args));
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }

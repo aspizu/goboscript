@@ -2,24 +2,17 @@ use logos::Span;
 
 use super::pass1::S;
 use crate::{
-    ast::{
-        Expr,
-        Name,
-        StructLiteralField,
-        Value,
-    },
-    blocks::{
-        BinOp,
-        Repr,
-        UnOp,
-    },
+    ast::{Arg, Expr, Name, StructLiteralField, Value},
+    blocks::{BinOp, Repr, UnOp},
     codegen::sb3::D,
     diagnostic::DiagnosticKind,
     misc::SmolStr,
 };
 
 pub fn apply<T, F>(value: &mut T, transformer: F)
-where F: FnOnce(&T) -> Option<T> {
+where
+    F: FnOnce(&T) -> Option<T>,
+{
     let replace = transformer(value);
     if let Some(replace) = replace {
         *value = replace;
@@ -310,4 +303,31 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
     ))
 }
 
-pub fn func_keyword_args(args: &mut [(Option<(SmolStr, Span)>, Expr)], s: S, d: D) {}
+pub fn keyword_arguments(
+    args: &mut Vec<(Option<(SmolStr, Span)>, Expr)>,
+    arg_names: Option<&Vec<Arg>>,
+) {
+    let mut i = 0;
+    if let Some(arg_names) = arg_names {
+        for arg in arg_names {
+            if let Some(index) = args.iter().position(|(arg_name, _)| {
+                arg_name
+                    .as_ref()
+                    .is_some_and(|(arg_name, _)| *arg_name == arg.name)
+            }) {
+                let arg = args.remove(index);
+                args.insert(i, (None, arg.1));
+            } else if let Some(index) = args[i..]
+                .iter()
+                .position(|(arg_name, _)| arg_name.is_none())
+            {
+                let arg = args.remove(i + index);
+                args.insert(i, arg);
+            }
+            i += 1;
+        }
+    }
+    for (arg_name, _) in args {
+        arg_name.take();
+    }
+}
