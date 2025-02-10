@@ -63,13 +63,9 @@ impl SpriteDiagnostics {
             let (start, include) = self
                 .translation_unit
                 .translate_position(diagnostic.span.start);
-            // Do not display diagnostics for standard library headers.
-            let Some(include_path) = &include.path else {
-                continue;
-            };
             // TODO: memoize this using a memoization crate.
-            let text = fs::read_to_string(include_path).unwrap();
-            let include_path = include_path.to_str().unwrap();
+            let text = fs::read_to_string(&include.path).unwrap();
+            let include_path = include.path.to_str().unwrap();
             if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
                 let mut message = level
                     .title(&title)
