@@ -1,8 +1,10 @@
 use logos::Span;
 
-use crate::blocks::{BinOp, UnOp};
-
 use super::Value;
+use crate::blocks::{
+    BinOp,
+    UnOp,
+};
 
 #[derive(Debug, Clone)]
 pub enum ConstExpr {
