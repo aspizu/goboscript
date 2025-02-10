@@ -36,6 +36,10 @@ pub enum Command {
         #[arg(short = 'n', long)]
         name: Option<PathBuf>,
 
+        /// Version of the standard library to use. Defaults to bleeding-edge.
+        #[arg(short = 's', long)]
+        std: Option<String>,
+
         /// (alias: --fps) Custom frame rate, used by TurboWarp.
         #[arg(short = 'f', long, alias = "fps")]
         frame_rate: Option<u64>,
