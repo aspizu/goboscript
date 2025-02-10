@@ -9,7 +9,10 @@ use std::{
         Path,
         PathBuf,
     },
-    process::Command,
+    process::{
+        Command,
+        Stdio,
+    },
 };
 
 use anyhow::{
@@ -39,10 +42,12 @@ impl StandardLibrary {
                 path.display()
             )
         })?;
-        if path.exists() {
+        if path.join(".git").exists() {
             if !Command::new("git")
                 .current_dir(&path)
                 .args(["pull"])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
                 .status()
                 .with_context(|| format!("Failed to fetch standard library updates"))?
                 .success()
@@ -58,6 +63,8 @@ impl StandardLibrary {
                     "main",
                     path.to_str().unwrap(),
                 ])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
                 .status()
                 .with_context(|| format!("Failed to clone standard library"))?
                 .success()
@@ -71,7 +78,8 @@ impl StandardLibrary {
             .output()
             .with_context(|| format!("Failed to get standard library version"))?;
         if !output.status.success() {
-            bail!("Failed to get latest standard library version");
+            let error = str::from_utf8(output.stderr.as_slice()).unwrap();
+            bail!("Failed to get latest standard library version {error}");
         }
         let version = str::from_utf8(output.stdout.as_slice()).unwrap();
         let version = version.strip_prefix('v').unwrap_or(version);
@@ -102,6 +110,8 @@ impl StandardLibrary {
                 &format!("v{}", self.version),
                 self.path.to_str().unwrap(),
             ])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .status()
             .with_context(|| format!("Failed to clone standard library version {}", self.version))?
             .success()
