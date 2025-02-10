@@ -56,7 +56,7 @@ impl TranslationUnit {
         instance
     }
 
-    pub fn pre_process(&mut self) -> Result<(), Diagnostic> {
+    pub fn pre_process(&mut self) -> Result<(), Vec<Diagnostic>> {
         self.parse(0)
     }
 
@@ -64,7 +64,8 @@ impl TranslationUnit {
         str::from_utf8(&self.text).unwrap()
     }
 
-    fn parse(&mut self, begin: usize) -> Result<(), Diagnostic> {
+    fn parse(&mut self, begin: usize) -> Result<(), Vec<Diagnostic>> {
+        let mut diagnostics = vec![];
         let mut comment = 0;
         let mut i = begin;
         while i < self.text.len() {
@@ -112,7 +113,9 @@ impl TranslationUnit {
                         }
                         let path = str::from_utf8(path).unwrap().trim().to_owned();
                         if !self.included.contains(&path) {
-                            self.include(&path, path_span, i)?;
+                            if let Err(err) = self.include(&path, path_span, i) {
+                                diagnostics.push(err);
+                            }
                             self.included.insert(path);
                         }
                         if self.text[i..].starts_with(b"%") {
@@ -171,7 +174,11 @@ impl TranslationUnit {
                 }
             }
         }
-        Ok(())
+        if diagnostics.is_empty() {
+            Ok(())
+        } else {
+            Err(diagnostics)
+        }
     }
 
     fn include(&mut self, path: &str, path_span: Span, begin: usize) -> Result<(), Diagnostic> {
@@ -193,7 +200,9 @@ impl TranslationUnit {
             (file, None)
         } else {
             let mut path = self.path.parent().unwrap().join(path);
-            if path.is_dir() {
+            let mut path_with_extension = path.clone();
+            path_with_extension.set_extension("gs");
+            if !path_with_extension.is_file() && path.is_dir() {
                 let file_name = path.file_name().unwrap().to_owned();
                 path.push(file_name);
             }

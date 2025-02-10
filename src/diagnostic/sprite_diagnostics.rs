@@ -34,7 +34,7 @@ impl SpriteDiagnostics {
         let mut translation_unit = TranslationUnit::new(path);
         let mut diagnostics = vec![];
         if let Err(diagnostic) = translation_unit.pre_process() {
-            diagnostics.push(diagnostic);
+            diagnostics.extend(diagnostic);
         }
         Self {
             sprite_name,
