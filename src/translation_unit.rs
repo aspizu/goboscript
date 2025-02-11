@@ -19,6 +19,12 @@ use crate::{
     standard_library::StandardLibrary,
 };
 
+#[derive(Debug, Copy, Clone)]
+pub enum Owner {
+    Local,
+    StandardLibrary,
+}
+
 #[derive(Debug)]
 /// A section of a source file that is included in the translation unit.
 /// This may be a section of the source file, or the entire source file.
@@ -28,6 +34,7 @@ pub struct Include {
     // The range that the source code of the include is in the source file.
     pub source_range: Span,
     pub path: PathBuf,
+    pub owner: Owner,
 }
 
 #[derive(Debug)]
@@ -55,6 +62,7 @@ impl TranslationUnit {
             unit_range: 0..instance.text.len(),
             source_range: 0..instance.text.len(),
             path: instance.path.clone(),
+            owner: Owner::Local,
         });
         instance
     }
@@ -192,10 +200,11 @@ impl TranslationUnit {
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
         let mut buffer = vec![];
-        let mut path = if let Some(path) = path.strip_prefix("std/") {
-            stdlib.path.join(path)
+
+        let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
+            (Owner::StandardLibrary, stdlib.path.join(path))
         } else {
-            self.path.parent().unwrap().join(path)
+            (Owner::Local, self.path.parent().unwrap().join(path))
         };
         let mut path_with_extension = path.clone();
         path_with_extension.set_extension("gs");
@@ -224,6 +233,7 @@ impl TranslationUnit {
                 source_range: current_include.source_range.start
                     ..(current_include.source_range.start + top_unit_range.len()),
                 path: current_include.path.clone(),
+                owner: current_include.owner,
             },
         );
 
@@ -234,6 +244,7 @@ impl TranslationUnit {
                 unit_range: begin..begin + buffer.len(),
                 source_range: 0..buffer.len(),
                 path,
+                owner,
             },
         );
 
@@ -248,6 +259,7 @@ impl TranslationUnit {
                         + top_unit_range.len()
                         + bottom_unit_range.len()),
                 path: current_include.path,
+                owner: current_include.owner,
             },
         );
 
