@@ -81,7 +81,7 @@ impl StandardLibrary {
             let error = str::from_utf8(output.stderr.as_slice()).unwrap();
             bail!("Failed to get latest standard library version {error}");
         }
-        let version = str::from_utf8(output.stdout.as_slice()).unwrap();
+        let version = str::from_utf8(output.stdout.as_slice()).unwrap().trim();
         let version = version.strip_prefix('v').unwrap_or(version);
         Ok(Self {
             path,
