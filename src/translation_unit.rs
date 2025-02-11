@@ -11,9 +11,12 @@ use std::{
 use fxhash::FxHashSet;
 use logos::Span;
 
-use crate::diagnostic::{
-    Diagnostic,
-    DiagnosticKind,
+use crate::{
+    diagnostic::{
+        Diagnostic,
+        DiagnosticKind,
+    },
+    standard_library::StandardLibrary,
 };
 
 #[derive(Debug)]
@@ -56,15 +59,15 @@ impl TranslationUnit {
         instance
     }
 
-    pub fn pre_process(&mut self) -> Result<(), Vec<Diagnostic>> {
-        self.parse(0)
+    pub fn pre_process(&mut self, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
+        self.parse(0, stdlib)
     }
 
     pub fn get_text(&self) -> &str {
         str::from_utf8(&self.text).unwrap()
     }
 
-    fn parse(&mut self, begin: usize) -> Result<(), Vec<Diagnostic>> {
+    fn parse(&mut self, begin: usize, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
         let mut diagnostics = vec![];
         let mut comment = 0;
         let mut i = begin;
@@ -113,7 +116,7 @@ impl TranslationUnit {
                         }
                         let path = str::from_utf8(path).unwrap().trim().to_owned();
                         if !self.included.contains(&path) {
-                            if let Err(err) = self.include(&path, path_span, i) {
+                            if let Err(err) = self.include(&path, path_span, i, stdlib) {
                                 diagnostics.push(err);
                             }
                             self.included.insert(path);
@@ -181,7 +184,13 @@ impl TranslationUnit {
         }
     }
 
-    fn include(&mut self, path: &str, path_span: Span, begin: usize) -> Result<(), Diagnostic> {
+    fn include(
+        &mut self,
+        path: &str,
+        path_span: Span,
+        begin: usize,
+        stdlib: &StandardLibrary,
+    ) -> Result<(), Diagnostic> {
         let mut buffer = vec![];
         let mut path = self.path.parent().unwrap().join(path);
         let mut path_with_extension = path.clone();

@@ -19,6 +19,7 @@ use super::{
 };
 use crate::{
     ast::Project,
+    standard_library::StandardLibrary,
     translation_unit::TranslationUnit,
 };
 
@@ -29,11 +30,11 @@ pub struct SpriteDiagnostics {
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(path: PathBuf, stdlib: &StandardLibrary) -> Self {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
         let mut translation_unit = TranslationUnit::new(path);
         let mut diagnostics = vec![];
-        if let Err(diagnostic) = translation_unit.pre_process() {
+        if let Err(diagnostic) = translation_unit.pre_process(stdlib) {
             diagnostics.extend(diagnostic);
         }
         Self {
