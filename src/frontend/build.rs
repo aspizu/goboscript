@@ -69,6 +69,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
     } else {
         StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
     };
+    stdlib.fetch()?;
     let stage_path = input.join("stage.gs");
     if !stage_path.is_file() {
         return Err(anyhow!("{} not found", stage_path.display()).into());
