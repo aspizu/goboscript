@@ -4,7 +4,10 @@ use std::{
         File,
     },
     io::Read,
-    path::PathBuf,
+    path::{
+        self,
+        PathBuf,
+    },
     str,
 };
 
@@ -192,7 +195,11 @@ impl TranslationUnit {
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
         let mut buffer = vec![];
-        let mut path = self.path.parent().unwrap().join(path);
+        let mut path = if let Some(path) = path.strip_prefix("std/") {
+            stdlib.path.join(path)
+        } else {
+            self.path.parent().unwrap().join(path)
+        };
         let mut path_with_extension = path.clone();
         path_with_extension.set_extension("gs");
         if !path_with_extension.is_file() && path.is_dir() {
