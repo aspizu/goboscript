@@ -4,10 +4,7 @@ use std::{
         File,
     },
     io::Read,
-    path::{
-        self,
-        PathBuf,
-    },
+    path::PathBuf,
     str,
 };
 

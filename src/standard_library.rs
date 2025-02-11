@@ -2,9 +2,7 @@ use core::str;
 use std::{
     fs::{
         self,
-        File,
     },
-    io,
     path::{
         Path,
         PathBuf,
@@ -74,34 +72,32 @@ impl StandardLibrary {
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .status()
-                .with_context(|| format!("Failed to fetch standard library updates"))?
+                .with_context(|| "Failed to fetch standard library updates".to_string())?
                 .success()
             {
                 bail!("Failed to fetch standard library updates");
             }
-        } else {
-            if !Command::new("git")
-                .args([
-                    "clone",
-                    "https://github.com/goboscript/std",
-                    "--branch",
-                    "main",
-                    path.to_str().unwrap(),
-                ])
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .status()
-                .with_context(|| format!("Failed to clone standard library"))?
-                .success()
-            {
-                bail!("Failed to clone standard library");
-            }
+        } else if !Command::new("git")
+            .args([
+                "clone",
+                "https://github.com/goboscript/std",
+                "--branch",
+                "main",
+                path.to_str().unwrap(),
+            ])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .with_context(|| "Failed to clone standard library".to_string())?
+            .success()
+        {
+            bail!("Failed to clone standard library");
         }
         let output = Command::new("git")
             .current_dir(&path)
             .args(["describe", "--tags", "--abbrev=0"])
             .output()
-            .with_context(|| format!("Failed to get standard library version"))?;
+            .with_context(|| "Failed to get standard library version".to_string())?;
         if !output.status.success() {
             let error = str::from_utf8(output.stderr.as_slice()).unwrap();
             bail!("Failed to get latest standard library version {error}");
