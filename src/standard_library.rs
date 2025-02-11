@@ -13,6 +13,10 @@ use std::{
         Command,
         Stdio,
     },
+    time::{
+        SystemTime,
+        UNIX_EPOCH,
+    },
 };
 
 use anyhow::{
@@ -35,6 +39,27 @@ impl StandardLibrary {
     }
 
     pub fn from_latest(cache_path: &Path) -> anyhow::Result<Self> {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let verinfo = cache_path.join("verinfo.txt");
+        if verinfo.exists() {
+            let verinfo = fs::read_to_string(&verinfo).unwrap();
+            let (version, last_updated) = verinfo.split_once('/').unwrap();
+            let version = version
+                .trim()
+                .parse::<Version>()
+                .context("verinfo.txt contains invalid semver version")?;
+            let last_updated = last_updated.trim().parse::<u64>().unwrap();
+
+            if now - last_updated < 60 * 60 * 24 * 7 {
+                return Ok(Self {
+                    path: cache_path.join(format!("v{}", version)),
+                    version,
+                });
+            }
+        }
         let path = cache_path.join("main");
         fs::create_dir_all(&path).with_context(|| {
             format!(
@@ -83,6 +108,7 @@ impl StandardLibrary {
         }
         let version = str::from_utf8(output.stdout.as_slice()).unwrap().trim();
         let version = version.strip_prefix('v').unwrap_or(version);
+        fs::write(verinfo, format!("{version}/{}", now)).unwrap();
         Ok(Self {
             path,
             version: version
