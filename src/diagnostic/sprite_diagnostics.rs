@@ -20,7 +20,10 @@ use super::{
 use crate::{
     ast::Project,
     standard_library::StandardLibrary,
-    translation_unit::TranslationUnit,
+    translation_unit::{
+        Owner,
+        TranslationUnit,
+    },
 };
 
 pub struct SpriteDiagnostics {
@@ -64,6 +67,9 @@ impl SpriteDiagnostics {
             let (start, include) = self
                 .translation_unit
                 .translate_position(diagnostic.span.start);
+            if !matches!(include.owner, Owner::Local) {
+                continue;
+            }
             // TODO: memoize this using a memoization crate.
             let text = fs::read_to_string(&include.path).unwrap();
             let include_path = include.path.to_str().unwrap();
