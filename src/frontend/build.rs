@@ -125,8 +125,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
         .into());
     }
     visitor::pass0::visit_project(&mut project);
-    visitor::pass2::visit_project(&mut project);
-    visitor::pass1::visit_project(
+    visitor::pass1::visit_project(&mut project);
+    visitor::pass2::visit_project(
         &mut project,
         &mut stage_diagnostics,
         &mut sprites_diagnostics,

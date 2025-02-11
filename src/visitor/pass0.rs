@@ -36,7 +36,7 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
         );
     }
     for func in sprite.funcs.values_mut() {
-        let name: SmolStr = format!("__return_{}__", func.name).into();
+        let name: SmolStr = format!("{}:return", func.name).into();
         sprite.vars.insert(
             name.clone(),
             Var {

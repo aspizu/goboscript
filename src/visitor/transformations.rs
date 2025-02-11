@@ -1,6 +1,6 @@
 use logos::Span;
 
-use super::pass1::S;
+use super::pass2::S;
 use crate::{
     ast::{
         Arg,
