@@ -26,8 +26,8 @@ use anyhow::{
 use semver::Version;
 
 pub struct StandardLibrary {
-    version: Version,
-    path: PathBuf,
+    pub version: Version,
+    pub path: PathBuf,
 }
 
 impl StandardLibrary {
@@ -151,9 +151,5 @@ impl StandardLibrary {
             )
         })?;
         Ok(())
-    }
-
-    pub fn open_file(&self, path: &str) -> io::Result<File> {
-        File::open(self.path.join(path))
     }
 }
