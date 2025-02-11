@@ -19,7 +19,11 @@ use super::{
 };
 use crate::{
     ast::Project,
-    translation_unit::TranslationUnit,
+    standard_library::StandardLibrary,
+    translation_unit::{
+        Owner,
+        TranslationUnit,
+    },
 };
 
 pub struct SpriteDiagnostics {
@@ -29,11 +33,11 @@ pub struct SpriteDiagnostics {
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(path: PathBuf, stdlib: &StandardLibrary) -> Self {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
         let mut translation_unit = TranslationUnit::new(path);
         let mut diagnostics = vec![];
-        if let Err(diagnostic) = translation_unit.pre_process() {
+        if let Err(diagnostic) = translation_unit.pre_process(stdlib) {
             diagnostics.extend(diagnostic);
         }
         Self {
@@ -63,13 +67,12 @@ impl SpriteDiagnostics {
             let (start, include) = self
                 .translation_unit
                 .translate_position(diagnostic.span.start);
-            // Do not display diagnostics for standard library headers.
-            let Some(include_path) = &include.path else {
+            if !matches!(include.owner, Owner::Local) {
                 continue;
-            };
+            }
             // TODO: memoize this using a memoization crate.
-            let text = fs::read_to_string(include_path).unwrap();
-            let include_path = include_path.to_str().unwrap();
+            let text = fs::read_to_string(&include.path).unwrap();
+            let include_path = include.path.to_str().unwrap();
             if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
                 let mut message = level
                     .title(&title)

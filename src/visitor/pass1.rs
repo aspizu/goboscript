@@ -1,12 +1,21 @@
 use fxhash::FxHashMap;
-use logos::Span;
 
-use super::transformations::{self, keyword_arguments};
+use super::transformations::{
+    self,
+    keyword_arguments,
+};
 use crate::{
     ast::*,
-    blocks::{BinOp, Block, UnOp},
+    blocks::{
+        BinOp,
+        Block,
+        UnOp,
+    },
     codegen::sb3::D,
-    diagnostic::{DiagnosticKind, SpriteDiagnostics},
+    diagnostic::{
+        DiagnosticKind,
+        SpriteDiagnostics,
+    },
     misc::SmolStr,
 };
 

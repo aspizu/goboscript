@@ -11,10 +11,19 @@ use std::{
 use fxhash::FxHashSet;
 use logos::Span;
 
-use crate::diagnostic::{
-    Diagnostic,
-    DiagnosticKind,
+use crate::{
+    diagnostic::{
+        Diagnostic,
+        DiagnosticKind,
+    },
+    standard_library::StandardLibrary,
 };
+
+#[derive(Debug, Copy, Clone)]
+pub enum Owner {
+    Local,
+    StandardLibrary,
+}
 
 #[derive(Debug)]
 /// A section of a source file that is included in the translation unit.
@@ -24,7 +33,8 @@ pub struct Include {
     pub unit_range: Span,
     // The range that the source code of the include is in the source file.
     pub source_range: Span,
-    pub path: Option<PathBuf>,
+    pub path: PathBuf,
+    pub owner: Owner,
 }
 
 #[derive(Debug)]
@@ -51,20 +61,21 @@ impl TranslationUnit {
         instance.includes.push(Include {
             unit_range: 0..instance.text.len(),
             source_range: 0..instance.text.len(),
-            path: Some(instance.path.clone()),
+            path: instance.path.clone(),
+            owner: Owner::Local,
         });
         instance
     }
 
-    pub fn pre_process(&mut self) -> Result<(), Vec<Diagnostic>> {
-        self.parse(0)
+    pub fn pre_process(&mut self, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
+        self.parse(0, stdlib)
     }
 
     pub fn get_text(&self) -> &str {
         str::from_utf8(&self.text).unwrap()
     }
 
-    fn parse(&mut self, begin: usize) -> Result<(), Vec<Diagnostic>> {
+    fn parse(&mut self, begin: usize, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
         let mut diagnostics = vec![];
         let mut comment = 0;
         let mut i = begin;
@@ -113,7 +124,7 @@ impl TranslationUnit {
                         }
                         let path = str::from_utf8(path).unwrap().trim().to_owned();
                         if !self.included.contains(&path) {
-                            if let Err(err) = self.include(&path, path_span, i) {
+                            if let Err(err) = self.include(&path, path_span, i, stdlib) {
                                 diagnostics.push(err);
                             }
                             self.included.insert(path);
@@ -181,46 +192,39 @@ impl TranslationUnit {
         }
     }
 
-    fn include(&mut self, path: &str, path_span: Span, begin: usize) -> Result<(), Diagnostic> {
+    fn include(
+        &mut self,
+        path: &str,
+        path_span: Span,
+        begin: usize,
+        stdlib: &StandardLibrary,
+    ) -> Result<(), Diagnostic> {
         let mut buffer = vec![];
-        let (file, path): (&[u8], Option<PathBuf>) = if let Some(path) = path.strip_prefix("std/") {
-            let path = path.strip_suffix(".gs").unwrap_or(path);
-            let file = match path {
-                "algo" => include_bytes!("../std/algo.gs").as_slice(),
-                "emoji" => include_bytes!("../std/emoji.gs").as_slice(),
-                "math" => include_bytes!("../std/math.gs").as_slice(),
-                "string" => include_bytes!("../std/string.gs").as_slice(),
-                _ => {
-                    return Err(Diagnostic {
-                        kind: DiagnosticKind::UnrecognizedStandardLibraryHeader,
-                        span: path_span,
-                    });
-                }
-            };
-            (file, None)
+
+        let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
+            (Owner::StandardLibrary, stdlib.path.join(path))
         } else {
-            let mut path = self.path.parent().unwrap().join(path);
-            let mut path_with_extension = path.clone();
-            path_with_extension.set_extension("gs");
-            if !path_with_extension.is_file() && path.is_dir() {
-                let file_name = path.file_name().unwrap().to_owned();
-                path.push(file_name);
-            }
-            path.set_extension("gs");
-            let mut file = File::open(&path).map_err(|error| Diagnostic {
-                kind: DiagnosticKind::IOError(error),
-                span: path_span,
-            })?;
-            file.read_to_end(&mut buffer).unwrap();
-            (&buffer, Some(path))
+            (Owner::Local, self.path.parent().unwrap().join(path))
         };
-        self.text.splice(begin..begin, file.iter().cloned());
+        let mut path_with_extension = path.clone();
+        path_with_extension.set_extension("gs");
+        if !path_with_extension.is_file() && path.is_dir() {
+            let file_name = path.file_name().unwrap().to_owned();
+            path.push(file_name);
+        }
+        path.set_extension("gs");
+        let mut file = File::open(&path).map_err(|error| Diagnostic {
+            kind: DiagnosticKind::IOError(error),
+            span: path_span,
+        })?;
+        file.read_to_end(&mut buffer).unwrap();
+        self.text.splice(begin..begin, buffer.iter().cloned());
 
         // split current include into two parts
 
         let current_include = self.includes.remove(self.current_include);
 
-        // file before the include stmt
+        // buffer before the include stmt
         let top_unit_range = current_include.unit_range.start..begin;
         self.includes.insert(
             self.current_include,
@@ -229,6 +233,7 @@ impl TranslationUnit {
                 source_range: current_include.source_range.start
                     ..(current_include.source_range.start + top_unit_range.len()),
                 path: current_include.path.clone(),
+                owner: current_include.owner,
             },
         );
 
@@ -236,13 +241,14 @@ impl TranslationUnit {
         self.includes.insert(
             self.current_include + 1,
             Include {
-                unit_range: begin..begin + file.len(),
-                source_range: 0..file.len(),
+                unit_range: begin..begin + buffer.len(),
+                source_range: 0..buffer.len(),
                 path,
+                owner,
             },
         );
 
-        // file after the include stmt
+        // buffer after the include stmt
         let bottom_unit_range = begin..current_include.unit_range.end;
         self.includes.insert(
             self.current_include + 2,
@@ -253,13 +259,14 @@ impl TranslationUnit {
                         + top_unit_range.len()
                         + bottom_unit_range.len()),
                 path: current_include.path,
+                owner: current_include.owner,
             },
         );
 
         // adjust
         for include in &mut self.includes[self.current_include + 2..] {
-            include.unit_range.start += file.len();
-            include.unit_range.end += file.len();
+            include.unit_range.start += buffer.len();
+            include.unit_range.end += buffer.len();
         }
 
         self.current_include += 1;

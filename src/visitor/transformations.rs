@@ -2,17 +2,25 @@ use logos::Span;
 
 use super::pass1::S;
 use crate::{
-    ast::{Arg, Expr, Name, StructLiteralField, Value},
-    blocks::{BinOp, Repr, UnOp},
+    ast::{
+        Arg,
+        Expr,
+        Name,
+        StructLiteralField,
+        Value,
+    },
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     codegen::sb3::D,
     diagnostic::DiagnosticKind,
     misc::SmolStr,
 };
 
 pub fn apply<T, F>(value: &mut T, transformer: F)
-where
-    F: FnOnce(&T) -> Option<T>,
-{
+where F: FnOnce(&T) -> Option<T> {
     let replace = transformer(value);
     if let Some(replace) = replace {
         *value = replace;

@@ -12,6 +12,7 @@ use anyhow::{
     anyhow,
     Context,
 };
+use directories::ProjectDirs;
 use fxhash::FxHashMap;
 
 use crate::{
@@ -27,6 +28,7 @@ use crate::{
     },
     misc::SmolStr,
     parser,
+    standard_library::StandardLibrary,
     visitor,
 };
 
@@ -50,6 +52,7 @@ impl From<ProjectDiagnostics> for BuildError {
 }
 
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), BuildError> {
+    let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
@@ -58,11 +61,22 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
     let config_src = fs::read_to_string(&config_path).unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
+    let stdlib = if let Some(std) = &config.std {
+        let std = std
+            .strip_prefix('v')
+            .unwrap_or(std)
+            .parse()
+            .with_context(|| format!("std version `{}` is not a valid semver version", std))?;
+        StandardLibrary::new(std, &dirs.config_dir().join("std"))
+    } else {
+        StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
+    };
+    stdlib.fetch()?;
     let stage_path = input.join("stage.gs");
     if !stage_path.is_file() {
         return Err(anyhow!("{} not found", stage_path.display()).into());
     }
-    let mut stage_diagnostics = SpriteDiagnostics::new(stage_path);
+    let mut stage_diagnostics = SpriteDiagnostics::new(stage_path, &stdlib);
     let stage = parser::parse(&stage_diagnostics.translation_unit)
         .map_err(|err| {
             stage_diagnostics.diagnostics.push(err);
@@ -90,7 +104,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
             .to_str()
             .unwrap()
             .into();
-        let mut sprite_diagnostics = SpriteDiagnostics::new(sprite_path);
+        let mut sprite_diagnostics = SpriteDiagnostics::new(sprite_path, &stdlib);
         let sprite = parser::parse(&sprite_diagnostics.translation_unit)
             .map_err(|err| sprite_diagnostics.diagnostics.push(err))
             .unwrap_or_default();

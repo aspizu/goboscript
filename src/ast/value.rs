@@ -1,10 +1,16 @@
 mod binop;
 mod unop;
-use std::fmt::{self, Display};
+use std::fmt::{
+    self,
+    Display,
+};
 
 use logos::Span;
 
-use super::{ConstExpr, Expr};
+use super::{
+    ConstExpr,
+    Expr,
+};
 use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]
