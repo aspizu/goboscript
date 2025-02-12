@@ -1,5 +1,6 @@
 pub mod build;
 mod cli;
+mod docgen;
 mod fmt;
 mod new;
 
@@ -87,6 +88,13 @@ pub fn frontend() -> ExitCode {
         Command::Fmt { input } => match fmt::fmt(input) {
             Ok(_) => ExitCode::SUCCESS,
             Err(FmtError::AnyhowError(err)) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+        },
+        Command::Docgen { input, output } => match docgen::docgen(input, output) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(docgen::DocgenError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
                 ExitCode::FAILURE
             }

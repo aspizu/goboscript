@@ -82,6 +82,17 @@ pub enum Command {
         input: Option<PathBuf>,
     },
 
+    /// Generate documentation for a goboscript project.
+    #[command()]
+    Docgen {
+        #[arg(short, long)]
+        /// Project directory, if not given, the current directory is used.
+        input: Option<PathBuf>,
+        #[arg(short, long)]
+        /// Output directory, if not given, the `docs` directory is used.
+        output: Option<PathBuf>,
+    },
+
     /// Generate completions for a shell.
     #[command()]
     Completions {
