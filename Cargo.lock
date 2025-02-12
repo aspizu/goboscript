@@ -558,6 +558,7 @@ dependencies = [
  "logos",
  "md-5",
  "pretty_env_logger",
+ "regex",
  "semver",
  "serde",
  "serde_json",
