@@ -1,4 +1,5 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::{
     type_::Type,
@@ -6,7 +7,7 @@ use super::{
 };
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct List {
     pub name: SmolStr,
     pub span: Span,
@@ -15,20 +16,20 @@ pub struct List {
     pub is_used: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum ListDefault {
     ConstExprs(Vec<ConstExpr>),
     Cmd(Cmd),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Cmd {
     pub program: Option<Program>,
     pub cmd: SmolStr,
     pub span: Span,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Program {
     pub name: SmolStr,
     pub span: Span,

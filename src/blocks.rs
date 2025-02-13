@@ -1,10 +1,12 @@
+use serde::Serialize;
+
 pub struct Menu {
     pub input: &'static str,
     pub opcode: &'static str,
     pub default: &'static str,
     pub field: &'static str,
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum UnOp {
     Not,
     Length,
@@ -97,7 +99,7 @@ impl UnOp {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum BinOp {
     Add,
     Sub,
@@ -1041,7 +1043,7 @@ impl Block {
         }
     }
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize)]
 pub enum Repr {
     XPosition,
     YPosition,

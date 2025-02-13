@@ -3,6 +3,7 @@ mod blocks;
 mod codegen;
 mod config;
 mod diagnostic;
+mod docgen;
 mod fmt;
 mod frontend;
 mod lexer;

@@ -1,10 +1,11 @@
 use fxhash::FxHashMap;
 use logos::Span;
+use serde::Serialize;
 
 use super::*;
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Func {
     pub name: SmolStr,
     pub span: Span,

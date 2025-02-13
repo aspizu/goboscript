@@ -89,7 +89,7 @@ pub enum Command {
         /// Project directory, if not given, the current directory is used.
         input: Option<PathBuf>,
         #[arg(short, long)]
-        /// Output directory, if not given, the `docs` directory is used.
+        /// Output file, if not given, the `docs.json` file is used.
         output: Option<PathBuf>,
     },
 
