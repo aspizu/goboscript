@@ -4,6 +4,7 @@ use clap_derive::{
     Parser,
     Subcommand,
 };
+use semver::Version;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -36,6 +37,9 @@ pub enum Command {
         input: PathBuf,
         /// Output file, if not given, it will be the file name + `.json`
         output: Option<PathBuf>,
+        /// Version of the standard library to use. Defaults to bleeding-edge.
+        #[arg(short, long)]
+        std: Option<Version>,
     },
 
     /// Create a new goboscript project with a blank backdrop, a main sprite with a
@@ -49,7 +53,7 @@ pub enum Command {
 
         /// Version of the standard library to use. Defaults to bleeding-edge.
         #[arg(short = 's', long)]
-        std: Option<String>,
+        std: Option<Version>,
 
         /// (alias: --fps) Custom frame rate, used by TurboWarp.
         #[arg(short = 'f', long, alias = "fps")]

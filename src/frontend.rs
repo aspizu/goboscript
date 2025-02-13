@@ -38,7 +38,7 @@ pub fn frontend() -> ExitCode {
                 }
             }
         },
-        Command::Parse { input, output } => match parse::parse(input, output) {
+        Command::Parse { input, output, std } => match parse::parse(input, output, std) {
             Ok(()) => ExitCode::SUCCESS,
             Err(parse::ParseError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
