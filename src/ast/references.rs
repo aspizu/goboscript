@@ -1,8 +1,9 @@
 use fxhash::FxHashSet;
+use serde::Serialize;
 
 use crate::misc::SmolStr;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct References {
     pub procs: FxHashSet<SmolStr>,
     pub funcs: FxHashSet<SmolStr>,

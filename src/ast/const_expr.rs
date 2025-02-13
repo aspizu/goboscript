@@ -1,4 +1,5 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::Value;
 use crate::blocks::{
@@ -6,7 +7,7 @@ use crate::blocks::{
     UnOp,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum ConstExpr {
     Value {
         value: Value,

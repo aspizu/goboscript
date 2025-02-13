@@ -1,4 +1,5 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::{
     value::Value,
@@ -14,7 +15,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Expr {
     Value {
         value: Value,

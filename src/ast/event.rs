@@ -1,4 +1,5 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::{
     event_kind::EventKind,
@@ -6,7 +7,7 @@ use super::{
     References,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Event {
     pub kind: EventKind,
     pub span: Span,

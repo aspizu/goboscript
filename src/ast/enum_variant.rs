@@ -1,9 +1,10 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::value::Value;
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct EnumVariant {
     pub name: SmolStr,
     pub span: Span,

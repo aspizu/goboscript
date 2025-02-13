@@ -1,9 +1,10 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::struct_field::StructField;
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Struct {
     pub name: SmolStr,
     pub span: Span,

@@ -2,11 +2,12 @@ use fxhash::{
     FxHashMap,
     FxHashSet,
 };
+use serde::Serialize;
 
 use super::*;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct Sprite {
     pub costumes: Vec<Costume>,
     pub procs: FxHashMap<SmolStr, Proc>,

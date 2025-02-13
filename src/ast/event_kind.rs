@@ -1,4 +1,5 @@
 use logos::Span;
+use serde::Serialize;
 
 use super::{
     expr::Expr,
@@ -8,7 +9,7 @@ use super::{
 use crate::misc::SmolStr;
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum EventKind {
     OnFlag,
     OnKey { key: SmolStr, span: Span },

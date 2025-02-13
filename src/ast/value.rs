@@ -6,6 +6,7 @@ use std::fmt::{
 };
 
 use logos::Span;
+use serde::Serialize;
 
 use super::{
     ConstExpr,
@@ -13,7 +14,7 @@ use super::{
 };
 use crate::misc::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Value {
     Int(i64),
     Float(f64),
