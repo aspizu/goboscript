@@ -55,6 +55,60 @@ where T: Write + Seek
         self.stmts(s, d, body, body_id, Some(this_id))
     }
 
+    pub fn foreach(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        name: &Name,
+        times: &Expr,
+        body: &[Stmt],
+    ) -> io::Result<()> {
+        let times_id = self.id.new_id();
+        let body_id = self.id.new_id();
+        self.begin_inputs()?;
+        self.input(s, d, "VALUE", times, times_id)?;
+        self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
+        self.end_obj()?; // inputs
+        match s.qualify_name(d, name) {
+            Some(QualifiedName::Var(qualified_name, _)) => {
+                self.single_field_id("VARIABLE", &qualified_name)?
+            }
+            Some(QualifiedName::List(..)) => {
+                d.report(
+                    DiagnosticKind::UnrecognizedVariable(name.basename().clone()),
+                    &name.span(),
+                );
+            }
+            None => {}
+        }
+        self.end_obj()?; // node
+        self.expr(s, d, times, times_id, this_id)?;
+        self.stmts(s, d, body, body_id, Some(this_id))
+    }
+
+    pub fn r#for(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        cond: &Expr,
+        incr: &Stmt,
+        body: &[Stmt],
+    ) -> io::Result<()> {
+        let cond_id = self.id.new_id();
+        let incr_id = self.id.new_id();
+        let body_id = self.id.new_id();
+        self.begin_inputs()?;
+        self.input(s, d, "CONDITION", cond, cond_id)?;
+        self.substack("SUBSTACK", Some((!body.is_empty()).then_some(body_id).unwrap_or(incr_id)))?;
+        self.end_obj()?; // inputs
+        self.end_obj()?; // node
+        self.expr(s, d, cond, cond_id, this_id)?;
+        self.stmts_with_next(s, d, body, body_id, Some(incr_id), Some(this_id))?;
+        self.stmt(s, d, incr, incr_id, None, Some(body_id))
+    }
+
     pub fn forever(
         &mut self,
         s: S,

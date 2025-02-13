@@ -87,6 +87,23 @@ Stmt: Stmt = {
         Stmt::Branch { cond, if_body, else_body: vec![else_body] }
     },
     REPEAT <times:BoxedIfExpr> <body:Stmts> => Stmt::Repeat { times, body },
+    FOR <l:@L> <name:NAME> <r:@R> IN <times:BoxedIfExpr> <body:Stmts> => {
+        Stmt::ForEach {
+            name: Name::Name { name, span: l..r },
+            times,
+            body,
+        }
+    },
+    FOR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" <cond:BoxedIfExpr> ";" <incr:BoxedStmt> <body:Stmts> => {
+        Stmt::For {
+            name: Name::Name { name, span: l..r },
+            value,
+            type_,
+            cond,
+            incr,
+            body,
+        }
+    },
     <l:@L> FOREVER <r:@R> <body:Stmts> => Stmt::Forever { body, span: l..r },
     UNTIL <cond:BoxedIfExpr> <body:Stmts> => Stmt::Until { cond, body },
     <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" => {
@@ -296,6 +313,9 @@ Elif: Stmt = {
         Stmt::Branch { cond, if_body, else_body }
     },
 }
+
+#[inline]
+BoxedStmt: Box<Stmt> = <stmt:Stmt> => Box::new(stmt);
 
 #[inline]
 BoxedExpr: Box<Expr> = <expr:Expr> => Box::new(expr);
@@ -593,6 +613,7 @@ extern {
         ELSE           => Token::Else,
         ELIF           => Token::Elif,
         UNTIL          => Token::Until,
+        FOR            => Token::For,
         FOREVER        => Token::Forever,
         REPEAT         => Token::Repeat,
         ","            => Token::Comma,

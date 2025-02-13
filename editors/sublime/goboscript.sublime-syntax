@@ -22,7 +22,7 @@ contexts:
       match: "\\b(costumes|sounds|global|variables|lists|nowarp|onflag|onkey|onbackdrop|onloudness|ontimer|on|onclone)\\b"
 
     - scope: keyword.control
-      match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert)\\b"
+      match: "\\b(if|else|elif|until|for|forever|repeat|delete|at|add|to|insert)\\b"
 
     - scope: keyword
       match: "\\b(error|warn|breakpoint|local|not|and|or|in|length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"

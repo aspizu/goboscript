@@ -20,6 +20,26 @@ until condition == true {
 
 ![](../assets/until.png){width="200"}
 
+## for each loop
+
+```goboscript
+for x in n {
+    # code
+}
+```
+
+![](../assets/foreach.png){width="200"}
+
+## for loop
+
+```goboscript
+for x = 0; x > n; x++ {
+    # code
+}
+```
+
+![](../assets/for.png){width="100"}
+
 ## forever loop
 
 ```goboscript
