@@ -1,3 +1,4 @@
+use semver::Version;
 use serde::{
     Deserialize,
     Serialize,
@@ -6,7 +7,7 @@ use serde::{
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
 pub struct Config {
     #[serde(default)]
-    pub std: Option<String>,
+    pub std: Option<Version>,
     #[serde(default)]
     pub frame_rate: Option<u64>,
     #[serde(default)]

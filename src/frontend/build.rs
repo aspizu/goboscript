@@ -62,12 +62,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
     let stdlib = if let Some(std) = &config.std {
-        let std = std
-            .strip_prefix('v')
-            .unwrap_or(std)
-            .parse()
-            .with_context(|| format!("std version `{}` is not a valid semver version", std))?;
-        StandardLibrary::new(std, &dirs.config_dir().join("std"))
+        StandardLibrary::new(std.clone(), &dirs.config_dir().join("std"))
     } else {
         StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
     };
