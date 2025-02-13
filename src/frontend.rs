@@ -2,6 +2,7 @@ pub mod build;
 mod cli;
 mod fmt;
 mod new;
+mod parse;
 
 use std::process::ExitCode;
 
@@ -35,6 +36,13 @@ pub fn frontend() -> ExitCode {
                 } else {
                     ExitCode::SUCCESS
                 }
+            }
+        },
+        Command::Parse { input, output } => match parse::parse(input, output) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(parse::ParseError::AnyhowError(err)) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
             }
         },
         Command::Completions { shell } => {
@@ -81,11 +89,11 @@ pub fn frontend() -> ExitCode {
                     }
                     ExitCode::FAILURE
                 }
-                Ok(_) => ExitCode::SUCCESS,
+                Ok(()) => ExitCode::SUCCESS,
             }
         }
         Command::Fmt { input } => match fmt::fmt(input) {
-            Ok(_) => ExitCode::SUCCESS,
+            Ok(()) => ExitCode::SUCCESS,
             Err(FmtError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
                 ExitCode::FAILURE

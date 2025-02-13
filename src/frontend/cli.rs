@@ -27,6 +27,17 @@ pub enum Command {
         output: Option<PathBuf>,
     },
 
+    /// Parse and serialize a goboscript source file (.gs) to JSON.
+    /// This can be used for example to generate documentation for a file.
+    #[command()]
+    Parse {
+        /// File to parse
+        #[arg(short, long)]
+        input: PathBuf,
+        /// Output file, if not given, it will be the file name + `.json`
+        output: Option<PathBuf>,
+    },
+
     /// Create a new goboscript project with a blank backdrop, a main sprite with a
     /// blank costume.
     #[command()]
