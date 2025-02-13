@@ -38,7 +38,8 @@ pub fn parse(
         StandardLibrary::from_latest(&cache_path)?
     };
     let output = output.unwrap_or_else(|| input.with_extension("json"));
-    let mut diagnostics = SpriteDiagnostics::new(input, &stdlib);
+    let mut diagnostics = SpriteDiagnostics::new(input.clone(), &stdlib)
+        .with_context(|| format!("failed to open {}", input.display()))?;
     let sprite = parser::parse(&diagnostics.translation_unit)
         .map_err(|err| {
             diagnostics.diagnostics.push(err);

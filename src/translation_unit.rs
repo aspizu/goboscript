@@ -3,7 +3,10 @@ use std::{
         self,
         File,
     },
-    io::Read,
+    io::{
+        self,
+        Read,
+    },
     path::PathBuf,
     str,
 };
@@ -48,8 +51,8 @@ pub struct TranslationUnit {
 }
 
 impl TranslationUnit {
-    pub fn new(path: PathBuf) -> Self {
-        let text = fs::read(&path).unwrap();
+    pub fn new(path: PathBuf) -> io::Result<Self> {
+        let text = fs::read(&path)?;
         let mut instance = Self {
             text,
             path,
@@ -64,7 +67,7 @@ impl TranslationUnit {
             path: instance.path.clone(),
             owner: Owner::Local,
         });
-        instance
+        Ok(instance)
     }
 
     pub fn pre_process(&mut self, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {

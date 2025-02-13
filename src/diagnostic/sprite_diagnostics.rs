@@ -2,6 +2,7 @@ use std::{
     fs::{
         self,
     },
+    io,
     path::PathBuf,
 };
 
@@ -33,18 +34,18 @@ pub struct SpriteDiagnostics {
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf, stdlib: &StandardLibrary) -> Self {
+    pub fn new(path: PathBuf, stdlib: &StandardLibrary) -> io::Result<Self> {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-        let mut translation_unit = TranslationUnit::new(path);
+        let mut translation_unit = TranslationUnit::new(path)?;
         let mut diagnostics = vec![];
         if let Err(diagnostic) = translation_unit.pre_process(stdlib) {
             diagnostics.extend(diagnostic);
         }
-        Self {
+        Ok(Self {
             sprite_name,
             translation_unit,
             diagnostics,
-        }
+        })
     }
 
     pub fn report(&mut self, kind: DiagnosticKind, span: &Span) {
