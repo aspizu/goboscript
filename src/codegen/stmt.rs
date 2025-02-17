@@ -361,6 +361,11 @@ where T: Write + Seek
         if let Some(fields) = block.fields() {
             write!(self, r#","fields":{fields}"#)?;
         }
+        if let Block::StopOtherScripts = block {
+            self.write_all(
+                b",\"mutation\":{\"tagName\":\"mutation\",\"children\": [],\"hasnext\": \"true\"}",
+            )?;
+        }
         self.end_obj()?; // node
         for ((_, arg), arg_id) in args.iter().zip(arg_ids) {
             self.expr(s, d, arg, arg_id, this_id)?;
