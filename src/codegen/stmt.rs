@@ -397,6 +397,23 @@ where T: Write + Seek
         span: &Span,
         args: &[(Option<(SmolStr, Span)>, Expr)],
     ) -> io::Result<()> {
+        if name == "log" {
+            return self.proc_call_impl(
+                &Proc::new(
+                    "\u{200b}\u{200b}log\u{200b}\u{200b}".into(),
+                    span.clone(),
+                    vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                    false,
+                ),
+                s,
+                d,
+                this_id,
+                name,
+                span,
+                args,
+                true,
+            );
+        }
         let Some(proc) = s.sprite.procs.get(name) else {
             if name == "breakpoint" {
                 return self.proc_call_impl(
@@ -404,23 +421,6 @@ where T: Write + Seek
                         "\u{200b}\u{200b}breakpoint\u{200b}\u{200b}".into(),
                         span.clone(),
                         vec![],
-                        false,
-                    ),
-                    s,
-                    d,
-                    this_id,
-                    name,
-                    span,
-                    args,
-                    true,
-                );
-            }
-            if name == "log" {
-                return self.proc_call_impl(
-                    &Proc::new(
-                        "\u{200b}\u{200b}log\u{200b}\u{200b}".into(),
-                        span.clone(),
-                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                         false,
                     ),
                     s,
