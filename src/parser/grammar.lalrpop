@@ -68,6 +68,9 @@ Declr: () = {
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
+    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:ConstExpr> ";" => {
+        sprite.vars.insert(name.clone(), Var::new(name, l..r, type_, value));
+    },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
         sprite.lists.insert(name.clone(), List::new(name, l..r, type_));
     },
@@ -708,5 +711,6 @@ extern {
         SET_ROTATION_STYLE_LEFT_RIGHT => Token::SetRotationStyleLeftRight,
         SET_ROTATION_STYLE_ALL_AROUND => Token::SetRotationStyleAllAround,
         SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
+        VAR => Token::Var,
     }
 }
