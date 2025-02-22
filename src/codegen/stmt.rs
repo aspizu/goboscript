@@ -415,7 +415,7 @@ where T: Write + Seek
                     true,
                 );
             }
-            if name == "sa_log" {
+            if name == "log" {
                 return self.proc_call_impl(
                     &Proc::new(
                         "\u{200b}\u{200b}log\u{200b}\u{200b}".into(),
