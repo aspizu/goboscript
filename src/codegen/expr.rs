@@ -51,6 +51,15 @@ where T: Write + Seek
             || s.func
                 .is_some_and(|func| func.args.iter().any(|arg| &arg.name == basename)))
         {
+            if basename == "tw_is_compiled" {
+                return self.arg_impl(this_id, parent_id, "is compiled?", true);
+            }
+            if basename == "tw_is_turbowarp" {
+                return self.arg_impl(this_id, parent_id, "is TurboWarp?", true);
+            }
+            if basename == "tw_is_forkphorus" {
+                return self.arg_impl(this_id, parent_id, "is forkphorus?", true);
+            }
             d.report(
                 DiagnosticKind::UnrecognizedArgument(basename.clone()),
                 &name.span(),
@@ -62,10 +71,29 @@ where T: Write + Seek
             Some(fieldname) => qualify_struct_var_name(fieldname, basename),
             None => basename.clone(),
         };
+
+        self.arg_impl(this_id, parent_id, &qualified_name, false)
+    }
+
+    fn arg_impl(
+        &mut self,
+        this_id: NodeID,
+        parent_id: NodeID,
+        qualified_name: &str,
+        is_boolean: bool,
+    ) -> io::Result<()> {
         self.begin_node(
-            Node::new("argument_reporter_string_number", this_id).parent_id(parent_id),
+            Node::new(
+                if is_boolean {
+                    "argument_reporter_boolean"
+                } else {
+                    "argument_reporter_string_number"
+                },
+                this_id,
+            )
+            .parent_id(parent_id),
         )?;
-        self.single_field("VALUE", &qualified_name)?;
+        self.single_field("VALUE", qualified_name)?;
         self.end_obj() // node
     }
 
@@ -370,7 +398,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::call(func.name.clone(), &qualified_args, true)
+            Mutation::call(func.name.clone(), &qualified_args, true, false)
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {

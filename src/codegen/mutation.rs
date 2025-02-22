@@ -14,24 +14,37 @@ pub struct Mutation<'a> {
     args: &'a Vec<(SmolStr, NodeID)>,
     warp: bool,
     is_call: bool,
+    compact: bool,
 }
 
 impl<'a> Mutation<'a> {
-    pub fn prototype(name: SmolStr, args: &'a Vec<(SmolStr, NodeID)>, warp: bool) -> Self {
+    pub fn prototype(
+        name: SmolStr,
+        args: &'a Vec<(SmolStr, NodeID)>,
+        warp: bool,
+        compact: bool,
+    ) -> Self {
         Self {
             name,
             args,
             warp,
             is_call: false,
+            compact,
         }
     }
 
-    pub fn call(name: SmolStr, args: &'a Vec<(SmolStr, NodeID)>, warp: bool) -> Self {
+    pub fn call(
+        name: SmolStr,
+        args: &'a Vec<(SmolStr, NodeID)>,
+        warp: bool,
+        compact: bool,
+    ) -> Self {
         Self {
             name,
             args,
             warp,
             is_call: true,
+            compact,
         }
     }
 }
@@ -42,7 +55,11 @@ impl Display for Mutation<'_> {
         write!(f, r#","warp":"{}""#, self.warp)?;
         write!(f, r#","proccode":"{}"#, self.name)?;
         for (arg_name, _) in self.args {
-            write!(f, " {arg_name}: %s")?;
+            if self.compact {
+                write!(f, " %s")?;
+            } else {
+                write!(f, " {arg_name}: %s")?;
+            }
         }
         write!(f, "\"")?;
         write!(f, r#","argumentids":"["#)?;

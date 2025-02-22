@@ -19,8 +19,10 @@ use super::{
 };
 use crate::{
     ast::{
+        Arg,
         Expr,
         Name,
+        Proc,
         Stmt,
         Type,
     },
@@ -395,10 +397,75 @@ where T: Write + Seek
         span: &Span,
         args: &[(Option<(SmolStr, Span)>, Expr)],
     ) -> io::Result<()> {
+        if name == "log" {
+            return self.proc_call_impl(
+                &Proc::new(
+                    "\u{200b}\u{200b}log\u{200b}\u{200b}".into(),
+                    span.clone(),
+                    vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                    false,
+                ),
+                s,
+                d,
+                this_id,
+                name,
+                span,
+                args,
+                true,
+            );
+        }
         let Some(proc) = s.sprite.procs.get(name) else {
+            if name == "breakpoint" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}breakpoint\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                    true,
+                );
+            }
+            if name == "error" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}error\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                    true,
+                );
+            }
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
             return Ok(());
         };
+        self.proc_call_impl(proc, s, d, this_id, name, span, args, false)
+    }
+
+    fn proc_call_impl(
+        &mut self,
+        proc: &Proc,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        name: &SmolStr,
+        span: &Span,
+        args: &[(Option<(SmolStr, Span)>, Expr)],
+        compact: bool,
+    ) -> io::Result<()> {
         if args.iter().any(|(keyword, _)| keyword.is_some()) {
             panic!("keyword args not transformed.")
         }
@@ -486,7 +553,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::call(proc.name.clone(), &qualified_args, proc.warp)
+            Mutation::call(proc.name.clone(), &qualified_args, proc.warp, compact)
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {

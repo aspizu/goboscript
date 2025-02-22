@@ -283,6 +283,7 @@ Stmt: Stmt = {
         Some(block) => Stmt::Block { block, span: l..r, args },
         None => Stmt::ProcCall { name, span: l..r, args },
     },
+    <l:@L> LOG <r:@R> <arg:Expr> ";" => Stmt::ProcCall { name: "log".into(), span: l..r, args: vec![(None, arg)] },
 }
 
 Elif: Stmt = {
