@@ -1149,9 +1149,7 @@ impl Repr {
     }
 
     pub fn overloads(name: &str) -> &'static [Self] {
-        match name {
-            _ => &[],
-        }
+        &[]
     }
 
     pub fn from_shape(name: &str, args: usize) -> Option<Self> {

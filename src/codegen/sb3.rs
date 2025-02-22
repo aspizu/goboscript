@@ -602,6 +602,36 @@ where T: Write + Seek
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         write!(self, "]")?; // sounds
+        if let Some(x_position) = &sprite.x_position {
+            let x_position = x_position.evaluate();
+            write!(self, r#","x":{}"#, x_position)?;
+        }
+        if let Some(y_position) = &sprite.y_position {
+            let y_position = y_position.evaluate();
+            write!(self, r#","y":{}"#, y_position)?;
+        }
+        if let Some(size) = &sprite.size {
+            let size = size.evaluate();
+            write!(self, r#","size":{}"#, size)?;
+        }
+        if let Some(direction) = &sprite.direction {
+            let direction = direction.evaluate();
+            write!(self, r#","direction":{}"#, direction)?;
+        }
+        if let Some(volume) = &sprite.volume {
+            let volume = volume.evaluate();
+            write!(self, r#","volume":{}"#, volume)?;
+        }
+        if let Some(layer_order) = &sprite.layer_order {
+            let layer_order = layer_order.evaluate();
+            write!(self, r#","layerOrder":{}"#, layer_order)?;
+        }
+        if !sprite.hidden {
+            write!(self, r#","visible":true"#)?;
+        } else {
+            write!(self, r#","visible":false"#)?;
+        }
+        write!(self, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
         write!(self, "}}")?; // sprite
         Ok(())
     }
