@@ -203,8 +203,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
                             }
                             .into(),
                             visited: true,
-                        }
-                        .into(),
+                        },
                     )
                 }
             }
