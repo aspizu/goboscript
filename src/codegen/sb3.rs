@@ -639,14 +639,24 @@ where T: Write + Seek
     pub fn json_var_declaration(
         &mut self,
         var_name: &str,
+        default: &Option<ConstExpr>,
         is_cloud: bool,
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        if is_cloud {
-            write!(self, "\"{}\":[\"\u{2601} {}\",0,true]", var_name, var_name)
+        let default = if let Some(default) = default {
+            default.evaluate().to_string()
         } else {
-            write!(self, "\"{}\":[\"{}\",0]", var_name, var_name)
+            "0".into()
+        };
+        if is_cloud {
+            write!(
+                self,
+                "\"{}\":[\"\u{2601} {}\",{default},true]",
+                var_name, var_name
+            )
+        } else {
+            write!(self, "\"{}\":[\"{}\",{default}]", var_name, var_name)
         }
     }
 
@@ -659,7 +669,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         match &var.type_ {
             Type::Value => {
-                self.json_var_declaration(&var.name, var.is_cloud, comma)?;
+                self.json_var_declaration(&var.name, &var.default, var.is_cloud, comma)?;
             }
             Type::Struct {
                 name: type_name,
@@ -674,7 +684,7 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
-                    self.json_var_declaration(&qualified_var_name, false, comma)?;
+                    self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
                 }
             }
         }
@@ -692,7 +702,7 @@ where T: Write + Seek
         match &var.type_ {
             Type::Value => {
                 let qualified_var_name = qualify_local_var_name(proc_name, &var.name);
-                self.json_var_declaration(&qualified_var_name, false, comma)?;
+                self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
             }
             Type::Struct {
                 name: type_name,
@@ -710,7 +720,7 @@ where T: Write + Seek
                         proc_name,
                         &qualify_struct_var_name(&field.name, &var.name),
                     );
-                    self.json_var_declaration(&qualified_var_name, false, comma)?;
+                    self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
                 }
             }
         }

@@ -69,7 +69,25 @@ Declr: () = {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
     VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:ConstExpr> ";" => {
-        sprite.vars.insert(name.clone(), Var::new(name, l..r, type_, value));
+        sprite.vars.insert(name.clone(), Var {
+            name,
+            span: l..r,
+            type_,
+            default: Some(value),
+            is_cloud: false,
+            is_used: false,
+
+        });
+    },
+    CLOUD <l:@L> <name:NAME> <r:@R> ";" => {
+        sprite.vars.insert(name.clone(), Var {
+            name,
+            span: l..r,
+            type_: Type::Value,
+            default: None,
+            is_cloud: true,
+            is_used: false,
+        });
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
         sprite.lists.insert(name.clone(), List::new(name, l..r, type_));

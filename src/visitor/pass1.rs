@@ -265,6 +265,7 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
                         name: callsite.basename().clone(),
                         span: callsite.basespan().clone(),
                         type_: func.type_.clone(),
+                        default: None,
                         is_cloud: false,
                         is_used: true,
                     },
