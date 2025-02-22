@@ -24,4 +24,12 @@ pub struct Sprite {
     pub events: Vec<Event>,
     pub used_procs: FxHashSet<SmolStr>,
     pub used_funcs: FxHashSet<SmolStr>,
+    pub volume: Option<ConstExpr>,
+    pub layer_order: Option<ConstExpr>,
+    pub x_position: Option<ConstExpr>,
+    pub y_position: Option<ConstExpr>,
+    pub size: Option<ConstExpr>,
+    pub direction: Option<ConstExpr>,
+    pub rotation_style: Option<SmolStr>,
+    pub hidden: bool,
 }

@@ -15,6 +15,24 @@ pub Sprite = Declr*;
 Declr: () = {
     ";",
     COSTUMES Comma<Costume> ";",
+    HIDE ";" => {
+        sprite.hidden = true;
+    },
+    SET_X <x:ConstExpr> => {
+        sprite.x_position = Some(x);
+    },
+    SET_Y <y:ConstExpr> => {
+        sprite.y_position = Some(y);
+    },
+    SET_SIZE <size:ConstExpr> => {
+        sprite.size = Some(size);
+    },
+    SET_VOLUME <volume:ConstExpr> => {
+        sprite.volume = Some(volume);
+    },
+    POINT_IN_DIRECTION <direction:ConstExpr> => {
+        sprite.direction = Some(direction);
+    },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, w.is_none()));
         sprite.proc_definitions.insert(n.clone(), b);
@@ -283,6 +301,11 @@ Stmt: Stmt = {
         Some(block) => Stmt::Block { block, span: l..r, args },
         None => Stmt::ProcCall { name, span: l..r, args },
     },
+    <l:@L> SET_X <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetX, span: l..r, args: vec![(None, arg)] },
+    <l:@L> SET_Y <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetY, span: l..r, args: vec![(None, arg)] },
+    <l:@L> SET_SIZE <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetSize, span: l..r, args: vec![(None, arg)] },
+    <l:@L> POINT_IN_DIRECTION <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::PointInDirection, span: l..r, args: vec![(None, arg)] },
+    <l:@L> SET_VOLUME <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetVolume, span: l..r, args: vec![(None, arg)] },
     <l:@L> LOG <r:@R> <arg:Expr> ";" => Stmt::ProcCall { name: "log".into(), span: l..r, args: vec![(None, arg)] },
 }
 
@@ -665,5 +688,10 @@ extern {
         LIST           => Token::List,
         CLOUD          => Token::Cloud,
         "|>"           => Token::Pipe,
+        SET_X          => Token::SetX,
+        SET_Y          => Token::SetY,
+        SET_SIZE       => Token::SetSize,
+        POINT_IN_DIRECTION => Token::PointInDirection,
+        SET_VOLUME     => Token::SetVolume,
     }
 }

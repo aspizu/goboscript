@@ -213,4 +213,14 @@ pub enum Token {
     Cloud,
     #[token("|>")]
     Pipe,
+    #[token("set_x")]
+    SetX,
+    #[token("set_y")]
+    SetY,
+    #[token("set_size")]
+    SetSize,
+    #[token("point_in_direction")]
+    PointInDirection,
+    #[token("set_volume")]
+    SetVolume,
 }

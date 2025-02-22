@@ -6,6 +6,7 @@ nav:
     - Configuration: configuration.md
     - Language:
           - Syntax: language/syntax.md
+          - Sprites: language/sprites.md
           - Costumes: language/costumes.md
           - Variables: language/variables.md
           - Lists: language/lists.md
