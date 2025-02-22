@@ -47,3 +47,21 @@ set_volume 100;
 ```goboscript
 hide;
 ```
+
+### Set Sprite rotation style to **left-right**
+
+```goboscript
+set_rotation_style_left_right;
+```
+
+### Set Sprite rotation style to **all around**
+
+```goboscript
+set_rotation_style_all_around;
+```
+
+### Set Sprite rotation style to **don't rotate**
+
+```goboscript
+set_rotation_style_do_not_rotate;
+```
