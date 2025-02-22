@@ -21,6 +21,7 @@ use crate::{
     ast::{
         Expr,
         Name,
+        Proc,
         Stmt,
         Type,
     },
@@ -396,9 +397,38 @@ where T: Write + Seek
         args: &[(Option<(SmolStr, Span)>, Expr)],
     ) -> io::Result<()> {
         let Some(proc) = s.sprite.procs.get(name) else {
+            if name == "breakpoint" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}breakpoint\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                );
+            }
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
             return Ok(());
         };
+        self.proc_call_impl(proc, s, d, this_id, name, span, args)
+    }
+
+    fn proc_call_impl(
+        &mut self,
+        proc: &Proc,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        name: &SmolStr,
+        span: &Span,
+        args: &[(Option<(SmolStr, Span)>, Expr)],
+    ) -> io::Result<()> {
         if args.iter().any(|(keyword, _)| keyword.is_some()) {
             panic!("keyword args not transformed.")
         }
