@@ -35,3 +35,11 @@ The Scratch Addons' debugger addon block to set a breakpoint.
 ```goboscript
 breakpoint;
 ```
+
+## `log`
+
+The Scratch Addons' debugger addon block to log a value.
+
+```goboscript
+log expr;
+```
