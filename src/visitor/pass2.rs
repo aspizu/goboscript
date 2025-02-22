@@ -9,10 +9,12 @@ use crate::{
     blocks::{
         BinOp,
         Block,
+        Repr,
         UnOp,
     },
     codegen::sb3::D,
     diagnostic::{
+        keys,
         DiagnosticKind,
         SpriteDiagnostics,
     },
@@ -297,10 +299,26 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             visit_expr(lhs, s, d, false);
         }
         Expr::Repr {
-            repr: _,
+            repr,
             span: _,
             args,
         } => {
+            if let Repr::KeyPressed = repr {
+                if let Some((_, arg)) = args.get(0) {
+                    if let Expr::Value {
+                        value: Value::String(keyname),
+                        span: keyname_span,
+                    } = arg
+                    {
+                        if !keys::is_key(keyname) {
+                            d.report(
+                                DiagnosticKind::UnrecognizedKey(keyname.clone()),
+                                keyname_span,
+                            );
+                        }
+                    }
+                }
+            }
             for (_, arg) in args {
                 visit_expr(arg, s, d, false);
             }

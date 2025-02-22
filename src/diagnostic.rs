@@ -1,4 +1,5 @@
 mod diagnostic_kind;
+pub mod keys;
 mod project_diagnostics;
 mod sprite_diagnostics;
 
