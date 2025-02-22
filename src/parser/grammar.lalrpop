@@ -307,6 +307,9 @@ Stmt: Stmt = {
     <l:@L> POINT_IN_DIRECTION <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::PointInDirection, span: l..r, args: vec![(None, arg)] },
     <l:@L> SET_VOLUME <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetVolume, span: l..r, args: vec![(None, arg)] },
     <l:@L> LOG <r:@R> <arg:Expr> ";" => Stmt::ProcCall { name: "log".into(), span: l..r, args: vec![(None, arg)] },
+    <l:@L> SET_ROTATION_STYLE_LEFT_RIGHT <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleLeftRight, span: l..r, args: vec![] },
+    <l:@L> SET_ROTATION_STYLE_ALL_AROUND <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleAllAround, span: l..r, args: vec![] },
+    <l:@L> SET_ROTATION_STYLE_DO_NOT_ROTATE <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleDoNotRotate, span: l..r, args: vec![] },
 }
 
 Elif: Stmt = {
