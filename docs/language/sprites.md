@@ -42,25 +42,27 @@ point_in_direction 100;
 set_volume 100;
 ```
 
-### Set Sprite visibility to hidden
+### Set sprite default visibility to hidden
+
+Hide sprite by default.
 
 ```goboscript
 hide;
 ```
 
-### Set Sprite rotation style to **left-right**
+### Set Sprite default rotation style to **left-right**
 
 ```goboscript
 set_rotation_style_left_right;
 ```
 
-### Set Sprite rotation style to **all around**
+### Set Sprite default rotation style to **all around**
 
 ```goboscript
 set_rotation_style_all_around;
 ```
 
-### Set Sprite rotation style to **don't rotate**
+### Set Sprite default rotation style to **don't rotate**
 
 ```goboscript
 set_rotation_style_do_not_rotate;
