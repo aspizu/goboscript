@@ -9,3 +9,4 @@ jobs:
               with:
                   rustflags: "-A warnings"
             - run: cargo check
+            - run: cargo test
