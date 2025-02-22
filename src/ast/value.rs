@@ -88,4 +88,13 @@ impl Value {
     pub fn to_const_expr(self, span: Span) -> ConstExpr {
         ConstExpr::Value { value: self, span }
     }
+
+    pub fn map_unless_infinity<F>(self, value: F) -> Self
+    where F: FnOnce(Self) -> Self {
+        match self {
+            Self::String(s) if s == "Infinity" => "Infinity".into(),
+            Self::String(s) if s == "-Infinity" => "-Infinity".into(),
+            _ => value(self),
+        }
+    }
 }

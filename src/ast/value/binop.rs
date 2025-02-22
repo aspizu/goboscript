@@ -31,6 +31,18 @@ impl Value {
             (Value::Float(a), Value::Float(b)) => Some(Value::Float(a + b)),
             (Value::Int(a), Value::Float(b)) => Some(Value::Float(*a as f64 + b)),
             (Value::Float(a), Value::Int(b)) => Some(Value::Float(a + *b as f64)),
+            (Value::Int(a), Value::String(b)) => {
+                Some(Value::String(b.clone()).map_unless_infinity(|_| Value::Int(*a)))
+            }
+            (Value::String(a), Value::Int(b)) => {
+                Some(Value::String(a.clone()).map_unless_infinity(|_| Value::Int(*b)))
+            }
+            (Value::Float(a), Value::String(b)) => {
+                Some(Value::String(b.clone()).map_unless_infinity(|_| Value::Float(*a)))
+            }
+            (Value::String(a), Value::Float(b)) => {
+                Some(Value::String(a.clone()).map_unless_infinity(|_| Value::Float(*b)))
+            }
             _ => None,
         }
     }
