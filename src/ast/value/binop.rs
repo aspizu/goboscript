@@ -53,6 +53,18 @@ impl Value {
             (Value::Float(a), Value::Float(b)) => Some(Value::Float(a - b)),
             (Value::Int(a), Value::Float(b)) => Some(Value::Float(*a as f64 - b)),
             (Value::Float(a), Value::Int(b)) => Some(Value::Float(a - *b as f64)),
+            (Value::Int(a), Value::String(b)) => {
+                Some(Value::String(b.clone()).map_unless_infinity(|_| Value::Int(*a)))
+            }
+            (Value::String(a), Value::Int(b)) => {
+                Some(Value::String(a.clone()).map_unless_infinity(|_| Value::Int(*b)))
+            }
+            (Value::Float(a), Value::String(b)) => {
+                Some(Value::String(b.clone()).map_unless_infinity(|_| Value::Float(*a)))
+            }
+            (Value::String(a), Value::Float(b)) => {
+                Some(Value::String(a.clone()).map_unless_infinity(|_| Value::Float(*b)))
+            }
             _ => None,
         }
     }
@@ -171,6 +183,32 @@ mod tests {
         );
         assert_eq!(
             Value::from("-Infinity").add(&Value::from(1)),
+            Some(Value::from("-Infinity"))
+        );
+    }
+
+    #[test]
+    fn test_sub() {
+        assert_eq!(Value::from(1).sub(&Value::from(2)), Some(Value::from(-1)));
+        assert_eq!(
+            Value::from(1.0).sub(&Value::from(2.0)),
+            Some(Value::from(-1.0))
+        );
+        assert_eq!(
+            Value::from(1).sub(&Value::from(2.0)),
+            Some(Value::from(-1.0))
+        );
+        assert_eq!(
+            Value::from(1.0).sub(&Value::from(2)),
+            Some(Value::from(-1.0))
+        );
+        assert_eq!(Value::from("a").sub(&Value::from(1)), Some(Value::from(1)));
+        assert_eq!(
+            Value::from("Infinity").sub(&Value::from(1)),
+            Some(Value::from("Infinity"))
+        );
+        assert_eq!(
+            Value::from("-Infinity").sub(&Value::from(1)),
             Some(Value::from("-Infinity"))
         );
     }
