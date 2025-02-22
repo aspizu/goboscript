@@ -8,6 +8,7 @@ nav:
           - Syntax: language/syntax.md
           - Sprites: language/sprites.md
           - Costumes: language/costumes.md
+          - Sounds: language/sounds.md
           - Variables: language/variables.md
           - Lists: language/lists.md
           - Operators: language/operators.md
