@@ -70,6 +70,9 @@ impl SpriteDiagnostics {
             if !matches!(include.owner, Owner::Local) {
                 continue;
             }
+            if diagnostic.kind.should_be_suppressed() {
+                continue;
+            }
             // TODO: memoize this using a memoization crate.
             let text = fs::read_to_string(&include.path).unwrap();
             let include_path = include.path.to_str().unwrap();
