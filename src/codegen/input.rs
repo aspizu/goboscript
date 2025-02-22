@@ -119,6 +119,9 @@ where T: Write + Seek
                     write!(self, "[1,[10,{}]]", json!(**string_value))
                 }
             }
+            Value::Bool(bool_value) => {
+                write!(self, "[1,[4,{}]]", json!(bool_value))
+            }
         }
     }
 
