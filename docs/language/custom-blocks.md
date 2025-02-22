@@ -23,3 +23,15 @@ proc my_procedure arg1, arg2 {
 ```goboscript
 my_procedure arg1, arg2;
 ```
+
+# Scratch Addons & Turbowarp Blocks
+
+goboscript supports the Scratch Addons' debugger addon blocks, and TurboWarp blocks.
+
+## `breakpoint`
+
+The Scratch Addons' debugger addon block to set a breakpoint.
+
+```goboscript
+breakpoint;
+```
