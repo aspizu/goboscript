@@ -223,4 +223,10 @@ pub enum Token {
     PointInDirection,
     #[token("set_volume")]
     SetVolume,
+    #[token("set_rotation_style_left_right")]
+    SetRotationStyleLeftRight,
+    #[token("set_rotation_style_all_around")]
+    SetRotationStyleAllAround,
+    #[token("set_rotation_style_do_not_rotate")]
+    SetRotationStyleDoNotRotate,
 }
