@@ -144,3 +144,34 @@ impl Value {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::ast::Value;
+
+    #[test]
+    fn test_add() {
+        assert_eq!(Value::from(1).add(&Value::from(2)), Some(Value::from(3)));
+        assert_eq!(
+            Value::from(1.0).add(&Value::from(2.0)),
+            Some(Value::from(3.0))
+        );
+        assert_eq!(
+            Value::from(1).add(&Value::from(2.0)),
+            Some(Value::from(3.0))
+        );
+        assert_eq!(
+            Value::from(1.0).add(&Value::from(2)),
+            Some(Value::from(3.0))
+        );
+        assert_eq!(Value::from("a").add(&Value::from(1)), Some(Value::from(1)));
+        assert_eq!(
+            Value::from("Infinity").add(&Value::from(1)),
+            Some(Value::from("Infinity"))
+        );
+        assert_eq!(
+            Value::from("-Infinity").add(&Value::from(1)),
+            Some(Value::from("-Infinity"))
+        );
+    }
+}
