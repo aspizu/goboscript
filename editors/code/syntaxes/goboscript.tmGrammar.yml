@@ -29,7 +29,7 @@ patterns:
       - name: punctuation
         match: ",|;"
   - name: keyword
-    match: "\\b(costumes|sounds|global|list|nowarp|onflag|onkey|onbackdrop|onloudness|ontimer|on|onclone)\\b"
+    match: "\\b(costumes|sounds|global|var|list|nowarp|onflag|onkey|onbackdrop|onloudness|ontimer|on|onclone)\\b"
   - name: keyword.control
     match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert|true|false|as|struct|enum|return)\\b"
   - name: keyword
