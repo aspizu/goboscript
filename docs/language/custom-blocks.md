@@ -51,3 +51,27 @@ The Scratch Addons' debugger addon block to log an error.
 ```goboscript
 error expr;
 ```
+
+## `is compiled?` boolean reporter
+
+The TurboWarp block to report whether the project is running in compiled mode.
+
+```goboscript
+say $tw_is_compiled;
+```
+
+## `is TurboWarp?` boolean reporter
+
+The TurboWarp block to report whether the project is running in TurboWarp.
+
+```goboscript
+say $tw_is_turbowarp;
+```
+
+## `is forkphorus?` boolean reporter
+
+The TurboWarp block to report whether the project is running in forkphorus.
+
+```goboscript
+say $tw_is_forkphorus;
+```
