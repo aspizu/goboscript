@@ -44,6 +44,14 @@ The Scratch Addons' debugger addon block to log a value.
 log expr;
 ```
 
+## `warn`
+
+The Scratch Addons' debugger addon block to log a warning.
+
+```goboscript
+warn expr;
+```
+
 ## `error`
 
 The Scratch Addons' debugger addon block to log an error.
