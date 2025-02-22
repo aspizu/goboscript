@@ -21,6 +21,7 @@ pub fn visit_project(project: &mut Project) {
 
 fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
     visit_costumes(&mut sprite.costumes);
+    visit_sounds(&mut sprite.sounds);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -107,6 +108,33 @@ fn visit_costumes(new: &mut Vec<Costume>) {
             new.extend(costumes);
         } else {
             new.push(costume);
+        }
+    }
+}
+
+fn visit_sounds(new: &mut Vec<Sound>) {
+    let old: Vec<Sound> = std::mem::take(new);
+    for sound in old {
+        if let Some(suffix) = sound.name.strip_prefix("@ascii/") {
+            new.extend((' '..='~').map(|ch| Sound {
+                name: format!("{suffix}{ch}").into(),
+                path: sound.path.clone(),
+                span: sound.span.clone(),
+            }));
+        } else if sound.path.contains('*') {
+            let mut sounds: Vec<Sound> = glob(&sound.path)
+                .unwrap()
+                .map(Result::unwrap)
+                .map(|path| Sound {
+                    name: path.file_stem().unwrap().to_string_lossy().into(),
+                    path: path.to_string_lossy().into(),
+                    span: sound.span.clone(),
+                })
+                .collect();
+            sounds.sort_by(|a, b| a.name.cmp(&b.name));
+            new.extend(sounds);
+        } else {
+            new.push(sound);
         }
     }
 }

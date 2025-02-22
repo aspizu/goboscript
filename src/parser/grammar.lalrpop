@@ -15,6 +15,7 @@ pub Sprite = Declr*;
 Declr: () = {
     ";",
     COSTUMES Comma<Costume> ";",
+    SOUNDS Comma<Sound> ";",
     HIDE ";" => {
         sprite.hidden = true;
     },
@@ -118,6 +119,12 @@ EnumVariant: EnumVariant = {
 Costume: () = {
     <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
         sprite.costumes.push(Costume::new(path, alias, l..r));
+    }
+}
+
+Sound: () = {
+    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
+        sprite.sounds.push(Sound::new(path, alias, l..r));
     }
 }
 

@@ -9,6 +9,7 @@ use crate::misc::SmolStr;
 #[derive(Debug, Default)]
 pub struct Sprite {
     pub costumes: Vec<Costume>,
+    pub sounds: Vec<Sound>,
     pub procs: FxHashMap<SmolStr, Proc>,
     pub proc_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub proc_references: FxHashMap<SmolStr, References>,

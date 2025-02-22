@@ -9,6 +9,7 @@ use std::{
     path::Path,
 };
 
+use base64::write;
 use fxhash::{
     FxHashMap,
     FxHashSet,
@@ -601,6 +602,11 @@ where T: Write + Seek
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
+        let mut comma = false;
+        for sound in &sprite.sounds {
+            write_comma_io(&mut self.zip, &mut comma)?;
+            self.sound(input, sound, d)?;
+        }
         write!(self, "]")?; // sounds
         if let Some(x_position) = &sprite.x_position {
             let x_position = x_position.evaluate();
@@ -829,6 +835,40 @@ where T: Write + Seek
         if extension == "png" || extension == "bmp" {
             write!(self, r#","bitmapResolution":1"#)?;
         }
+        write!(self, r#","dataFormat":"{extension}""#)?;
+        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
+        write!(self, "}}") // costume
+    }
+
+    pub fn sound(&mut self, input: &Path, sound: &Sound, d: D) -> io::Result<()> {
+        let path = input.join(&*sound.path);
+        let hash = self
+            .costumes
+            .get(&sound.path)
+            .cloned()
+            .map(Ok::<_, io::Error>)
+            .unwrap_or_else(|| {
+                let mut file = match File::open(&path) {
+                    Ok(file) => file,
+                    Err(error) => {
+                        d.report(DiagnosticKind::IOError(error), &sound.span);
+                        return Ok(Default::default());
+                    }
+                };
+                let mut hasher = Md5::new();
+                io::copy(&mut file, &mut hasher)?;
+                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
+                self.costumes.insert(sound.path.clone(), hash.clone());
+                Ok(hash)
+            })?;
+        let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
+        self.sound_entry(&sound.name, &hash, extension)
+    }
+
+    pub fn sound_entry(&mut self, name: &str, hash: &str, extension: &str) -> io::Result<()> {
+        write!(self, "{{")?;
+        write!(self, r#""name":{}"#, json!(name))?;
+        write!(self, r#","assetId":"{hash}""#)?;
         write!(self, r#","dataFormat":"{extension}""#)?;
         write!(self, r#","md5ext":"{hash}.{extension}""#)?;
         write!(self, "}}") // costume
