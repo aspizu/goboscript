@@ -78,7 +78,9 @@ say                               say               MESSAGE      |              
 think                             think             ...          |                          |
 switch_costume                    switchcostumeto   COSTUME      |                          | COSTUME:looks_costume=make gh issue if this bothers u
 next_costume                      nextcostume                    |                          |
-switch_backdrop                   switchbackdropto  BACKDROP     |                          | BACKDROP:looks_backdrops=make gh issue if this bothers u
+switch_backdrop                   switchbackdropto  BACKDROP     |                          | BACKDROP:looks_backdrops=next backdrop
+previous_backdrop                 switchbackdropto               |                          | BACKDROP:looks_backdrops=previous backdrop
+random_backdrop                   switchbackdropto               |                          | BACKDROP:looks_backdrops=random backdrop
 next_backdrop                     nextbackdrop                   |                          |
 set_size                          setsizeto         SIZE         |                          |
 change_size                       changesizeby      CHANGE       |                          |
