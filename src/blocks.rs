@@ -208,6 +208,8 @@ pub enum Block {
     SwitchCostume,
     NextCostume,
     SwitchBackdrop,
+    PreviousBackdrop,
+    RandomBackdrop,
     NextBackdrop,
     SetSize,
     ChangeSize,
@@ -343,7 +345,19 @@ impl Block {
                 opcode: "looks_backdrops",
                 input: "BACKDROP",
                 field: "BACKDROP",
-                default: "make gh issue if this bothers u",
+                default: "next backdrop",
+            }),
+            Self::PreviousBackdrop => Some(Menu {
+                opcode: "looks_backdrops",
+                input: "BACKDROP",
+                field: "BACKDROP",
+                default: "previous backdrop",
+            }),
+            Self::RandomBackdrop => Some(Menu {
+                opcode: "looks_backdrops",
+                input: "BACKDROP",
+                field: "BACKDROP",
+                default: "random backdrop",
             }),
             Self::PlaySoundUntilDone => Some(Menu {
                 opcode: "sound_sounds_menu",
@@ -468,6 +482,8 @@ impl Block {
             ("switch_costume", _) => Some(Self::SwitchCostume),
             ("next_costume", _) => Some(Self::NextCostume),
             ("switch_backdrop", _) => Some(Self::SwitchBackdrop),
+            ("previous_backdrop", _) => Some(Self::PreviousBackdrop),
+            ("random_backdrop", _) => Some(Self::RandomBackdrop),
             ("next_backdrop", _) => Some(Self::NextBackdrop),
             ("set_size", _) => Some(Self::SetSize),
             ("change_size", _) => Some(Self::ChangeSize),
@@ -571,6 +587,8 @@ impl Block {
             Self::SwitchCostume => "switch_costume",
             Self::NextCostume => "next_costume",
             Self::SwitchBackdrop => "switch_backdrop",
+            Self::PreviousBackdrop => "previous_backdrop",
+            Self::RandomBackdrop => "random_backdrop",
             Self::NextBackdrop => "next_backdrop",
             Self::SetSize => "set_size",
             Self::ChangeSize => "change_size",
@@ -668,6 +686,8 @@ impl Block {
             "switch_costume",
             "next_costume",
             "switch_backdrop",
+            "previous_backdrop",
+            "random_backdrop",
             "next_backdrop",
             "set_size",
             "change_size",
@@ -768,6 +788,8 @@ impl Block {
             Self::SwitchCostume => "looks_switchcostumeto",
             Self::NextCostume => "looks_nextcostume",
             Self::SwitchBackdrop => "looks_switchbackdropto",
+            Self::PreviousBackdrop => "looks_switchbackdropto",
+            Self::RandomBackdrop => "looks_switchbackdropto",
             Self::NextBackdrop => "looks_nextbackdrop",
             Self::SetSize => "looks_setsizeto",
             Self::ChangeSize => "looks_changesizeby",
@@ -869,6 +891,8 @@ impl Block {
             Self::SwitchCostume => &["COSTUME"],
             Self::NextCostume => &[],
             Self::SwitchBackdrop => &["BACKDROP"],
+            Self::PreviousBackdrop => &[],
+            Self::RandomBackdrop => &[],
             Self::NextBackdrop => &[],
             Self::SetSize => &["SIZE"],
             Self::ChangeSize => &["CHANGE"],
@@ -970,6 +994,8 @@ impl Block {
             Self::SwitchCostume => None,
             Self::NextCostume => None,
             Self::SwitchBackdrop => None,
+            Self::PreviousBackdrop => None,
+            Self::RandomBackdrop => None,
             Self::NextBackdrop => None,
             Self::SetSize => None,
             Self::ChangeSize => None,
@@ -1123,7 +1149,9 @@ impl Repr {
     }
 
     pub fn overloads(name: &str) -> &'static [Self] {
-        &[]
+        match name {
+            _ => &[],
+        }
     }
 
     pub fn from_shape(name: &str, args: usize) -> Option<Self> {
