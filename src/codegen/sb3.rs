@@ -1,6 +1,5 @@
 use core::str;
 use std::{
-    f32::consts::E,
     fs::File,
     io::{
         self,
@@ -632,6 +631,7 @@ where T: Write + Seek
         } else {
             write!(self, r#","visible":false"#)?;
         }
+        write!(self, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
         write!(self, "}}")?; // sprite
         Ok(())
     }

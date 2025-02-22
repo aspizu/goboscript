@@ -33,6 +33,15 @@ Declr: () = {
     POINT_IN_DIRECTION <direction:ConstExpr> => {
         sprite.direction = Some(direction);
     },
+    SET_ROTATION_STYLE_LEFT_RIGHT ";" => {  
+        sprite.rotation_style = RotationStyle::LeftRight;
+    },
+    SET_ROTATION_STYLE_ALL_AROUND ";" => {  
+        sprite.rotation_style = RotationStyle::AllAround;
+    },
+    SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
+        sprite.rotation_style = RotationStyle::DoNotRotate;
+    },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, w.is_none()));
         sprite.proc_definitions.insert(n.clone(), b);

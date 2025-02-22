@@ -304,7 +304,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             args,
         } => {
             if let Repr::KeyPressed = repr {
-                if let Some((_, arg)) = args.get(0) {
+                if let Some((_, arg)) = args.first() {
                     if let Expr::Value {
                         value: Value::String(keyname),
                         span: keyname_span,

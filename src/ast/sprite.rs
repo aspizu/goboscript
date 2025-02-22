@@ -30,6 +30,6 @@ pub struct Sprite {
     pub y_position: Option<ConstExpr>,
     pub size: Option<ConstExpr>,
     pub direction: Option<ConstExpr>,
-    pub rotation_style: Option<SmolStr>,
+    pub rotation_style: RotationStyle,
     pub hidden: bool,
 }
