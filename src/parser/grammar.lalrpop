@@ -693,5 +693,8 @@ extern {
         SET_SIZE       => Token::SetSize,
         POINT_IN_DIRECTION => Token::PointInDirection,
         SET_VOLUME     => Token::SetVolume,
+        SET_ROTATION_STYLE_LEFT_RIGHT => Token::SetRotationStyleLeftRight,
+        SET_ROTATION_STYLE_ALL_AROUND => Token::SetRotationStyleAllAround,
+        SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
     }
 }
