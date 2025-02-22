@@ -229,4 +229,6 @@ pub enum Token {
     SetRotationStyleAllAround,
     #[token("set_rotation_style_do_not_rotate")]
     SetRotationStyleDoNotRotate,
+    #[token("var")]
+    Var,
 }

@@ -43,6 +43,7 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
                 name,
                 span: func.span.clone(),
                 type_: func.type_.clone(),
+                default: None,
                 is_cloud: false,
                 is_used: true,
             },
@@ -139,6 +140,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
                 name: basename.clone(),
                 span: name.span(),
                 type_: type_.clone(),
+                default: None,
                 is_cloud: *is_cloud,
                 is_used: false,
             };
