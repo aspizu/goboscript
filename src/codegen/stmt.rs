@@ -432,6 +432,23 @@ where T: Write + Seek
                     true,
                 );
             }
+            if name == "error" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}error\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                    true,
+                );
+            }
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
             return Ok(());
         };
