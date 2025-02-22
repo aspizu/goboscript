@@ -34,7 +34,6 @@ pub enum DiagnosticKind {
     UnrecognizedArgument(SmolStr),
     UnrecognizedStructField(SmolStr),
     UnrecognizedEnumVariant(SmolStr),
-    UnrecognizedKey(SmolStr),
     UnrecognizedStandardLibraryHeader,
     NoCostumes,
     BlockArgsCountMismatch {
@@ -67,6 +66,7 @@ pub enum DiagnosticKind {
     },
     // Warnings
     FollowedByUnreachableCode,
+    UnrecognizedKey(SmolStr),
     UnusedVariable(SmolStr),
     UnusedList(SmolStr),
     UnusedEnum(SmolStr),
@@ -203,7 +203,6 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedArgument(_)
             | DiagnosticKind::UnrecognizedStructField(_)
             | DiagnosticKind::UnrecognizedEnumVariant(_)
-            | DiagnosticKind::UnrecognizedKey(_)
             | DiagnosticKind::UnrecognizedStandardLibraryHeader
             | DiagnosticKind::NoCostumes
             | DiagnosticKind::BlockArgsCountMismatch { .. }
@@ -216,6 +215,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::StructDoesNotHaveField { .. } => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
+            | DiagnosticKind::UnrecognizedKey(_)
             | DiagnosticKind::UnusedVariable(_)
             | DiagnosticKind::UnusedList(_)
             | DiagnosticKind::UnusedEnum(_)
