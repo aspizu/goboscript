@@ -94,6 +94,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: &mut S) {
 }
 
 fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
+    let mut replace = None;
     let mut before = vec![];
     match stmt {
         Stmt::Repeat { times, body } => {
@@ -193,11 +194,24 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
                         type_: Type::Value,
                         is_local: false,
                         is_cloud: false,
-                    })
+                    });
+                    replace = Some(
+                        Stmt::Return {
+                            value: Expr::Value {
+                                value: Value::Int(0),
+                                span: 0..0,
+                            }
+                            .into(),
+                            visited: true,
+                        }
+                        .into(),
+                    )
                 }
             }
-            visit_expr(value, &mut before, s);
         }
+    }
+    if let Some(replace) = replace {
+        *stmt = replace;
     }
     before
 }
