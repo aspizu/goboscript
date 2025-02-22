@@ -182,6 +182,22 @@ impl DiagnosticKind {
             _ => None,
         }
     }
+
+    pub fn should_be_suppressed(&self) -> bool {
+        match self {
+            DiagnosticKind::UnrecognizedArgument(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedArg(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedEnum(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedEnumVariant(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedList(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedProc(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedFunc(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedStruct(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedVariable(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedStructField(name) => name.starts_with('_'),
+            _ => false,
+        }
+    }
 }
 
 impl From<&DiagnosticKind> for Level {
