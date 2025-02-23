@@ -24,7 +24,7 @@
             <Keywords name="Folders in comment, open"></Keywords>
             <Keywords name="Folders in comment, middle"></Keywords>
             <Keywords name="Folders in comment, close"></Keywords>
-            <Keywords name="Keywords1">costumes sounds local proc func return nowarp if else elif until forever repeat list cloud struct enum</Keywords>
+            <Keywords name="Keywords1">costumes sounds local proc func return nowarp if else elif until for forever repeat list cloud struct enum</Keywords>
             <Keywords name="Keywords2">%define&#x000D;&#x000A;%if&#x000D;&#x000A;%else&#x000D;&#x000A;%endif&#x000D;&#x000A;%include&#x000D;&#x000A;%undef</Keywords>
             <Keywords name="Keywords3">true false</Keywords>
             <Keywords name="Keywords4">$</Keywords>
