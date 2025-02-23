@@ -67,7 +67,7 @@ impl SpriteDiagnostics {
             let (start, include) = self
                 .translation_unit
                 .translate_position(diagnostic.span.start);
-            if !matches!(include.owner, Owner::Local) {
+            if level != Level::Error && !matches!(include.owner, Owner::Local) {
                 continue;
             }
             if diagnostic.kind.should_be_suppressed() {
