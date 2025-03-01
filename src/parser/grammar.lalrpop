@@ -43,6 +43,9 @@ Declr: () = {
     SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
         sprite.rotation_style = RotationStyle::DoNotRotate;
     },
+    SET_LAYER_ORDER <layer_order:ConstExpr> => {
+        sprite.layer_order = Some(layer_order);
+    },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, w.is_none()));
         sprite.proc_definitions.insert(n.clone(), b);
@@ -736,6 +739,7 @@ extern {
         SET_ROTATION_STYLE_LEFT_RIGHT => Token::SetRotationStyleLeftRight,
         SET_ROTATION_STYLE_ALL_AROUND => Token::SetRotationStyleAllAround,
         SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
+        SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
     }
 }

@@ -9,7 +9,6 @@ use std::{
     path::Path,
 };
 
-use base64::write;
 use fxhash::{
     FxHashMap,
     FxHashSet,
