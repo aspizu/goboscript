@@ -422,6 +422,7 @@ where T: Write + Seek
                 return Ok(());
             }
         }
-        panic!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}")
+        eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
+        Ok(())
     }
 }
