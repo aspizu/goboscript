@@ -517,7 +517,18 @@ where T: Write + Seek
             .filter(|proc| sprite.used_procs.contains(&proc.name))
         {
             for var in proc.locals.values() {
-                self.local_var_declaration(sprite, &proc.name, var, &mut comma, d)?;
+                self.local_var_declaration(
+                    S {
+                        sprite,
+                        stage,
+                        proc: None,
+                        func: None,
+                    },
+                    &proc.name,
+                    var,
+                    &mut comma,
+                    d,
+                )?;
             }
         }
         for func in sprite
@@ -526,11 +537,32 @@ where T: Write + Seek
             .filter(|func| sprite.used_funcs.contains(&func.name))
         {
             for var in func.locals.values() {
-                self.local_var_declaration(sprite, &func.name, var, &mut comma, d)?;
+                self.local_var_declaration(
+                    S {
+                        sprite,
+                        stage,
+                        proc: None,
+                        func: None,
+                    },
+                    &func.name,
+                    var,
+                    &mut comma,
+                    d,
+                )?;
             }
         }
         for var in sprite.vars.values().filter(|var| var.is_used) {
-            self.var_declaration(sprite, var, &mut comma, d)?;
+            self.var_declaration(
+                S {
+                    sprite,
+                    stage,
+                    proc: None,
+                    func: None,
+                },
+                var,
+                &mut comma,
+                d,
+            )?;
         }
         write!(self, "}}")?; // variables
         write!(self, r#","lists":{{"#)?;
@@ -665,13 +697,7 @@ where T: Write + Seek
         }
     }
 
-    pub fn var_declaration(
-        &mut self,
-        sprite: &Sprite,
-        var: &Var,
-        comma: &mut bool,
-        d: D,
-    ) -> io::Result<()> {
+    pub fn var_declaration(&mut self, s: S, var: &Var, comma: &mut bool, d: D) -> io::Result<()> {
         match &var.type_ {
             Type::Value => {
                 self.json_var_declaration(&var.name, &var.default, var.is_cloud, comma)?;
@@ -680,7 +706,7 @@ where T: Write + Seek
                 name: type_name,
                 span: type_span,
             } => {
-                let Some(struct_) = sprite.structs.get(type_name) else {
+                let Some(struct_) = s.get_struct(type_name) else {
                     d.report(
                         DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                         type_span,
@@ -698,7 +724,7 @@ where T: Write + Seek
 
     pub fn local_var_declaration(
         &mut self,
-        sprite: &Sprite,
+        s: S,
         proc_name: &str,
         var: &Var,
         comma: &mut bool,
@@ -713,7 +739,7 @@ where T: Write + Seek
                 name: type_name,
                 span: type_span,
             } => {
-                let Some(struct_) = sprite.structs.get(type_name) else {
+                let Some(struct_) = s.get_struct(type_name) else {
                     d.report(
                         DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                         type_span,
@@ -904,7 +930,7 @@ where T: Write + Seek
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         d.report(
                             DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                             type_span,
@@ -978,7 +1004,7 @@ where T: Write + Seek
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         d.report(
                             DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                             type_span,
