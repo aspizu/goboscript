@@ -156,6 +156,46 @@ pub fn pre_processor(tokens: &mut Vec<SpannedToken>) -> Result<(), Diagnostic> {
                     i += 1;
                 }
                 i = begin;
+            } else if name == "__xxCONCAT__" {
+                tokens.remove(i);
+                if i >= tokens.len() {
+                    return Err(Diagnostic {
+                        kind: DiagnosticKind::UnrecognizedEof(vec!["LHS".to_owned()]),
+                        span: span(&tokens[i - 1]),
+                    });
+                }
+                let (lbegin, ltoken, lend) = tokens.remove(i);
+                if i >= tokens.len() {
+                    return Err(Diagnostic {
+                        kind: DiagnosticKind::UnrecognizedEof(vec!["RHS".to_owned()]),
+                        span: span(&tokens[i - 1]),
+                    });
+                }
+                let (rbegin, rtoken, rend) = tokens.remove(i);
+                match (&ltoken, &rtoken) {
+                    (Token::Name(lname), Token::Name(rname)) => {
+                        tokens.insert(
+                            i,
+                            (lbegin, Token::Name(format!("{lname}{rname}").into()), lend),
+                        );
+                    }
+                    (Token::Str(lstr), Token::Str(rstr)) => {
+                        tokens.insert(
+                            i,
+                            (lbegin, Token::Str(format!("{lstr}{rstr}").into()), lend),
+                        );
+                    }
+                    _ => {
+                        return Err(Diagnostic {
+                            kind: DiagnosticKind::UnrecognizedToken(
+                                ltoken,
+                                vec!["Concatenable".to_owned()],
+                            ),
+                            span: lbegin..lend,
+                        })
+                    }
+                }
+                i += 1;
             } else {
                 i += 1;
             }
