@@ -67,3 +67,12 @@ set_rotation_style_all_around;
 ```goboscript
 set_rotation_style_do_not_rotate;
 ```
+
+### Set Sprite layer order
+
+Set the layer order of the sprite. The layer order is the order in which the sprites
+are drawn, and scripts are executed.
+
+```goboscript
+set_layer_order 100;
+```
