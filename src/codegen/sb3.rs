@@ -568,7 +568,18 @@ where T: Write + Seek
         write!(self, r#","lists":{{"#)?;
         let mut comma = false;
         for list in sprite.lists.values().filter(|list| list.is_used) {
-            self.list_declaration(input, sprite, list, &mut comma, d)?;
+            self.list_declaration(
+                input,
+                S {
+                    stage,
+                    sprite,
+                    proc: None,
+                    func: None,
+                },
+                list,
+                &mut comma,
+                d,
+            )?;
         }
         write!(self, "}}")?; // lists
         write!(self, r#","blocks":{{"#)?;
@@ -761,7 +772,7 @@ where T: Write + Seek
     pub fn list_declaration(
         &mut self,
         input: &Path,
-        sprite: &Sprite,
+        s: S,
         list: &List,
         comma: &mut bool,
         d: D,
@@ -794,7 +805,7 @@ where T: Write + Seek
                 name: type_name,
                 span: type_span,
             } => {
-                let Some(struct_) = sprite.structs.get(type_name) else {
+                let Some(struct_) = s.get_struct(type_name) else {
                     d.report(
                         DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                         type_span,

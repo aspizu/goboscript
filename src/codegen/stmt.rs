@@ -510,7 +510,7 @@ where T: Write + Seek
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         continue;
                     };
                     let struct_literal_fields = match arg_value {
