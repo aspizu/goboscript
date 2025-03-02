@@ -224,6 +224,8 @@ impl Stmt {
     fn opcode(&self, s: S) -> &'static str {
         match self {
             Stmt::Repeat { .. } => "control_repeat",
+            Stmt::ForEach { .. } => "control_for_each",
+            Stmt::For { .. } => "control_repeat_until",
             Stmt::Forever { .. } => "control_forever",
             Stmt::Branch { else_body, .. } => {
                 if else_body.is_empty() {
@@ -1081,18 +1083,20 @@ where T: Write + Seek
         self.stmts(s, d, &event.body, next_id, Some(this_id))
     }
 
-    pub fn stmts(
+    pub fn stmts_with_next(
         &mut self,
         s: S,
         d: D,
         stmts: &[Stmt],
         mut this_id: NodeID,
+        last_id: Option<NodeID>,
         mut parent_id: Option<NodeID>,
     ) -> io::Result<()> {
         for (i, stmt) in stmts.iter().enumerate() {
             let is_last = i == stmts.len() - 1;
             if is_last || stmt.is_terminator() {
-                self.stmt(s, d, stmt, this_id, None, parent_id)?;
+                let next_id = last_id;
+                self.stmt(s, d, stmt, this_id, next_id, parent_id)?;
                 if !is_last {
                     d.report(DiagnosticKind::FollowedByUnreachableCode, stmt.span());
                 }
@@ -1104,6 +1108,17 @@ where T: Write + Seek
             this_id = next_id;
         }
         Ok(())
+    }
+
+    pub fn stmts(
+        &mut self,
+        s: S,
+        d: D,
+        stmts: &[Stmt],
+        this_id: NodeID,
+        parent_id: Option<NodeID>,
+    ) -> io::Result<()> {
+        self.stmts_with_next(s, d, stmts, this_id, None, parent_id)
     }
 
     pub fn stmt(
@@ -1122,6 +1137,13 @@ where T: Write + Seek
         )?;
         match stmt {
             Stmt::Repeat { times, body } => self.repeat(s, d, this_id, times, body),
+            Stmt::ForEach { name, times, body } => self.foreach(s, d, this_id, name, times, body),
+            Stmt::For {
+                cond,
+                incr,
+                body,
+                ..
+            } => self.r#for(s, d, this_id, cond, incr, body),
             Stmt::Forever { body, span } => self.forever(s, d, this_id, body, span),
             Stmt::Branch {
                 cond,

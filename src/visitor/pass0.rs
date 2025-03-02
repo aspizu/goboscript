@@ -148,6 +148,8 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, v: &mut V) {
 fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
     match stmt {
         Stmt::Repeat { body, .. } => visit_stmts(body, v),
+        Stmt::ForEach { body, .. } => visit_stmts(body, v),
+        Stmt::For { body, .. } => visit_stmts(body, v),
         Stmt::Forever { body, .. } => visit_stmts(body, v),
         Stmt::Branch {
             if_body, else_body, ..
