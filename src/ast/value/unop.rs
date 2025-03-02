@@ -30,6 +30,7 @@ impl Value {
             Self::Int(integer) => Some(integer.to_string().len().into()),
             Self::Float(float) => Some(float.to_string().len().into()),
             Self::String(string) => Some(string.len().into()),
+            Self::Bool(bool) => None
         }
     }
 
