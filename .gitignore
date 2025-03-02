@@ -4,3 +4,7 @@
 /playground
 node_modules
 site
+# Added by goreleaser init:
+dist/
+.intentionally-empty-file.o
+target/
