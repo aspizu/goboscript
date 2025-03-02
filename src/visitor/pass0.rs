@@ -168,7 +168,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
                 name: basename.clone(),
                 span: name.span(),
                 type_: type_.clone(),
-                default: None,
+                default: v.vars.get(basename).and_then(|var| var.default.clone()),
                 is_cloud: *is_cloud,
                 is_used: false,
             };
