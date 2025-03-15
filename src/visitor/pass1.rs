@@ -195,16 +195,14 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
                         is_local: false,
                         is_cloud: false,
                     });
-                    replace = Some(
-                        Stmt::Return {
-                            value: Expr::Value {
-                                value: Value::Int(0),
-                                span: 0..0,
-                            }
-                            .into(),
-                            visited: true,
-                        },
-                    )
+                    replace = Some(Stmt::Return {
+                        value: Expr::Value {
+                            value: Value::Int(0),
+                            span: 0..0,
+                        }
+                        .into(),
+                        visited: true,
+                    })
                 }
             }
         }
