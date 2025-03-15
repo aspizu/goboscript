@@ -1,4 +1,7 @@
-use fxhash::FxHashMap;
+use fxhash::{
+    FxHashMap,
+    FxHashSet,
+};
 use logos::Span;
 
 use crate::{
@@ -10,263 +13,292 @@ use crate::{
     misc::SmolStr,
 };
 
-fn span(token: &(usize, Token, usize)) -> Span {
+type SpannedToken = (usize, Token, usize);
+
+fn get_span(token: &SpannedToken) -> Span {
     token.0..token.2
 }
 
-type SpannedToken = (usize, Token, usize);
-type Define = Vec<SpannedToken>;
-
-#[derive(Debug)]
-enum MacroDefinition {
-    Simple(Define),
-    Function(Vec<SmolStr>, Vec<SpannedToken>),
+fn get_token(token: &SpannedToken) -> &Token {
+    &token.1
 }
 
-struct PreProcessor {
-    defines: FxHashMap<SmolStr, MacroDefinition>,
+pub struct PreProcessor<'a, 'b> {
+    tokens: &'a mut Vec<(usize, Token, usize)>,
+    function_defines: FxHashMap<SmolStr, (Vec<Token>, Vec<Token>)>,
+    simple_defines: FxHashMap<SmolStr, Vec<Token>>,
+    i: &'b mut usize,
 }
 
-impl PreProcessor {
-    fn new() -> Self {
-        Self {
-            defines: Default::default(),
-        }
+impl<'a, 'b> PreProcessor<'a, 'b> {
+    pub fn apply(tokens: &'a mut Vec<SpannedToken>) -> Result<(), Diagnostic> {
+        let length = tokens.len();
+        let mut i = 0;
+        let mut pre_processor = PreProcessor {
+            tokens,
+            i: &mut i,
+            function_defines: Default::default(),
+            simple_defines: Default::default(),
+        };
+        pre_processor.process(&mut (0..length), &Default::default())?;
+        pre_processor.remove_marker_tokens();
+        std::fs::write(
+            "simple-defines.js",
+            format!("({:?})", pre_processor.simple_defines).as_bytes(),
+        )
+        .unwrap();
+        std::fs::write(
+            "function-defines.js",
+            format!("({:?})", pre_processor.function_defines).as_bytes(),
+        )
+        .unwrap();
+        Ok(())
     }
 
-    fn process_define(
+    fn process(
         &mut self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
+        span: &mut Span,
+        suppress: &FxHashSet<SmolStr>,
     ) -> Result<(), Diagnostic> {
-        tokens.remove(*i);
-        let name = self.extract_name(tokens, i)?;
+        *self.i = span.start;
+        while *self.i < span.end {
+            if let Some(define_name) = self.parse_define_begin(span)? {
+                if self.parse_function_define(span, define_name.clone())? {
+                    continue;
+                }
+                self.parse_simple_define(span, define_name)?;
+                continue;
+            }
+            if self.substitute_simple_define(span, suppress)? {
+                continue;
+            }
+            if self.substitute_function_define(span, suppress)? {
+                continue;
+            }
+            *self.i += 1;
+        }
 
-        if matches!(tokens[*i].1, Token::LParen) {
-            let (args, definition) = self.parse_function_define(tokens, i)?;
-            self.defines
-                .insert(name, MacroDefinition::Function(args, definition));
-        } else {
-            let definition = self.parse_simple_define(tokens, i)?;
-            self.defines
-                .insert(name, MacroDefinition::Simple(definition));
+        Ok(())
+    }
+
+    fn remove_marker_tokens(&mut self) {
+        self.tokens.retain(|token| {
+            !matches!(
+                get_token(token),
+                Token::Newline | Token::Define | Token::Undef | Token::Backslash
+            )
+        });
+    }
+
+    fn expect_no_eof(&self) -> Result<(), Diagnostic> {
+        if *self.i >= self.tokens.len() {
+            return Err(Diagnostic {
+                kind: DiagnosticKind::UnrecognizedEof(vec![]),
+                span: get_span(&self.tokens[*self.i - 1]),
+            });
         }
         Ok(())
     }
 
-    fn extract_name(
-        &self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
-    ) -> Result<SmolStr, Diagnostic> {
-        if *i >= tokens.len() {
-            return Err(Diagnostic {
-                kind: DiagnosticKind::UnrecognizedEof(vec!["NAME".to_owned()]),
-                span: span(&tokens[*i - 1]),
-            });
-        }
+    fn remove_token(&mut self, span: &mut Span) {
+        self.tokens.remove(*self.i);
+        span.end -= 1;
+    }
 
-        let (begin, token, end) = tokens.remove(*i);
-        match token {
-            Token::Name(name) => Ok(name),
-            _ => Err(Diagnostic {
-                kind: DiagnosticKind::UnrecognizedToken(token, vec!["NAME".to_owned()]),
-                span: begin..end,
-            }),
+    fn parse_define_begin(&mut self, span: &mut Span) -> Result<Option<Token>, Diagnostic> {
+        if get_token(&self.tokens[*self.i]) != &Token::Define {
+            return Ok(None);
         }
+        *self.i += 1;
+        self.expect_no_eof()?;
+        let name = get_token(&self.tokens[*self.i]).clone();
+        *self.i -= 1;
+        self.remove_token(span);
+        self.remove_token(span);
+        Ok(Some(name))
     }
 
     fn parse_function_define(
-        &self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
-    ) -> Result<(Vec<SmolStr>, Vec<SpannedToken>), Diagnostic> {
-        let mut args = vec![];
-        tokens.remove(*i); // Remove LParen
-
-        while *i < tokens.len() {
-            match &tokens[*i].1 {
-                Token::RParen => {
-                    tokens.remove(*i);
-                    break;
-                }
-                Token::Comma => {
-                    tokens.remove(*i);
-                }
-                Token::Name(name) => {
-                    args.push(name.clone());
-                    tokens.remove(*i);
-                }
-                _ => {
-                    tokens.remove(*i);
-                }
-            }
+        &mut self,
+        span: &mut Span,
+        define_name: Token,
+    ) -> Result<bool, Diagnostic> {
+        if !matches!(get_token(&self.tokens[*self.i]), Token::LParen) {
+            return Ok(false);
         }
-
-        let definition = self.parse_definition(tokens, i)?;
-        Ok((args, definition))
+        *self.i += 1;
+        self.expect_no_eof()?;
+        let mut name = get_token(&self.tokens[*self.i]).clone();
+        *self.i -= 1;
+        if !matches!(name, Token::Name(_) | Token::LParen) {
+            return Ok(false);
+        }
+        self.tokens.remove(*self.i);
+        let mut args = vec![];
+        while name != Token::RParen {
+            if name != Token::Comma {
+                args.push(name);
+            }
+            self.remove_token(span);
+            self.expect_no_eof()?;
+            name = get_token(&self.tokens[*self.i]).clone();
+        }
+        self.remove_token(span);
+        let body = self.parse_define_body(span)?;
+        self.function_defines
+            .insert(define_name.to_string().into(), (args, body));
+        Ok(true)
     }
 
     fn parse_simple_define(
-        &self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
-    ) -> Result<Vec<SpannedToken>, Diagnostic> {
-        self.parse_definition(tokens, i)
+        &mut self,
+        span: &mut Span,
+        define_name: Token,
+    ) -> Result<bool, Diagnostic> {
+        let define_name: SmolStr = define_name.to_string().into();
+        let body = self.parse_define_body(span)?;
+        self.simple_defines.insert(define_name.clone(), body);
+        Ok(true)
     }
 
-    fn parse_definition(
-        &self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
-    ) -> Result<Vec<SpannedToken>, Diagnostic> {
-        let mut definition = vec![];
-        while *i < tokens.len() {
-            match tokens[*i].1 {
-                Token::Backslash => {
-                    tokens.remove(*i);
-                    if matches!(tokens[*i].1, Token::Newline) {
-                        tokens.remove(*i);
-                    }
-                }
-                Token::Newline => {
-                    tokens.remove(*i);
-                    break;
-                }
-                _ => definition.push(tokens.remove(*i)),
+    fn parse_define_body(&mut self, span: &mut Span) -> Result<Vec<Token>, Diagnostic> {
+        let mut body = vec![];
+        self.expect_no_eof()?;
+        let mut token = get_token(&self.tokens[*self.i]);
+        while token != &Token::Newline {
+            body.push(token.clone());
+            self.remove_token(span);
+            self.expect_no_eof()?;
+            token = get_token(&self.tokens[*self.i]);
+            if token == &Token::Backslash {
+                self.remove_token(span);
+                self.expect_no_eof()?;
+                self.remove_token(span);
+                self.expect_no_eof()?;
+                token = get_token(&self.tokens[*self.i]);
             }
         }
-        Ok(definition)
+        self.remove_token(span);
+        Ok(body)
     }
 
-    fn process_concat(
-        &self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
-    ) -> Result<(), Diagnostic> {
-        tokens.remove(*i);
-        let (lbegin, ltoken, lend) = self.expect_token(tokens, i, "LHS")?;
-        let (_, rtoken, _) = self.expect_token(tokens, i, "RHS")?;
-
-        let new_token = match (&ltoken, &rtoken) {
-            (Token::Name(lname), Token::Name(rname)) => {
-                Token::Name(format!("{lname}{rname}").into())
-            }
-            (Token::Str(lstr), Token::Str(rstr)) => Token::Str(format!("{lstr}{rstr}").into()),
-            _ => {
-                return Err(Diagnostic {
-                    kind: DiagnosticKind::UnrecognizedToken(
-                        ltoken,
-                        vec!["Concatenable".to_owned()],
-                    ),
-                    span: lbegin..lend,
-                })
-            }
+    fn substitute_simple_define(
+        &mut self,
+        span: &mut Span,
+        suppress: &FxHashSet<SmolStr>,
+    ) -> Result<bool, Diagnostic> {
+        let macro_name_token = get_token(&self.tokens[*self.i]);
+        let macro_name_span = get_span(&self.tokens[*self.i]);
+        let macro_name: SmolStr = macro_name_token.to_string().into();
+        let Some(simple_define_body) = self.simple_defines.get(&*macro_name) else {
+            return Ok(false);
         };
-
-        tokens.insert(*i, (lbegin, new_token, lend));
-        *i += 1;
-        Ok(())
+        if suppress.contains(&*macro_name) {
+            return Ok(false);
+        }
+        self.tokens.splice(
+            *self.i..(*self.i + 1),
+            simple_define_body
+                .iter()
+                .map(|token| (macro_name_span.start, token.clone(), macro_name_span.end)),
+        );
+        let mut suppress = suppress.clone();
+        suppress.insert(macro_name);
+        span.end += simple_define_body.len() - 1;
+        let subspan_end = *self.i + simple_define_body.len();
+        let mut subspan = *self.i..subspan_end;
+        self.process(&mut subspan, &suppress)?;
+        span.end += subspan.end - subspan_end;
+        Ok(true)
     }
 
-    fn expect_token(
-        &self,
-        tokens: &mut Vec<SpannedToken>,
-        i: &mut usize,
-        expected: &str,
-    ) -> Result<SpannedToken, Diagnostic> {
-        if *i >= tokens.len() {
+    fn substitute_function_define(
+        &mut self,
+        span: &mut Span,
+        suppress: &FxHashSet<SmolStr>,
+    ) -> Result<bool, Diagnostic> {
+        let macro_name_token = get_token(&self.tokens[*self.i]);
+        let macro_name_span = get_span(&self.tokens[*self.i]);
+        let macro_name: SmolStr = macro_name_token.to_string().into();
+        let Some((function_define_params, function_define_body)) =
+            self.function_defines.get(&*macro_name).cloned()
+        else {
+            return Ok(false);
+        };
+        if suppress.contains(&*macro_name) {
+            return Ok(false);
+        }
+        if get_token(&self.tokens[*self.i + 1]) != &Token::LParen {
+            return Ok(false);
+        }
+        self.remove_token(span);
+        self.remove_token(span);
+        self.expect_no_eof()?;
+        let mut token = get_token(&self.tokens[*self.i]).clone();
+        let mut args = vec![];
+        let mut arg = vec![];
+        let mut parens = 0;
+        while parens >= 0 {
+            match token {
+                Token::LParen => {
+                    parens += 1;
+                    arg.push(token);
+                }
+                Token::RParen => {
+                    parens -= 1;
+                    if parens < 0 {
+                        args.push(arg);
+                        arg = vec![];
+                    } else {
+                        arg.push(token);
+                    }
+                }
+                Token::Comma if parens == 0 => {
+                    args.push(arg);
+                    arg = vec![];
+                }
+                _ => {
+                    arg.push(token);
+                }
+            }
+            self.remove_token(span);
+            token = get_token(&self.tokens[*self.i]).clone();
+        }
+        if args.len() != function_define_params.len() {
             return Err(Diagnostic {
-                kind: DiagnosticKind::UnrecognizedEof(vec![expected.to_owned()]),
-                span: span(&tokens[*i - 1]),
+                kind: DiagnosticKind::MacroArgsCountMismatch {
+                    expected: function_define_params.len(),
+                    given: args.len(),
+                },
+                span: macro_name_span,
             });
         }
-        Ok(tokens.remove(*i))
-    }
-}
-
-pub fn pre_processor(tokens: &mut Vec<SpannedToken>) -> Result<(), Diagnostic> {
-    let mut processor = PreProcessor::new();
-    let mut i = 0;
-
-    while i < tokens.len() {
-        match &tokens[i].1 {
-            Token::Define => processor.process_define(tokens, &mut i)?,
-            Token::Undef => {
-                tokens.remove(i);
-                let name = processor.extract_name(tokens, &mut i)?;
-                processor.defines.remove(&name);
-            }
-            Token::Name(name) if name == "__xxCONCAT__" => {
-                processor.process_concat(tokens, &mut i)?;
-            }
-            Token::Name(name) => match processor.defines.get(name) {
-                Some(MacroDefinition::Simple(definition)) => {
-                    tokens.splice(i..(i + 1), definition.iter().cloned());
+        let mut i = *self.i;
+        for token in function_define_body {
+            if let Some(position) = function_define_params
+                .iter()
+                .position(|param| param == &token)
+            {
+                for token in &args[position] {
+                    self.tokens.insert(
+                        i,
+                        (macro_name_span.start, token.clone(), macro_name_span.end),
+                    );
+                    i += 1;
+                    span.end += 1;
                 }
-                Some(MacroDefinition::Function(args, definition)) => {
-                    tokens.remove(i);
-                    if matches!(tokens[i].1, Token::LParen) {
-                        tokens.remove(i);
-                    }
-                    let mut parens = 0;
-                    let mut brackets = 0;
-                    let mut braces = 0;
-                    let mut parameters = vec![];
-                    let mut parameter = vec![];
-                    while i < tokens.len() {
-                        if matches!(tokens[i].1, Token::RParen) {
-                            if parens == 0 {
-                                tokens.remove(i);
-                                if !parameter.is_empty() {
-                                    parameters.push(parameter);
-                                }
-                                break;
-                            }
-                            parens -= 1;
-                        } else if matches!(tokens[i].1, Token::LParen) {
-                            parens += 1;
-                        } else if matches!(tokens[i].1, Token::LBracket) {
-                            brackets += 1;
-                        } else if matches!(tokens[i].1, Token::RBracket) {
-                            brackets -= 1;
-                        } else if matches!(tokens[i].1, Token::LBrace) {
-                            braces += 1;
-                        } else if matches!(tokens[i].1, Token::RBrace) {
-                            braces -= 1;
-                        } else if matches!(tokens[i].1, Token::Comma)
-                            && parens == 0
-                            && brackets == 0
-                            && braces == 0
-                        {
-                            parameters.push(parameter);
-                            parameter = vec![];
-                            tokens.remove(i);
-                            continue;
-                        }
-                        parameter.push(tokens.remove(i));
-                    }
-                    let begin = i;
-                    for token in definition {
-                        if let Token::Name(name) = &token.1 {
-                            if let Some(index) = args.iter().position(|arg| arg == name) {
-                                tokens.splice(i..i, parameters[index].iter().cloned());
-                                i += parameters[index].len();
-                                continue;
-                            }
-                        }
-                        tokens.insert(i, token.clone());
-                        i += 1;
-                    }
-                    i = begin;
-                }
-                None => i += 1,
-            },
-            Token::Newline | Token::Backslash => {
-                tokens.remove(i);
+            } else {
+                self.tokens
+                    .insert(i, (macro_name_span.start, token, macro_name_span.end));
+                i += 1;
+                span.end += 1;
             }
-            _ => i += 1,
         }
+        let mut suppress = suppress.clone();
+        suppress.insert(macro_name);
+        let mut subspan = *self.i..i;
+        self.process(&mut subspan, &suppress)?;
+        span.end += subspan.end - i;
+        Ok(true)
     }
-    Ok(())
 }

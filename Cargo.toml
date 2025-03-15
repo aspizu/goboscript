@@ -11,6 +11,7 @@ base64 = "0.22.1"
 clap = { version = "4.5.20", features = ["derive"] }
 clap_complete_command = "0.6.1"
 clap_derive = "4.5.18"
+color-debug = "0.1.1"
 colored = "2.1.0"
 csscolorparser = "0.7.0"
 directories = "6.0.0"

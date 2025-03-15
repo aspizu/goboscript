@@ -5,7 +5,7 @@ use crate::{
     ast::Sprite,
     diagnostic::Diagnostic,
     lexer::adaptor,
-    pre_processor::pre_processor,
+    pre_processor::PreProcessor,
     translation_unit::TranslationUnit,
 };
 
@@ -17,7 +17,7 @@ pub fn parse(translation_unit: &TranslationUnit) -> Result<Sprite, Diagnostic> {
         let token = token?;
         tokens.push(token);
     }
-    pre_processor(&mut tokens)?;
+    PreProcessor::apply(&mut tokens)?;
     let parser = SpriteParser::new();
     let mut sprite = Sprite::default();
     parser.parse(&mut sprite, tokens)?;
