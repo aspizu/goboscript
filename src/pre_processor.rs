@@ -60,6 +60,7 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         span: &mut Span,
         suppress: &FxHashSet<SmolStr>,
     ) -> Result<(), Diagnostic> {
+        let mut dirty = false;
         *self.i = span.start;
         while *self.i < span.end {
             if let Some(define_name) = self.parse_define_begin(span)? {
@@ -69,15 +70,24 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
                 self.parse_simple_define(span, define_name)?;
                 continue;
             }
+            if self.parse_undef(span)? {
+                continue;
+            }
             if self.substitute_simple_define(span, suppress)? {
                 continue;
             }
             if self.substitute_function_define(span, suppress)? {
                 continue;
             }
+            if self.substitute_concat(span)? {
+                dirty = true;
+                continue;
+            }
             *self.i += 1;
         }
-
+        if dirty {
+            self.process(span, suppress)?;
+        }
         Ok(())
     }
 
@@ -133,7 +143,7 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         if !matches!(name, Token::Name(_) | Token::LParen) {
             return Ok(false);
         }
-        self.tokens.remove(*self.i);
+        self.remove_token(span);
         let mut args = vec![];
         while name != Token::RParen {
             if name != Token::Comma {
@@ -165,11 +175,7 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         let mut body = vec![];
         self.expect_no_eof()?;
         let mut token = get_token(&self.tokens[*self.i]);
-        while token != &Token::Newline {
-            body.push(token.clone());
-            self.remove_token(span);
-            self.expect_no_eof()?;
-            token = get_token(&self.tokens[*self.i]);
+        loop {
             if token == &Token::Backslash {
                 self.remove_token(span);
                 self.expect_no_eof()?;
@@ -177,6 +183,13 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
                 self.expect_no_eof()?;
                 token = get_token(&self.tokens[*self.i]);
             }
+            if token == &Token::Newline {
+                break;
+            }
+            body.push(token.clone());
+            self.remove_token(span);
+            self.expect_no_eof()?;
+            token = get_token(&self.tokens[*self.i]);
         }
         self.remove_token(span);
         Ok(body)
@@ -208,7 +221,8 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         let subspan_end = *self.i + simple_define_body.len();
         let mut subspan = *self.i..subspan_end;
         self.process(&mut subspan, &suppress)?;
-        span.end += subspan.end - subspan_end;
+        span.end =
+            ((span.end as isize) + ((subspan.end as isize) - (subspan_end as isize))) as usize;
         Ok(true)
     }
 
@@ -298,7 +312,73 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         suppress.insert(macro_name);
         let mut subspan = *self.i..i;
         self.process(&mut subspan, &suppress)?;
-        span.end += subspan.end - i;
+        span.end = ((span.end as isize) + ((subspan.end as isize) - (i as isize))) as usize;
+        Ok(true)
+    }
+
+    fn parse_undef(&mut self, span: &mut Span) -> Result<bool, Diagnostic> {
+        if get_token(&self.tokens[*self.i]) != &Token::Undef {
+            return Ok(false);
+        }
+        self.remove_token(span);
+        self.expect_no_eof()?;
+        let name = get_token(&self.tokens[*self.i]).clone();
+        self.simple_defines.remove(name.to_string().as_str());
+        self.function_defines.remove(name.to_string().as_str());
+        self.remove_token(span);
+        Ok(true)
+    }
+
+    fn substitute_concat(&mut self, span: &mut Span) -> Result<bool, Diagnostic> {
+        let Token::Name(macro_name) = get_token(&self.tokens[*self.i]) else {
+            return Ok(false);
+        };
+        let macro_name_span = get_span(&self.tokens[*self.i]);
+        if macro_name != "CONCAT" {
+            return Ok(false);
+        }
+        if self
+            .tokens
+            .get(*self.i + 1)
+            .is_none_or(|token| get_token(token) != &Token::LParen)
+        {
+            return Ok(false);
+        }
+        if self
+            .tokens
+            .get(*self.i + 3)
+            .is_none_or(|token| get_token(token) != &Token::Comma)
+        {
+            return Ok(false);
+        }
+        if self
+            .tokens
+            .get(*self.i + 5)
+            .is_none_or(|token| get_token(token) != &Token::RParen)
+        {
+            return Ok(false);
+        }
+        let Some(Token::Name(left)) = self.tokens.get(*self.i + 2).map(get_token).cloned() else {
+            return Ok(false);
+        };
+        let Some(Token::Name(right)) = self.tokens.get(*self.i + 4).map(get_token).cloned() else {
+            return Ok(false);
+        };
+        self.remove_token(span);
+        self.remove_token(span);
+        self.remove_token(span);
+        self.remove_token(span);
+        self.remove_token(span);
+        self.remove_token(span);
+        self.tokens.insert(
+            *self.i,
+            (
+                macro_name_span.start,
+                Token::Name(format!("{}{}", left, right).into()),
+                macro_name_span.end,
+            ),
+        );
+        span.end += 1;
         Ok(true)
     }
 }
