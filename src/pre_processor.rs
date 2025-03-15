@@ -154,11 +154,11 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         &mut self,
         span: &mut Span,
         define_name: Token,
-    ) -> Result<bool, Diagnostic> {
+    ) -> Result<(), Diagnostic> {
         let define_name: SmolStr = define_name.to_string().into();
         let body = self.parse_define_body(span)?;
         self.simple_defines.insert(define_name.clone(), body);
-        Ok(true)
+        Ok(())
     }
 
     fn parse_define_body(&mut self, span: &mut Span) -> Result<Vec<Token>, Diagnostic> {
