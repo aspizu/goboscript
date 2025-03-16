@@ -1,3 +1,4 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
 use super::pass2::S;
@@ -6,6 +7,7 @@ use crate::{
         Arg,
         Expr,
         Name,
+        Proc,
         StructLiteralField,
         Value,
     },
@@ -312,33 +314,10 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
 }
 
 pub fn keyword_arguments(
-    args: &mut Vec<(Option<(SmolStr, Span)>, Expr)>,
-    arg_names: Option<&Vec<Arg>>,
+    signature: Option<&Vec<Arg>>,
+    args: &mut Vec<Expr>,
+    kwargs: &mut FxHashMap<SmolStr, (Span, Expr)>,
     d: D,
 ) {
-    let mut i = 0;
-    if let Some(arg_names) = arg_names {
-        for arg in arg_names {
-            if let Some(index) = args.iter().position(|(arg_name, _)| {
-                arg_name
-                    .as_ref()
-                    .is_some_and(|(arg_name, _)| *arg_name == arg.name)
-            }) {
-                let arg = args.remove(index);
-                args.insert(i, (None, arg.1));
-            } else if let Some(index) = args[i..]
-                .iter()
-                .position(|(arg_name, _)| arg_name.is_none())
-            {
-                let arg = args.remove(i + index);
-                args.insert(i, arg);
-            }
-            i += 1;
-        }
-    }
-    for (arg_name, _) in args {
-        if let Some((arg_name, arg_span)) = arg_name.take() {
-            d.report(DiagnosticKind::UnrecognizedArgument(arg_name), &arg_span);
-        }
-    }
+    todo!()
 }
