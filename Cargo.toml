@@ -2,6 +2,11 @@
 name = "goboscript"
 version = "3.1.1"
 edition = "2021"
+description = "goboscript is the Scratch compiler."
+license = "MIT"
+authors = ["Priyanshu Dangare <aspizu@protonmail.com>"]
+homepage = "https://aspizu.github.io/goboscript"
+categories = ["programming-language", "compiler"]
 
 [dependencies]
 annotate-snippets = "0.11.4"
