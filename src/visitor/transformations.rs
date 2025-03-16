@@ -317,7 +317,37 @@ pub fn keyword_arguments(
     signature: Option<&Vec<Arg>>,
     args: &mut Vec<Expr>,
     kwargs: &mut FxHashMap<SmolStr, (Span, Expr)>,
-    d: D,
+    d: D, // currently not used in this implementation
 ) {
-    todo!()
+    if let Some(sig) = signature {
+        // Build a new vector of arguments in the order given by the signature.
+        let mut new_args = Vec::with_capacity(sig.len());
+        let mut pos = 0;
+
+        for param in sig {
+            if pos < args.len() {
+                // Use the next positional argument.
+                new_args.push(args[pos].clone());
+                pos += 1;
+            } else if let Some((_, kw_expr)) = kwargs.remove(&param.name) {
+                // No more positional args, but there is a matching keyword argument.
+                new_args.push(kw_expr);
+            } else if let Some(default) = &param.default {
+                // Compute the default value if one is provided.
+                new_args.push(default.to_expr());
+            }
+            // If no positional, keyword, or default value exists, then
+            // we simply do not insert anything (and no error is raised).
+        }
+
+        // Append any extra positional arguments that exceed the signature length.
+        while pos < args.len() {
+            new_args.push(args[pos].clone());
+            pos += 1;
+        }
+
+        // Replace the original args with the re-ordered version.
+        *args = new_args;
+    }
+    assert!(kwargs.is_empty(), "kwargs should be empty after processing");
 }
