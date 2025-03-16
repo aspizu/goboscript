@@ -318,11 +318,8 @@ where T: Write + Seek
         this_id: NodeID,
         block: &Block,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("block's do not support keyword args yet.")
-        }
         if block.args().len() != args.len() {
             d.report(
                 DiagnosticKind::BlockArgsCountMismatch {
@@ -337,7 +334,7 @@ where T: Write + Seek
         let menu_id = block.menu().map(|_| self.id.new_id());
         let mut menu_value = None;
         let mut menu_is_default = menu_id.is_some();
-        for ((&arg_name, (_, arg_value)), &arg_id) in block.args().iter().zip(args).zip(&arg_ids) {
+        for ((&arg_name, arg_value), &arg_id) in block.args().iter().zip(args).zip(&arg_ids) {
             if block.menu().is_some_and(|menu| menu.input == arg_name) {
                 if let Expr::Value { value, span: _ } = &arg_value {
                     menu_value = Some(value.clone());
@@ -369,7 +366,7 @@ where T: Write + Seek
             )?;
         }
         self.end_obj()?; // node
-        for ((_, arg), arg_id) in args.iter().zip(arg_ids) {
+        for (arg, arg_id) in args.iter().zip(arg_ids) {
             self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = block.menu() {
@@ -395,7 +392,7 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
         if name == "log" {
             return self.proc_call_impl(
@@ -480,12 +477,9 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
         compact: bool,
     ) -> io::Result<()> {
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("keyword args not transformed.")
-        }
         if proc.args.len() != args.len() {
             d.report(
                 DiagnosticKind::ProcArgsCountMismatch {
@@ -498,7 +492,7 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
         let mut qualified_arg_values: Vec<&Expr> = Vec::new();
         self.begin_inputs()?;
-        for (arg, (_, arg_value)) in proc.args.iter().zip(args) {
+        for (arg, arg_value) in proc.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
