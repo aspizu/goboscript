@@ -186,3 +186,23 @@ impl Stmt {
         }
     }
 }
+
+pub fn split_args(
+    mut args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+) -> (Vec<Expr>, FxHashMap<SmolStr, (Span, Expr)>) {
+    let mut positional = Vec::new();
+    let mut named = FxHashMap::default();
+
+    // Drain the vector so that we consume the arguments.
+    for (maybe_name, expr) in args.drain(..) {
+        if let Some((name, span)) = maybe_name {
+            // Insert into the named arguments map.
+            named.insert(name, (span, expr));
+        } else {
+            // Otherwise, treat it as a positional argument.
+            positional.push(expr);
+        }
+    }
+
+    (positional, named)
+}
