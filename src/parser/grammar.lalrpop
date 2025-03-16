@@ -607,7 +607,7 @@ Type: Type = {
 
 #[inline]
 Arg: Arg = {
-    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <IfExpr>)?> => Arg::new(name, l..r, type_, default),
+    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <ConstExpr>)?> => Arg::new(name, l..r, type_, default),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {
