@@ -82,6 +82,7 @@ pub enum Stmt {
         name: SmolStr,
         span: Span,
         args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     Return {
         value: Box<Expr>,
