@@ -42,16 +42,16 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         };
         pre_processor.process(&mut (0..length), &Default::default())?;
         pre_processor.remove_marker_tokens();
-        std::fs::write(
-            "simple-defines.js",
-            format!("({:?})", pre_processor.simple_defines).as_bytes(),
-        )
-        .unwrap();
-        std::fs::write(
-            "function-defines.js",
-            format!("({:?})", pre_processor.function_defines).as_bytes(),
-        )
-        .unwrap();
+        // std::fs::write(
+        //     "simple-defines.js",
+        //     format!("({:?})", pre_processor.simple_defines).as_bytes(),
+        // )
+        // .unwrap();
+        // std::fs::write(
+        //     "function-defines.js",
+        //     format!("({:?})", pre_processor.function_defines).as_bytes(),
+        // )
+        // .unwrap();
         Ok(())
     }
 
