@@ -52,6 +52,10 @@ pub enum DiagnosticKind {
         func: SmolStr,
         given: usize,
     },
+    MacroArgsCountMismatch {
+        expected: usize,
+        given: usize,
+    },
     CommandFailed {
         stderr: Vec<u8>,
     },
@@ -150,6 +154,12 @@ impl DiagnosticKind {
                     given
                 )
             }
+            DiagnosticKind::MacroArgsCountMismatch { expected, given } => {
+                format!(
+                    "macro expects {} arguments, but {} were given",
+                    expected, given
+                )
+            }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
             DiagnosticKind::TypeMismatch { expected, given } => {
                 format!("type mismatch: expected {}, but got {}", expected, given)
@@ -225,6 +235,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::ReprArgsCountMismatch { .. }
             | DiagnosticKind::ProcArgsCountMismatch { .. }
             | DiagnosticKind::FuncArgsCountMismatch { .. }
+            | DiagnosticKind::MacroArgsCountMismatch { .. }
             | DiagnosticKind::CommandFailed { .. }
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct

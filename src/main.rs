@@ -21,6 +21,7 @@ use std::{
 use colored::Colorize;
 
 fn main() -> ExitCode {
+    // unsafe { color_debug::enable() };
     pretty_env_logger::init();
     std::panic::set_hook(Box::new(|info| {
         eprintln!(
