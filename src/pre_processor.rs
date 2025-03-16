@@ -140,7 +140,7 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         self.expect_no_eof()?;
         let mut name = get_token(&self.tokens[*self.i]).clone();
         *self.i -= 1;
-        if !matches!(name, Token::Name(_) | Token::LParen) {
+        if !matches!(name, Token::Name(_) | Token::RParen) {
             return Ok(false);
         }
         self.remove_token(span);
@@ -251,32 +251,36 @@ impl<'a, 'b> PreProcessor<'a, 'b> {
         let mut token = get_token(&self.tokens[*self.i]).clone();
         let mut args = vec![];
         let mut arg = vec![];
-        let mut parens = 0;
-        while parens >= 0 {
-            match token {
-                Token::LParen => {
-                    parens += 1;
-                    arg.push(token);
-                }
-                Token::RParen => {
-                    parens -= 1;
-                    if parens < 0 {
+        if token != Token::RParen {
+            let mut parens = 0;
+            while parens >= 0 {
+                match token {
+                    Token::LParen => {
+                        parens += 1;
+                        arg.push(token);
+                    }
+                    Token::RParen => {
+                        parens -= 1;
+                        if parens < 0 {
+                            args.push(arg);
+                            arg = vec![];
+                        } else {
+                            arg.push(token);
+                        }
+                    }
+                    Token::Comma if parens == 0 => {
                         args.push(arg);
                         arg = vec![];
-                    } else {
+                    }
+                    _ => {
                         arg.push(token);
                     }
                 }
-                Token::Comma if parens == 0 => {
-                    args.push(arg);
-                    arg = vec![];
-                }
-                _ => {
-                    arg.push(token);
-                }
+                self.remove_token(span);
+                token = get_token(&self.tokens[*self.i]).clone();
             }
+        } else {
             self.remove_token(span);
-            token = get_token(&self.tokens[*self.i]).clone();
         }
         if args.len() != function_define_params.len() {
             return Err(Diagnostic {
