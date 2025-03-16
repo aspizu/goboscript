@@ -1,6 +1,9 @@
 use logos::Span;
 
-use super::Value;
+use super::{
+    Expr,
+    Value,
+};
 use crate::blocks::{
     BinOp,
     UnOp,
@@ -39,6 +42,13 @@ impl ConstExpr {
             Self::Value { value, .. } => value.clone(),
             Self::UnOp { op, opr, .. } => opr.evaluate().unop(*op).unwrap(),
             Self::BinOp { op, lhs, rhs, .. } => lhs.evaluate().binop(*op, &rhs.evaluate()).unwrap(),
+        }
+    }
+
+    pub fn to_expr(&self) -> Expr {
+        Expr::Value {
+            value: self.evaluate(),
+            span: self.span(),
         }
     }
 }
