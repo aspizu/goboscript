@@ -6,7 +6,7 @@ description = "goboscript is the Scratch compiler."
 license = "MIT"
 authors = ["Priyanshu Dangare <aspizu@protonmail.com>"]
 homepage = "https://aspizu.github.io/goboscript"
-categories = ["programming-language", "compiler"]
+categories = ["compilers"]
 
 [dependencies]
 annotate-snippets = "0.11.4"
