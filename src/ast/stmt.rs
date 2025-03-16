@@ -1,3 +1,4 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
 use super::{
@@ -68,17 +69,19 @@ pub enum Stmt {
     Block {
         block: Block,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     ProcCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
     },
     Return {
         value: Box<Expr>,
