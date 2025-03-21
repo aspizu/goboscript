@@ -12,7 +12,7 @@ and indentation has no semantic significance. Statements end in semicolons.
 ## Numbers
 
 ```goboscript
-0b111 # Binary:      8
+0b111 # Binary:      7
 0xFF  # Hexadecimal: 255
 0o777 # Octal:       511
 1024  # Decimal:     1024
