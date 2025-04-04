@@ -353,7 +353,8 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             for field in fields {
                 visit_expr(&mut field.value, s, d, false);
             }
-        }
+        },
+        Expr::Of { span: _, property: _, object: _ } => {},
     }
     transformations::apply(expr, transformations::minus);
     transformations::apply(expr, transformations::less_than_equal);

@@ -314,6 +314,9 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             }
             None
         }
+        Expr::Of { span: _, property: _, object: _ } => {
+            None
+        },
     };
     if let Some(replace) = replace {
         *expr = replace;
