@@ -425,4 +425,32 @@ where T: Write + Seek
         eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
         Ok(())
     }
+
+    pub fn property_of(
+        &mut self,
+        s: S,
+        d: D,
+        expr: &Expr,
+        this_id: NodeID,
+        parent_id: NodeID,
+        property: &SmolStr,
+        object: &SmolStr,
+    ) -> io::Result<()> {
+        let menu_id = self.id.new_id();
+        self.begin_node(
+            Node::new("sensing_of_object_menu", menu_id)
+            .parent_id(this_id)
+            .shadow(true)
+        )?;
+        self.single_field("OBJECT", object)?;
+        self.end_obj()?; // node
+
+        self.begin_node(Node::new("sensing_of", this_id).parent_id(parent_id))?;
+        self.begin_inputs()?;
+        self.input(s, d, "OBJECT", expr, menu_id)?;
+        self.end_obj()?; // inputs
+        self.single_field("PROPERTY", property)?;
+        self.end_obj()?; // node
+        Ok(())
+    }
 }
