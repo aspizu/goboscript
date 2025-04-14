@@ -101,6 +101,30 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             visit_expr(times, &mut before, s);
             visit_stmts(body, s);
         }
+        Stmt::ForEach { times, body, .. } => {
+            visit_expr(times, &mut before, s);
+            visit_stmts(body, s);
+        }
+        Stmt::For {
+            name,
+            value,
+            type_,
+            cond,
+            incr,
+            body,
+        } => {
+            before.push(Stmt::SetVar {
+                name: name.clone(),
+                value: value.clone(),
+                type_: type_.clone(),
+                is_local: false,
+                is_cloud: false,
+            });
+            visit_expr(value, &mut before, s);
+            visit_expr(cond, &mut before, s);
+            visit_stmt(incr, s);
+            visit_stmts(body, s);
+        }
         Stmt::Forever { body, span: _ } => visit_stmts(body, s),
         Stmt::Branch {
             cond,
