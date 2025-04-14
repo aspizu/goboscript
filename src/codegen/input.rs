@@ -148,7 +148,9 @@ where T: Write + Seek
         node_id: NodeID,
         shadow_id: Option<NodeID>,
     ) -> io::Result<()> {
-        if ["CONDITION", "CONDITION2"].contains(&input_name) {
+        if ["OBJECT"].contains(&input_name) {
+            return write!(self, "[1,{node_id}]");
+        } else if ["CONDITION", "CONDITION2"].contains(&input_name) {
             return write!(self, "[2,{node_id}]");
         }
         write!(self, "[3,{node_id},")?;

@@ -28,4 +28,5 @@ onflag {
     say current_second();
     say days_since_2000();
     say username();
+    say direction of foo;
 }

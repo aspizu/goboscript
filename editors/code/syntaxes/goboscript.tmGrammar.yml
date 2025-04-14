@@ -33,7 +33,7 @@ patterns:
   - name: keyword.control
     match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert|true|false|as|struct|enum|return)\\b"
   - name: keyword
-    match: "\\b(error|warn|breakpoint|local|not|and|or|in|length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
+    match: "\\b(error|warn|breakpoint|local|not|and|or|of|in|length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
   - name: support.function.builtin
     match: "\\bset_layer_order\\b"
   - name: support.function.builtin
