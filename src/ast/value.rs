@@ -18,6 +18,7 @@ pub enum Value {
     Int(i64),
     Float(f64),
     String(SmolStr),
+    Bool(bool)
 }
 
 impl Display for Value {
@@ -26,6 +27,7 @@ impl Display for Value {
             Self::Int(int) => write!(f, "{}", int),
             Self::Float(float) => write!(f, "{}", float),
             Self::String(string) => write!(f, "{}", string),
+            Self::Bool(bool) => write!(f, "{}", bool)
         }
     }
 }
@@ -75,6 +77,12 @@ impl From<String> for Value {
 impl From<SmolStr> for Value {
     fn from(string: SmolStr) -> Self {
         Self::String(string)
+    }
+}
+
+impl From<bool> for Value{
+    fn from(v: bool) -> Self {
+        Self::Bool(v)
     }
 }
 
