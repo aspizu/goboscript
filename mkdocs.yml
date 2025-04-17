@@ -27,6 +27,8 @@ nav:
           - Visual Studio Code: editor-integration/vscode.md
           - Sublime Text: editor-integration/sublime-text.md
           - Notepad++: editor-integration/notepad++.md
+    - Recipes:
+          - Workarounds: recipes/workarounds.md
 theme:
     name: material
     features:
