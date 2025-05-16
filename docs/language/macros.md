@@ -58,3 +58,9 @@ the callsite.
     code
 %endif
 ```
+
+## Concatenate Tokens
+
+```goboscript
+CONCAT(prefix, suffix) # becomes prefixsuffix
+```
