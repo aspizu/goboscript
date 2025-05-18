@@ -31,7 +31,7 @@ impl Interpreter {
             BinOp::Eq => eq(self, span, lhs, rhs),
             BinOp::And => todo!(),
             BinOp::Or => todo!(),
-            BinOp::Join => todo!(),
+            BinOp::Join => join(self, span, lhs, rhs),
             BinOp::In => todo!(),
             BinOp::Of => todo!(),
             BinOp::Le => todo!(),
@@ -88,4 +88,10 @@ fn eq(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::R
     let lhs = this.run_expr(lhs)?;
     let rhs = this.run_expr(rhs)?;
     Ok(Value::Boolean(lhs.compare(rhs) == 0.0))
+}
+
+fn join(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = this.run_expr(lhs)?.to_string();
+    let rhs = this.run_expr(rhs)?.to_string();
+    Ok(Value::String(format!("{lhs}{rhs}").into()))
 }

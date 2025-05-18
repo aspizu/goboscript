@@ -12,13 +12,16 @@ use crate::{
         EventKind,
         Name,
         Project,
+        Sprite,
         Stmt,
     },
     misc::SmolStr,
 };
 
+#[derive(Default)]
 pub struct Interpreter {
     pub vars: FxHashMap<SmolStr, Value>,
+    pub args: FxHashMap<SmolStr, Value>,
 }
 
 pub fn qualify_name(name: &Name) -> SmolStr {
@@ -30,9 +33,7 @@ pub fn qualify_name(name: &Name) -> SmolStr {
 
 impl Interpreter {
     pub fn new() -> Self {
-        Self {
-            vars: FxHashMap::default(),
-        }
+        Default::default()
     }
 
     pub fn run_project(&mut self, project: &Project) -> anyhow::Result<()> {
@@ -48,15 +49,15 @@ impl Interpreter {
         }
         for event in &project.stage.events {
             if matches!(event.kind, EventKind::OnFlag) {
-                self.run_stmts(&event.body)?;
+                self.run_stmts(&project.stage, &event.body)?;
             }
         }
         Ok(())
     }
 
-    pub fn run_stmts(&mut self, stmts: &[Stmt]) -> anyhow::Result<()> {
+    pub fn run_stmts(&mut self, sprite: &Sprite, stmts: &[Stmt]) -> anyhow::Result<()> {
         for stmt in stmts {
-            self.run_stmt(stmt)?;
+            self.run_stmt(sprite, stmt)?;
         }
         Ok(())
     }
