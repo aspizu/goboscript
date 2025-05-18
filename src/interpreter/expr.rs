@@ -10,13 +10,13 @@ impl Interpreter {
         match expr {
             Expr::Value { value, .. } => Ok(value.clone().into()),
             Expr::Name(name) => Ok(self.vars.get(&qualify_name(name)).unwrap().clone()),
-            Expr::Dot { lhs, rhs, rhs_span } => todo!(),
+            Expr::Dot { .. } => unreachable!(),
             Expr::Arg(name) => Ok(self.args.get(&qualify_name(name)).unwrap().clone()),
             Expr::Repr { repr, span, args } => todo!(),
-            Expr::FuncCall { name, span, args } => todo!(),
+            Expr::FuncCall { .. } => unreachable!(),
             Expr::UnOp { op, span, opr } => self.run_un_op(op, span, opr),
             Expr::BinOp { op, span, lhs, rhs } => self.run_bin_op(op, span, lhs, rhs),
-            Expr::StructLiteral { name, span, fields } => todo!(),
+            Expr::StructLiteral { .. } => unreachable!(),
         }
     }
 }
