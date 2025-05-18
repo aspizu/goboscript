@@ -8,7 +8,10 @@ use crate::{
         ProjectDiagnostics,
         SpriteDiagnostics,
     },
-    interpreter::Interpreter,
+    interpreter::{
+        Exception,
+        Interpreter,
+    },
     parser,
     standard_library::StandardLibrary,
     visitor,
@@ -17,6 +20,7 @@ use crate::{
 pub enum RunError {
     AnyhowError(anyhow::Error),
     ProjectDiagnostics(ProjectDiagnostics),
+    Exception(Exception),
 }
 
 impl<T> From<T> for RunError
@@ -24,6 +28,12 @@ where T: Into<anyhow::Error>
 {
     fn from(value: T) -> Self {
         Self::AnyhowError(value.into())
+    }
+}
+
+impl From<Exception> for RunError {
+    fn from(value: Exception) -> Self {
+        Self::Exception(value)
     }
 }
 

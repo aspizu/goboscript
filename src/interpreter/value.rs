@@ -1,3 +1,10 @@
+use std::fmt::{
+    self,
+    Display,
+};
+
+use serde_json::json;
+
 use crate::{
     ast,
     misc::SmolStr,
@@ -67,16 +74,16 @@ impl Value {
         match self {
             Value::Boolean(true) => "true".into(),
             Value::Boolean(false) => "false".into(),
-            Value::Number(number) if number.is_nan() => "NaN".into(),
-            Value::Number(number) if number.is_infinite() => {
-                if number.is_sign_positive() {
-                    "Infinity".into()
-                } else {
-                    "-Infinity".into()
-                }
+            Value::Number(n) if n.is_nan() => "NaN".into(),
+            Value::Number(n) if n.is_infinite() => if n.is_sign_positive() {
+                "Infinity"
+            } else {
+                "-Infinity"
             }
-            Value::Number(number) => serde_json::to_string(&number).unwrap().into(),
-            Value::String(string) => string,
+            .into(),
+            Value::Number(n) if n.fract() == 0.0 => SmolStr::from((n as i64).to_string()),
+            Value::Number(n) => n.to_string().into(),
+            Value::String(s) => s,
         }
     }
 
@@ -101,5 +108,78 @@ impl Value {
             return 0.0;
         }
         n1 - n2
+    }
+
+    pub fn is_integer(&self) -> bool {
+        match self {
+            Value::Boolean(_) => true,
+            Value::Number(number) if number.is_nan() => true,
+            Value::Number(number) if number.round() == *number => true,
+            Value::String(string) => !string.contains('.'),
+            _ => false,
+        }
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Boolean(b) => write!(f, "{}", b),
+            Value::Number(n) if n.is_nan() => write!(f, "NaN"),
+            Value::Number(n) if n.is_infinite() => write!(
+                f,
+                "{}",
+                if n.is_sign_positive() {
+                    "Infinity"
+                } else {
+                    "-Infinity"
+                }
+            ),
+            Value::Number(n) if n.fract() == 0.0 => write!(f, "{}", *n as i64),
+            Value::Number(n) => write!(f, "{}", json!(n)),
+            Value::String(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+impl From<bool> for Value {
+    fn from(b: bool) -> Self {
+        Value::Boolean(b)
+    }
+}
+
+impl From<f64> for Value {
+    fn from(value: f64) -> Self {
+        Value::Number(value)
+    }
+}
+
+impl From<i64> for Value {
+    fn from(value: i64) -> Self {
+        Value::Number(value as f64)
+    }
+}
+
+impl From<usize> for Value {
+    fn from(value: usize) -> Self {
+        Value::Number(value as f64)
+    }
+}
+
+impl From<SmolStr> for Value {
+    fn from(value: SmolStr) -> Self {
+        Value::String(value)
+    }
+}
+
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(value.into())
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(value.into())
     }
 }

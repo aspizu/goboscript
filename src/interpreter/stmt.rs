@@ -1,8 +1,10 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
 use super::{
     qualify_name,
     value::Value,
+    ExceptionResult,
     Interpreter,
 };
 use crate::{
@@ -11,12 +13,12 @@ use crate::{
         Sprite,
         Stmt,
     },
-    blocks::Block,
     misc::SmolStr,
+    throw,
 };
 
 impl Interpreter {
-    pub fn run_stmt(&mut self, sprite: &Sprite, stmt: &Stmt) -> anyhow::Result<()> {
+    pub fn run_stmt(&mut self, sprite: &Sprite, stmt: &Stmt) -> ExceptionResult<()> {
         match stmt {
             Stmt::Repeat { times, body } => {
                 let times = self.run_expr(times)?.to_number() as usize;
@@ -74,41 +76,29 @@ impl Interpreter {
         }
     }
 
-    pub fn run_block(
-        &mut self,
-        block: &Block,
-        _span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
-    ) -> anyhow::Result<()> {
-        let mut arg_values = vec![];
-        for (_arg_name, arg_expr) in args {
-            let arg_value = self.run_expr(arg_expr)?;
-            arg_values.push(arg_value);
-        }
-        match block {
-            Block::Say1 => {
-                println!("{}", arg_values[0].clone().to_string());
-            }
-            _ => todo!(),
-        }
-        Ok(())
-    }
-
     pub fn run_proc_call(
         &mut self,
         sprite: &Sprite,
         name: &SmolStr,
-        _span: &Span,
+        span: &Span,
         args: &[(Option<(SmolStr, Span)>, Expr)],
-    ) -> anyhow::Result<()> {
-        let previous_args = std::mem::take(&mut self.args);
+    ) -> ExceptionResult<()> {
         let proc = sprite.procs.get(name).unwrap();
+        let mut new_args = FxHashMap::default();
+        if proc.args.len() != args.len() {
+            throw!(
+                format!("Expected {} arguments, got {}", proc.args.len(), args.len()),
+                span.clone()
+            );
+        }
         for (arg, (_arg_name, arg_expr)) in proc.args.iter().zip(args) {
             let arg_value = self.run_expr(arg_expr)?;
-            self.args.insert(arg.name.clone(), arg_value);
+            new_args.insert(arg.name.clone(), arg_value);
         }
         let proc_definition = sprite.proc_definitions.get(name).unwrap();
-        self.run_stmts(sprite, &proc_definition)?;
+        let previous_args = std::mem::take(&mut self.args);
+        self.args = new_args;
+        self.run_script(sprite, &proc_definition)?;
         self.args = previous_args;
         Ok(())
     }
@@ -117,17 +107,25 @@ impl Interpreter {
         &mut self,
         sprite: &Sprite,
         name: &SmolStr,
-        _span: &Span,
+        span: &Span,
         args: &[(Option<(SmolStr, Span)>, Expr)],
-    ) -> anyhow::Result<()> {
-        let previous_args = std::mem::take(&mut self.args);
+    ) -> ExceptionResult<()> {
         let func = sprite.funcs.get(name).unwrap();
+        if func.args.len() != args.len() {
+            throw!(
+                format!("Expected {} arguments, got {}", func.args.len(), args.len()),
+                span.clone()
+            );
+        }
+        let mut new_args = FxHashMap::default();
         for (arg, (_arg_name, arg_expr)) in func.args.iter().zip(args) {
             let arg_value = self.run_expr(arg_expr)?;
-            self.args.insert(arg.name.clone(), arg_value);
+            new_args.insert(arg.name.clone(), arg_value);
         }
         let func_definition = sprite.func_definitions.get(name).unwrap();
-        self.run_stmts(sprite, &func_definition)?;
+        let previous_args = std::mem::take(&mut self.args);
+        self.args = new_args;
+        self.run_script(sprite, &func_definition)?;
         self.args = previous_args;
         Ok(())
     }

@@ -19,7 +19,10 @@ use fmt::FmtError;
 use new::NewError;
 use run::RunError;
 
-use crate::config::Config;
+use crate::{
+    config::Config,
+    interpreter::Exception,
+};
 
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
@@ -106,6 +109,11 @@ pub fn frontend() -> ExitCode {
             }
             Err(RunError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+            Err(RunError::Exception(Exception { message, span })) => {
+                eprintln!("{}: {:?}", "error".red().bold(), message);
+                eprintln!("{}: {:?}", "span".blue().bold(), span);
                 ExitCode::FAILURE
             }
         },
