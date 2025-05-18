@@ -27,6 +27,13 @@ pub enum Command {
         output: Option<PathBuf>,
     },
 
+    /// Run a goboscript file using the experimental interpreter.
+    #[command()]
+    Run {
+        #[arg(short, long)]
+        input: PathBuf,
+    },
+
     /// Create a new goboscript project with a blank backdrop, a main sprite with a
     /// blank costume.
     #[command()]

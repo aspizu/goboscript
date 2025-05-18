@@ -2,6 +2,7 @@ pub mod build;
 mod cli;
 mod fmt;
 mod new;
+mod run;
 
 use std::process::ExitCode;
 
@@ -90,6 +91,10 @@ pub fn frontend() -> ExitCode {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
                 ExitCode::FAILURE
             }
+        },
+        Command::Run { input } => match run::run(input) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(error) => panic!("{:?}", error),
         },
     }
 }
