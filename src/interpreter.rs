@@ -54,6 +54,7 @@ macro_rules! throw {
 pub struct Interpreter {
     pub vars: FxHashMap<SmolStr, Value>,
     pub args: FxHashMap<SmolStr, Value>,
+    pub answer: Value,
 }
 
 pub fn qualify_name(name: &Name) -> SmolStr {
@@ -74,8 +75,8 @@ impl Interpreter {
                 var_name.clone(),
                 var.default
                     .as_ref()
-                    .map(|v| v.evaluate())
-                    .unwrap_or(0.into())
+                    .map(|v| Value::from(v.evaluate()))
+                    .unwrap_or_default()
                     .into(),
             );
         }

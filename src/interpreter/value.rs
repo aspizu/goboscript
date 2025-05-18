@@ -183,3 +183,9 @@ impl From<&str> for Value {
         Value::String(value.into())
     }
 }
+
+impl Default for Value {
+    fn default() -> Self {
+        Value::Number(0.0)
+    }
+}

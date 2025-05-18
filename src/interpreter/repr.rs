@@ -55,7 +55,7 @@ impl Interpreter {
             Repr::Username => todo!(),
             Repr::TouchingColor => todo!(),
             Repr::ColorIsTouchingColor => todo!(),
-            Repr::Answer => todo!(),
+            Repr::Answer => Ok(self.answer.clone()),
             Repr::Random => random(arg_values),
             Repr::Contains => todo!(),
         }

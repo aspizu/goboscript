@@ -1,3 +1,4 @@
+use inquire::Text;
 use logos::Span;
 
 use super::{
@@ -106,7 +107,10 @@ impl Interpreter {
             Block::DeleteThisClone => todo!(),
             Block::Clone0 => todo!(),
             Block::Clone1 => todo!(),
-            Block::Ask => todo!(),
+            Block::Ask => {
+                let [question] = arguments::<1>(arg_values, span)?;
+                ask(self, question)
+            }
             Block::SetDragModeDraggable => todo!(),
             Block::SetDragModeNotDraggable => todo!(),
             Block::ResetTimer => todo!(),
@@ -153,5 +157,10 @@ fn arguments<const N: usize>(arg_values: Vec<Value>, span: &Span) -> ExceptionRe
 
 fn say1(message: Value) -> ExceptionResult<()> {
     println!("{}", message);
+    Ok(())
+}
+
+fn ask(this: &mut Interpreter, question: Value) -> ExceptionResult<()> {
+    this.answer = Text::new(&question.to_string()).prompt().unwrap().into();
     Ok(())
 }
