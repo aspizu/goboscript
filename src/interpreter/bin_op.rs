@@ -1,12 +1,15 @@
 use logos::Span;
 
-use super::Interpreter;
+use super::{
+    value,
+    Interpreter,
+};
 use crate::{
     ast::*,
     blocks::*,
 };
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub fn run_bin_op(
         &mut self,
         op: &BinOp,
@@ -15,10 +18,10 @@ impl<'a> Interpreter<'a> {
         rhs: &Expr,
     ) -> anyhow::Result<Value> {
         match op {
-            BinOp::Add => self.run_bin_op_add(span, lhs, rhs),
-            BinOp::Sub => todo!(),
-            BinOp::Mul => todo!(),
-            BinOp::Div => todo!(),
+            BinOp::Add => add(self, span, lhs, rhs),
+            BinOp::Sub => sub(self, span, lhs, rhs),
+            BinOp::Mul => mul(self, span, lhs, rhs),
+            BinOp::Div => div(self, span, lhs, rhs),
             BinOp::Mod => todo!(),
             BinOp::Lt => todo!(),
             BinOp::Gt => todo!(),
@@ -34,21 +37,50 @@ impl<'a> Interpreter<'a> {
             BinOp::FloorDiv => todo!(),
         }
     }
+}
 
-    pub fn run_bin_op_add(
-        &mut self,
-        _span: &Span,
-        lhs: &Expr,
-        rhs: &Expr,
-    ) -> anyhow::Result<Value> {
-        let lhs = self.run_expr(lhs)?;
-        let rhs = self.run_expr(rhs)?;
-        match (lhs, rhs) {
-            (Value::Int(lhs), Value::Int(rhs)) => Ok((lhs + rhs).into()),
-            (Value::Float(lhs), Value::Float(rhs)) => Ok((lhs + rhs).into()),
-            (Value::Int(lhs), Value::Float(rhs)) => Ok((lhs as f64 + rhs).into()),
-            (Value::Float(lhs), Value::Int(rhs)) => Ok((lhs + rhs as f64).into()),
-            _ => todo!(),
+fn add(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
+    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
+    Ok(Value::Float(lhs + rhs))
+}
+
+fn sub(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
+    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
+    Ok(Value::Float(lhs - rhs))
+}
+
+fn mul(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
+    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
+    Ok(Value::Float(lhs * rhs))
+}
+
+fn div(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
+    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
+    if rhs == 0.0 {
+        if lhs > 0.0 {
+            Ok(Value::Float(f64::INFINITY))
+        } else {
+            Ok(Value::Float(f64::NEG_INFINITY))
+        }
+    } else {
+        Ok(Value::Float(lhs / rhs))
+    }
+}
+
+fn modulo(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
+    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
+    if rhs == 0.0 {
+        Ok(Value::Float(f64::NAN))
+    } else {
+        if lhs > 0.0 {
+            Ok(Value::Float(lhs % rhs))
+        } else {
+            Ok(Value::Float(rhs % lhs))
         }
     }
 }

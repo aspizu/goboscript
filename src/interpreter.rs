@@ -2,17 +2,16 @@ mod bin_op;
 mod expr;
 mod stmt;
 mod un_op;
+mod value;
 
 use fxhash::FxHashMap;
 
 use crate::{
     ast::*,
-    diagnostic::SpriteDiagnostics,
     misc::SmolStr,
 };
 
-pub struct Interpreter<'a> {
-    pub diagnostics: &'a mut SpriteDiagnostics,
+pub struct Interpreter {
     pub vars: FxHashMap<SmolStr, Value>,
 }
 
@@ -23,18 +22,9 @@ pub fn qualify_name(name: &Name) -> SmolStr {
     }
 }
 
-pub fn is_truthy(value: Value) -> bool {
-    match value {
-        Value::Int(i) => i != 0,
-        Value::Float(f) => f != 0.0,
-        Value::String(s) => !s.is_empty(),
-    }
-}
-
-impl<'a> Interpreter<'a> {
-    pub fn new(diagnostics: &'a mut SpriteDiagnostics) -> Self {
+impl Interpreter {
+    pub fn new() -> Self {
         Self {
-            diagnostics,
             vars: FxHashMap::default(),
         }
     }

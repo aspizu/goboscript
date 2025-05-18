@@ -6,7 +6,7 @@ use crate::{
     blocks::*,
 };
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub fn run_un_op(&mut self, op: &UnOp, span: &Span, opr: &Expr) -> anyhow::Result<Value> {
         match op {
             UnOp::Not => todo!(),

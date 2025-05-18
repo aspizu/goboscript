@@ -1,7 +1,7 @@
 use super::Interpreter;
 use crate::ast::*;
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub fn run_expr(&mut self, expr: &Expr) -> anyhow::Result<Value> {
         match expr {
             Expr::Value { value, .. } => Ok(value.clone()),

@@ -1,8 +1,8 @@
 use logos::Span;
 
 use super::{
-    is_truthy,
     qualify_name,
+    value,
     Interpreter,
 };
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
     misc::SmolStr,
 };
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub fn run_stmt(&mut self, stmt: &Stmt) -> anyhow::Result<()> {
         match stmt {
             Stmt::Repeat { times, body } => {
@@ -31,7 +31,7 @@ impl<'a> Interpreter<'a> {
                 else_body,
             } => {
                 let cond = self.run_expr(cond)?;
-                if is_truthy(cond) {
+                if value::is_truthy(cond) {
                     self.run_stmts(if_body)?;
                 } else {
                     self.run_stmts(else_body)?;
@@ -39,7 +39,7 @@ impl<'a> Interpreter<'a> {
                 Ok(())
             }
             Stmt::Until { cond, body } => loop {
-                if is_truthy(self.run_expr(cond)?) {
+                if value::is_truthy(self.run_expr(cond)?) {
                     break Ok(());
                 }
                 self.run_stmts(body)?;
