@@ -2,7 +2,6 @@ use logos::Span;
 
 use super::{
     qualify_name,
-    value,
     Interpreter,
 };
 use crate::{
@@ -15,8 +14,7 @@ impl Interpreter {
     pub fn run_stmt(&mut self, stmt: &Stmt) -> anyhow::Result<()> {
         match stmt {
             Stmt::Repeat { times, body } => {
-                let times = self.run_expr(times)?;
-                let Value::Int(times) = times else { panic!() };
+                let times = self.run_expr(times)?.to_number() as usize;
                 for _ in 0..times {
                     self.run_stmts(body)?;
                 }
@@ -31,7 +29,7 @@ impl Interpreter {
                 else_body,
             } => {
                 let cond = self.run_expr(cond)?;
-                if value::is_truthy(cond) {
+                if cond.to_boolean() {
                     self.run_stmts(if_body)?;
                 } else {
                     self.run_stmts(else_body)?;
@@ -39,7 +37,7 @@ impl Interpreter {
                 Ok(())
             }
             Stmt::Until { cond, body } => loop {
-                if value::is_truthy(self.run_expr(cond)?) {
+                if self.run_expr(cond)?.to_boolean() {
                     break Ok(());
                 }
                 self.run_stmts(body)?;
@@ -78,7 +76,7 @@ impl Interpreter {
         }
         match block {
             Block::Say1 => {
-                println!("{}", arg_values[0]);
+                println!("{}", arg_values[0].clone().to_string());
             }
             _ => todo!(),
         }

@@ -1,12 +1,15 @@
 use logos::Span;
 
 use super::{
-    value,
+    value::{
+        self,
+        Value,
+    },
     Interpreter,
 };
 use crate::{
-    ast::*,
-    blocks::*,
+    ast::Expr,
+    blocks::BinOp,
 };
 
 impl Interpreter {
@@ -22,10 +25,10 @@ impl Interpreter {
             BinOp::Sub => sub(self, span, lhs, rhs),
             BinOp::Mul => mul(self, span, lhs, rhs),
             BinOp::Div => div(self, span, lhs, rhs),
-            BinOp::Mod => todo!(),
+            BinOp::Mod => modulo(self, span, lhs, rhs),
             BinOp::Lt => todo!(),
             BinOp::Gt => todo!(),
-            BinOp::Eq => todo!(),
+            BinOp::Eq => eq(self, span, lhs, rhs),
             BinOp::And => todo!(),
             BinOp::Or => todo!(),
             BinOp::Join => todo!(),
@@ -40,47 +43,49 @@ impl Interpreter {
 }
 
 fn add(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
-    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
-    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
-    Ok(Value::Float(lhs + rhs))
+    let lhs = this.run_expr(lhs)?.to_number();
+    let rhs = this.run_expr(rhs)?.to_number();
+    Ok(Value::Number(lhs + rhs))
 }
 
 fn sub(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
-    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
-    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
-    Ok(Value::Float(lhs - rhs))
+    let lhs = this.run_expr(lhs)?.to_number();
+    let rhs = this.run_expr(rhs)?.to_number();
+    Ok(Value::Number(lhs - rhs))
 }
 
 fn mul(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
-    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
-    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
-    Ok(Value::Float(lhs * rhs))
+    let lhs = this.run_expr(lhs)?.to_number();
+    let rhs = this.run_expr(rhs)?.to_number();
+    Ok(Value::Number(lhs * rhs))
 }
 
 fn div(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
-    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
-    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
+    let lhs = this.run_expr(lhs)?.to_number();
+    let rhs = this.run_expr(rhs)?.to_number();
     if rhs == 0.0 {
         if lhs > 0.0 {
-            Ok(Value::Float(f64::INFINITY))
+            Ok(Value::Number(f64::INFINITY))
         } else {
-            Ok(Value::Float(f64::NEG_INFINITY))
+            Ok(Value::Number(f64::NEG_INFINITY))
         }
     } else {
-        Ok(Value::Float(lhs / rhs))
+        Ok(Value::Number(lhs / rhs))
     }
 }
 
 fn modulo(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
-    let lhs = value::to_float(this.run_expr(lhs)?).unwrap_or(0.0);
-    let rhs = value::to_float(this.run_expr(rhs)?).unwrap_or(0.0);
-    if rhs == 0.0 {
-        Ok(Value::Float(f64::NAN))
-    } else {
-        if lhs > 0.0 {
-            Ok(Value::Float(lhs % rhs))
-        } else {
-            Ok(Value::Float(rhs % lhs))
-        }
+    let lhs = this.run_expr(lhs)?.to_number();
+    let rhs = this.run_expr(rhs)?.to_number();
+    let mut result = lhs % rhs;
+    if result / rhs < 0.0 {
+        result += rhs;
     }
+    Ok(Value::Number(result))
+}
+
+fn eq(this: &mut Interpreter, _span: &Span, lhs: &Expr, rhs: &Expr) -> anyhow::Result<Value> {
+    let lhs = this.run_expr(lhs)?;
+    let rhs = this.run_expr(rhs)?;
+    Ok(Value::Boolean(lhs.compare(rhs) == 0.0))
 }

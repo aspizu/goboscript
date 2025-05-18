@@ -1,10 +1,16 @@
-use super::Interpreter;
-use crate::ast::*;
+use super::{
+    value::Value,
+    Interpreter,
+};
+use crate::ast::{
+    Expr,
+    Name,
+};
 
 impl Interpreter {
     pub fn run_expr(&mut self, expr: &Expr) -> anyhow::Result<Value> {
         match expr {
-            Expr::Value { value, .. } => Ok(value.clone()),
+            Expr::Value { value, .. } => Ok(value.clone().into()),
             Expr::Name(name) => match name {
                 Name::Name { name, .. } => Ok(self.vars.get(name).unwrap().clone()),
                 Name::DotName { lhs, rhs, .. } => Ok(self

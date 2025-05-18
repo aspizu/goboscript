@@ -5,9 +5,15 @@ mod un_op;
 mod value;
 
 use fxhash::FxHashMap;
+use value::Value;
 
 use crate::{
-    ast::*,
+    ast::{
+        EventKind,
+        Name,
+        Project,
+        Stmt,
+    },
     misc::SmolStr,
 };
 
@@ -36,7 +42,8 @@ impl Interpreter {
                 var.default
                     .as_ref()
                     .map(|v| v.evaluate())
-                    .unwrap_or(0.into()),
+                    .unwrap_or(0.into())
+                    .into(),
             );
         }
         for event in &project.stage.events {
