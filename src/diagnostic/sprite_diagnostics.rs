@@ -27,7 +27,7 @@ use crate::{
 };
 
 pub struct SpriteDiagnostics {
-    sprite_name: String,
+    pub sprite_name: String,
     pub translation_unit: TranslationUnit,
     pub diagnostics: Vec<Diagnostic>,
 }

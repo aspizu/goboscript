@@ -5,6 +5,7 @@ mod config;
 mod diagnostic;
 mod fmt;
 mod frontend;
+mod interpreter;
 mod lexer;
 mod misc;
 mod parser;

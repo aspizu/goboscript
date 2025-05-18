@@ -17,6 +17,7 @@ use cli::{
 use colored::Colorize;
 use fmt::FmtError;
 use new::NewError;
+use run::RunError;
 
 use crate::config::Config;
 
@@ -94,7 +95,19 @@ pub fn frontend() -> ExitCode {
         },
         Command::Run { input } => match run::run(input) {
             Ok(_) => ExitCode::SUCCESS,
-            Err(error) => panic!("{:?}", error),
+            Err(RunError::ProjectDiagnostics(diagnostics)) => {
+                diagnostics.eprint();
+                eprintln!();
+                if diagnostics.failure() {
+                    ExitCode::FAILURE
+                } else {
+                    ExitCode::SUCCESS
+                }
+            }
+            Err(RunError::AnyhowError(err)) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
         },
     }
 }
