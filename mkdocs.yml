@@ -2,7 +2,9 @@ site_name: goboscript
 nav:
     - README: index.md
     - Install: install.md
-    - Getting Started: getting-started.md
+    - Getting Started:
+          - Getting Started: getting-started/index.md
+          - Basic Examples: getting-started/basic-examples.md
     - Configuration: configuration.md
     - Language:
           - Syntax: language/syntax.md

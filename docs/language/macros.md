@@ -16,8 +16,8 @@ Include the contents of a file.
 %include path/to/file.gs
 ```
 
-The `.gs` extension is optional. If not specified, the file extension will be added
-automatically. (This is recommended)
+The `.gs` extension is optional. If not specified (recommended), the file extension will
+be added automatically.
 
 If the include path is a directory, the file inside the directory with the same name as
 the directory will be included.
@@ -57,4 +57,10 @@ the callsite.
 %if not macro_name
     code
 %endif
+```
+
+## Concatenate Tokens
+
+```goboscript
+CONCAT(prefix, suffix) # becomes prefixsuffix
 ```

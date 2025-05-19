@@ -7,6 +7,7 @@ use std::io::{
 use logos::Span;
 
 use super::{
+    input::coerce_condition,
     node::Node,
     node_id::NodeID,
     sb3::{
@@ -82,16 +83,17 @@ where T: Write + Seek
         if_body: &[Stmt],
         else_body: &[Stmt],
     ) -> io::Result<()> {
+        let cond = coerce_condition(cond);
         let cond_id = self.id.new_id();
         let if_body_id = self.id.new_id();
         let else_body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "CONDITION", cond, cond_id)?;
+        self.input(s, d, "CONDITION", &cond, cond_id)?;
         self.substack("SUBSTACK", (!if_body.is_empty()).then_some(if_body_id))?;
         self.substack("SUBSTACK2", (!else_body.is_empty()).then_some(else_body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
-        self.expr(s, d, cond, cond_id, this_id)?;
+        self.expr(s, d, &cond, cond_id, this_id)?;
         self.stmts(s, d, if_body, if_body_id, Some(this_id))?;
         self.stmts(s, d, else_body, else_body_id, Some(this_id))
     }
@@ -104,14 +106,15 @@ where T: Write + Seek
         cond: &Expr,
         body: &[Stmt],
     ) -> io::Result<()> {
+        let cond = coerce_condition(cond);
         let cond_id = self.id.new_id();
         let body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "CONDITION", cond, cond_id)?;
+        self.input(s, d, "CONDITION", &cond, cond_id)?;
         self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
-        self.expr(s, d, cond, cond_id, this_id)?;
+        self.expr(s, d, &cond, cond_id, this_id)?;
         self.stmts(s, d, body, body_id, Some(this_id))
     }
 

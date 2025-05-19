@@ -209,7 +209,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
                     });
                     replace = Some(Stmt::Return {
                         value: Expr::Value {
-                            value: Value::Int(0),
+                            value: Value::from(0.0),
                             span: 0..0,
                         }
                         .into(),

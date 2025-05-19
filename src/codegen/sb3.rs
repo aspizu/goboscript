@@ -650,29 +650,29 @@ where T: Write + Seek
             self.sound(input, sound, d)?;
         }
         write!(self, "]")?; // sounds
-        if let Some(x_position) = &sprite.x_position {
-            let x_position = x_position.evaluate();
-            write!(self, r#","x":{}"#, x_position)?;
+        if let Some((x_position, _)) = &sprite.x_position {
+            let x_position = x_position.to_string();
+            write!(self, r#","x":{}"#, json!(*x_position))?;
         }
-        if let Some(y_position) = &sprite.y_position {
-            let y_position = y_position.evaluate();
-            write!(self, r#","y":{}"#, y_position)?;
+        if let Some((y_position, _)) = &sprite.y_position {
+            let y_position = y_position.to_string();
+            write!(self, r#","y":{}"#, json!(*y_position))?;
         }
-        if let Some(size) = &sprite.size {
-            let size = size.evaluate();
-            write!(self, r#","size":{}"#, size)?;
+        if let Some((size, _)) = &sprite.size {
+            let size = size.to_string();
+            write!(self, r#","size":{}"#, json!(*size))?;
         }
-        if let Some(direction) = &sprite.direction {
-            let direction = direction.evaluate();
-            write!(self, r#","direction":{}"#, direction)?;
+        if let Some((direction, _)) = &sprite.direction {
+            let direction = direction.to_string();
+            write!(self, r#","direction":{}"#, json!(*direction))?;
         }
-        if let Some(volume) = &sprite.volume {
-            let volume = volume.evaluate();
-            write!(self, r#","volume":{}"#, volume)?;
+        if let Some((volume, _)) = &sprite.volume {
+            let volume = volume.to_string();
+            write!(self, r#","volume":{}"#, json!(*volume))?;
         }
-        if let Some(layer_order) = &sprite.layer_order {
-            let layer_order = layer_order.evaluate();
-            write!(self, r#","layerOrder":{}"#, layer_order)?;
+        if let Some((layer_order, _)) = &sprite.layer_order {
+            let layer_order = layer_order.to_string();
+            write!(self, r#","layerOrder":{}"#, json!(*layer_order))?;
         }
         if !sprite.hidden {
             write!(self, r#","visible":true"#)?;
@@ -687,15 +687,14 @@ where T: Write + Seek
     pub fn json_var_declaration(
         &mut self,
         var_name: &str,
-        default: &Option<ConstExpr>,
+        default: &Option<(Value, Span)>,
         is_cloud: bool,
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        let default = if let Some(default) = default {
-            default.evaluate().to_string()
-        } else {
-            "0".into()
+        let default = match default {
+            Some((value, _)) => value.to_string(),
+            None => arcstr::literal!("0"),
         };
         if is_cloud {
             write!(
@@ -788,7 +787,7 @@ where T: Write + Seek
                 list.array().map(|array| {
                     array
                         .iter()
-                        .map(|const_expr| const_expr.evaluate().to_string())
+                        .map(|(value, _)| String::from(value.to_string().as_str()))
                         .collect::<Vec<_>>()
                 })
             });
@@ -1191,10 +1190,8 @@ where T: Write + Seek
                 d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
                 Ok(())
             }
-            Expr::UnOp { op, span, opr } => self.un_op(s, d, this_id, parent_id, op, span, opr),
-            Expr::BinOp { op, span, lhs, rhs } => {
-                self.bin_op(s, d, this_id, parent_id, op, span, lhs, rhs)
-            }
+            Expr::UnOp { op, opr, .. } => self.un_op(s, d, this_id, parent_id, op, opr),
+            Expr::BinOp { op, lhs, rhs, .. } => self.bin_op(s, d, this_id, parent_id, op, lhs, rhs),
             Expr::StructLiteral { name, span, .. } => {
                 d.report(
                     DiagnosticKind::TypeMismatch {

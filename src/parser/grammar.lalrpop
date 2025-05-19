@@ -19,19 +19,19 @@ Declr: () = {
     HIDE ";" => {
         sprite.hidden = true;
     },
-    SET_X <x:ConstExpr> => {
+    SET_X <x:Value> => {
         sprite.x_position = Some(x);
     },
-    SET_Y <y:ConstExpr> => {
+    SET_Y <y:Value> => {
         sprite.y_position = Some(y);
     },
-    SET_SIZE <size:ConstExpr> => {
+    SET_SIZE <size:Value> => {
         sprite.size = Some(size);
     },
-    SET_VOLUME <volume:ConstExpr> => {
+    SET_VOLUME <volume:Value> => {
         sprite.volume = Some(volume);
     },
-    POINT_IN_DIRECTION <direction:ConstExpr> => {
+    POINT_IN_DIRECTION <direction:Value> => {
         sprite.direction = Some(direction);
     },
     SET_ROTATION_STYLE_LEFT_RIGHT ";" => {  
@@ -43,7 +43,7 @@ Declr: () = {
     SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
         sprite.rotation_style = RotationStyle::DoNotRotate;
     },
-    SET_LAYER_ORDER <layer_order:ConstExpr> => {
+    SET_LAYER_ORDER <layer_order:Value> => {
         sprite.layer_order = Some(layer_order);
     },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
@@ -72,7 +72,7 @@ Declr: () = {
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
-    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:ConstExpr> ";" => {
+    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:Value> ";" => {
         sprite.vars.insert(name.clone(), Var {
             name,
             span: l..r,
@@ -99,7 +99,7 @@ Declr: () = {
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <cmd:Cmd> ";" => {
         sprite.lists.insert(name.clone(), List::new_cmd(name, l..r, type_, cmd));
     },
-    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<ConstExpr>> "]" ";" => {
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<Value>> "]" ";" => {
         sprite.lists.insert(name.clone(), List::new_array(name, l..r, type_, default));
     }
 }
@@ -518,59 +518,6 @@ Term: Expr = {
     }
 }
 
-ConstExpr: ConstExpr = {
-    #[precedence(level="1")]
-    ConstTerm,
-    #[precedence(level="2")] #[assoc(side="right")]
-    <l:@L> "-"     <e:ConstExpr> <r:@R> => UnOp::Minus  .to_const_expr(l..r, e),
-    <l:@L> NOT     <e:ConstExpr> <r:@R> => UnOp::Not    .to_const_expr(l..r, e),
-    <l:@L> LENGTH  <e:ConstExpr> <r:@R> => UnOp::Length .to_const_expr(l..r, e),
-    <l:@L> ROUND   <e:ConstExpr> <r:@R> => UnOp::Round  .to_const_expr(l..r, e),
-    <l:@L> ABS     <e:ConstExpr> <r:@R> => UnOp::Abs    .to_const_expr(l..r, e),
-    <l:@L> FLOOR   <e:ConstExpr> <r:@R> => UnOp::Floor  .to_const_expr(l..r, e),
-    <l:@L> CEIL    <e:ConstExpr> <r:@R> => UnOp::Ceil   .to_const_expr(l..r, e),
-    <l:@L> SQRT    <e:ConstExpr> <r:@R> => UnOp::Sqrt   .to_const_expr(l..r, e),
-    <l:@L> SIN     <e:ConstExpr> <r:@R> => UnOp::Sin    .to_const_expr(l..r, e),
-    <l:@L> COS     <e:ConstExpr> <r:@R> => UnOp::Cos    .to_const_expr(l..r, e),
-    <l:@L> TAN     <e:ConstExpr> <r:@R> => UnOp::Tan    .to_const_expr(l..r, e),
-    <l:@L> ASIN    <e:ConstExpr> <r:@R> => UnOp::Asin   .to_const_expr(l..r, e),
-    <l:@L> ACOS    <e:ConstExpr> <r:@R> => UnOp::Acos   .to_const_expr(l..r, e),
-    <l:@L> ATAN    <e:ConstExpr> <r:@R> => UnOp::Atan   .to_const_expr(l..r, e),
-    <l:@L> LN      <e:ConstExpr> <r:@R> => UnOp::Ln     .to_const_expr(l..r, e),
-    <l:@L> LOG     <e:ConstExpr> <r:@R> => UnOp::Log    .to_const_expr(l..r, e),
-    <l:@L> ANTILN  <e:ConstExpr> <r:@R> => UnOp::AntiLn .to_const_expr(l..r, e),
-    <l:@L> ANTILOG <e:ConstExpr> <r:@R> => UnOp::AntiLog.to_const_expr(l..r, e),
-    #[precedence(level="3")] #[assoc(side="left")]
-    <l:@L> <lhs:ConstExpr> "*" <rhs:ConstExpr> <r:@R> => BinOp::Mul     .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> "/" <rhs:ConstExpr> <r:@R> => BinOp::Div     .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> "//"<rhs:ConstExpr> <r:@R> => BinOp::FloorDiv.to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> "%" <rhs:ConstExpr> <r:@R> => BinOp::Mod     .to_const_expr(l..r, lhs, rhs),
-    #[precedence(level="4")] #[assoc(side="left")]
-    <l:@L> <lhs:ConstExpr> "+" <rhs:ConstExpr> <r:@R> => BinOp::Add     .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> "-" <rhs:ConstExpr> <r:@R> => BinOp::Sub     .to_const_expr(l..r, lhs, rhs),
-    #[precedence(level="5")] #[assoc(side="left")]
-    <l:@L> <lhs:ConstExpr> "<" <rhs:ConstExpr> <r:@R> => BinOp::Lt      .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> "<="<rhs:ConstExpr> <r:@R> => BinOp::Le      .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> ">" <rhs:ConstExpr> <r:@R> => BinOp::Gt      .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> ">="<rhs:ConstExpr> <r:@R> => BinOp::Ge      .to_const_expr(l..r, lhs, rhs),
-    #[precedence(level="6")] #[assoc(side="right")]
-    <l:@L> <lhs:ConstExpr> "&" <rhs:ConstExpr> <r:@R> => BinOp::Join    .to_const_expr(l..r, lhs, rhs),
-    #[precedence(level="7")] #[assoc(side="left")]
-    <l:@L> <lhs:ConstExpr>  IN <rhs:ConstExpr> <r:@R> => BinOp::In      .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> NOT IN <rhs:ConstExpr> <r:@R> => UnOp::Not.to_const_expr(l..r, BinOp::In.to_const_expr(l..r, lhs, rhs)),
-    <l:@L> <lhs:ConstExpr> "=="<rhs:ConstExpr> <r:@R> => BinOp::Eq      .to_const_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:ConstExpr> "!="<rhs:ConstExpr> <r:@R> => BinOp::Ne      .to_const_expr(l..r, lhs, rhs),
-    #[precedence(level="8")] #[assoc(side="left")]
-    <l:@L> <lhs:ConstExpr> AND <rhs:ConstExpr> <r:@R> => BinOp::And     .to_const_expr(l..r, lhs, rhs),
-    #[precedence(level="9")] #[assoc(side="left")]
-    <l:@L> <lhs:ConstExpr> OR  <rhs:ConstExpr> <r:@R> => BinOp::Or      .to_const_expr(l..r, lhs, rhs),
-}
-
-ConstTerm: ConstExpr = {
-    "(" <ConstExpr> ")",
-    <v:Value> => v.0.to_const_expr(v.1),
-}
-
 StructLiteral: Expr = {
     <l:@L> <name:NAME> <r:@R> "{" <fields:Comma<StructLiteralField>> "}" => {
         Expr::StructLiteral { name, span: l..r, fields }
@@ -584,8 +531,8 @@ StructLiteralField: StructLiteralField = {
 };
 
 Value: (Value, Span) = { 
-    <l:@L> TRUE      <r:@R> => (Value::from(1), l..r),
-    <l:@L> FALSE     <r:@R> => (Value::from(0), l..r),
+    <l:@L> TRUE      <r:@R> => (Value::from(1.0), l..r),
+    <l:@L> FALSE     <r:@R> => (Value::from(0.0), l..r),
     <l:@L> <v:INT>   <r:@R> => (Value::from(v), l..r),
     <l:@L> <v:HEX>   <r:@R> => (Value::from(v), l..r),
     <l:@L> <v:OCT>   <r:@R> => (Value::from(v), l..r),
@@ -610,7 +557,7 @@ Type: Type = {
 
 #[inline]
 Arg: Arg = {
-    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <ConstExpr>)?> => Arg::new(name, l..r, type_, default),
+    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => Arg::new(name, l..r, type_, default),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {

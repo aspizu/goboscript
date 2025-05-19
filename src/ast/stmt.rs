@@ -99,7 +99,7 @@ impl Stmt {
         let span = name.span();
         Self::ChangeVar {
             name,
-            value: Box::new(Value::Int(1).to_expr(span)),
+            value: Box::new(Value::from(1.0).to_expr(span)),
         }
     }
 
@@ -107,7 +107,7 @@ impl Stmt {
         let span = name.span();
         Self::ChangeVar {
             name,
-            value: Box::new(Value::Int(-1).to_expr(span)),
+            value: Box::new(Value::from(-1.0).to_expr(span)),
         }
     }
 
@@ -156,7 +156,7 @@ impl Stmt {
             value: Box::new(BinOp::Add.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
-                Value::Int(1).to_expr(span),
+                Value::from(1.0).to_expr(span),
             )),
         }
     }
@@ -169,7 +169,7 @@ impl Stmt {
             value: Box::new(BinOp::Add.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
-                Value::Int(1).to_expr(span),
+                Value::from(1.0).to_expr(span),
             )),
         }
     }

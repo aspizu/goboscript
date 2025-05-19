@@ -13,7 +13,6 @@ use crate::{
     },
     blocks::{
         BinOp,
-        Repr,
         UnOp,
     },
     codegen::sb3::D,
@@ -178,9 +177,7 @@ pub fn bin_op(expr: &Expr) -> Option<Expr> {
     else {
         return None;
     };
-    lhs_value
-        .binop(*op, rhs_value)
-        .map(|value| value.to_expr(span.clone()))
+    Some(Value::bin_op(*op, lhs_value, rhs_value).to_expr(span.clone()))
 }
 
 pub fn un_op(expr: &Expr) -> Option<Expr> {
@@ -193,7 +190,7 @@ pub fn un_op(expr: &Expr) -> Option<Expr> {
     else {
         return None;
     };
-    opr_value.unop(*op).map(|value| value.to_expr(span.clone()))
+    Some(Value::un_op(*op, opr_value).to_expr(span.clone()))
 }
 
 pub fn minus(expr: &Expr) -> Option<Expr> {
@@ -207,7 +204,7 @@ pub fn minus(expr: &Expr) -> Option<Expr> {
     };
     Some(BinOp::Sub.to_expr(
         span.clone(),
-        Value::Int(0).to_expr(span.clone()),
+        Value::from(0.0).to_expr(span.clone()),
         opr.as_ref().clone(),
     ))
 }
@@ -273,43 +270,6 @@ pub fn floor_div(expr: &Expr) -> Option<Expr> {
     Some(UnOp::Floor.to_expr(
         span.clone(),
         BinOp::Div.to_expr(span.clone(), lhs.as_ref().clone(), rhs.as_ref().clone()),
-    ))
-}
-
-pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
-    if matches!(
-        expr,
-        Expr::UnOp { op: UnOp::Not, .. }
-            | Expr::BinOp {
-                op: BinOp::Eq
-                    | BinOp::Ne
-                    | BinOp::Lt
-                    | BinOp::Le
-                    | BinOp::Gt
-                    | BinOp::Ge
-                    | BinOp::And
-                    | BinOp::Or
-                    | BinOp::In,
-                ..
-            }
-            | Expr::Repr {
-                repr: Repr::ColorIsTouchingColor
-                    | Repr::KeyPressed
-                    | Repr::MouseDown
-                    | Repr::Touching
-                    | Repr::TouchingColor
-                    | Repr::TouchingEdge
-                    | Repr::TouchingMousePointer
-                    | Repr::Contains,
-                ..
-            }
-    ) {
-        return None;
-    }
-    Some(BinOp::Eq.to_expr(
-        expr.span(),
-        expr.clone(),
-        Value::Int(1).to_expr(expr.span()),
     ))
 }
 
