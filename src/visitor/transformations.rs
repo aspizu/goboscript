@@ -277,7 +277,7 @@ pub fn keyword_arguments(
     signature: Option<&Vec<Arg>>,
     args: &mut Vec<Expr>,
     kwargs: &mut FxHashMap<SmolStr, (Span, Expr)>,
-    d: D, // currently not used in this implementation
+    _d: D, // currently not used in this implementation
 ) {
     if let Some(sig) = signature {
         // Build a new vector of arguments in the order given by the signature.
@@ -292,9 +292,9 @@ pub fn keyword_arguments(
             } else if let Some((_, kw_expr)) = kwargs.remove(&param.name) {
                 // No more positional args, but there is a matching keyword argument.
                 new_args.push(kw_expr);
-            } else if let Some(default) = &param.default {
+            } else if let Some((default, span)) = &param.default {
                 // Compute the default value if one is provided.
-                new_args.push(default.to_expr());
+                new_args.push(default.clone().to_expr(span.clone()));
             }
             // If no positional, keyword, or default value exists, then
             // we simply do not insert anything (and no error is raised).
