@@ -258,10 +258,10 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             kwargs,
         } => {
             for arg in args {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
             for (_, arg) in kwargs.values_mut() {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
         }
         Stmt::ProcCall {
@@ -272,10 +272,10 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
         } => {
             keyword_arguments(s.procs.get(name).map(|proc| &proc.args), args, kwargs, d);
             for arg in args {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
             for (_, arg) in kwargs.values_mut() {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
         }
         Stmt::FuncCall {
@@ -286,10 +286,10 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
         } => {
             keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
             for arg in args {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
             for (_, arg) in kwargs.values_mut() {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
         }
         Stmt::Return { value, .. } => visit_expr(value, s, d),
@@ -328,7 +328,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
                 }
             }
             for arg in args {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
         }
         Expr::FuncCall {
@@ -339,10 +339,10 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
         } => {
             keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
             for arg in args {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
             for (_, arg) in kwargs.values_mut() {
-                visit_expr(arg, s, d, false);
+                visit_expr(arg, s, d);
             }
         }
         Expr::UnOp { opr, .. } => {
