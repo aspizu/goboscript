@@ -66,7 +66,7 @@ Declr: () = {
     <l:@L> ONLOUDNESS <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnLoudnessGt { value }.to_event(l..r, b)),
     <l:@L> ONTIMER <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
     <l:@L> ONCLONE <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClone.to_event(l..r, b)),
-    STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:SpannedComma<NAME>> "}" => {
+    STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:Comma<StructField>> "}" => {
         sprite.structs.insert(name.clone(), Struct::new(name, l..r, fields));
     },
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
@@ -558,6 +558,11 @@ Type: Type = {
 #[inline]
 Arg: Arg = {
     <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => Arg::new(name, l..r, type_, default),
+}
+
+#[inline]
+StructField: (SmolStr, Span, Option<(Value, Span)>) = {
+    <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => (name, l..r, default),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {
