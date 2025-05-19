@@ -7,7 +7,6 @@ use crate::{
         Arg,
         Expr,
         Name,
-        Proc,
         StructLiteralField,
         Value,
     },
