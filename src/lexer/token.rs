@@ -76,6 +76,8 @@ pub enum Token {
     Elif,
     #[token("until")]
     Until,
+    #[token("for")]
+    For,
     #[token("forever")]
     Forever,
     #[token("repeat")]

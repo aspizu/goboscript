@@ -20,6 +20,19 @@ pub enum Stmt {
         times: Box<Expr>,
         body: Vec<Stmt>,
     },
+    ForEach {
+        name: Name,
+        times: Box<Expr>,
+        body: Vec<Stmt>,
+    },
+    For {
+        name: Name,
+        value: Box<Expr>,
+        type_: Type,
+        cond: Box<Expr>,
+        incr: Box<Stmt>,
+        body: Vec<Stmt>,
+    },
     Forever {
         body: Vec<Stmt>,
         span: Span,

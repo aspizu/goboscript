@@ -31,7 +31,7 @@ patterns:
   - name: keyword
     match: "\\b(costumes|sounds|global|var|list|nowarp|onflag|onkey|onbackdrop|onloudness|ontimer|on|onclone)\\b"
   - name: keyword.control
-    match: "\\b(if|else|elif|until|forever|repeat|delete|at|add|to|insert|true|false|as|struct|enum|return)\\b"
+    match: "\\b(if|else|elif|until|for|forever|repeat|delete|at|add|to|insert|true|false|as|struct|enum|return)\\b"
   - name: keyword
     match: "\\b(error|warn|breakpoint|local|not|and|or|in|length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
   - name: support.function.builtin
