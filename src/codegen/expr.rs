@@ -7,6 +7,10 @@ use std::io::{
 use logos::Span;
 
 use super::{
+    input::{
+        coerce_condition,
+        is_expr_boolean,
+    },
     mutation::Mutation,
     node::Node,
     node_id::NodeID,
@@ -179,9 +183,11 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
         op: &UnOp,
-        _span: &Span,
         opr: &Expr,
     ) -> io::Result<()> {
+        if matches!(op, UnOp::Not) && !is_expr_boolean(opr) {
+            return self.un_op(s, d, this_id, parent_id, op, &coerce_condition(opr));
+        }
         if matches!(op, UnOp::Length) {
             if let Expr::Name(Name::Name { name, .. }) = opr {
                 if s.sprite.lists.contains_key(name)
@@ -210,10 +216,20 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
         op: &BinOp,
-        _span: &Span,
         lhs: &Expr,
         rhs: &Expr,
     ) -> io::Result<()> {
+        if matches!(op, BinOp::And | BinOp::Or) && !(is_expr_boolean(lhs) && is_expr_boolean(rhs)) {
+            return self.bin_op(
+                s,
+                d,
+                this_id,
+                parent_id,
+                op,
+                &coerce_condition(lhs),
+                &coerce_condition(rhs),
+            );
+        }
         if let BinOp::Of = op {
             if let Expr::Name(name) = lhs {
                 if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(d, name) {

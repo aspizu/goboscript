@@ -21,9 +21,51 @@ use crate::{
         Name,
         Value,
     },
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     diagnostic::DiagnosticKind,
     misc::write_comma_io,
 };
+
+pub fn is_expr_boolean(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::UnOp { op: UnOp::Not, .. }
+            | Expr::BinOp {
+                op: BinOp::Eq
+                    | BinOp::Ne
+                    | BinOp::Lt
+                    | BinOp::Le
+                    | BinOp::Gt
+                    | BinOp::Ge
+                    | BinOp::And
+                    | BinOp::Or
+                    | BinOp::In,
+                ..
+            }
+            | Expr::Repr {
+                repr: Repr::ColorIsTouchingColor
+                    | Repr::KeyPressed
+                    | Repr::MouseDown
+                    | Repr::Touching
+                    | Repr::TouchingColor
+                    | Repr::TouchingEdge
+                    | Repr::TouchingMousePointer
+                    | Repr::Contains,
+                ..
+            }
+    )
+}
+
+pub fn coerce_condition(expr: &Expr) -> Expr {
+    if is_expr_boolean(expr) {
+        return expr.clone();
+    }
+    BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(0.0).to_expr(0..0))
+}
 
 impl<T> Sb3<T>
 where T: Write + Seek

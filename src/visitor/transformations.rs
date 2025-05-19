@@ -272,43 +272,6 @@ pub fn floor_div(expr: &Expr) -> Option<Expr> {
     ))
 }
 
-pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
-    if matches!(
-        expr,
-        Expr::UnOp { op: UnOp::Not, .. }
-            | Expr::BinOp {
-                op: BinOp::Eq
-                    | BinOp::Ne
-                    | BinOp::Lt
-                    | BinOp::Le
-                    | BinOp::Gt
-                    | BinOp::Ge
-                    | BinOp::And
-                    | BinOp::Or
-                    | BinOp::In,
-                ..
-            }
-            | Expr::Repr {
-                repr: Repr::ColorIsTouchingColor
-                    | Repr::KeyPressed
-                    | Repr::MouseDown
-                    | Repr::Touching
-                    | Repr::TouchingColor
-                    | Repr::TouchingEdge
-                    | Repr::TouchingMousePointer
-                    | Repr::Contains,
-                ..
-            }
-    ) {
-        return None;
-    }
-    Some(BinOp::Eq.to_expr(
-        expr.span(),
-        expr.clone(),
-        Value::from(1.0).to_expr(expr.span()),
-    ))
-}
-
 pub fn keyword_arguments(
     args: &mut Vec<(Option<(SmolStr, Span)>, Expr)>,
     arg_names: Option<&Vec<Arg>>,

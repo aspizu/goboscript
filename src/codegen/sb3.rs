@@ -1175,10 +1175,8 @@ where T: Write + Seek
                 d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
                 Ok(())
             }
-            Expr::UnOp { op, span, opr } => self.un_op(s, d, this_id, parent_id, op, span, opr),
-            Expr::BinOp { op, span, lhs, rhs } => {
-                self.bin_op(s, d, this_id, parent_id, op, span, lhs, rhs)
-            }
+            Expr::UnOp { op, opr, .. } => self.un_op(s, d, this_id, parent_id, op, opr),
+            Expr::BinOp { op, lhs, rhs, .. } => self.bin_op(s, d, this_id, parent_id, op, lhs, rhs),
             Expr::StructLiteral { name, span, .. } => {
                 d.report(
                     DiagnosticKind::TypeMismatch {
