@@ -13,6 +13,7 @@ annotate-snippets = "0.11.4"
 anyhow = "1.0.91"
 arcstr = "1.2.0"
 base64 = "0.22.1"
+chrono = "0.4"
 clap = { version = "4.5.20", features = ["derive"] }
 clap_complete_command = "0.6.1"
 clap_derive = "4.5.18"

@@ -1,3 +1,9 @@
+use chrono::{
+    Datelike,
+    TimeZone,
+    Timelike,
+    Utc,
+};
 use logos::Span;
 
 use super::{
@@ -44,14 +50,21 @@ impl Interpreter {
             Repr::MouseY => todo!(),
             Repr::Loudness => todo!(),
             Repr::Timer => todo!(),
-            Repr::CurrentYear => todo!(),
-            Repr::CurrentMonth => todo!(),
-            Repr::CurrentDate => todo!(),
-            Repr::CurrentDayOfWeek => todo!(),
-            Repr::CurrentHour => todo!(),
-            Repr::CurrentMinute => todo!(),
-            Repr::CurrentSecond => todo!(),
-            Repr::DaysSince2000 => todo!(),
+            Repr::CurrentYear => Ok((Utc::now().year() as f64).into()),
+            Repr::CurrentMonth => Ok((Utc::now().month() as f64).into()),
+            Repr::CurrentDate => Ok((Utc::now().day() as f64).into()),
+            Repr::CurrentDayOfWeek => {
+                Ok((Utc::now().weekday().num_days_from_sunday() as f64).into())
+            }
+            Repr::CurrentHour => Ok((Utc::now().hour() as f64).into()),
+            Repr::CurrentMinute => Ok((Utc::now().minute() as f64).into()),
+            Repr::CurrentSecond => Ok((Utc::now().second() as f64).into()),
+            Repr::DaysSince2000 => {
+                let now = Utc::now();
+                let base_date = Utc.with_ymd_and_hms(2000, 1, 1, 0, 0, 0).unwrap();
+                let duration = now.signed_duration_since(base_date);
+                Ok((duration.num_milliseconds() as f64 / (24.0 * 60.0 * 60.0 * 1000.0)).into())
+            }
             Repr::Username => todo!(),
             Repr::TouchingColor => todo!(),
             Repr::ColorIsTouchingColor => todo!(),
