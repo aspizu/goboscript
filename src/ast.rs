@@ -40,7 +40,6 @@ pub use sound::*;
 pub use sprite::*;
 pub use stmt::*;
 pub use struct_::*;
-pub use struct_field::*;
 pub use struct_literal_field::*;
 pub use type_::*;
 pub use value::*;

@@ -64,7 +64,7 @@ impl Value {
             Value::Number(number) if number.is_nan() => false,
             Value::Number(0.0) => false,
             Value::Number(_) => true,
-            Value::String(string) if string == "" => false,
+            Value::String(string) if string.is_empty() => false,
             Value::String(string) if string == "0" => false,
             Value::String(string) if string.to_lowercase() == "false" => false,
             Value::String(_) => true,
@@ -97,7 +97,7 @@ impl Value {
     }
 
     pub fn is_whitespace(&self) -> bool {
-        self.string().is_some_and(|string| string.trim().len() == 0)
+        self.string().is_some_and(|string| string.trim().is_empty())
     }
 
     pub fn compare(v1: &Value, v2: &Value) -> f64 {

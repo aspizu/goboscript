@@ -30,7 +30,7 @@ pub struct PreProcessor<'a, 'b> {
     i: &'b mut usize,
 }
 
-impl<'a, 'b> PreProcessor<'a, 'b> {
+impl<'a> PreProcessor<'a, '_> {
     pub fn apply(tokens: &'a mut Vec<SpannedToken>) -> Result<(), Diagnostic> {
         let length = tokens.len();
         let mut i = 0;
