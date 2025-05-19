@@ -1,3 +1,4 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
 use super::pass2::S;
@@ -272,33 +273,43 @@ pub fn floor_div(expr: &Expr) -> Option<Expr> {
 }
 
 pub fn keyword_arguments(
-    args: &mut Vec<(Option<(SmolStr, Span)>, Expr)>,
-    arg_names: Option<&Vec<Arg>>,
-    d: D,
+    signature: Option<&Vec<Arg>>,
+    args: &mut Vec<Expr>,
+    kwargs: &mut FxHashMap<SmolStr, (Span, Expr)>,
+    _d: D, // currently not used in this implementation
 ) {
-    let mut i = 0;
-    if let Some(arg_names) = arg_names {
-        for arg in arg_names {
-            if let Some(index) = args.iter().position(|(arg_name, _)| {
-                arg_name
-                    .as_ref()
-                    .is_some_and(|(arg_name, _)| *arg_name == arg.name)
-            }) {
-                let arg = args.remove(index);
-                args.insert(i, (None, arg.1));
-            } else if let Some(index) = args[i..]
-                .iter()
-                .position(|(arg_name, _)| arg_name.is_none())
-            {
-                let arg = args.remove(i + index);
-                args.insert(i, arg);
+    if let Some(sig) = signature {
+        // Build a new vector of arguments in the order given by the signature.
+        let mut new_args = Vec::with_capacity(sig.len());
+        let mut pos = 0;
+
+        for param in sig {
+            if pos < args.len() {
+                // If there is both a positional and keyword argument, we prefer the positional one.
+                // Remove the keyword argument from the map.
+                kwargs.remove(&param.name);
+                // Use the next positional argument.
+                new_args.push(args[pos].clone());
+                pos += 1;
+            } else if let Some((_, kw_expr)) = kwargs.remove(&param.name) {
+                // No more positional args, but there is a matching keyword argument.
+                new_args.push(kw_expr);
+            } else if let Some((default, span)) = &param.default {
+                // Compute the default value if one is provided.
+                new_args.push(default.clone().to_expr(span.clone()));
             }
-            i += 1;
+            // If no positional, keyword, or default value exists, then
+            // we simply do not insert anything (and no error is raised).
         }
-    }
-    for (arg_name, _) in args {
-        if let Some((arg_name, arg_span)) = arg_name.take() {
-            d.report(DiagnosticKind::UnrecognizedArgument(arg_name), &arg_span);
+
+        // Append any extra positional arguments that exceed the signature length.
+        while pos < args.len() {
+            new_args.push(args[pos].clone());
+            pos += 1;
         }
+
+        // Replace the original args with the re-ordered version.
+        *args = new_args;
     }
+    assert!(kwargs.is_empty(), "kwargs should be empty after processing");
 }

@@ -1149,9 +1149,24 @@ where T: Write + Seek
             Stmt::SetListIndex { name, index, value } => {
                 self.set_list_index(s, d, this_id, name, index, value)
             }
-            Stmt::Block { block, span, args } => self.block(s, d, this_id, block, span, args),
-            Stmt::ProcCall { name, span, args } => self.proc_call(s, d, this_id, name, span, args),
-            Stmt::FuncCall { name, span, args } => self.func_call(s, d, this_id, name, span, args),
+            Stmt::Block {
+                block,
+                span,
+                args,
+                kwargs: _,
+            } => self.block(s, d, this_id, block, span, args),
+            Stmt::ProcCall {
+                name,
+                span,
+                args,
+                kwargs: _,
+            } => self.proc_call(s, d, this_id, name, span, args),
+            Stmt::FuncCall {
+                name,
+                span,
+                args,
+                kwargs: _,
+            } => self.func_call(s, d, this_id, name, span, args),
             Stmt::Return { .. } => panic!(),
         }
     }

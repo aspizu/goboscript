@@ -1,4 +1,5 @@
 use fxhash::FxHashMap;
+use logos::Span;
 
 use super::transformations::{
     self,
@@ -255,8 +256,12 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             block: _,
             span: _,
             args,
+            kwargs,
         } => {
-            for (_, arg) in args {
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, s, d);
             }
         }
@@ -264,9 +269,13 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             name,
             span: _,
             args,
+            kwargs,
         } => {
-            keyword_arguments(args, s.procs.get(name).map(|proc| &proc.args), d);
-            for (_, arg) in args {
+            keyword_arguments(s.procs.get(name).map(|proc| &proc.args), args, kwargs, d);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, s, d);
             }
         }
@@ -274,9 +283,13 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             name,
             span: _,
             args,
+            kwargs,
         } => {
-            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args), d);
-            for (_, arg) in args {
+            keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, s, d);
             }
         }
@@ -302,22 +315,20 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             args,
         } => {
             if let Repr::KeyPressed = repr {
-                if let Some((_, arg)) = args.first() {
-                    if let Expr::Value {
-                        value: Value::String(keyname),
-                        span: keyname_span,
-                    } = arg
-                    {
-                        if !keys::is_key(keyname) {
-                            d.report(
-                                DiagnosticKind::UnrecognizedKey(keyname.clone()),
-                                keyname_span,
-                            );
-                        }
+                if let Some(Expr::Value {
+                    value: Value::String(keyname),
+                    span: keyname_span,
+                }) = args.first()
+                {
+                    if !keys::is_key(keyname) {
+                        d.report(
+                            DiagnosticKind::UnrecognizedKey(keyname.clone()),
+                            keyname_span,
+                        );
                     }
                 }
             }
-            for (_, arg) in args {
+            for arg in args {
                 visit_expr(arg, s, d);
             }
         }
@@ -325,9 +336,13 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             name,
             span: _,
             args,
+            kwargs,
         } => {
-            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args), d);
-            for (_, arg) in args {
+            keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, s, d);
             }
         }
@@ -338,11 +353,8 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             visit_expr(lhs, s, d);
             visit_expr(rhs, s, d);
         }
-        Expr::StructLiteral {
-            name: _,
-            span: _,
-            fields,
-        } => {
+        Expr::StructLiteral { name, fields, span } => {
+            struct_literal(s, d, name, span, fields);
             for field in fields {
                 visit_expr(&mut field.value, s, d);
             }
@@ -579,5 +591,37 @@ fn visit_stmt_return(_value: &Expr) -> Option<Vec<Stmt>> {
         block: Block::StopThisScript,
         span: 0..0,
         args: vec![],
+        kwargs: Default::default(),
     }])
+}
+
+fn struct_literal(s: S, d: D, name: &SmolStr, span: &Span, fields: &mut Vec<StructLiteralField>) {
+    let Some(struct_) = s.get_struct(name) else {
+        return;
+    };
+    let mut new_fields: Vec<StructLiteralField> = vec![];
+    for field in &struct_.fields {
+        let provided_field = fields
+            .iter()
+            .position(|f| f.name == field.name)
+            .map(|idx| fields.remove(idx));
+        if let Some(provided_field) = provided_field {
+            new_fields.push(provided_field);
+        } else if let Some((default, span)) = &field.default {
+            new_fields.push(StructLiteralField {
+                name: field.name.clone(),
+                span: span.clone(),
+                value: Box::new(default.clone().to_expr(span.clone())),
+            });
+        } else {
+            d.report(
+                DiagnosticKind::MissingField {
+                    struct_name: struct_.name.clone(),
+                    field_name: field.name.clone(),
+                },
+                span,
+            );
+        }
+    }
+    *fields = new_fields;
 }

@@ -68,6 +68,10 @@ pub enum DiagnosticKind {
         type_name: SmolStr,
         field_name: SmolStr,
     },
+    MissingField {
+        struct_name: SmolStr,
+        field_name: SmolStr,
+    },
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
@@ -181,6 +185,12 @@ impl DiagnosticKind {
             } => {
                 format!("struct {type_name} does not have field {field_name}")
             }
+            DiagnosticKind::MissingField {
+                struct_name,
+                field_name,
+            } => {
+                format!("struct {struct_name} is missing field {field_name}")
+            }
         }
     }
 
@@ -239,6 +249,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::CommandFailed { .. }
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
+            | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. } => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode

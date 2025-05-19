@@ -109,11 +109,8 @@ where T: Write + Seek
         parent_id: NodeID,
         repr: &Repr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("repr's do not support keyword args yet.")
-        }
         if args.len() != repr.args().len() {
             d.report(
                 DiagnosticKind::ReprArgsCountMismatch {
@@ -130,7 +127,7 @@ where T: Write + Seek
         let mut menu_value = None;
         let mut menu_is_default = menu_id.is_some();
         self.begin_inputs()?;
-        for ((&arg_name, (_, arg_value)), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
+        for ((&arg_name, arg_value), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
             if repr.menu().is_some_and(|menu| menu.input == arg_name) {
                 if let Expr::Value { value, span: _ } = arg_value {
                     menu_value = Some(value.clone());
@@ -157,7 +154,7 @@ where T: Write + Seek
             write!(self, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
-        for ((_, arg), arg_id) in args.iter().zip(arg_ids) {
+        for (arg, arg_id) in args.iter().zip(arg_ids) {
             self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = repr.menu() {
@@ -320,15 +317,12 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
         let Some(func) = s.sprite.funcs.get(name) else {
             d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
             return Ok(());
         };
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("func's do not support keyword args yet.")
-        }
         if func.args.len() != args.len() {
             d.report(
                 DiagnosticKind::FuncArgsCountMismatch {
@@ -341,13 +335,13 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = vec![];
         let mut qualified_arg_values: Vec<Expr> = vec![];
         self.begin_inputs()?;
-        for (arg, (_, kwarg)) in func.args.iter().zip(args) {
+        for (arg, arg_value) in func.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, kwarg, arg_id)?;
+                    self.input(s, d, &arg.name, arg_value, arg_id)?;
                     qualified_args.push((arg.name.clone(), arg_id));
-                    qualified_arg_values.push(kwarg.clone());
+                    qualified_arg_values.push(arg_value.clone());
                 }
                 Type::Struct {
                     name: type_name,
@@ -356,7 +350,7 @@ where T: Write + Seek
                     let Some(struct_) = s.get_struct(type_name) else {
                         continue;
                     };
-                    let arg_value = kwarg;
+                    let arg_value = arg_value;
                     let struct_literal_fields = match arg_value {
                         Expr::StructLiteral {
                             name: struct_literal_name,
@@ -426,15 +420,15 @@ where T: Write + Seek
     pub fn expr_dot(
         &mut self,
         s: S,
-        d: D,
-        this_id: NodeID,
-        parent_id: NodeID,
+        _d: D,
+        _this_id: NodeID,
+        _parent_id: NodeID,
         lhs: &Expr,
         rhs: &SmolStr,
-        rhs_span: Span,
+        _rhs_span: Span,
     ) -> io::Result<()> {
         if let Expr::Name(name) = lhs {
-            if let Some(enum_) = s.get_enum(name.basename()) {
+            if let Some(_enum_) = s.get_enum(name.basename()) {
                 return Ok(());
             }
         }

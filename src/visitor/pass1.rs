@@ -156,8 +156,12 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             block: _,
             span: _,
             args,
+            kwargs,
         } => {
-            for (_, arg) in args {
+            for arg in args {
+                visit_expr(arg, &mut before, s);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, &mut before, s);
             }
         }
@@ -165,9 +169,13 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             name,
             span: _,
             args,
+            kwargs,
         } => {
             s.references.procs.insert(name.clone());
-            for (_, arg) in args {
+            for arg in args {
+                visit_expr(arg, &mut before, s);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, &mut before, s);
             }
         }
@@ -175,9 +183,13 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             name,
             span: _,
             args,
+            kwargs,
         } => {
             s.references.funcs.insert(name.clone());
-            for (_, arg) in args {
+            for arg in args {
+                visit_expr(arg, &mut before, s);
+            }
+            for (_, arg) in kwargs.values_mut() {
                 visit_expr(arg, &mut before, s);
             }
         }
@@ -239,18 +251,24 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             span: _,
             args,
         } => {
-            for (_, arg) in args {
+            for arg in args {
                 visit_expr(arg, before, s);
             }
             None
         }
-        Expr::FuncCall { name, span, args } => {
+        Expr::FuncCall {
+            name,
+            span,
+            args,
+            kwargs,
+        } => {
             if let Some(func) = s.funcs.get(name) {
                 *s.callsites += 1;
                 before.push(Stmt::FuncCall {
                     name: name.clone(),
                     span: span.clone(),
                     args: args.clone(),
+                    kwargs: kwargs.clone(),
                 });
                 let callsite = Name::Name {
                     name: format!("@{}", *s.callsites).into(),
