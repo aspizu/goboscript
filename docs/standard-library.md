@@ -5,13 +5,6 @@ can be used in any goboscript project.
 
 ## Standard library headers
 
-| Header | Description |
-|--------|-------------|
-| `std/math` | Mathematical operations |
-| `std/string` | String manipulation |
-| `std/algo` | Various algorithms |
-| `std/emoji` | Emoji database |
-
 Include a header using the `%include` directive.
 
 ```goboscript
@@ -20,3 +13,9 @@ Include a header using the `%include` directive.
 
 goboscript's dead code elimination will remove any unused procedures and functions from
 the compiled project.
+
+## Documentation
+
+There is no hand-written documentation currently, so refer to AI-generated documentation.
+
+<https://deepwiki.com/goboscript/std>
