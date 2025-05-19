@@ -286,6 +286,9 @@ pub fn keyword_arguments(
 
         for param in sig {
             if pos < args.len() {
+                // If there is both a positional and keyword argument, we prefer the positional one.
+                // Remove the keyword argument from the map.
+                kwargs.remove(&param.name);
                 // Use the next positional argument.
                 new_args.push(args[pos].clone());
                 pos += 1;
