@@ -176,9 +176,7 @@ pub fn bin_op(expr: &Expr) -> Option<Expr> {
     else {
         return None;
     };
-    lhs_value
-        .binop(*op, rhs_value)
-        .map(|value| value.to_expr(span.clone()))
+    Some(Value::bin_op(*op, lhs_value, rhs_value).to_expr(span.clone()))
 }
 
 pub fn un_op(expr: &Expr) -> Option<Expr> {
@@ -191,7 +189,7 @@ pub fn un_op(expr: &Expr) -> Option<Expr> {
     else {
         return None;
     };
-    opr_value.unop(*op).map(|value| value.to_expr(span.clone()))
+    Some(Value::un_op(*op, opr_value).to_expr(span.clone()))
 }
 
 pub fn minus(expr: &Expr) -> Option<Expr> {
@@ -205,7 +203,7 @@ pub fn minus(expr: &Expr) -> Option<Expr> {
     };
     Some(BinOp::Sub.to_expr(
         span.clone(),
-        Value::Int(0).to_expr(span.clone()),
+        Value::from(0.0).to_expr(span.clone()),
         opr.as_ref().clone(),
     ))
 }
@@ -307,7 +305,7 @@ pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
     Some(BinOp::Eq.to_expr(
         expr.span(),
         expr.clone(),
-        Value::Int(1).to_expr(expr.span()),
+        Value::from(1.0).to_expr(expr.span()),
     ))
 }
 

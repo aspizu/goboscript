@@ -72,15 +72,15 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
 }
 
 fn visit_enum(enum_: &mut Enum) {
-    let mut index = 0;
+    let mut index = 0.0;
     for variant in &mut enum_.variants {
         if let Some((value, _)) = &variant.value {
-            if let Value::Int(int_value) = value {
-                index = *int_value;
+            if let Value::Number(number) = value {
+                index = *number;
             }
         } else {
-            variant.value = Some((Value::Int(index), variant.span.clone()));
-            index += 1;
+            variant.value = Some((Value::Number(index), variant.span.clone()));
+            index += 1.0;
         }
     }
 }

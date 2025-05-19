@@ -91,3 +91,9 @@ impl BinOp {
         }
     }
 }
+
+impl Value {
+    pub fn to_expr(self, span: Span) -> Expr {
+        Expr::Value { value: self, span }
+    }
+}
