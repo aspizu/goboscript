@@ -14,7 +14,7 @@
             <Keywords name="Numbers, suffix2"></Keywords>
             <Keywords name="Numbers, range"></Keywords>
             <Keywords name="Operators1">== ++ -- += -= *= /= //= %= &amp;= != &lt; &gt; &lt;= &gt;= &amp; + - * / // ; ( ) { } [ ] , |&gt;</Keywords>
-            <Keywords name="Operators2">not in length round abs floor ceil sqrt sin cos tan asin acos atan ln log antiln antilog %</Keywords>
+            <Keywords name="Operators2">not in length round abs floor ceil sqrt sin cos tan asin acos atan ln log antiln antilog % of</Keywords>
             <Keywords name="Folders in code1, open">{</Keywords>
             <Keywords name="Folders in code1, middle"></Keywords>
             <Keywords name="Folders in code1, close">}</Keywords>

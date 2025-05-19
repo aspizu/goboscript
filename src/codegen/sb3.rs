@@ -1196,6 +1196,9 @@ where T: Write + Seek
             Expr::Dot { lhs, rhs, rhs_span } => {
                 self.expr_dot(s, d, this_id, parent_id, lhs, rhs, rhs_span.clone())
             }
+            Expr::Of { property, span, object} => {
+                self.property_of(s, d, expr, this_id, parent_id, property, object)
+            }
         }
     }
 }
