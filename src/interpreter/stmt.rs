@@ -2,6 +2,7 @@ use fxhash::FxHashMap;
 use logos::Span;
 
 use super::{
+    foreign::foreign_proc,
     qualify_name,
     value::Value,
     ExceptionResult,
@@ -83,14 +84,19 @@ impl Interpreter {
         span: &Span,
         args: &[(Option<(SmolStr, Span)>, Expr)],
     ) -> ExceptionResult<()> {
-        let proc = sprite.procs.get(name).unwrap();
-        let mut new_args = FxHashMap::default();
+        let Some(proc) = sprite.procs.get(name) else {
+            if !foreign_proc(self, name, span, args)? {
+                throw!(format!("Procedure {} not found", name), span.clone());
+            }
+            return Ok(());
+        };
         if proc.args.len() != args.len() {
             throw!(
                 format!("Expected {} arguments, got {}", proc.args.len(), args.len()),
                 span.clone()
             );
         }
+        let mut new_args = FxHashMap::default();
         for (arg, (_arg_name, arg_expr)) in proc.args.iter().zip(args) {
             let arg_value = self.run_expr(arg_expr)?;
             new_args.insert(arg.name.clone(), arg_value);

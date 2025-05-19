@@ -51,7 +51,7 @@ impl Interpreter {
             Block::SetRotationStyleAllAround => todo!(),
             Block::Say2 => todo!(),
             Block::Say1 => {
-                let [message] = arguments::<1>(arg_values, span)?;
+                let [message] = arguments(arg_values, span)?;
                 say1(message)
             }
             Block::Think2 => todo!(),
@@ -108,7 +108,7 @@ impl Interpreter {
             Block::Clone0 => todo!(),
             Block::Clone1 => todo!(),
             Block::Ask => {
-                let [question] = arguments::<1>(arg_values, span)?;
+                let [question] = arguments(arg_values, span)?;
                 ask(self, question)
             }
             Block::SetDragModeDraggable => todo!(),
@@ -136,7 +136,10 @@ impl Interpreter {
     }
 }
 
-fn arguments<const N: usize>(arg_values: Vec<Value>, span: &Span) -> ExceptionResult<[Value; N]> {
+pub fn arguments<const N: usize>(
+    arg_values: Vec<Value>,
+    span: &Span,
+) -> ExceptionResult<[Value; N]> {
     if arg_values.len() != N {
         throw!(
             format!("Expected {} arguments, but got {}.", N, arg_values.len()),

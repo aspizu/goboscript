@@ -1,10 +1,13 @@
 mod bin_op;
 mod block;
 mod expr;
+mod foreign;
 mod repr;
 mod stmt;
 mod un_op;
 mod value;
+
+use std::fs::File;
 
 use fxhash::FxHashMap;
 use logos::Span;
@@ -55,6 +58,7 @@ pub struct Interpreter {
     pub vars: FxHashMap<SmolStr, Value>,
     pub args: FxHashMap<SmolStr, Value>,
     pub answer: Value,
+    pub files: Vec<File>,
 }
 
 pub fn qualify_name(name: &Name) -> SmolStr {
