@@ -23,7 +23,7 @@ impl<T> Sb3<T>
 where T: Write + Seek
 {
     pub fn on(&mut self, event: &SmolStr) -> io::Result<()> {
-        self.single_field("BROADCAST_OPTION", event)?;
+        self.single_field_id("BROADCAST_OPTION", event)?;
         self.end_obj() // node
     }
 
