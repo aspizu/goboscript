@@ -55,6 +55,8 @@ pub fn build(fs: JsValue) -> JsValue {
             })
             .unwrap()
         }
-        Err(_) => panic!(),
+        Err(BuildError::AnyhowError(error)) => {
+            panic!("{:#?}", error);
+        }
     }
 }
