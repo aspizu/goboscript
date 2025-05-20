@@ -10,6 +10,10 @@ use std::{
 };
 
 use fxhash::FxHashMap;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 pub trait VFS {
     fn read_dir(&mut self, path: &Path) -> io::Result<Vec<PathBuf>>;
@@ -70,26 +74,34 @@ impl VFS for RealFS {
     }
 }
 
+mod base64 {
+    use serde::{
+        Deserialize,
+        Deserializer,
+        Serialize,
+        Serializer,
+    };
+
+    pub fn serialize<S: Serializer>(v: &Vec<u8>, s: S) -> Result<S::Ok, S::Error> {
+        let base64 = base64::encode(v);
+        String::serialize(&base64, s)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
+        let base64 = String::deserialize(d)?;
+        base64::decode(base64.as_bytes()).map_err(|e| serde::de::Error::custom(e))
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct Data {
+    #[serde(with = "base64")]
+    pub inner: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct MemFS {
-    files: FxHashMap<String, Vec<u8>>,
-}
-
-impl Default for MemFS {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl MemFS {
-    pub fn new() -> Self {
-        Self {
-            files: FxHashMap::default(),
-        }
-    }
-
-    pub fn add_file(&mut self, path: String, data: Vec<u8>) {
-        self.files.insert(path, data);
-    }
+    files: FxHashMap<String, Data>,
 }
 
 impl VFS for MemFS {
@@ -114,7 +126,7 @@ impl VFS for MemFS {
                 format!("File not found: {}", path.display()),
             )
         })?;
-        let cursor = Cursor::new(data.clone());
+        let cursor = Cursor::new(&data.inner);
         Ok(Box::new(cursor))
     }
 
