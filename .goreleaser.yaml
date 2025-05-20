@@ -42,6 +42,7 @@ archives:
       format_overrides:
           - goos: windows
             format: zip
+      allow_different_binary_count: true
 
 changelog:
     sort: asc
