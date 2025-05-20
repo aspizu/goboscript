@@ -648,14 +648,14 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(input, costume, d)?;
+            self.costume(fs.clone(), input, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.sound(input, sound, d)?;
+            self.sound(fs.clone(), input, sound, d)?;
         }
         write!(self, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
@@ -847,7 +847,13 @@ where T: Write + Seek
         Ok(())
     }
 
-    pub fn costume(&mut self, input: &Path, costume: &Costume, d: D) -> io::Result<()> {
+    pub fn costume(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
+        costume: &Costume,
+        d: D,
+    ) -> io::Result<()> {
         let path = input.join(&*costume.path);
         let hash = self
             .costumes
@@ -855,7 +861,8 @@ where T: Write + Seek
             .cloned()
             .map(Ok::<_, io::Error>)
             .unwrap_or_else(|| {
-                let mut file = match File::open(&path) {
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
                         d.report(
@@ -887,7 +894,13 @@ where T: Write + Seek
         write!(self, "}}") // costume
     }
 
-    pub fn sound(&mut self, input: &Path, sound: &Sound, d: D) -> io::Result<()> {
+    pub fn sound(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
+        sound: &Sound,
+        d: D,
+    ) -> io::Result<()> {
         let path = input.join(&*sound.path);
         let hash = self
             .costumes
@@ -895,7 +908,8 @@ where T: Write + Seek
             .cloned()
             .map(Ok::<_, io::Error>)
             .unwrap_or_else(|| {
-                let mut file = match File::open(&path) {
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
                         d.report(
