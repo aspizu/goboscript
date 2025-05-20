@@ -95,7 +95,10 @@ pub fn build_impl<'a, T: Write + Seek>(
         let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
         StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
     };
-    stdlib.fetch()?;
+    // v0.0.0 means stdlib is from wasm
+    if stdlib.version.major != 0 {
+        stdlib.fetch()?;
+    }
     let stage_path = input.join("stage.gs");
     if !stage_path.is_file() {
         return Err(anyhow!("{} not found", stage_path.display()).into());
