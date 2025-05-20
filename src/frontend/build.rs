@@ -100,7 +100,7 @@ pub fn build_impl<'a, T: Write + Seek>(
         stdlib.fetch()?;
     }
     let stage_path = input.join("stage.gs");
-    if !stage_path.is_file() {
+    if !fs.borrow_mut().is_file(&stage_path) {
         return Err(anyhow!("{} not found", stage_path.display()).into());
     }
     let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib);
