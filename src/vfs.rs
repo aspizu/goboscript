@@ -2,6 +2,7 @@ use std::{
     io::{
         self,
         Cursor,
+        Read,
     },
     path::{
         Path,
@@ -105,39 +106,166 @@ pub struct MemFS {
 }
 
 impl VFS for MemFS {
-    fn read_dir<'a>(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
-        let path = path.to_str().unwrap();
+    fn read_dir(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
+        let path_str = path
+            .to_str()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid UTF-8 in path"))?;
+
+        // Normalize path: empty string or "/" means root
+        let normalized_path = match path_str {
+            "" | "." | "/" => "",
+            s if s.ends_with('/') => s,
+            s => &(s.to_owned() + "/"),
+        };
+
         let mut entries = Vec::new();
-        for (key, _) in self.files.iter() {
-            if key.starts_with(path)
-                && key.chars().filter(|c| *c == '/').count()
-                    == path.chars().filter(|c| *c == '/').count()
-            {
-                entries.push(PathBuf::from(key));
+        let mut seen = std::collections::HashSet::new();
+
+        for key in self.files.keys() {
+            if key.starts_with(normalized_path) {
+                let remainder = &key[normalized_path.len()..];
+                if let Some(pos) = remainder.find('/') {
+                    let entry = &remainder[..pos];
+                    if seen.insert(entry) {
+                        entries.push(path.join(entry));
+                    }
+                } else if seen.insert(remainder) {
+                    entries.push(path.join(remainder));
+                }
             }
         }
+
         Ok(entries)
     }
 
     fn read_file<'a>(&'a mut self, path: &Path) -> io::Result<Box<dyn io::Read + 'a>> {
-        let data = self.files.get(path.to_str().unwrap()).ok_or_else(|| {
+        let path_str = path
+            .to_str()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid UTF-8 in path"))?;
+
+        let data = self.files.get(path_str).ok_or_else(|| {
             io::Error::new(
                 io::ErrorKind::NotFound,
                 format!("File not found: {}", path.display()),
             )
         })?;
-        let cursor = Cursor::new(&data.inner);
-        Ok(Box::new(cursor))
+
+        Ok(Box::new(Cursor::new(&data.inner)))
     }
 
     fn is_dir(&self, path: &Path) -> bool {
-        let path = path.to_str().unwrap();
+        let path_str = match path.to_str() {
+            Some(s) => s,
+            None => return false,
+        };
+
+        let normalized_path = if path_str.ends_with('/') {
+            path_str.to_string()
+        } else {
+            format!("{}/", path_str)
+        };
+
         self.files
             .keys()
-            .any(|key| key.starts_with(path) && key != path)
+            .any(|key| key.starts_with(&normalized_path))
     }
 
     fn is_file(&self, path: &Path) -> bool {
-        self.files.contains_key(path.to_str().unwrap()) && !self.is_dir(path)
+        let path_str = match path.to_str() {
+            Some(s) => s,
+            None => return false,
+        };
+
+        self.files.contains_key(path_str)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use super::*;
+
+    #[test]
+    fn test_memfs_read_write_file() {
+        let mut memfs = MemFS {
+            files: FxHashMap::default(),
+        };
+        let path = Path::new("test_file.txt");
+        let content = b"Hello, MemFS!".to_vec();
+
+        // Write file
+        memfs.files.insert(
+            path.to_str().unwrap().to_string(),
+            Data {
+                inner: content.clone(),
+            },
+        );
+
+        // Read file
+        let mut file = memfs.read_file(path).expect("File should exist");
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).expect("Read should succeed");
+
+        assert_eq!(buffer, content);
+    }
+
+    #[test]
+    fn test_memfs_is_file() {
+        let mut memfs = MemFS {
+            files: FxHashMap::default(),
+        };
+        let path = Path::new("test_file.txt");
+        memfs
+            .files
+            .insert(path.to_str().unwrap().to_string(), Data { inner: vec![] });
+
+        assert!(memfs.is_file(path));
+        assert!(!memfs.is_file(Path::new("non_existent.txt")));
+    }
+
+    #[test]
+    fn test_memfs_is_dir() {
+        let mut memfs = MemFS {
+            files: FxHashMap::default(),
+        };
+        memfs
+            .files
+            .insert("dir/file.txt".to_string(), Data { inner: vec![] });
+
+        assert!(memfs.is_dir(Path::new("dir/")));
+        assert!(!memfs.is_dir(Path::new("dir/file.txt")));
+        assert!(!memfs.is_dir(Path::new("non_existent_dir/")));
+    }
+
+    #[test]
+    fn test_memfs_read_dir() {
+        let mut memfs = MemFS {
+            files: FxHashMap::default(),
+        };
+        memfs
+            .files
+            .insert("rootfile1.txt".to_string(), Data { inner: vec![] });
+        memfs
+            .files
+            .insert("dir/file1.txt".to_string(), Data { inner: vec![] });
+        memfs
+            .files
+            .insert("dir/file2.txt".to_string(), Data { inner: vec![] });
+        memfs
+            .files
+            .insert("dir/subdir/file3.txt".to_string(), Data { inner: vec![] });
+
+        let entries = memfs
+            .read_dir(Path::new("dir"))
+            .expect("Read dir should succeed");
+        let entry_names: Vec<_> = entries
+            .iter()
+            .map(|p| p.file_name().unwrap().to_str().unwrap().to_string())
+            .collect();
+
+        assert!(entry_names.contains(&"file1.txt".to_string()));
+        assert!(entry_names.contains(&"file2.txt".to_string()));
+        assert!(entry_names.contains(&"subdir".to_string()));
     }
 }
