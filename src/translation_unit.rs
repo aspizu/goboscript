@@ -12,6 +12,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 
 use crate::{
     diagnostic::{
@@ -22,13 +23,15 @@ use crate::{
     vfs::VFS,
 };
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum Owner {
     Local,
     StandardLibrary,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 /// A section of a source file that is included in the translation unit.
 /// This may be a section of the source file, or the entire source file.
 pub struct Include {
@@ -40,7 +43,8 @@ pub struct Include {
     pub owner: Owner,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct TranslationUnit {
     path: PathBuf,
     text: Vec<u8>,

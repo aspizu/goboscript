@@ -12,10 +12,12 @@ use serde::{
     Serialize,
 };
 pub use sprite_diagnostics::*;
+use tsify::Tsify;
 
 use crate::lexer::token::Token;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub span: Span,

@@ -1,10 +1,9 @@
-use std::io;
-
 use annotate_snippets::Level;
 use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 
 use crate::{
     ast::{
@@ -19,7 +18,8 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum DiagnosticKind {
     // Errors
     InvalidToken,

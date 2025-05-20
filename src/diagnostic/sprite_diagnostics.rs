@@ -18,6 +18,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 
 use super::{
     diagnostic_kind::DiagnosticKind,
@@ -32,8 +33,8 @@ use crate::{
     },
     vfs::VFS,
 };
-
-#[derive(Serialize, Deserialize)]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct SpriteDiagnostics {
     sprite_name: String,
     pub translation_unit: TranslationUnit,

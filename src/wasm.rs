@@ -11,6 +11,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 use wasm_bindgen::{
     prelude::*,
     JsValue,
@@ -28,7 +29,8 @@ use crate::{
     vfs::MemFS,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Diagnostics {
     stage_diagnostics: SpriteDiagnostics,
     sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
