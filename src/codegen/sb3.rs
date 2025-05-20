@@ -305,7 +305,8 @@ where T: Write + Seek
         }
     }
 
-    fn assets(&mut self, input: &Path) -> io::Result<()> {
+    fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
+        let mut fs = fs.borrow_mut();
         let mut added = FxHashSet::default();
         for (path, hash) in &self.costumes {
             if added.contains(hash) {
@@ -315,7 +316,7 @@ where T: Write + Seek
             let (_, extension) = path.rsplit_once('.').unwrap();
             self.zip
                 .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = File::open(input.join(&**path));
+            let file = fs.read_file(&input.join(&**path));
             io::copy(&mut file?, &mut self.zip)?;
         }
         if self.srcpkg_hash.is_some() {
@@ -428,7 +429,7 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets(input)?;
+        self.assets(fs.clone(), input)?;
         Ok(())
     }
 
