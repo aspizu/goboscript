@@ -43,7 +43,12 @@ pub fn build(fs: JsValue) -> JsValue {
         path: "stdlib".into(),
         version: Version::new(0, 0, 0),
     };
-    match build_impl(Rc::new(RefCell::new(fs)), "".into(), sb3, Some(stdlib)) {
+    match build_impl(
+        Rc::new(RefCell::new(fs)),
+        "project".into(),
+        sb3,
+        Some(stdlib),
+    ) {
         Ok(()) => {
             let uint8_array = Uint8Array::from(file.as_slice());
             uint8_array.into()
