@@ -18,8 +18,6 @@ before:
 
 builds:
     - builder: rust
-      tool: cross
-      command: build
       flags:
           - --release
       targets:
