@@ -34,6 +34,7 @@ toml = "0.8.19"
 walkdir = "2.5.0"
 zip = { version = "3.0.0", default-features = false, features = ["deflate"] }
 wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1.7"
 
 [build-dependencies]
 lalrpop = "0.22.0"
