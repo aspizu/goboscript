@@ -36,3 +36,6 @@ zip = { version = "3.0.0", features = ["deflate"] }
 
 [build-dependencies]
 lalrpop = "0.22.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
