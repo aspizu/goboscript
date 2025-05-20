@@ -1,6 +1,6 @@
 use std::{
+    cell::RefCell,
     env::consts::OS,
-    fs::File,
     io::{
         BufRead,
         BufReader,
@@ -11,6 +11,7 @@ use std::{
         Command,
         Stdio,
     },
+    rc::Rc,
 };
 
 use crate::{
@@ -19,15 +20,21 @@ use crate::{
         Diagnostic,
         DiagnosticKind,
     },
+    vfs::VFS,
 };
 
-pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
+pub fn cmd_to_list(
+    fs: Rc<RefCell<dyn VFS>>,
+    cmd: &Cmd,
+    input: &Path,
+) -> Result<Vec<String>, Diagnostic> {
     if cmd
         .program
         .as_ref()
         .is_some_and(|program| &*program.name == "file")
     {
-        let file = match File::open(input.join(&*cmd.cmd)) {
+        let mut fs = fs.borrow_mut();
+        let file = match fs.read_file(&input.join(&*cmd.cmd)) {
             Ok(file) => file,
             Err(error) => {
                 return Err(Diagnostic {

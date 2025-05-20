@@ -779,7 +779,7 @@ where T: Write + Seek
         let data = list
             .cmd()
             .and_then(|cmd| {
-                cmd_to_list(cmd, input)
+                cmd_to_list(d.translation_unit.fs.clone(), cmd, input)
                     .map_err(|err| d.diagnostics.push(err))
                     .ok()
             })

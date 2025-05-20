@@ -1,8 +1,10 @@
 use std::{
+    cell::RefCell,
     fs::{
         self,
     },
     path::PathBuf,
+    rc::Rc,
 };
 
 use annotate_snippets::{
@@ -24,6 +26,7 @@ use crate::{
         Owner,
         TranslationUnit,
     },
+    vfs::VFS,
 };
 
 pub struct SpriteDiagnostics {
@@ -33,9 +36,9 @@ pub struct SpriteDiagnostics {
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf, stdlib: &StandardLibrary) -> Self {
+    pub fn new(path: PathBuf, stdlib: &StandardLibrary, fs: Rc<RefCell<dyn VFS>>) -> Self {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-        let mut translation_unit = TranslationUnit::new(path);
+        let mut translation_unit = TranslationUnit::new(path, fs);
         let mut diagnostics = vec![];
         if let Err(diagnostic) = translation_unit.pre_process(stdlib) {
             diagnostics.extend(diagnostic);

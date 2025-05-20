@@ -1,10 +1,8 @@
 use std::{
-    fs::{
-        self,
-        File,
-    },
+    cell::RefCell,
     io::Read,
     path::PathBuf,
+    rc::Rc,
     str,
 };
 
@@ -17,6 +15,7 @@ use crate::{
         DiagnosticKind,
     },
     standard_library::StandardLibrary,
+    vfs::VFS,
 };
 
 #[derive(Debug, Copy, Clone)]
@@ -37,7 +36,6 @@ pub struct Include {
     pub owner: Owner,
 }
 
-#[derive(Debug)]
 pub struct TranslationUnit {
     path: PathBuf,
     text: Vec<u8>,
@@ -45,11 +43,12 @@ pub struct TranslationUnit {
     includes: Vec<Include>,
     included: FxHashSet<String>,
     current_include: usize,
+    pub fs: Rc<RefCell<dyn VFS>>,
 }
 
 impl TranslationUnit {
-    pub fn new(path: PathBuf) -> Self {
-        let text = fs::read(&path).unwrap();
+    pub fn new(path: PathBuf, fs: Rc<RefCell<dyn VFS>>) -> Self {
+        let text = fs.borrow_mut().read_to_vec(&path).unwrap();
         let mut instance = Self {
             text,
             path,
@@ -57,6 +56,7 @@ impl TranslationUnit {
             includes: Default::default(),
             included: Default::default(),
             current_include: 0,
+            fs,
         };
         instance.includes.push(Include {
             unit_range: 0..instance.text.len(),
@@ -199,6 +199,7 @@ impl TranslationUnit {
         begin: usize,
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
+        let mut fs = self.fs.borrow_mut();
         let mut buffer = vec![];
 
         let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
@@ -208,12 +209,12 @@ impl TranslationUnit {
         };
         let mut path_with_extension = path.clone();
         path_with_extension.set_extension("gs");
-        if !path_with_extension.is_file() && path.is_dir() {
+        if !fs.is_file(&path_with_extension) && fs.is_dir(&path) {
             let file_name = path.file_name().unwrap().to_owned();
             path.push(file_name);
         }
         path.set_extension("gs");
-        let mut file = File::open(&path).map_err(|error| Diagnostic {
+        let mut file = fs.read_file(&path).map_err(|error| Diagnostic {
             kind: DiagnosticKind::IOError(error),
             span: path_span,
         })?;
