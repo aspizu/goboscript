@@ -693,7 +693,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
         let default = match default {
-            Some((value, _)) => value.to_string(),
+            Some((value, _)) => value.to_js_string(),
             None => arcstr::literal!("0"),
         };
         if is_cloud {

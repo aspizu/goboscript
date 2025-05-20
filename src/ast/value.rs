@@ -86,6 +86,13 @@ impl Value {
             Value::String(string) => string.clone(),
         }
     }
+    
+    pub fn to_js_string(&self) -> SmolStr {
+        match self {
+            Value::String(string) => arcstr::format!("\"{}\"", string),
+            _ => self.to_string(),
+        }
+    }
 
     pub fn is_integer(&self) -> bool {
         match self {
