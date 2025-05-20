@@ -74,7 +74,6 @@ pub fn build_impl<'a, T: Write + Seek>(
     mut sb3: Sb3<T>,
     stdlib: Option<StandardLibrary>,
 ) -> Result<(), BuildError> {
-    let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
     let config_path = input.join("goboscript.toml");
     let config_src = fs
         .borrow_mut()
@@ -85,6 +84,7 @@ pub fn build_impl<'a, T: Write + Seek>(
     let stdlib = if let Some(stdlib) = stdlib {
         stdlib
     } else if let Some(std) = &config.std {
+        let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
         let std = std
             .strip_prefix('v')
             .unwrap_or(std)
@@ -92,6 +92,7 @@ pub fn build_impl<'a, T: Write + Seek>(
             .with_context(|| format!("std version `{}` is not a valid semver version", std))?;
         StandardLibrary::new(std, &dirs.config_dir().join("std"))
     } else {
+        let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
         StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
     };
     stdlib.fetch()?;
