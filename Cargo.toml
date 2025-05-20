@@ -47,3 +47,6 @@ crate-type = ["cdylib", "rlib"]
 # <https://github.com/rustwasm/wasm-pack/issues/1441>
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+[profile.release]
+debug = true
