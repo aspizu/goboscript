@@ -467,6 +467,7 @@ dependencies = [
  "fast-float2",
  "fxhash",
  "glob",
+ "js-sys",
  "lalrpop",
  "lalrpop-util",
  "log",

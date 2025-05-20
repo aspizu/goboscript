@@ -14,6 +14,10 @@ use annotate_snippets::{
 };
 use colored::Colorize;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::{
     diagnostic_kind::DiagnosticKind,
@@ -29,6 +33,7 @@ use crate::{
     vfs::VFS,
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct SpriteDiagnostics {
     sprite_name: String,
     pub translation_unit: TranslationUnit,
