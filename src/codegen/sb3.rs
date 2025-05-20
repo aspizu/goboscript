@@ -693,17 +693,25 @@ where T: Write + Seek
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
         let default = match default {
-            Some((value, _)) => value.to_js_string(),
+            Some((value, _)) => value.to_string(),
             None => arcstr::literal!("0"),
         };
         if is_cloud {
             write!(
                 self,
-                "\"{}\":[\"\u{2601} {}\",{default},true]",
-                var_name, var_name
+                "\"{}\":[\"\u{2601} {}\",{},true]",
+                var_name,
+                var_name,
+                json!(*default)
             )
         } else {
-            write!(self, "\"{}\":[\"{}\",{default}]", var_name, var_name)
+            write!(
+                self,
+                "\"{}\":[\"{}\",{}]",
+                var_name,
+                var_name,
+                json!(*default)
+            )
         }
     }
 
