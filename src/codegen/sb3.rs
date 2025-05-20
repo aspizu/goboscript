@@ -699,11 +699,19 @@ where T: Write + Seek
         if is_cloud {
             write!(
                 self,
-                "\"{}\":[\"\u{2601} {}\",{default},true]",
-                var_name, var_name
+                "\"{}\":[\"\u{2601} {}\",{},true]",
+                var_name,
+                var_name,
+                json!(*default)
             )
         } else {
-            write!(self, "\"{}\":[\"{}\",{default}]", var_name, var_name)
+            write!(
+                self,
+                "\"{}\":[\"{}\",{}]",
+                var_name,
+                var_name,
+                json!(*default)
+            )
         }
     }
 
