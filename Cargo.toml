@@ -11,7 +11,7 @@ categories = ["compilers"]
 [dependencies]
 annotate-snippets = "0.11.4"
 anyhow = "1.0.91"
-arcstr = "1.2.0"
+arcstr = { version = "1.2.0", features = ["serde"] }
 base64 = "0.22.1"
 clap = { version = "4.5.20", features = ["derive"] }
 clap_complete_command = "0.6.1"
@@ -35,6 +35,7 @@ walkdir = "2.5.0"
 zip = { version = "3.0.0", default-features = false, features = ["deflate"] }
 wasm-bindgen = "0.2"
 console_error_panic_hook = "0.1.7"
+serde-wasm-bindgen = "0.6.5"
 
 [build-dependencies]
 lalrpop = "0.22.0"

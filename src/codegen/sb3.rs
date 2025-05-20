@@ -1,5 +1,6 @@
 use core::str;
 use std::{
+    cell::RefCell,
     fs::File,
     io::{
         self,
@@ -7,6 +8,7 @@ use std::{
         Write,
     },
     path::Path,
+    rc::Rc,
 };
 
 use fxhash::{
@@ -44,6 +46,7 @@ use crate::{
         write_comma_io,
         SmolStr,
     },
+    vfs::VFS,
 };
 
 const STAGE_NAME: &str = "Stage";
@@ -362,6 +365,7 @@ where T: Write + Seek
 
     pub fn project(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         project: &Project,
         config: &Config,
@@ -389,6 +393,7 @@ where T: Write + Seek
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
+            fs.clone(),
             input,
             STAGE_NAME,
             &project.stage,
@@ -400,6 +405,7 @@ where T: Write + Seek
         for (sprite_name, sprite) in &project.sprites {
             write!(self, r#","#)?;
             self.sprite(
+                fs.clone(),
                 input,
                 sprite_name,
                 sprite,
@@ -428,6 +434,7 @@ where T: Write + Seek
 
     pub fn sprite(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         name: &str,
         sprite: &Sprite,
@@ -569,6 +576,7 @@ where T: Write + Seek
         let mut comma = false;
         for list in sprite.lists.values().filter(|list| list.is_used) {
             self.list_declaration(
+                fs.clone(),
                 input,
                 S {
                     stage,
@@ -770,6 +778,7 @@ where T: Write + Seek
 
     pub fn list_declaration(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         s: S,
         list: &List,
@@ -779,7 +788,7 @@ where T: Write + Seek
         let data = list
             .cmd()
             .and_then(|cmd| {
-                cmd_to_list(d.translation_unit.fs.clone(), cmd, input)
+                cmd_to_list(fs.clone(), cmd, input)
                     .map_err(|err| d.diagnostics.push(err))
                     .ok()
             })
@@ -849,7 +858,10 @@ where T: Write + Seek
                 let mut file = match File::open(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(DiagnosticKind::IOError(error), &costume.span);
+                        d.report(
+                            DiagnosticKind::IOError(error.to_string().into()),
+                            &costume.span,
+                        );
                         return Ok(Default::default());
                     }
                 };
@@ -886,7 +898,10 @@ where T: Write + Seek
                 let mut file = match File::open(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(DiagnosticKind::IOError(error), &sound.span);
+                        d.report(
+                            DiagnosticKind::IOError(error.to_string().into()),
+                            &sound.span,
+                        );
                         return Ok(Default::default());
                     }
                 };

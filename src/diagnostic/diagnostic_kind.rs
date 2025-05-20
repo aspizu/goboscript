@@ -1,6 +1,10 @@
 use std::io;
 
 use annotate_snippets::Level;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::{
     ast::{
@@ -15,14 +19,14 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum DiagnosticKind {
     // Errors
     InvalidToken,
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
     ExtraToken(Token),
-    IOError(io::Error),
+    IOError(SmolStr),
     UnrecognizedReporter(SmolStr),
     UnrecognizedBlock(SmolStr),
     UnrecognizedVariable(SmolStr),

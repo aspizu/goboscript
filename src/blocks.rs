@@ -1,10 +1,14 @@
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub struct Menu {
     pub input: &'static str,
     pub opcode: &'static str,
     pub default: &'static str,
     pub field: &'static str,
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum UnOp {
     Not,
     Length,
@@ -97,7 +101,7 @@ impl UnOp {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum BinOp {
     Add,
     Sub,
@@ -176,7 +180,7 @@ impl BinOp {
         }
     }
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Block {
     Move,
     TurnLeft,
@@ -1067,7 +1071,7 @@ impl Block {
         }
     }
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Repr {
     XPosition,
     YPosition,
@@ -1149,7 +1153,9 @@ impl Repr {
     }
 
     pub fn overloads(name: &str) -> &'static [Self] {
-        &[]
+        match name {
+            _ => &[],
+        }
     }
 
     pub fn from_shape(name: &str, args: usize) -> Option<Self> {

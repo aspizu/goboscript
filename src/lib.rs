@@ -13,6 +13,7 @@ pub mod standard_library;
 pub mod translation_unit;
 pub mod vfs;
 pub mod visitor;
+pub mod wasm;
 
 use std::panic;
 

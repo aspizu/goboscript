@@ -36,11 +36,11 @@ pub struct SpriteDiagnostics {
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf, stdlib: &StandardLibrary, fs: Rc<RefCell<dyn VFS>>) -> Self {
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf, stdlib: &StandardLibrary) -> Self {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-        let mut translation_unit = TranslationUnit::new(path, fs);
+        let mut translation_unit = TranslationUnit::new(fs.clone(), path);
         let mut diagnostics = vec![];
-        if let Err(diagnostic) = translation_unit.pre_process(stdlib) {
+        if let Err(diagnostic) = translation_unit.pre_process(fs.clone(), stdlib) {
             diagnostics.extend(diagnostic);
         }
         Self {

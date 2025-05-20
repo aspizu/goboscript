@@ -38,7 +38,7 @@ pub fn cmd_to_list(
             Ok(file) => file,
             Err(error) => {
                 return Err(Diagnostic {
-                    kind: DiagnosticKind::IOError(error),
+                    kind: DiagnosticKind::IOError(error.to_string().into()),
                     span: cmd.span.clone(),
                 });
             }
@@ -56,7 +56,7 @@ pub fn cmd_to_list(
             .spawn();
         if let Err(error) = command {
             return Err(Diagnostic {
-                kind: DiagnosticKind::IOError(error),
+                kind: DiagnosticKind::IOError(error.to_string().into()),
                 span: program.span.clone(),
             });
         }

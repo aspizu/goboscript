@@ -7,11 +7,15 @@ pub use diagnostic_kind::*;
 use lalrpop_util::ParseError;
 use logos::Span;
 pub use project_diagnostics::*;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub use sprite_diagnostics::*;
 
 use crate::lexer::token::Token;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub span: Span,

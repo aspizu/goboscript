@@ -99,7 +99,7 @@ pub fn build_impl<'a, T: Write + Seek>(
     if !stage_path.is_file() {
         return Err(anyhow!("{} not found", stage_path.display()).into());
     }
-    let mut stage_diagnostics = SpriteDiagnostics::new(stage_path, &stdlib, fs.clone());
+    let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib);
     let stage = parser::parse(&stage_diagnostics.translation_unit)
         .map_err(|err| {
             stage_diagnostics.diagnostics.push(err);
@@ -127,7 +127,7 @@ pub fn build_impl<'a, T: Write + Seek>(
             .to_str()
             .unwrap()
             .into();
-        let mut sprite_diagnostics = SpriteDiagnostics::new(sprite_path, &stdlib, fs.clone());
+        let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib);
         let sprite = parser::parse(&sprite_diagnostics.translation_unit)
             .map_err(|err| sprite_diagnostics.diagnostics.push(err))
             .unwrap_or_default();
@@ -157,6 +157,7 @@ pub fn build_impl<'a, T: Write + Seek>(
     visitor::pass3::visit_project(&mut project);
     log::info!("{:#?}", project);
     sb3.project(
+        fs.clone(),
         &input,
         &project,
         &config,

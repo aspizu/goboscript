@@ -8,6 +8,10 @@ use std::{
 
 use fxhash::FxHashSet;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::{
     diagnostic::{
@@ -18,13 +22,13 @@ use crate::{
     vfs::VFS,
 };
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Owner {
     Local,
     StandardLibrary,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 /// A section of a source file that is included in the translation unit.
 /// This may be a section of the source file, or the entire source file.
 pub struct Include {
@@ -36,6 +40,7 @@ pub struct Include {
     pub owner: Owner,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct TranslationUnit {
     path: PathBuf,
     text: Vec<u8>,
@@ -43,11 +48,10 @@ pub struct TranslationUnit {
     includes: Vec<Include>,
     included: FxHashSet<String>,
     current_include: usize,
-    pub fs: Rc<RefCell<dyn VFS>>,
 }
 
 impl TranslationUnit {
-    pub fn new(path: PathBuf, fs: Rc<RefCell<dyn VFS>>) -> Self {
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> Self {
         let text = fs.borrow_mut().read_to_vec(&path).unwrap();
         let mut instance = Self {
             text,
@@ -56,7 +60,6 @@ impl TranslationUnit {
             includes: Default::default(),
             included: Default::default(),
             current_include: 0,
-            fs,
         };
         instance.includes.push(Include {
             unit_range: 0..instance.text.len(),
@@ -67,15 +70,24 @@ impl TranslationUnit {
         instance
     }
 
-    pub fn pre_process(&mut self, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
-        self.parse(0, stdlib)
+    pub fn pre_process(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        stdlib: &StandardLibrary,
+    ) -> Result<(), Vec<Diagnostic>> {
+        self.parse(fs, 0, stdlib)
     }
 
     pub fn get_text(&self) -> &str {
         str::from_utf8(&self.text).unwrap()
     }
 
-    fn parse(&mut self, begin: usize, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
+    fn parse(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        begin: usize,
+        stdlib: &StandardLibrary,
+    ) -> Result<(), Vec<Diagnostic>> {
         let mut diagnostics = vec![];
         let mut comment = 0;
         let mut i = begin;
@@ -124,7 +136,8 @@ impl TranslationUnit {
                         }
                         let path = str::from_utf8(path).unwrap().trim().to_owned();
                         if !self.included.contains(&path) {
-                            if let Err(err) = self.include(&path, path_span, i, stdlib) {
+                            if let Err(err) = self.include(fs.clone(), &path, path_span, i, stdlib)
+                            {
                                 diagnostics.push(err);
                             }
                             self.included.insert(path);
@@ -194,12 +207,13 @@ impl TranslationUnit {
 
     fn include(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         path: &str,
         path_span: Span,
         begin: usize,
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
-        let mut fs = self.fs.borrow_mut();
+        let mut fs = fs.borrow_mut();
         let mut buffer = vec![];
 
         let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
@@ -215,7 +229,7 @@ impl TranslationUnit {
         }
         path.set_extension("gs");
         let mut file = fs.read_file(&path).map_err(|error| Diagnostic {
-            kind: DiagnosticKind::IOError(error),
+            kind: DiagnosticKind::IOError(error.to_string().into()),
             span: path_span,
         })?;
         file.read_to_end(&mut buffer).unwrap();
