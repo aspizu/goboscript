@@ -11,7 +11,10 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{
+    prelude::*,
+    JsValue,
+};
 
 use crate::{
     codegen::sb3::Sb3,
@@ -31,6 +34,7 @@ pub struct Diagnostics {
     sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
 }
 
+#[wasm_bindgen]
 pub fn build(fs: JsValue) -> JsValue {
     let fs: MemFS = serde_wasm_bindgen::from_value(fs).unwrap();
     let mut file = Vec::new();
