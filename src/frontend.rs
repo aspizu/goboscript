@@ -15,12 +15,12 @@ use cli::{
     Command,
 };
 use colored::Colorize;
-use fmt::FmtError;
 use new::NewError;
 use run::RunError;
 
 use crate::{
     config::Config,
+    fmt::FmtError,
     interpreter::Exception,
 };
 
