@@ -1,6 +1,6 @@
 # goboscript
 
-![image](https://shields.io/crates/l/goboscript)
+![Discord](https://img.shields.io/discord/1216842627379363921?style=flat&logo=discord&label=Discord) ![image](https://shields.io/crates/l/goboscript)
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
 
@@ -26,6 +26,21 @@ goboscript is more than just an 1:1 mapping of Scratch blocks to text, it also h
 additional features like local variables for procedures (custom blocks).
 
 goboscript also performs optimizations, detects problems and unused code.
+
+### Prior Art
+
+goboscript was inspired from projects such as:
+
+ - <https://tosh.blob.codes/>: Text-based programming language for Scratch 2.
+ - <https://github.com/DavidBuchanan314/boiga>: Python DSL that generates Scratch 3 projects.
+
+**@retr0id** first presented the demoscene discord with his `boiga` project. `boiga` works by
+exporting Python data structures which nicely represent Scratch code in the form of
+Python code. Soon after, I created my own re-implementation of `boiga` called `gobomatic`.
+`gobomatic` was more feature-complete and supported more Scratch blocks and features than
+`boiga` did, and it had some syntactical differences. The python version of `goboscript`
+used `gobomatic` as a dependency to generate Scratch projects. Now, `gobomatic` is abandoned
+and `goboscript` was ported to Rust.
 
 # Sister Projects
 
@@ -97,5 +112,3 @@ goboscript was one of the first-place winners of FOSS HACK 25, and was awarded a
 FOSS HACK 25 was a open-source hackathon conducted on 22nd - 23rd February 2025 by the FOSS United
 Foundation. During the 48-hour hackathon, I had worked on several goboscript issues and feature
 implementation. Thank you FOSS United for the platform and oportunity. 
-
-*This section will be updated with information about how the funds will be utilized.*

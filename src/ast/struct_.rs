@@ -1,6 +1,9 @@
 use logos::Span;
 
-use super::struct_field::StructField;
+use super::{
+    struct_field::StructField,
+    Value,
+};
 use crate::misc::SmolStr;
 
 #[derive(Debug)]
@@ -12,15 +15,20 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(name: SmolStr, span: Span, fields: Vec<(SmolStr, Span)>) -> Self {
+    pub fn new(
+        name: SmolStr,
+        span: Span,
+        fields: Vec<(SmolStr, Span, Option<(Value, Span)>)>,
+    ) -> Self {
         Self {
             name,
             span,
             fields: fields
                 .into_iter()
-                .map(|(name, span)| StructField {
+                .map(|(name, span, default)| StructField {
                     name,
                     span,
+                    default,
                     is_used: false,
                 })
                 .collect(),

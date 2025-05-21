@@ -1,4 +1,5 @@
 use fxhash::FxHashMap;
+use logos::Span;
 
 use super::transformations::{
     self,
@@ -7,10 +8,8 @@ use super::transformations::{
 use crate::{
     ast::*,
     blocks::{
-        BinOp,
         Block,
         Repr,
-        UnOp,
     },
     codegen::sb3::D,
     diagnostic::{
@@ -196,7 +195,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
 fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
     match stmt {
         Stmt::Repeat { times, body } => {
-            visit_expr(times, s, d, false);
+            visit_expr(times, s, d);
             visit_stmts(body, s, d, false);
         }
         Stmt::Forever { body, span: _ } => {
@@ -207,12 +206,12 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             if_body,
             else_body,
         } => {
-            visit_expr(cond, s, d, true);
+            visit_expr(cond, s, d);
             visit_stmts(if_body, s, d, false);
             visit_stmts(else_body, s, d, false);
         }
         Stmt::Until { cond, body } => {
-            visit_expr(cond, s, d, true);
+            visit_expr(cond, s, d);
             visit_stmts(body, s, d, false);
         }
         Stmt::SetVar {
@@ -222,71 +221,83 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             is_local: _,
             is_cloud: _,
         } => {
-            visit_expr(value, s, d, false);
+            visit_expr(value, s, d);
         }
         Stmt::ChangeVar { name: _, value } => {
-            visit_expr(value, s, d, false);
+            visit_expr(value, s, d);
         }
         Stmt::Show(_) => {}
         Stmt::Hide(_) => {}
         Stmt::AddToList { name: _, value } => {
-            visit_expr(value, s, d, false);
+            visit_expr(value, s, d);
         }
         Stmt::DeleteList(_) => {}
         Stmt::DeleteListIndex { name: _, index } => {
-            visit_expr(index, s, d, false);
+            visit_expr(index, s, d);
         }
         Stmt::InsertAtList {
             name: _,
             index,
             value,
         } => {
-            visit_expr(value, s, d, false);
-            visit_expr(index, s, d, false);
+            visit_expr(value, s, d);
+            visit_expr(index, s, d);
         }
         Stmt::SetListIndex {
             name: _,
             index,
             value,
         } => {
-            visit_expr(value, s, d, false);
-            visit_expr(index, s, d, false);
+            visit_expr(value, s, d);
+            visit_expr(index, s, d);
         }
 
         Stmt::Block {
             block: _,
             span: _,
             args,
+            kwargs,
         } => {
-            for (_, arg) in args {
-                visit_expr(arg, s, d, false);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
+                visit_expr(arg, s, d);
             }
         }
         Stmt::ProcCall {
             name,
             span: _,
             args,
+            kwargs,
         } => {
-            keyword_arguments(args, s.procs.get(name).map(|proc| &proc.args), d);
-            for (_, arg) in args {
-                visit_expr(arg, s, d, false);
+            keyword_arguments(s.procs.get(name).map(|proc| &proc.args), args, kwargs, d);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
+                visit_expr(arg, s, d);
             }
         }
         Stmt::FuncCall {
             name,
             span: _,
             args,
+            kwargs,
         } => {
-            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args), d);
-            for (_, arg) in args {
-                visit_expr(arg, s, d, false);
+            keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
+                visit_expr(arg, s, d);
             }
         }
-        Stmt::Return { value, .. } => visit_expr(value, s, d, false),
+        Stmt::Return { value, .. } => visit_expr(value, s, d),
     }
 }
 
-fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
+fn visit_expr(expr: &mut Expr, s: S, d: D) {
     match expr {
         Expr::Value { value: _, span: _ } => {}
         Expr::Name(_) => {}
@@ -296,7 +307,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             rhs: _,
             rhs_span: _,
         } => {
-            visit_expr(lhs, s, d, false);
+            visit_expr(lhs, s, d);
         }
         Expr::Repr {
             repr,
@@ -304,54 +315,48 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
             args,
         } => {
             if let Repr::KeyPressed = repr {
-                if let Some((_, arg)) = args.first() {
-                    if let Expr::Value {
-                        value: Value::String(keyname),
-                        span: keyname_span,
-                    } = arg
-                    {
-                        if !keys::is_key(keyname) {
-                            d.report(
-                                DiagnosticKind::UnrecognizedKey(keyname.clone()),
-                                keyname_span,
-                            );
-                        }
+                if let Some(Expr::Value {
+                    value: Value::String(keyname),
+                    span: keyname_span,
+                }) = args.first()
+                {
+                    if !keys::is_key(keyname) {
+                        d.report(
+                            DiagnosticKind::UnrecognizedKey(keyname.clone()),
+                            keyname_span,
+                        );
                     }
                 }
             }
-            for (_, arg) in args {
-                visit_expr(arg, s, d, false);
+            for arg in args {
+                visit_expr(arg, s, d);
             }
         }
         Expr::FuncCall {
             name,
             span: _,
             args,
+            kwargs,
         } => {
-            keyword_arguments(args, s.funcs.get(name).map(|func| &func.args), d);
-            for (_, arg) in args {
-                visit_expr(arg, s, d, false);
+            keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
+            for arg in args {
+                visit_expr(arg, s, d);
+            }
+            for (_, arg) in kwargs.values_mut() {
+                visit_expr(arg, s, d);
             }
         }
-        Expr::UnOp { op, span: _, opr } => {
-            visit_expr(opr, s, d, matches!(op, UnOp::Not));
+        Expr::UnOp { opr, .. } => {
+            visit_expr(opr, s, d);
         }
-        Expr::BinOp {
-            op,
-            span: _,
-            lhs,
-            rhs,
-        } => {
-            visit_expr(lhs, s, d, matches!(op, BinOp::And | BinOp::Or));
-            visit_expr(rhs, s, d, matches!(op, BinOp::And | BinOp::Or));
+        Expr::BinOp { lhs, rhs, .. } => {
+            visit_expr(lhs, s, d);
+            visit_expr(rhs, s, d);
         }
-        Expr::StructLiteral {
-            name: _,
-            span: _,
-            fields,
-        } => {
+        Expr::StructLiteral { name, fields, span } => {
+            struct_literal(s, d, name, span, fields);
             for field in fields {
-                visit_expr(&mut field.value, s, d, false);
+                visit_expr(&mut field.value, s, d);
             }
         }
     }
@@ -368,9 +373,6 @@ fn visit_expr(expr: &mut Expr, s: S, d: D, coerce_condition: bool) {
     transformations::apply(expr, |expr| {
         transformations::struct_literal_field_access(expr, d)
     });
-    if coerce_condition {
-        transformations::apply(expr, transformations::coerce_condition);
-    }
 }
 
 fn visit_stmt_set_var(
@@ -589,5 +591,37 @@ fn visit_stmt_return(_value: &Expr) -> Option<Vec<Stmt>> {
         block: Block::StopThisScript,
         span: 0..0,
         args: vec![],
+        kwargs: Default::default(),
     }])
+}
+
+fn struct_literal(s: S, d: D, name: &SmolStr, span: &Span, fields: &mut Vec<StructLiteralField>) {
+    let Some(struct_) = s.get_struct(name) else {
+        return;
+    };
+    let mut new_fields: Vec<StructLiteralField> = vec![];
+    for field in &struct_.fields {
+        let provided_field = fields
+            .iter()
+            .position(|f| f.name == field.name)
+            .map(|idx| fields.remove(idx));
+        if let Some(provided_field) = provided_field {
+            new_fields.push(provided_field);
+        } else if let Some((default, span)) = &field.default {
+            new_fields.push(StructLiteralField {
+                name: field.name.clone(),
+                span: span.clone(),
+                value: Box::new(default.clone().to_expr(span.clone())),
+            });
+        } else {
+            d.report(
+                DiagnosticKind::MissingField {
+                    struct_name: struct_.name.clone(),
+                    field_name: field.name.clone(),
+                },
+                span,
+            );
+        }
+    }
+    *fields = new_fields;
 }

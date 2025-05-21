@@ -21,9 +21,51 @@ use crate::{
         Name,
         Value,
     },
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     diagnostic::DiagnosticKind,
     misc::write_comma_io,
 };
+
+pub fn is_expr_boolean(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::UnOp { op: UnOp::Not, .. }
+            | Expr::BinOp {
+                op: BinOp::Eq
+                    | BinOp::Ne
+                    | BinOp::Lt
+                    | BinOp::Le
+                    | BinOp::Gt
+                    | BinOp::Ge
+                    | BinOp::And
+                    | BinOp::Or
+                    | BinOp::In,
+                ..
+            }
+            | Expr::Repr {
+                repr: Repr::ColorIsTouchingColor
+                    | Repr::KeyPressed
+                    | Repr::MouseDown
+                    | Repr::Touching
+                    | Repr::TouchingColor
+                    | Repr::TouchingEdge
+                    | Repr::TouchingMousePointer
+                    | Repr::Contains,
+                ..
+            }
+    )
+}
+
+pub fn coerce_condition(expr: &Expr) -> Expr {
+    if is_expr_boolean(expr) {
+        return expr.clone();
+    }
+    BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(0.0).to_expr(0..0))
+}
 
 impl<T> Sb3<T>
 where T: Write + Seek
@@ -91,32 +133,30 @@ where T: Write + Seek
 
     fn value_input(&mut self, name: &str, value: &Value) -> io::Result<()> {
         match value {
-            Value::Int(int_value) => {
-                write!(self, "[1,[4,{}]]", json!(int_value))
+            Value::Boolean(boolean) => {
+                write!(self, "[1,[4,{}]]", json!(*boolean as i64))
             }
-            Value::Float(float_value) => {
-                write!(self, "[1,[4,{}]]", json!(float_value))
+            Value::Number(number) if number.fract() == 0.0 => {
+                write!(self, "[1,[4,{}]]", json!(number))
             }
-            Value::String(string_value) => {
+            Value::Number(number) => {
+                write!(self, "[1,[4,{}]]", json!(number))
+            }
+            Value::String(string) => {
                 let color = ["COLOR", "COLOR2"]
                     .contains(&name)
                     .then(|| {
-                        csscolorparser::parse(string_value)
+                        csscolorparser::parse(string)
                             .ok()
                             .filter(|color| color.a == 1.0)
                     })
                     .flatten();
                 if name == "BROADCAST_INPUT" {
-                    write!(
-                        self,
-                        "[1,[11,{},{}]]",
-                        json!(**string_value),
-                        json!(**string_value)
-                    )
+                    write!(self, "[1,[11,{},{}]]", json!(**string), json!(**string))
                 } else if let Some(color) = color {
                     write!(self, "[1,[9,{}]]", json!(color.to_hex_string()))
                 } else {
-                    write!(self, "[1,[10,{}]]", json!(**string_value))
+                    write!(self, "[1,[10,{}]]", json!(**string))
                 }
             }
         }

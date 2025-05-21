@@ -4,11 +4,15 @@ use std::fmt::{
 };
 
 use logos::Logos;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::literal::*;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Logos, Clone, PartialEq)]
+#[derive(Debug, Logos, Clone, PartialEq, Serialize, Deserialize)]
 #[logos(skip r"[ \r\t\f]+")]
 #[logos(skip r"#[^\n]*\n")]
 pub enum Token {
@@ -246,7 +250,7 @@ impl Display for Token {
             Token::Name(name) => write!(f, "name{}", name),
             Token::Define => write!(f, "%define"),
             Token::Undef => write!(f, "%undef"),
-            Token::Newline => write!(f, "\n"),
+            Token::Newline => writeln!(f),
             Token::Backslash => write!(f, "\\"),
             Token::Arg(name) => write!(f, "${}", name),
             Token::Bin(value) => write!(f, "bin{}", value),

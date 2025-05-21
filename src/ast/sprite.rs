@@ -2,6 +2,7 @@ use fxhash::{
     FxHashMap,
     FxHashSet,
 };
+use logos::Span;
 
 use super::*;
 use crate::misc::SmolStr;
@@ -25,12 +26,12 @@ pub struct Sprite {
     pub events: Vec<Event>,
     pub used_procs: FxHashSet<SmolStr>,
     pub used_funcs: FxHashSet<SmolStr>,
-    pub volume: Option<ConstExpr>,
-    pub layer_order: Option<ConstExpr>,
-    pub x_position: Option<ConstExpr>,
-    pub y_position: Option<ConstExpr>,
-    pub size: Option<ConstExpr>,
-    pub direction: Option<ConstExpr>,
+    pub volume: Option<(Value, Span)>,
+    pub layer_order: Option<(Value, Span)>,
+    pub x_position: Option<(Value, Span)>,
+    pub y_position: Option<(Value, Span)>,
+    pub size: Option<(Value, Span)>,
+    pub direction: Option<(Value, Span)>,
     pub rotation_style: RotationStyle,
     pub hidden: bool,
 }

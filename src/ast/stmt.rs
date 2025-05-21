@@ -1,3 +1,4 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
 use super::{
@@ -68,17 +69,20 @@ pub enum Stmt {
     Block {
         block: Block,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     ProcCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     Return {
         value: Box<Expr>,
@@ -95,7 +99,7 @@ impl Stmt {
         let span = name.span();
         Self::ChangeVar {
             name,
-            value: Box::new(Value::Int(1).to_expr(span)),
+            value: Box::new(Value::from(1.0).to_expr(span)),
         }
     }
 
@@ -103,7 +107,7 @@ impl Stmt {
         let span = name.span();
         Self::ChangeVar {
             name,
-            value: Box::new(Value::Int(-1).to_expr(span)),
+            value: Box::new(Value::from(-1.0).to_expr(span)),
         }
     }
 
@@ -152,7 +156,7 @@ impl Stmt {
             value: Box::new(BinOp::Add.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
-                Value::Int(1).to_expr(span),
+                Value::from(1.0).to_expr(span),
             )),
         }
     }
@@ -165,7 +169,7 @@ impl Stmt {
             value: Box::new(BinOp::Add.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
-                Value::Int(1).to_expr(span),
+                Value::from(1.0).to_expr(span),
             )),
         }
     }
@@ -182,4 +186,24 @@ impl Stmt {
             )),
         }
     }
+}
+
+pub fn split_args(
+    mut args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+) -> (Vec<Expr>, FxHashMap<SmolStr, (Span, Expr)>) {
+    let mut positional = Vec::new();
+    let mut named = FxHashMap::default();
+
+    // Drain the vector so that we consume the arguments.
+    for (maybe_name, expr) in args.drain(..) {
+        if let Some((name, span)) = maybe_name {
+            // Insert into the named arguments map.
+            named.insert(name, (span, expr));
+        } else {
+            // Otherwise, treat it as a positional argument.
+            positional.push(expr);
+        }
+    }
+
+    (positional, named)
 }

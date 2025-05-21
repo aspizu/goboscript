@@ -1,3 +1,4 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
 use super::{
@@ -30,12 +31,13 @@ pub enum Expr {
     Repr {
         repr: Repr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     UnOp {
         op: UnOp,
@@ -89,5 +91,11 @@ impl BinOp {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         }
+    }
+}
+
+impl Value {
+    pub fn to_expr(self, span: Span) -> Expr {
+        Expr::Value { value: self, span }
     }
 }

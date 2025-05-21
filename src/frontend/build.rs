@@ -1,11 +1,14 @@
 use std::{
+    cell::RefCell,
     env,
-    fs::{
-        self,
-        File,
+    fs::File,
+    io::{
+        BufWriter,
+        Seek,
+        Write,
     },
-    io::BufWriter,
     path::PathBuf,
+    rc::Rc,
 };
 
 use anyhow::{
@@ -29,6 +32,10 @@ use crate::{
     misc::SmolStr,
     parser,
     standard_library::StandardLibrary,
+    vfs::{
+        RealFS,
+        VFS,
+    },
     visitor,
 };
 
@@ -52,16 +59,32 @@ impl From<ProjectDiagnostics> for BuildError {
 }
 
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), BuildError> {
-    let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
+    let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
+    let fs = Rc::new(RefCell::new(RealFS::new()));
+    build_impl(fs, canonical_input, sb3, None)
+}
+
+pub fn build_impl<'a, T: Write + Seek>(
+    fs: Rc<RefCell<dyn VFS>>,
+    input: PathBuf,
+    mut sb3: Sb3<T>,
+    stdlib: Option<StandardLibrary>,
+) -> Result<(), BuildError> {
     let config_path = input.join("goboscript.toml");
-    let config_src = fs::read_to_string(&config_path).unwrap_or_default();
+    let config_src = fs
+        .borrow_mut()
+        .read_to_string(&config_path)
+        .unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
-    let stdlib = if let Some(std) = &config.std {
+    let stdlib = if let Some(stdlib) = stdlib {
+        stdlib
+    } else if let Some(std) = &config.std {
+        let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
         let std = std
             .strip_prefix('v')
             .unwrap_or(std)
@@ -69,14 +92,18 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
             .with_context(|| format!("std version `{}` is not a valid semver version", std))?;
         StandardLibrary::new(std, &dirs.config_dir().join("std"))
     } else {
+        let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
         StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
     };
-    stdlib.fetch()?;
+    // v0.0.0 means stdlib is from wasm
+    if stdlib.version.major != 0 {
+        stdlib.fetch()?;
+    }
     let stage_path = input.join("stage.gs");
-    if !stage_path.is_file() {
+    if !fs.borrow_mut().is_file(&stage_path) {
         return Err(anyhow!("{} not found", stage_path.display()).into());
     }
-    let mut stage_diagnostics = SpriteDiagnostics::new(stage_path, &stdlib);
+    let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib);
     let stage = parser::parse(&stage_diagnostics.translation_unit)
         .map_err(|err| {
             stage_diagnostics.diagnostics.push(err);
@@ -84,8 +111,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
         .unwrap_or_default();
     let mut sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics> = Default::default();
     let mut sprites: FxHashMap<SmolStr, Sprite> = Default::default();
-    for sprite_path in fs::read_dir(&input)? {
-        let sprite_path = sprite_path?.path();
+    let files = fs.borrow_mut().read_dir(&input)?;
+    for sprite_path in files {
         if sprite_path.file_stem().is_some_and(|stem| stem == "stage") {
             continue;
         }
@@ -95,7 +122,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
         {
             continue;
         }
-        if !sprite_path.is_file() {
+        if fs.borrow_mut().is_dir(&sprite_path) {
             continue;
         }
         let sprite_name: SmolStr = sprite_path
@@ -104,7 +131,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
             .to_str()
             .unwrap()
             .into();
-        let mut sprite_diagnostics = SpriteDiagnostics::new(sprite_path, &stdlib);
+        let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib);
         let sprite = parser::parse(&sprite_diagnostics.translation_unit)
             .map_err(|err| sprite_diagnostics.diagnostics.push(err))
             .unwrap_or_default();
@@ -133,8 +160,8 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), Buil
     );
     visitor::pass3::visit_project(&mut project);
     log::info!("{:#?}", project);
-    let mut sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     sb3.project(
+        fs.clone(),
         &input,
         &project,
         &config,

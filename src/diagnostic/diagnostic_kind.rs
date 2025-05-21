@@ -1,6 +1,9 @@
-use std::io;
-
 use annotate_snippets::Level;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use tsify::Tsify;
 
 use crate::{
     ast::{
@@ -15,14 +18,15 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum DiagnosticKind {
     // Errors
     InvalidToken,
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
     ExtraToken(Token),
-    IOError(io::Error),
+    IOError(SmolStr),
     UnrecognizedReporter(SmolStr),
     UnrecognizedBlock(SmolStr),
     UnrecognizedVariable(SmolStr),
@@ -66,6 +70,10 @@ pub enum DiagnosticKind {
     NotStruct,
     StructDoesNotHaveField {
         type_name: SmolStr,
+        field_name: SmolStr,
+    },
+    MissingField {
+        struct_name: SmolStr,
         field_name: SmolStr,
     },
     // Warnings
@@ -181,6 +189,12 @@ impl DiagnosticKind {
             } => {
                 format!("struct {type_name} does not have field {field_name}")
             }
+            DiagnosticKind::MissingField {
+                struct_name,
+                field_name,
+            } => {
+                format!("struct {struct_name} is missing field {field_name}")
+            }
         }
     }
 
@@ -239,6 +253,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::CommandFailed { .. }
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
+            | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. } => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode

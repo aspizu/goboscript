@@ -1,25 +1,10 @@
-mod ast;
-mod blocks;
-mod codegen;
-mod config;
-mod diagnostic;
-mod fmt;
-mod frontend;
-mod interpreter;
-mod lexer;
-mod misc;
-mod parser;
-mod pre_processor;
-mod standard_library;
-mod translation_unit;
-mod visitor;
-
 use std::{
     process::ExitCode,
     time::Instant,
 };
 
 use colored::Colorize;
+use goboscript::frontend::frontend;
 
 fn main() -> ExitCode {
     pretty_env_logger::init();
@@ -31,7 +16,7 @@ fn main() -> ExitCode {
         );
     }));
     let begin = Instant::now();
-    let result = frontend::frontend();
+    let result = frontend();
     eprintln!("{} in {:?}", "Finished".green().bold(), begin.elapsed());
     result
 }

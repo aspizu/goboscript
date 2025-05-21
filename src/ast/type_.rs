@@ -2,10 +2,14 @@ use core::fmt;
 use std::fmt::Display;
 
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::misc::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Type {
     Value,
     Struct { name: SmolStr, span: Span },
