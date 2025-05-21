@@ -1,4 +1,8 @@
-use std::path::PathBuf;
+use std::{
+    cell::RefCell,
+    path::PathBuf,
+    rc::Rc,
+};
 
 use directories::ProjectDirs;
 
@@ -14,6 +18,7 @@ use crate::{
     },
     parser,
     standard_library::StandardLibrary,
+    vfs::RealFS,
     visitor,
 };
 
@@ -38,10 +43,11 @@ impl From<Exception> for RunError {
 }
 
 pub fn run(input: PathBuf) -> Result<(), RunError> {
+    let fs = Rc::new(RefCell::new(RealFS::new()));
     let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
     let stdlib = StandardLibrary::from_latest(&dirs.config_dir().join("std"))?;
     stdlib.fetch()?;
-    let mut diagnostics = SpriteDiagnostics::new(input, &stdlib);
+    let mut diagnostics = SpriteDiagnostics::new(fs.clone(), input, &stdlib);
     diagnostics.sprite_name = "stage".to_owned();
     let sprite = parser::parse(&diagnostics.translation_unit)
         .map_err(|err| {
