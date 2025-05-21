@@ -4,7 +4,12 @@ mod foreign;
 mod repr;
 mod stmt;
 
-use std::fs::File;
+use std::{
+    cell::RefCell,
+    fs::File,
+    path::Path,
+    rc::Rc,
+};
 
 use fxhash::FxHashMap;
 use logos::Span;
@@ -19,7 +24,9 @@ use crate::{
         Stmt,
         Value,
     },
+    codegen::cmd::cmd_to_list,
     misc::SmolStr,
+    vfs::RealFS,
 };
 
 #[derive(Debug, Clone)]
@@ -83,7 +90,7 @@ impl Interpreter {
         }
     }
 
-    pub fn run_project(&mut self, project: &Project) -> ExceptionResult<()> {
+    pub fn run_project(&mut self, input: &Path, project: &Project) -> ExceptionResult<()> {
         for (var_name, var) in &project.stage.vars {
             self.vars.insert(
                 var_name.clone(),
@@ -98,7 +105,13 @@ impl Interpreter {
                 Some(ListDefault::Values(values)) => {
                     values.iter().map(|(value, _)| value.clone()).collect()
                 }
-                Some(ListDefault::Cmd(_)) => todo!(),
+                Some(ListDefault::Cmd(cmd)) => {
+                    cmd_to_list(Rc::new(RefCell::new(RealFS::new())), cmd, input)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|s| Value::from(s))
+                        .collect()
+                }
                 None => vec![],
             };
             self.lists.insert(list_name.clone(), values);
