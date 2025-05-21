@@ -63,8 +63,8 @@ impl Interpreter {
                 self.vars.insert(name, Value::Number(current_value + value));
                 Ok(())
             }
-            Stmt::Show(name) => todo!(),
-            Stmt::Hide(name) => todo!(),
+            Stmt::Show(_) => unimplemented!(),
+            Stmt::Hide(_) => unimplemented!(),
             Stmt::AddToList { name, value } => todo!(),
             Stmt::DeleteList(name) => todo!(),
             Stmt::DeleteListIndex { name, index } => todo!(),
@@ -79,7 +79,7 @@ impl Interpreter {
             Stmt::FuncCall {
                 name, span, args, ..
             } => self.run_func_call(sprite, name, span, args),
-            Stmt::Return { value, visited } => todo!(),
+            Stmt::Return { .. } => unreachable!(),
         }
     }
 
