@@ -10,6 +10,7 @@ use super::{
 use crate::{
     ast::{
         Expr,
+        ListIndex,
         Sprite,
         Stmt,
         Value,
@@ -81,30 +82,44 @@ impl Interpreter {
             Stmt::DeleteListIndex { name, index } => {
                 let name = qualify_name(name);
                 // TODO: implement LIST_ALL
-                let index = self.run_expr(index)?.to_number() as usize;
+                let index = self.run_expr(index)?;
                 let list = self.lists.get_mut(&name).unwrap();
-                if index < list.len() {
-                    list.remove(index);
+                match index.to_list_index(list.len()) {
+                    Some(ListIndex::All) => {
+                        list.clear();
+                    }
+                    Some(ListIndex::Index(index)) => {
+                        list.remove(index);
+                    }
+                    None => {}
                 }
                 Ok(())
             }
             Stmt::InsertAtList { name, index, value } => {
                 let name = qualify_name(name);
-                let index = self.run_expr(index)?.to_number() as usize;
+                let index = self.run_expr(index)?;
                 let value = self.run_expr(value)?;
                 let list = self.lists.get_mut(&name).unwrap();
-                if index <= list.len() {
-                    list.insert(index, value);
+                match index.to_list_index(list.len()) {
+                    Some(ListIndex::All) => {}
+                    Some(ListIndex::Index(index)) => {
+                        list.insert(index, value);
+                    }
+                    None => {}
                 }
                 Ok(())
             }
             Stmt::SetListIndex { name, index, value } => {
                 let name = qualify_name(name);
-                let index = self.run_expr(index)?.to_number() as usize;
+                let index = self.run_expr(index)?;
                 let value = self.run_expr(value)?;
                 let list = self.lists.get_mut(&name).unwrap();
-                if index < list.len() {
-                    list[index] = value;
+                match index.to_list_index(list.len()) {
+                    Some(ListIndex::All) => {}
+                    Some(ListIndex::Index(index)) => {
+                        list[index] = value;
+                    }
+                    None => {}
                 }
                 Ok(())
             }

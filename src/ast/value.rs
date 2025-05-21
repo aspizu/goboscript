@@ -133,14 +133,14 @@ impl Value {
                 return Some(ListIndex::All);
             }
             if string == "last" {
-                return Some(ListIndex::Index(length));
+                return Some(ListIndex::Index(length - 1));
             }
         }
         let index = self.to_number().floor();
         if index < 1.0 || index > length as f64 {
             return None;
         }
-        return Some(ListIndex::Index(index as usize));
+        return Some(ListIndex::Index((index - 1.0) as usize));
     }
 }
 
