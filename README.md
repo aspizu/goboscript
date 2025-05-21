@@ -27,20 +27,19 @@ additional features like local variables for procedures (custom blocks).
 
 goboscript also performs optimizations, detects problems and unused code.
 
-### Prior Art
+### Other Text-Based Scratch projects
 
-goboscript was inspired from projects such as:
+For a complete list of all text-based scratch projects, see <https://scratch.mit.edu/discuss/topic/792714/>
 
- - <https://tosh.blob.codes/>: Text-based programming language for Scratch 2.
- - <https://github.com/DavidBuchanan314/boiga>: Python DSL that generates Scratch 3 projects.
-
-**@retr0id** first presented the demoscene discord with his `boiga` project. `boiga` works by
+**@retr0id** first presented the demoscene discord with his `boiga` project (1). `boiga` works by
 exporting Python data structures which nicely represent Scratch code in the form of
 Python code. Soon after, I created my own re-implementation of `boiga` called `gobomatic`.
 `gobomatic` was more feature-complete and supported more Scratch blocks and features than
 `boiga` did, and it had some syntactical differences. The python version of `goboscript`
 used `gobomatic` as a dependency to generate Scratch projects. Now, `gobomatic` is abandoned
 and `goboscript` was ported to Rust.
+
+(1): <https://github.com/DavidBuchanan314/boiga>
 
 # Sister Projects
 
