@@ -33,10 +33,11 @@ use crate::{
     },
     vfs::VFS,
 };
+
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct SpriteDiagnostics {
-    sprite_name: String,
+    pub sprite_name: String,
     pub translation_unit: TranslationUnit,
     pub diagnostics: Vec<Diagnostic>,
 }

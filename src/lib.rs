@@ -5,6 +5,7 @@ pub mod config;
 pub mod diagnostic;
 pub mod fmt;
 pub mod frontend;
+pub mod interpreter;
 pub mod lexer;
 pub mod misc;
 pub mod parser;
