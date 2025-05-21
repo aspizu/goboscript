@@ -2,10 +2,7 @@ mod bin_op;
 mod js;
 mod un_op;
 
-use crate::{
-    codegen::sb3::S,
-    misc::SmolStr,
-};
+use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -140,7 +137,7 @@ impl Value {
         if index < 1.0 || index > length as f64 {
             return None;
         }
-        return Some(ListIndex::Index((index - 1.0) as usize));
+        Some(ListIndex::Index((index - 1.0) as usize))
     }
 }
 

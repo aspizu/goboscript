@@ -109,7 +109,7 @@ impl Interpreter {
                     cmd_to_list(Rc::new(RefCell::new(RealFS::new())), cmd, input)
                         .unwrap_or_default()
                         .into_iter()
-                        .map(|s| Value::from(s))
+                        .map(Value::from)
                         .collect()
                 }
                 None => vec![],
