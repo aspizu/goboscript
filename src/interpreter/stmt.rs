@@ -65,11 +65,49 @@ impl Interpreter {
             }
             Stmt::Show(_) => unimplemented!(),
             Stmt::Hide(_) => unimplemented!(),
-            Stmt::AddToList { name, value } => todo!(),
-            Stmt::DeleteList(name) => todo!(),
-            Stmt::DeleteListIndex { name, index } => todo!(),
-            Stmt::InsertAtList { name, index, value } => todo!(),
-            Stmt::SetListIndex { name, index, value } => todo!(),
+            Stmt::AddToList { name, value } => {
+                let name = qualify_name(name);
+                let value = self.run_expr(value)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                list.push(value);
+                Ok(())
+            }
+            Stmt::DeleteList(name) => {
+                let name = qualify_name(name);
+                let list = self.lists.get_mut(&name).unwrap();
+                list.clear();
+                Ok(())
+            }
+            Stmt::DeleteListIndex { name, index } => {
+                let name = qualify_name(name);
+                // TODO: implement LIST_ALL
+                let index = self.run_expr(index)?.to_number() as usize;
+                let list = self.lists.get_mut(&name).unwrap();
+                if index < list.len() {
+                    list.remove(index);
+                }
+                Ok(())
+            }
+            Stmt::InsertAtList { name, index, value } => {
+                let name = qualify_name(name);
+                let index = self.run_expr(index)?.to_number() as usize;
+                let value = self.run_expr(value)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                if index <= list.len() {
+                    list.insert(index, value);
+                }
+                Ok(())
+            }
+            Stmt::SetListIndex { name, index, value } => {
+                let name = qualify_name(name);
+                let index = self.run_expr(index)?.to_number() as usize;
+                let value = self.run_expr(value)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                if index < list.len() {
+                    list[index] = value;
+                }
+                Ok(())
+            }
             Stmt::Block {
                 block, span, args, ..
             } => self.run_block(block, span, args),
