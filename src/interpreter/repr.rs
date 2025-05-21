@@ -7,27 +7,23 @@ use chrono::{
 use logos::Span;
 
 use super::{
-    value::Value,
     ExceptionResult,
     Interpreter,
 };
 use crate::{
-    ast::Expr,
+    ast::{
+        Expr,
+        Value,
+    },
     blocks::Repr,
-    misc::SmolStr,
 };
 
 impl Interpreter {
-    pub fn run_repr(
-        &mut self,
-        repr: &Repr,
-        _span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
-    ) -> ExceptionResult<Value> {
+    pub fn run_repr(&mut self, repr: &Repr, _span: &Span, args: &[Expr]) -> ExceptionResult<Value> {
         let mut arg_values = vec![];
-        for (_arg_name, arg_expr) in args {
-            let arg_value = self.run_expr(arg_expr)?;
-            arg_values.push(arg_value);
+        for arg in args {
+            let value = self.run_expr(arg)?;
+            arg_values.push(value);
         }
         match repr {
             Repr::XPosition => todo!(),

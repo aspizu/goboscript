@@ -2,26 +2,22 @@ use inquire::Text;
 use logos::Span;
 
 use super::{
-    value::Value,
     ExceptionResult,
     Interpreter,
 };
 use crate::{
-    ast::Expr,
+    ast::{
+        Expr,
+        Value,
+    },
     blocks::Block,
-    misc::SmolStr,
     throw,
 };
 
 impl Interpreter {
-    pub fn run_block(
-        &mut self,
-        block: &Block,
-        span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
-    ) -> ExceptionResult<()> {
+    pub fn run_block(&mut self, block: &Block, span: &Span, args: &[Expr]) -> ExceptionResult<()> {
         let mut arg_values = vec![];
-        for (_arg_name, arg_expr) in args {
+        for arg_expr in args {
             let arg_value = self.run_expr(arg_expr)?;
             arg_values.push(arg_value);
         }
@@ -159,7 +155,7 @@ pub fn arguments<const N: usize>(
 }
 
 fn say1(message: Value) -> ExceptionResult<()> {
-    println!("{}", message);
+    println!("{}", message.to_string());
     Ok(())
 }
 

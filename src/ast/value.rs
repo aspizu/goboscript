@@ -143,6 +143,18 @@ impl From<SmolStr> for Value {
     }
 }
 
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(SmolStr::from(value))
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(SmolStr::from(value))
+    }
+}
+
 impl From<i64> for Value {
     fn from(value: i64) -> Self {
         Value::Number(value as f64)

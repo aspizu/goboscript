@@ -1,17 +1,13 @@
-mod bin_op;
 mod block;
 mod expr;
 mod foreign;
 mod repr;
 mod stmt;
-mod un_op;
-mod value;
 
 use std::fs::File;
 
 use fxhash::FxHashMap;
 use logos::Span;
-use value::Value;
 
 use crate::{
     ast::{
@@ -20,6 +16,7 @@ use crate::{
         Project,
         Sprite,
         Stmt,
+        Value,
     },
     misc::SmolStr,
 };
@@ -44,16 +41,15 @@ impl Exception {
 #[macro_export]
 macro_rules! throw {
     ($msg:expr, $span:expr) => {
-        use crate::interpreter::Exception;
+        use $crate::interpreter::Exception;
         return Err(Exception::new($msg, Some($span)))
     };
     ($msg:expr) => {
-        use crate::interpreter::Exception;
+        use $crate::interpreter::Exception;
         return Err(Exception::new($msg, None))
     };
 }
 
-#[derive(Default)]
 pub struct Interpreter {
     pub vars: FxHashMap<SmolStr, Value>,
     pub args: FxHashMap<SmolStr, Value>,
@@ -68,9 +64,20 @@ pub fn qualify_name(name: &Name) -> SmolStr {
     }
 }
 
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Interpreter {
     pub fn new() -> Self {
-        Default::default()
+        Self {
+            vars: FxHashMap::default(),
+            args: FxHashMap::default(),
+            answer: arcstr::literal!("").into(),
+            files: Vec::new(),
+        }
     }
 
     pub fn run_project(&mut self, project: &Project) -> ExceptionResult<()> {
@@ -78,10 +85,9 @@ impl Interpreter {
             self.vars.insert(
                 var_name.clone(),
                 var.default
-                    .as_ref()
-                    .map(|v| Value::from(v.evaluate()))
-                    .unwrap_or_default()
-                    .into(),
+                    .clone()
+                    .map(|(value, _)| value)
+                    .unwrap_or(0.0.into()),
             );
         }
         for event in &project.stage.events {

@@ -1,7 +1,6 @@
 use core::str;
 use std::{
     cell::RefCell,
-    fs::File,
     io::{
         self,
         Seek,

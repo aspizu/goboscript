@@ -9,14 +9,15 @@ use std::{
 use logos::Span;
 
 use super::{
-    value::Value,
     ExceptionResult,
     Interpreter,
 };
 use crate::{
-    ast::Expr,
+    ast::{
+        Expr,
+        Value,
+    },
     interpreter::block::arguments,
-    misc::SmolStr,
     throw,
 };
 
@@ -25,10 +26,10 @@ pub fn foreign_proc(
     vm: &mut Interpreter,
     name: &str,
     span: &Span,
-    args: &[(Option<(SmolStr, Span)>, Expr)],
+    args: &[Expr],
 ) -> ExceptionResult<bool> {
     let mut arg_values = vec![];
-    for (_arg_name, arg_expr) in args {
+    for arg_expr in args {
         let arg_value = vm.run_expr(arg_expr)?;
         arg_values.push(arg_value);
     }
@@ -71,10 +72,10 @@ pub fn foreign_func(
     vm: &mut Interpreter,
     name: &str,
     span: &Span,
-    args: &[(Option<(SmolStr, Span)>, Expr)],
+    args: &[Expr],
 ) -> ExceptionResult<Value> {
     let mut arg_values = vec![];
-    for (_arg_name, arg_expr) in args {
+    for arg_expr in args {
         let arg_value = vm.run_expr(arg_expr)?;
         arg_values.push(arg_value);
     }
@@ -112,9 +113,8 @@ pub fn foreign_func(
             let file = &mut vm.files[id];
             if size == -1.0 {
                 let mut buf = String::new();
-                let _ = file.read_to_string(&mut buf).map_err(|err| {
+                let _ = file.read_to_string(&mut buf).inspect_err(|err| {
                     vm.vars.insert("errstr".into(), err.to_string().into());
-                    err
                 });
                 return Ok(buf.into());
             }
