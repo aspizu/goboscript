@@ -4,6 +4,7 @@ use std::{
     rc::Rc,
 };
 
+use anyhow::Context;
 use directories::ProjectDirs;
 
 use crate::{
@@ -43,6 +44,10 @@ impl From<Exception> for RunError {
 }
 
 pub fn run(input: PathBuf) -> Result<(), RunError> {
+    let parent = input
+        .parent()
+        .context("Failed to get parent directory")?
+        .to_owned();
     let fs = Rc::new(RefCell::new(RealFS::new()));
     let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
     let stdlib = StandardLibrary::from_latest(&dirs.config_dir().join("std"))?;
@@ -63,7 +68,7 @@ pub fn run(input: PathBuf) -> Result<(), RunError> {
     visitor::pass2::visit_project(&mut project, &mut diagnostics, &mut Default::default());
     visitor::pass3::visit_project(&mut project);
     let mut interpreter = Interpreter::new();
-    interpreter.run_project(&project)?;
+    interpreter.run_project(&parent, &project)?;
     if !(diagnostics.diagnostics.is_empty()) {
         return Err(RunError::ProjectDiagnostics(ProjectDiagnostics {
             project,

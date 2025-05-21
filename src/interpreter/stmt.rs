@@ -10,6 +10,7 @@ use super::{
 use crate::{
     ast::{
         Expr,
+        ListIndex,
         Sprite,
         Stmt,
         Value,
@@ -65,11 +66,63 @@ impl Interpreter {
             }
             Stmt::Show(_) => unimplemented!(),
             Stmt::Hide(_) => unimplemented!(),
-            Stmt::AddToList { name, value } => todo!(),
-            Stmt::DeleteList(name) => todo!(),
-            Stmt::DeleteListIndex { name, index } => todo!(),
-            Stmt::InsertAtList { name, index, value } => todo!(),
-            Stmt::SetListIndex { name, index, value } => todo!(),
+            Stmt::AddToList { name, value } => {
+                let name = qualify_name(name);
+                let value = self.run_expr(value)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                list.push(value);
+                Ok(())
+            }
+            Stmt::DeleteList(name) => {
+                let name = qualify_name(name);
+                let list = self.lists.get_mut(&name).unwrap();
+                list.clear();
+                Ok(())
+            }
+            Stmt::DeleteListIndex { name, index } => {
+                let name = qualify_name(name);
+                // TODO: implement LIST_ALL
+                let index = self.run_expr(index)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                match index.to_list_index(list.len()) {
+                    Some(ListIndex::All) => {
+                        list.clear();
+                    }
+                    Some(ListIndex::Index(index)) => {
+                        list.remove(index);
+                    }
+                    None => {}
+                }
+                Ok(())
+            }
+            Stmt::InsertAtList { name, index, value } => {
+                let name = qualify_name(name);
+                let index = self.run_expr(index)?;
+                let value = self.run_expr(value)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                match index.to_list_index(list.len()) {
+                    Some(ListIndex::All) => {}
+                    Some(ListIndex::Index(index)) => {
+                        list.insert(index, value);
+                    }
+                    None => {}
+                }
+                Ok(())
+            }
+            Stmt::SetListIndex { name, index, value } => {
+                let name = qualify_name(name);
+                let index = self.run_expr(index)?;
+                let value = self.run_expr(value)?;
+                let list = self.lists.get_mut(&name).unwrap();
+                match index.to_list_index(list.len()) {
+                    Some(ListIndex::All) => {}
+                    Some(ListIndex::Index(index)) => {
+                        list[index] = value;
+                    }
+                    None => {}
+                }
+                Ok(())
+            }
             Stmt::Block {
                 block, span, args, ..
             } => self.run_block(block, span, args),

@@ -2,7 +2,10 @@ mod bin_op;
 mod js;
 mod un_op;
 
-use crate::misc::SmolStr;
+use crate::{
+    codegen::sb3::S,
+    misc::SmolStr,
+};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -123,6 +126,22 @@ impl Value {
         }
         n1 - n2
     }
+
+    pub fn to_list_index(&self, length: usize) -> Option<ListIndex> {
+        if let Value::String(string) = self {
+            if string == "all" {
+                return Some(ListIndex::All);
+            }
+            if string == "last" {
+                return Some(ListIndex::Index(length - 1));
+            }
+        }
+        let index = self.to_number().floor();
+        if index < 1.0 || index > length as f64 {
+            return None;
+        }
+        return Some(ListIndex::Index((index - 1.0) as usize));
+    }
 }
 
 impl From<bool> for Value {
@@ -165,4 +184,9 @@ impl From<usize> for Value {
     fn from(value: usize) -> Self {
         Value::Number(value as f64)
     }
+}
+
+pub enum ListIndex {
+    Index(usize),
+    All,
 }

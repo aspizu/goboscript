@@ -797,7 +797,17 @@ where T: Write + Seek
             .cmd()
             .and_then(|cmd| {
                 cmd_to_list(fs.clone(), cmd, input)
-                    .map_err(|err| d.diagnostics.push(err))
+                    .map_err(|(io_error, stderr)| {
+                        if let Some(io_error) = io_error {
+                            d.report(
+                                DiagnosticKind::IOError(io_error.to_string().into()),
+                                &list.span,
+                            );
+                        }
+                        if let Some(stderr) = stderr {
+                            d.report(DiagnosticKind::CommandFailed { stderr }, &list.span);
+                        }
+                    })
                     .ok()
             })
             .or_else(|| {
