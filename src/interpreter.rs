@@ -12,6 +12,7 @@ use logos::Span;
 use crate::{
     ast::{
         EventKind,
+        ListDefault,
         Name,
         Project,
         Sprite,
@@ -52,6 +53,7 @@ macro_rules! throw {
 
 pub struct Interpreter {
     pub vars: FxHashMap<SmolStr, Value>,
+    pub lists: FxHashMap<SmolStr, Vec<Value>>,
     pub args: FxHashMap<SmolStr, Value>,
     pub answer: Value,
     pub files: Vec<File>,
@@ -74,6 +76,7 @@ impl Interpreter {
     pub fn new() -> Self {
         Self {
             vars: FxHashMap::default(),
+            lists: FxHashMap::default(),
             args: FxHashMap::default(),
             answer: arcstr::literal!("").into(),
             files: Vec::new(),
@@ -89,6 +92,16 @@ impl Interpreter {
                     .map(|(value, _)| value)
                     .unwrap_or(0.0.into()),
             );
+        }
+        for (list_name, list) in &project.stage.lists {
+            let values = match &list.default {
+                Some(ListDefault::Values(values)) => {
+                    values.iter().map(|(value, _)| value.clone()).collect()
+                }
+                Some(ListDefault::Cmd(_)) => todo!(),
+                None => vec![],
+            };
+            self.lists.insert(list_name.clone(), values);
         }
         for event in &project.stage.events {
             if matches!(event.kind, EventKind::OnFlag) {
