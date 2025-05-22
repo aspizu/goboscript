@@ -20,7 +20,10 @@ use crate::{
     codegen::sb3::Sb3,
     diagnostic::SpriteDiagnostics,
     frontend::build::build_impl,
-    misc::SmolStr,
+    misc::{
+        base64,
+        SmolStr,
+    },
     standard_library::StandardLibrary,
     vfs::MemFS,
 };
@@ -28,6 +31,7 @@ use crate::{
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Artifact {
+    #[serde(with = "base64")]
     project: Vec<u8>,
     stage_diagnostics: SpriteDiagnostics,
     sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
