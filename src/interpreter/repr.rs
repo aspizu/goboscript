@@ -82,11 +82,18 @@ fn random(mut args: Vec<Value>) -> ExceptionResult<Value> {
     if low == high {
         return Ok(low.into());
     }
-    let mut rng = rand::rng();
-    let random_value = rand::Rng::random_range(&mut rng, low..=high);
-    if lhs.is_integer() && rhs.is_integer() {
-        Ok(random_value.floor().into())
-    } else {
-        Ok(random_value.into())
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let mut rng = rand::rng();
+        let random_value = rand::Rng::random_range(&mut rng, low..=high);
+        if lhs.is_integer() && rhs.is_integer() {
+            Ok(random_value.floor().into())
+        } else {
+            Ok(random_value.into())
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        Ok(0.0.into())
     }
 }

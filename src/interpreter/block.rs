@@ -1,3 +1,4 @@
+#[cfg(not(target_arch = "wasm32"))]
 use inquire::Text;
 use logos::Span;
 
@@ -160,6 +161,9 @@ fn say1(message: Value) -> ExceptionResult<()> {
 }
 
 fn ask(this: &mut Interpreter, question: Value) -> ExceptionResult<()> {
-    this.answer = Text::new(&question.to_string()).prompt().unwrap().into();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        this.answer = Text::new(&question.to_string()).prompt().unwrap().into();
+    }
     Ok(())
 }
