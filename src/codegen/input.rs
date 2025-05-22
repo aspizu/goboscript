@@ -64,7 +64,7 @@ pub fn coerce_condition(expr: &Expr) -> Expr {
     if is_expr_boolean(expr) {
         return expr.clone();
     }
-    BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(1.0).to_expr(0..0))
+    BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(true).to_expr(0..0))
 }
 
 impl<T> Sb3<T>
