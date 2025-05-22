@@ -123,6 +123,22 @@ impl Value {
         }
         n1 - n2
     }
+
+    pub fn to_list_index(&self, length: usize) -> Option<ListIndex> {
+        if let Value::String(string) = self {
+            if string == "all" {
+                return Some(ListIndex::All);
+            }
+            if string == "last" {
+                return Some(ListIndex::Index(length - 1));
+            }
+        }
+        let index = self.to_number().floor();
+        if index < 1.0 || index > length as f64 {
+            return None;
+        }
+        Some(ListIndex::Index((index - 1.0) as usize))
+    }
 }
 
 impl From<bool> for Value {
@@ -143,6 +159,18 @@ impl From<SmolStr> for Value {
     }
 }
 
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(SmolStr::from(value))
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(SmolStr::from(value))
+    }
+}
+
 impl From<i64> for Value {
     fn from(value: i64) -> Self {
         Value::Number(value as f64)
@@ -153,4 +181,9 @@ impl From<usize> for Value {
     fn from(value: usize) -> Self {
         Value::Number(value as f64)
     }
+}
+
+pub enum ListIndex {
+    Index(usize),
+    All,
 }

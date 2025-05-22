@@ -1,15 +1,18 @@
 use std::{
-    fs::{
-        self,
-        File,
-    },
+    cell::RefCell,
     io::Read,
     path::PathBuf,
+    rc::Rc,
     str,
 };
 
 use fxhash::FxHashSet;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use tsify::Tsify;
 
 use crate::{
     diagnostic::{
@@ -17,15 +20,18 @@ use crate::{
         DiagnosticKind,
     },
     standard_library::StandardLibrary,
+    vfs::VFS,
 };
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum Owner {
     Local,
     StandardLibrary,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 /// A section of a source file that is included in the translation unit.
 /// This may be a section of the source file, or the entire source file.
 pub struct Include {
@@ -37,7 +43,8 @@ pub struct Include {
     pub owner: Owner,
 }
 
-#[derive(Debug)]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct TranslationUnit {
     path: PathBuf,
     text: Vec<u8>,
@@ -48,8 +55,8 @@ pub struct TranslationUnit {
 }
 
 impl TranslationUnit {
-    pub fn new(path: PathBuf) -> Self {
-        let text = fs::read(&path).unwrap();
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> Self {
+        let text = fs.borrow_mut().read_to_vec(&path).unwrap();
         let mut instance = Self {
             text,
             path,
@@ -67,15 +74,24 @@ impl TranslationUnit {
         instance
     }
 
-    pub fn pre_process(&mut self, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
-        self.parse(0, stdlib)
+    pub fn pre_process(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        stdlib: &StandardLibrary,
+    ) -> Result<(), Vec<Diagnostic>> {
+        self.parse(fs, 0, stdlib)
     }
 
     pub fn get_text(&self) -> &str {
         str::from_utf8(&self.text).unwrap()
     }
 
-    fn parse(&mut self, begin: usize, stdlib: &StandardLibrary) -> Result<(), Vec<Diagnostic>> {
+    fn parse(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        begin: usize,
+        stdlib: &StandardLibrary,
+    ) -> Result<(), Vec<Diagnostic>> {
         let mut diagnostics = vec![];
         let mut comment = 0;
         let mut i = begin;
@@ -124,7 +140,8 @@ impl TranslationUnit {
                         }
                         let path = str::from_utf8(path).unwrap().trim().to_owned();
                         if !self.included.contains(&path) {
-                            if let Err(err) = self.include(&path, path_span, i, stdlib) {
+                            if let Err(err) = self.include(fs.clone(), &path, path_span, i, stdlib)
+                            {
                                 diagnostics.push(err);
                             }
                             self.included.insert(path);
@@ -194,11 +211,13 @@ impl TranslationUnit {
 
     fn include(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         path: &str,
         path_span: Span,
         begin: usize,
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
+        let mut fs = fs.borrow_mut();
         let mut buffer = vec![];
 
         let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
@@ -208,13 +227,13 @@ impl TranslationUnit {
         };
         let mut path_with_extension = path.clone();
         path_with_extension.set_extension("gs");
-        if !path_with_extension.is_file() && path.is_dir() {
+        if !fs.is_file(&path_with_extension) && fs.is_dir(&path) {
             let file_name = path.file_name().unwrap().to_owned();
             path.push(file_name);
         }
         path.set_extension("gs");
-        let mut file = File::open(&path).map_err(|error| Diagnostic {
-            kind: DiagnosticKind::IOError(error),
+        let mut file = fs.read_file(&path).map_err(|error| Diagnostic {
+            kind: DiagnosticKind::IOError(error.to_string().into()),
             span: path_span,
         })?;
         file.read_to_end(&mut buffer).unwrap();

@@ -1,12 +1,13 @@
 use core::str;
 use std::{
-    fs::File,
+    cell::RefCell,
     io::{
         self,
         Seek,
         Write,
     },
     path::Path,
+    rc::Rc,
 };
 
 use fxhash::{
@@ -44,6 +45,7 @@ use crate::{
         write_comma_io,
         SmolStr,
     },
+    vfs::VFS,
 };
 
 const STAGE_NAME: &str = "Stage";
@@ -302,7 +304,8 @@ where T: Write + Seek
         }
     }
 
-    fn assets(&mut self, input: &Path) -> io::Result<()> {
+    fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
+        let mut fs = fs.borrow_mut();
         let mut added = FxHashSet::default();
         for (path, hash) in &self.costumes {
             if added.contains(hash) {
@@ -312,7 +315,7 @@ where T: Write + Seek
             let (_, extension) = path.rsplit_once('.').unwrap();
             self.zip
                 .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = File::open(input.join(&**path));
+            let file = fs.read_file(&input.join(&**path));
             io::copy(&mut file?, &mut self.zip)?;
         }
         if self.srcpkg_hash.is_some() {
@@ -362,6 +365,7 @@ where T: Write + Seek
 
     pub fn project(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         project: &Project,
         config: &Config,
@@ -389,6 +393,7 @@ where T: Write + Seek
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
+            fs.clone(),
             input,
             STAGE_NAME,
             &project.stage,
@@ -400,6 +405,7 @@ where T: Write + Seek
         for (sprite_name, sprite) in &project.sprites {
             write!(self, r#","#)?;
             self.sprite(
+                fs.clone(),
                 input,
                 sprite_name,
                 sprite,
@@ -422,12 +428,13 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets(input)?;
+        self.assets(fs.clone(), input)?;
         Ok(())
     }
 
     pub fn sprite(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         name: &str,
         sprite: &Sprite,
@@ -569,6 +576,7 @@ where T: Write + Seek
         let mut comma = false;
         for list in sprite.lists.values().filter(|list| list.is_used) {
             self.list_declaration(
+                fs.clone(),
                 input,
                 S {
                     stage,
@@ -640,14 +648,14 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(input, costume, d)?;
+            self.costume(fs.clone(), input, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.sound(input, sound, d)?;
+            self.sound(fs.clone(), input, sound, d)?;
         }
         write!(self, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
@@ -699,11 +707,19 @@ where T: Write + Seek
         if is_cloud {
             write!(
                 self,
-                "\"{}\":[\"\u{2601} {}\",{default},true]",
-                var_name, var_name
+                "\"{}\":[\"\u{2601} {}\",{},true]",
+                var_name,
+                var_name,
+                json!(*default)
             )
         } else {
-            write!(self, "\"{}\":[\"{}\",{default}]", var_name, var_name)
+            write!(
+                self,
+                "\"{}\":[\"{}\",{}]",
+                var_name,
+                var_name,
+                json!(*default)
+            )
         }
     }
 
@@ -770,6 +786,7 @@ where T: Write + Seek
 
     pub fn list_declaration(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         s: S,
         list: &List,
@@ -779,8 +796,18 @@ where T: Write + Seek
         let data = list
             .cmd()
             .and_then(|cmd| {
-                cmd_to_list(cmd, input)
-                    .map_err(|err| d.diagnostics.push(err))
+                cmd_to_list(fs.clone(), cmd, input)
+                    .map_err(|(io_error, stderr)| {
+                        if let Some(io_error) = io_error {
+                            d.report(
+                                DiagnosticKind::IOError(io_error.to_string().into()),
+                                &list.span,
+                            );
+                        }
+                        if let Some(stderr) = stderr {
+                            d.report(DiagnosticKind::CommandFailed { stderr }, &list.span);
+                        }
+                    })
                     .ok()
             })
             .or_else(|| {
@@ -838,7 +865,13 @@ where T: Write + Seek
         Ok(())
     }
 
-    pub fn costume(&mut self, input: &Path, costume: &Costume, d: D) -> io::Result<()> {
+    pub fn costume(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
+        costume: &Costume,
+        d: D,
+    ) -> io::Result<()> {
         let path = input.join(&*costume.path);
         let hash = self
             .costumes
@@ -846,10 +879,14 @@ where T: Write + Seek
             .cloned()
             .map(Ok::<_, io::Error>)
             .unwrap_or_else(|| {
-                let mut file = match File::open(&path) {
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(DiagnosticKind::IOError(error), &costume.span);
+                        d.report(
+                            DiagnosticKind::IOError(error.to_string().into()),
+                            &costume.span,
+                        );
                         return Ok(Default::default());
                     }
                 };
@@ -875,7 +912,13 @@ where T: Write + Seek
         write!(self, "}}") // costume
     }
 
-    pub fn sound(&mut self, input: &Path, sound: &Sound, d: D) -> io::Result<()> {
+    pub fn sound(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
+        sound: &Sound,
+        d: D,
+    ) -> io::Result<()> {
         let path = input.join(&*sound.path);
         let hash = self
             .costumes
@@ -883,10 +926,14 @@ where T: Write + Seek
             .cloned()
             .map(Ok::<_, io::Error>)
             .unwrap_or_else(|| {
-                let mut file = match File::open(&path) {
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(DiagnosticKind::IOError(error), &sound.span);
+                        d.report(
+                            DiagnosticKind::IOError(error.to_string().into()),
+                            &sound.span,
+                        );
                         return Ok(Default::default());
                     }
                 };

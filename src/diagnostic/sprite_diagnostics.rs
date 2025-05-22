@@ -1,8 +1,10 @@
 use std::{
+    cell::RefCell,
     fs::{
         self,
     },
     path::PathBuf,
+    rc::Rc,
 };
 
 use annotate_snippets::{
@@ -12,6 +14,11 @@ use annotate_snippets::{
 };
 use colored::Colorize;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use tsify::Tsify;
 
 use super::{
     diagnostic_kind::DiagnosticKind,
@@ -24,20 +31,23 @@ use crate::{
         Owner,
         TranslationUnit,
     },
+    vfs::VFS,
 };
 
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct SpriteDiagnostics {
-    sprite_name: String,
+    pub sprite_name: String,
     pub translation_unit: TranslationUnit,
     pub diagnostics: Vec<Diagnostic>,
 }
 
 impl SpriteDiagnostics {
-    pub fn new(path: PathBuf, stdlib: &StandardLibrary) -> Self {
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf, stdlib: &StandardLibrary) -> Self {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-        let mut translation_unit = TranslationUnit::new(path);
+        let mut translation_unit = TranslationUnit::new(fs.clone(), path);
         let mut diagnostics = vec![];
-        if let Err(diagnostic) = translation_unit.pre_process(stdlib) {
+        if let Err(diagnostic) = translation_unit.pre_process(fs.clone(), stdlib) {
             diagnostics.extend(diagnostic);
         }
         Self {

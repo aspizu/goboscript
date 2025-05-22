@@ -5,25 +5,10 @@ use std::{
 
 use glob::glob;
 
-use crate::fmt;
-
-pub enum FmtError {
-    AnyhowError(anyhow::Error),
-}
-
-impl<T> From<T> for FmtError
-where T: Into<anyhow::Error>
-{
-    fn from(value: T) -> Self {
-        Self::AnyhowError(value.into())
-    }
-}
-
-impl From<fmt::FmtError> for FmtError {
-    fn from(value: fmt::FmtError) -> Self {
-        todo!()
-    }
-}
+use crate::fmt::{
+    self,
+    FmtError,
+};
 
 pub fn fmt(input: Option<PathBuf>) -> Result<(), FmtError> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());

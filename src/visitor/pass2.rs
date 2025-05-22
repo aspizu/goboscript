@@ -163,7 +163,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
                 visit_stmt_list_set(s, d, name, index, value)
             }
             Stmt::AddToList { name, value } => visit_stmt_list_add(s, d, name, value),
-            Stmt::DeleteList(name) => visit_stmt_delete_list(s, d, name),
+            Stmt::DeleteList(name) => visit_stmt_delete_list(s, name),
             Stmt::DeleteListIndex { name, index } => {
                 visit_stmt_delete_list_index(s, d, name, index)
             }
@@ -450,7 +450,7 @@ fn visit_stmt_list_add(s: S, d: D, name: &Name, value: &Expr) -> Option<Vec<Stmt
     )
 }
 
-fn visit_stmt_delete_list(s: S, d: D, name: &Name) -> Option<Vec<Stmt>> {
+fn visit_stmt_delete_list(s: S, name: &Name) -> Option<Vec<Stmt>> {
     if name.fieldname().is_some() {
         return None;
     }

@@ -2,6 +2,7 @@ pub mod build;
 mod cli;
 mod fmt;
 mod new;
+mod run;
 
 use std::process::ExitCode;
 
@@ -14,10 +15,14 @@ use cli::{
     Command,
 };
 use colored::Colorize;
-use fmt::FmtError;
 use new::NewError;
+use run::RunError;
 
-use crate::config::Config;
+use crate::{
+    config::Config,
+    fmt::FmtError,
+    interpreter::Exception,
+};
 
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
@@ -88,6 +93,27 @@ pub fn frontend() -> ExitCode {
             Ok(_) => ExitCode::SUCCESS,
             Err(FmtError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+        },
+        Command::Run { input } => match run::run(input) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(RunError::ProjectDiagnostics(diagnostics)) => {
+                diagnostics.eprint();
+                eprintln!();
+                if diagnostics.failure() {
+                    ExitCode::FAILURE
+                } else {
+                    ExitCode::SUCCESS
+                }
+            }
+            Err(RunError::AnyhowError(err)) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+            Err(RunError::Exception(Exception { message, span })) => {
+                eprintln!("{}: {:?}", "error".red().bold(), message);
+                eprintln!("{}: {:?}", "span".blue().bold(), span);
                 ExitCode::FAILURE
             }
         },

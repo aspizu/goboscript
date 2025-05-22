@@ -14,7 +14,6 @@ struct S<'a> {
     callsites: &'a mut usize,
     funcs: &'a FxHashMap<SmolStr, Func>,
     func: Option<&'a Func>,
-    proc: Option<&'a Proc>,
     used_args: Option<&'a mut FxHashSet<SmolStr>>,
 }
 
@@ -40,7 +39,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 callsites,
                 funcs: &sprite.funcs,
                 func: None,
-                proc: Some(proc),
                 used_args: Some(used_args),
             },
         );
@@ -57,7 +55,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 callsites,
                 funcs: &sprite.funcs,
                 func: Some(func),
-                proc: None,
                 used_args: Some(used_args),
             },
         );
@@ -71,7 +68,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 callsites,
                 funcs: &sprite.funcs,
                 func: None,
-                proc: None,
                 used_args: None,
             },
         );
