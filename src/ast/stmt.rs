@@ -1,5 +1,6 @@
 use fxhash::FxHashMap;
 use logos::Span;
+use serde::{Serialize, Deserialize};
 
 use super::{
     expr::Expr,
@@ -15,7 +16,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Stmt {
     Repeat {
         times: Box<Expr>,

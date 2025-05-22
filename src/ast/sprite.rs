@@ -3,11 +3,15 @@ use fxhash::{
     FxHashSet,
 };
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::*;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Sprite {
     pub costumes: Vec<Costume>,
     pub sounds: Vec<Sound>,

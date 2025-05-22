@@ -4,7 +4,6 @@ use std::{
     rc::Rc,
 };
 
-use fxhash::FxHashMap;
 use semver::Version;
 use serde::{
     Deserialize,
@@ -17,24 +16,24 @@ use wasm_bindgen::{
 };
 
 use crate::{
+    ast::Sprite,
     codegen::sb3::Sb3,
-    diagnostic::SpriteDiagnostics,
-    frontend::build::build_impl,
-    misc::{
-        base64,
-        SmolStr,
+    diagnostic::{
+        Artifact,
+        Diagnostic,
     },
+    frontend::build::build_impl,
+    misc::base64,
     standard_library::StandardLibrary,
     vfs::MemFS,
 };
 
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Artifact {
+pub struct Build {
     #[serde(with = "base64")]
-    project: Vec<u8>,
-    stage_diagnostics: SpriteDiagnostics,
-    sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
+    file: Vec<u8>,
+    artifact: Artifact,
 }
 
 #[wasm_bindgen]
@@ -53,10 +52,12 @@ pub fn build(fs: JsValue) -> JsValue {
         Some(stdlib),
     )
     .unwrap();
-    serde_wasm_bindgen::to_value(&Artifact {
-        project: file,
-        sprites_diagnostics: artifact.sprites_diagnostics,
-        stage_diagnostics: artifact.stage_diagnostics,
-    })
-    .unwrap()
+    serde_wasm_bindgen::to_value(&Build { file, artifact }).unwrap()
+}
+
+#[wasm_bindgen]
+pub fn diagnostic_to_string(diagnostic: JsValue, sprite: JsValue) -> String {
+    let diagnostic: Diagnostic = serde_wasm_bindgen::from_value(diagnostic).unwrap();
+    let sprite: Sprite = serde_wasm_bindgen::from_value(sprite).unwrap();
+    diagnostic.kind.to_string(&sprite)
 }
