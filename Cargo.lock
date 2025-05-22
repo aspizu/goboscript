@@ -540,7 +540,7 @@ checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
 
 [[package]]
 name = "goboscript"
-version = "3.2.0"
+version = "3.2.1"
 dependencies = [
  "annotate-snippets",
  "anyhow",
