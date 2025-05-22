@@ -10,7 +10,7 @@ use directories::ProjectDirs;
 use crate::{
     ast::Project,
     diagnostic::{
-        ProjectDiagnostics,
+        Artifact,
         SpriteDiagnostics,
     },
     interpreter::{
@@ -25,7 +25,7 @@ use crate::{
 
 pub enum RunError {
     AnyhowError(anyhow::Error),
-    ProjectDiagnostics(ProjectDiagnostics),
+    ProjectDiagnostics(Artifact),
     Exception(Exception),
 }
 
@@ -70,7 +70,7 @@ pub fn run(input: PathBuf) -> Result<(), RunError> {
     let mut interpreter = Interpreter::new();
     interpreter.run_project(&parent, &project)?;
     if !(diagnostics.diagnostics.is_empty()) {
-        return Err(RunError::ProjectDiagnostics(ProjectDiagnostics {
+        return Err(RunError::ProjectDiagnostics(Artifact {
             project,
             stage_diagnostics: diagnostics,
             sprites_diagnostics: Default::default(),

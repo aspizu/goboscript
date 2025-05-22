@@ -26,7 +26,7 @@ use crate::{
     codegen::sb3::Sb3,
     config::Config,
     diagnostic::{
-        ProjectDiagnostics,
+        Artifact,
         SpriteDiagnostics,
     },
     misc::SmolStr,
@@ -39,26 +39,7 @@ use crate::{
     visitor,
 };
 
-pub enum BuildError {
-    AnyhowError(anyhow::Error),
-    ProjectDiagnostics(ProjectDiagnostics),
-}
-
-impl<T> From<T> for BuildError
-where T: Into<anyhow::Error>
-{
-    fn from(value: T) -> Self {
-        Self::AnyhowError(value.into())
-    }
-}
-
-impl From<ProjectDiagnostics> for BuildError {
-    fn from(value: ProjectDiagnostics) -> Self {
-        Self::ProjectDiagnostics(value)
-    }
-}
-
-pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> Result<(), BuildError> {
+pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
@@ -73,7 +54,7 @@ pub fn build_impl<'a, T: Write + Seek>(
     input: PathBuf,
     mut sb3: Sb3<T>,
     stdlib: Option<StandardLibrary>,
-) -> Result<(), BuildError> {
+) -> anyhow::Result<Artifact> {
     let config_path = input.join("goboscript.toml");
     let config_src = fs
         .borrow_mut()
@@ -144,12 +125,11 @@ pub fn build_impl<'a, T: Write + Seek>(
             .values()
             .all(|sprite_diagnostics| sprite_diagnostics.diagnostics.is_empty()))
     {
-        return Err(ProjectDiagnostics {
+        return Ok(Artifact {
             project,
             stage_diagnostics,
             sprites_diagnostics,
-        }
-        .into());
+        });
     }
     visitor::pass0::visit_project(&mut project);
     visitor::pass1::visit_project(&mut project);
@@ -168,17 +148,9 @@ pub fn build_impl<'a, T: Write + Seek>(
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     )?;
-    if !(stage_diagnostics.diagnostics.is_empty()
-        && sprites_diagnostics
-            .values()
-            .all(|sprite_diagnostics| sprite_diagnostics.diagnostics.is_empty()))
-    {
-        return Err(ProjectDiagnostics {
-            project,
-            stage_diagnostics,
-            sprites_diagnostics,
-        }
-        .into());
-    }
-    Ok(())
+    Ok(Artifact {
+        project,
+        stage_diagnostics,
+        sprites_diagnostics,
+    })
 }

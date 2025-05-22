@@ -27,19 +27,18 @@ use crate::{
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
         Command::Build { input, output } => match build::build(input, output) {
-            Ok(()) => ExitCode::SUCCESS,
-            Err(build::BuildError::AnyhowError(err)) => {
-                eprintln!("{}: {:?}", "error".red().bold(), err);
-                ExitCode::FAILURE
-            }
-            Err(build::BuildError::ProjectDiagnostics(diagnostics)) => {
-                diagnostics.eprint();
+            Ok(artifact) => {
+                artifact.eprint();
                 eprintln!();
-                if diagnostics.failure() {
+                if artifact.failure() {
                     ExitCode::FAILURE
                 } else {
                     ExitCode::SUCCESS
                 }
+            }
+            Err(err) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
             }
         },
         Command::Completions { shell } => {

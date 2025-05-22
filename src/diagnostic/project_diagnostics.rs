@@ -10,13 +10,13 @@ use crate::{
     misc::SmolStr,
 };
 
-pub struct ProjectDiagnostics {
+pub struct Artifact {
     pub project: Project,
     pub stage_diagnostics: SpriteDiagnostics,
     pub sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
 }
 
-impl ProjectDiagnostics {
+impl Artifact {
     pub fn eprint(&self) {
         let renderer = Renderer::styled();
         self.stage_diagnostics.eprint(&renderer, &self.project);

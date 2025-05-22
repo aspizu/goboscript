@@ -5,7 +5,6 @@ use std::{
 };
 
 use fxhash::FxHashMap;
-use js_sys::Uint8Array;
 use semver::Version;
 use serde::{
     Deserialize,
@@ -20,10 +19,7 @@ use wasm_bindgen::{
 use crate::{
     codegen::sb3::Sb3,
     diagnostic::SpriteDiagnostics,
-    frontend::build::{
-        build_impl,
-        BuildError,
-    },
+    frontend::build::build_impl,
     misc::SmolStr,
     standard_library::StandardLibrary,
     vfs::MemFS,
@@ -31,7 +27,8 @@ use crate::{
 
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
-pub struct Diagnostics {
+pub struct Artifact {
+    project: Vec<u8>,
     stage_diagnostics: SpriteDiagnostics,
     sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
 }
@@ -45,25 +42,17 @@ pub fn build(fs: JsValue) -> JsValue {
         path: "stdlib".into(),
         version: Version::new(0, 0, 0),
     };
-    match build_impl(
+    let artifact = build_impl(
         Rc::new(RefCell::new(fs)),
         "project".into(),
         sb3,
         Some(stdlib),
-    ) {
-        Ok(()) => {
-            let uint8_array = Uint8Array::from(file.as_slice());
-            uint8_array.into()
-        }
-        Err(BuildError::ProjectDiagnostics(diagnostics)) => {
-            serde_wasm_bindgen::to_value(&Diagnostics {
-                stage_diagnostics: diagnostics.stage_diagnostics,
-                sprites_diagnostics: diagnostics.sprites_diagnostics,
-            })
-            .unwrap()
-        }
-        Err(BuildError::AnyhowError(error)) => {
-            panic!("{:#?}", error);
-        }
-    }
+    )
+    .unwrap();
+    serde_wasm_bindgen::to_value(&Artifact {
+        project: file,
+        sprites_diagnostics: artifact.sprites_diagnostics,
+        stage_diagnostics: artifact.stage_diagnostics,
+    })
+    .unwrap()
 }
