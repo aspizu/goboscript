@@ -1,6 +1,6 @@
 # goboscript
 
-![Discord](https://img.shields.io/discord/1216842627379363921?style=flat&logo=discord&label=Discord) ![image](https://shields.io/crates/l/goboscript) 
+[![Discord](https://img.shields.io/discord/1216842627379363921?style=flat&logo=discord&label=Discord)](https://discord.gg/W9ZWy6ZMA3) ![image](https://shields.io/crates/l/goboscript) 
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
 
