@@ -15,6 +15,9 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
+
+use crate::misc::base64;
 
 pub trait VFS {
     fn read_dir(&mut self, path: &Path) -> io::Result<Vec<PathBuf>>;
@@ -75,35 +78,15 @@ impl VFS for RealFS {
     }
 }
 
-mod base64 {
-    use base64::Engine;
-    use serde::{
-        Deserialize,
-        Deserializer,
-        Serialize,
-        Serializer,
-    };
-
-    pub fn serialize<S: Serializer>(v: &Vec<u8>, s: S) -> Result<S::Ok, S::Error> {
-        let base64 = base64::engine::general_purpose::STANDARD.encode(v);
-        String::serialize(&base64, s)
-    }
-
-    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
-        let base64 = String::deserialize(d)?;
-        base64::engine::general_purpose::STANDARD
-            .decode(base64.as_bytes())
-            .map_err(serde::de::Error::custom)
-    }
-}
-
-#[derive(Serialize, Deserialize)]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 struct Data {
     #[serde(with = "base64")]
     pub inner: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct MemFS {
     files: FxHashMap<String, Data>,
 }
