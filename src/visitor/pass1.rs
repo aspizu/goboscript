@@ -323,9 +323,9 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
         } => {
             s.references.structs.insert(name.clone());
             for field in fields {
-                s.references
-                    .struct_fields
-                    .insert((name.clone(), field.name.clone()));
+                // s.references
+                //     .struct_fields
+                //     .insert((name.clone(), field.name.clone()));
                 visit_expr(&mut field.value, before, s);
             }
             None
