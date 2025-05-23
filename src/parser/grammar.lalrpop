@@ -198,6 +198,7 @@ Stmt: Stmt = {
                 lhs_span: l..r,
                 rhs,
                 rhs_span: fl..fr,
+                is_generated: false,
             },
             value,
             type_: Type::Value,
@@ -210,7 +211,8 @@ Stmt: Stmt = {
             lhs: name,
             lhs_span: l..r,
             rhs: field,
-            rhs_span: fl..fr
+            rhs_span: fl..fr,
+            is_generated: false,
         })
     },
     <l:@L> <name:NAME> <r:@R> "." <fl:@L> <field:NAME> <fr:@R> "--" ";" => {
@@ -218,7 +220,8 @@ Stmt: Stmt = {
             lhs: name,
             lhs_span: l..r,
             rhs: field,
-            rhs_span: fl..fr
+            rhs_span: fl..fr,
+            is_generated: false,
         })
     },
     <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "+=" <value:BoxedExpr> ";" => {
@@ -227,7 +230,8 @@ Stmt: Stmt = {
                 lhs,
                 lhs_span: l..r,
                 rhs,
-                rhs_span: fl..fr
+                rhs_span: fl..fr,
+                is_generated: false,
             },
             value,
         }
@@ -290,45 +294,45 @@ Stmt: Stmt = {
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:BoxedExpr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "=" <value:BoxedExpr> ";" => {
         Stmt::SetListIndex {
-            name: Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr },
+            name: Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false },
             index,
             value
         }
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "++" ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::increment_index(name, index)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "--" ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::decrement_index(name, index)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "+=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Add, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "-=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Sub, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "*=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Mul, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "/=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Div, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "//=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::FloorDiv, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "%=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Mod, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "&=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Join, name, index, value)
     },
     <l:@L> <name:NAME> <r:@R> <args:Kwargs> ";" => {
@@ -540,7 +544,7 @@ NameName: Name = <l:@L> <n:NAME> <r:@R> => Name::Name { name: n, span: l..r };
 
 #[inline]
 NameDotName: Name = <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> => {
-    Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }
+    Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf, is_generated: false }
 };
 
 #[inline]

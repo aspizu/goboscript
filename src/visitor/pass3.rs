@@ -167,12 +167,14 @@ fn visit_expr(expr: &Expr, s: &mut S) {
     match expr {
         Expr::Value { value: _, span: _ } => {}
         Expr::Name(name) => {
-            s.references.names.insert(NameReference {
-                name: name.basename().clone(),
-                field: name.fieldname().cloned(),
-                proc: s.proc.map(|p| p.name.clone()),
-                func: s.func.map(|f| f.name.clone()),
-            });
+            if !name.is_generated() {
+                s.references.names.insert(NameReference {
+                    name: name.basename().clone(),
+                    field: name.fieldname().cloned(),
+                    proc: s.proc.map(|p| p.name.clone()),
+                    func: s.func.map(|f| f.name.clone()),
+                });
+            }
         }
         Expr::Dot {
             lhs,

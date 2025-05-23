@@ -405,6 +405,7 @@ fn visit_stmt_set_var(
                     lhs_span: name.basespan().clone(),
                     rhs: struct_literal_field.name.clone(),
                     rhs_span: struct_literal_field.span.clone(),
+                    is_generated: true,
                 },
                 value: struct_literal_field.value.clone(),
                 type_: Type::Value,
@@ -429,6 +430,7 @@ fn visit_stmt_list_set(s: S, d: D, name: &Name, index: &Expr, value: &Expr) -> O
                     lhs_span: name.basespan().clone(),
                     rhs: struct_literal_field.name.clone(),
                     rhs_span: struct_literal_field.span.clone(),
+                    is_generated: true,
                 },
                 index: Box::new(index.clone()),
                 value: struct_literal_field.value.clone(),
@@ -451,6 +453,7 @@ fn visit_stmt_list_add(s: S, d: D, name: &Name, value: &Expr) -> Option<Vec<Stmt
                     lhs_span: name.basespan().clone(),
                     rhs: struct_literal_field.name.clone(),
                     rhs_span: struct_literal_field.span.clone(),
+                    is_generated: true,
                 },
                 value: struct_literal_field.value.clone(),
             })
@@ -476,6 +479,7 @@ fn visit_stmt_delete_list(s: S, name: &Name) -> Option<Vec<Stmt>> {
                     lhs_span: name.basespan().clone(),
                     rhs: struct_field.name.clone(),
                     rhs_span: struct_field.span.clone(),
+                    is_generated: true,
                 })
             })
             .collect(),
@@ -502,6 +506,7 @@ fn visit_stmt_insert_at_list(
                     lhs_span: name.basespan().clone(),
                     rhs: struct_literal_field.name.clone(),
                     rhs_span: struct_literal_field.span.clone(),
+                    is_generated: true,
                 },
                 index: Box::new(index.clone()),
                 value: struct_literal_field.value.clone(),
@@ -528,6 +533,7 @@ fn visit_stmt_delete_list_index(s: S, _d: D, name: &Name, index: &Expr) -> Optio
                     lhs_span: name.basespan().clone(),
                     rhs: struct_field.name.clone(),
                     rhs_span: struct_field.span.clone(),
+                    is_generated: true,
                 },
                 index: Box::new(index.clone()),
             })

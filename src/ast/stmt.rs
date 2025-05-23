@@ -160,6 +160,7 @@ impl Stmt {
             lhs_span: span,
             rhs: field,
             rhs_span: field_span,
+            is_generated: false,
         };
         Stmt::SetVar {
             name: name.clone(),
