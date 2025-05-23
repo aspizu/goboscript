@@ -49,7 +49,11 @@ pub fn struct_literal_field_access(expr: &Expr, d: D) -> Option<Expr> {
         );
         return None;
     };
-    Some(field.value.as_ref().clone())
+    let mut field = field.value.as_ref().clone();
+    if let Expr::Name(Name::DotName { is_generated, .. }) = &mut field {
+        *is_generated = false;
+    }
+    Some(field)
 }
 
 pub fn list_field_access(expr: &Expr, s: S) -> Option<Expr> {
@@ -85,6 +89,7 @@ pub fn list_field_access(expr: &Expr, s: S) -> Option<Expr> {
                             lhs_span: span.clone(),
                             rhs: field.name.clone(),
                             rhs_span: field.span.clone(),
+                            is_generated: true,
                         }),
                         rhs.as_ref().clone(),
                     )
@@ -120,6 +125,7 @@ pub fn variable_field_access(expr: &Expr, s: S) -> Option<Expr> {
                     lhs_span: span.clone(),
                     rhs: field.name.clone(),
                     rhs_span: field.span.clone(),
+                    is_generated: true,
                 })
                 .into(),
             })
@@ -153,6 +159,7 @@ pub fn arg_field_access(expr: &Expr, s: S) -> Option<Expr> {
                     lhs_span: span.clone(),
                     rhs: field.name.clone(),
                     rhs_span: field.span.clone(),
+                    is_generated: true,
                 })
                 .into(),
             })

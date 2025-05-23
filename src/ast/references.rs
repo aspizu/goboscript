@@ -10,8 +10,15 @@ use crate::misc::SmolStr;
 pub struct References {
     pub procs: FxHashSet<SmolStr>,
     pub funcs: FxHashSet<SmolStr>,
-    pub names: FxHashSet<SmolStr>,
+    pub names: FxHashSet<NameReference>,
     pub structs: FxHashSet<SmolStr>,
-    pub struct_fields: FxHashSet<(SmolStr, SmolStr)>,
-    pub enum_variants: FxHashSet<(SmolStr, SmolStr)>,
+    pub args: FxHashSet<NameReference>,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, Eq, PartialEq, Hash)]
+pub struct NameReference {
+    pub name: SmolStr,
+    pub field: Option<SmolStr>,
+    pub proc: Option<SmolStr>,
+    pub func: Option<SmolStr>,
 }

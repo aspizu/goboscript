@@ -66,7 +66,7 @@ pub fn run(input: PathBuf) -> Result<(), RunError> {
     visitor::pass0::visit_project(&mut project);
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(&mut project, &mut diagnostics, &mut Default::default());
-    visitor::pass3::visit_project(&mut project);
+    visitor::pass4::visit_project(&mut project);
     let mut interpreter = Interpreter::new();
     interpreter.run_project(&parent, &project)?;
     if !(diagnostics.diagnostics.is_empty()) {

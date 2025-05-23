@@ -16,6 +16,7 @@ pub struct Arg {
     pub span: Span,
     pub type_: Type,
     pub default: Option<(Value, Span)>,
+    pub is_used: bool,
 }
 
 impl Arg {
@@ -25,6 +26,7 @@ impl Arg {
             span,
             type_,
             default,
+            is_used: false,
         }
     }
 }

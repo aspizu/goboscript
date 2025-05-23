@@ -83,8 +83,11 @@ impl S<'_> {
 
     fn get_local_var(&self, name: &str) -> Option<&Var> {
         self.proc
-            .and_then(|proc| proc.locals.get(name))
-            .or_else(|| self.func.and_then(|func| func.locals.get(name)))
+            .and_then(|proc| self.sprite.proc_locals[&proc.name].get(name))
+            .or_else(|| {
+                self.func
+                    .and_then(|func| self.sprite.func_locals[&func.name].get(name))
+            })
     }
 
     fn get_var(&self, name: &str) -> Option<&Var> {
@@ -447,13 +450,8 @@ where T: Write + Seek
             if !sprite.used_procs.contains(&proc.name) {
                 d.report(DiagnosticKind::UnusedProc(proc.name.clone()), &proc.span);
             } else {
-                for arg in &proc.args {
-                    if !sprite
-                        .proc_used_args
-                        .get(&proc.name)
-                        .unwrap()
-                        .contains(&arg.name)
-                    {
+                for arg in &sprite.proc_args[&proc.name] {
+                    if !arg.is_used {
                         d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
                     }
                 }
@@ -463,13 +461,8 @@ where T: Write + Seek
             if !sprite.used_funcs.contains(&func.name) {
                 d.report(DiagnosticKind::UnusedFunc(func.name.clone()), &func.span);
             } else {
-                for arg in &func.args {
-                    if !sprite
-                        .func_used_args
-                        .get(&func.name)
-                        .unwrap()
-                        .contains(&arg.name)
-                    {
+                for arg in &sprite.func_args[&func.name] {
+                    if !arg.is_used {
                         d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
                     }
                 }
@@ -482,10 +475,26 @@ where T: Write + Seek
                     &struct_.span,
                 );
             }
+            for field in &struct_.fields {
+                if !field.is_used {
+                    d.report(
+                        DiagnosticKind::UnusedStructField(field.name.clone()),
+                        &field.span,
+                    );
+                }
+            }
         }
         for enum_ in sprite.enums.values() {
             if !enum_.is_used {
                 d.report(DiagnosticKind::UnusedEnum(enum_.name.clone()), &enum_.span);
+            }
+            for variant in &enum_.variants {
+                if !variant.is_used {
+                    d.report(
+                        DiagnosticKind::UnusedEnumVariant(variant.name.clone()),
+                        &variant.span,
+                    );
+                }
             }
         }
         self.id.reset();
@@ -523,7 +532,7 @@ where T: Write + Seek
             .values()
             .filter(|proc| sprite.used_procs.contains(&proc.name))
         {
-            for var in proc.locals.values() {
+            for var in sprite.proc_locals[&proc.name].values() {
                 self.local_var_declaration(
                     S {
                         sprite,
@@ -543,7 +552,7 @@ where T: Write + Seek
             .values()
             .filter(|func| sprite.used_funcs.contains(&func.name))
         {
-            for var in func.locals.values() {
+            for var in sprite.func_locals[&func.name].values() {
                 self.local_var_declaration(
                     S {
                         sprite,
@@ -970,7 +979,7 @@ where T: Write + Seek
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
-        for arg in &proc.args {
+        for arg in &s.sprite.proc_args[&proc.name] {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
@@ -1044,7 +1053,7 @@ where T: Write + Seek
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
-        for arg in &func.args {
+        for arg in &s.sprite.func_args[&func.name] {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
@@ -1216,7 +1225,19 @@ where T: Write + Seek
                 span,
                 args,
                 kwargs: _,
-            } => self.func_call(s, d, this_id, name, span, args),
+            } => self.func_call(
+                s,
+                d,
+                this_id,
+                name,
+                s.sprite
+                    .func_args
+                    .get(name)
+                    .map(|a| a.as_slice())
+                    .unwrap_or_default(),
+                span,
+                args,
+            ),
             Stmt::Return { .. } => panic!(),
         }
     }

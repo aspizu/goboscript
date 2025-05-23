@@ -1,7 +1,4 @@
-use fxhash::{
-    FxHashMap,
-    FxHashSet,
-};
+use fxhash::FxHashMap;
 
 use crate::{
     ast::*,
@@ -9,12 +6,10 @@ use crate::{
 };
 
 struct S<'a> {
-    references: &'a mut References,
     vars: &'a mut FxHashMap<SmolStr, Var>,
     callsites: &'a mut usize,
     funcs: &'a FxHashMap<SmolStr, Func>,
     func: Option<&'a Func>,
-    used_args: Option<&'a mut FxHashSet<SmolStr>>,
 }
 
 pub fn visit_project(project: &mut Project) {
@@ -29,33 +24,25 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
     let old_callsites = *callsites;
     for proc in sprite.procs.values_mut() {
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
-        let proc_references = sprite.proc_references.get_mut(&proc.name).unwrap();
-        let used_args = sprite.proc_used_args.get_mut(&proc.name).unwrap();
         visit_stmts(
             proc_definition,
             &mut S {
-                references: proc_references,
                 vars: &mut sprite.vars,
                 callsites,
                 funcs: &sprite.funcs,
                 func: None,
-                used_args: Some(used_args),
             },
         );
     }
     for func in sprite.funcs.values() {
         let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
-        let func_references = sprite.func_references.get_mut(&func.name).unwrap();
-        let used_args = sprite.func_used_args.get_mut(&func.name).unwrap();
         visit_stmts(
             func_definition,
             &mut S {
-                references: func_references,
                 vars: &mut sprite.vars,
                 callsites,
                 funcs: &sprite.funcs,
                 func: Some(func),
-                used_args: Some(used_args),
             },
         );
     }
@@ -63,12 +50,10 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
         visit_stmts(
             &mut event.body,
             &mut S {
-                references: &mut event.references,
                 vars: &mut sprite.vars,
                 callsites,
                 funcs: &sprite.funcs,
                 func: None,
-                used_args: None,
             },
         );
     }
@@ -162,12 +147,11 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             }
         }
         Stmt::ProcCall {
-            name,
+            name: _,
             span: _,
             args,
             kwargs,
         } => {
-            s.references.procs.insert(name.clone());
             for arg in args {
                 visit_expr(arg, &mut before, s);
             }
@@ -176,12 +160,11 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             }
         }
         Stmt::FuncCall {
-            name,
+            name: _,
             span: _,
             args,
             kwargs,
         } => {
-            s.references.funcs.insert(name.clone());
             for arg in args {
                 visit_expr(arg, &mut before, s);
             }
@@ -224,10 +207,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
 fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
     let replace: Option<Expr> = match expr {
         Expr::Value { value: _, span: _ } => None,
-        Expr::Name(name) => {
-            s.references.names.insert(name.basename().clone());
-            None
-        }
+        Expr::Name(_) => None,
         Expr::Dot {
             lhs,
             rhs: _,
@@ -236,12 +216,7 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             visit_expr(lhs, before, s);
             None
         }
-        Expr::Arg(name) => {
-            if let Some(used_args) = &mut s.used_args {
-                used_args.insert(name.basename().clone());
-            }
-            None
-        }
+        Expr::Arg(_) => None,
         Expr::Repr {
             repr: _,
             span: _,
@@ -315,15 +290,11 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             None
         }
         Expr::StructLiteral {
-            name,
+            name: _,
             span: _,
             fields,
         } => {
-            s.references.structs.insert(name.clone());
             for field in fields {
-                s.references
-                    .struct_fields
-                    .insert((name.clone(), field.name.clone()));
                 visit_expr(&mut field.value, before, s);
             }
             None

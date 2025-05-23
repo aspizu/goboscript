@@ -51,9 +51,11 @@ where T: Write + Seek
 
         if !(s
             .proc
-            .is_some_and(|proc| proc.args.iter().any(|arg| &arg.name == basename))
+            .map(|proc| &s.sprite.proc_args[&proc.name])
+            .is_some_and(|args| args.iter().any(|arg| &arg.name == basename))
             || s.func
-                .is_some_and(|func| func.args.iter().any(|arg| &arg.name == basename)))
+                .map(|func| &s.sprite.func_args[&func.name])
+                .is_some_and(|args| args.iter().any(|arg| &arg.name == basename)))
         {
             if basename == "tw_is_compiled" {
                 return self.arg_impl(this_id, parent_id, "is compiled?", true);
@@ -317,6 +319,7 @@ where T: Write + Seek
         d: D,
         this_id: NodeID,
         name: &SmolStr,
+        signature: &[Arg],
         span: &Span,
         args: &[Expr],
     ) -> io::Result<()> {
@@ -324,7 +327,7 @@ where T: Write + Seek
             d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
             return Ok(());
         };
-        if func.args.len() != args.len() {
+        if signature.len() != args.len() {
             d.report(
                 DiagnosticKind::FuncArgsCountMismatch {
                     func: name.clone(),
@@ -336,7 +339,7 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = vec![];
         let mut qualified_arg_values: Vec<Expr> = vec![];
         self.begin_inputs()?;
-        for (arg, arg_value) in func.args.iter().zip(args) {
+        for (arg, arg_value) in signature.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();

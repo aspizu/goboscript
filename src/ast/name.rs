@@ -17,6 +17,7 @@ pub enum Name {
         lhs_span: Span,
         rhs: SmolStr,
         rhs_span: Span,
+        is_generated: bool,
     },
 }
 
@@ -55,6 +56,13 @@ impl Name {
         match self {
             Self::Name { span, .. } => span.clone(),
             Self::DotName { rhs_span, .. } => rhs_span.clone(),
+        }
+    }
+
+    pub fn is_generated(&self) -> bool {
+        match self {
+            Self::Name { .. } => false,
+            Self::DotName { is_generated, .. } => *is_generated,
         }
     }
 }
