@@ -1,4 +1,7 @@
-use std::fmt::{self, Display};
+use std::fmt::{
+    self,
+    Display,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub struct NodeID {

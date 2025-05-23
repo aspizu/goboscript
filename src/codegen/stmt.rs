@@ -1,19 +1,39 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use logos::Span;
-use serde_json::json;
 
 use super::{
+    input::coerce_condition,
     node::Node,
     node_id::NodeID,
-    sb3::{qualify_struct_var_name, QualifiedName, Sb3, D, S},
+    sb3::{
+        qualify_struct_var_name,
+        QualifiedName,
+        Sb3,
+        D,
+        S,
+    },
 };
 use crate::{
-    ast::{Expr, Name, Stmt, Type},
+    ast::{
+        Arg,
+        Expr,
+        Name,
+        Proc,
+        Stmt,
+        Type,
+    },
     blocks::Block,
     codegen::mutation::Mutation,
     diagnostic::DiagnosticKind,
-    misc::{write_comma_io, SmolStr},
+    misc::{
+        write_comma_io,
+        SmolStr,
+    },
 };
 
 impl<T> Sb3<T>
@@ -30,7 +50,7 @@ where T: Write + Seek
         let times_id = self.id.new_id();
         let body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "TIMES", times, times_id)?;
+        self.input(s, d, "TIMES", times, times_id, false)?;
         self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
@@ -63,16 +83,17 @@ where T: Write + Seek
         if_body: &[Stmt],
         else_body: &[Stmt],
     ) -> io::Result<()> {
+        let cond = coerce_condition(cond);
         let cond_id = self.id.new_id();
         let if_body_id = self.id.new_id();
         let else_body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "CONDITION", cond, cond_id)?;
+        self.input(s, d, "CONDITION", &cond, cond_id, true)?;
         self.substack("SUBSTACK", (!if_body.is_empty()).then_some(if_body_id))?;
         self.substack("SUBSTACK2", (!else_body.is_empty()).then_some(else_body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
-        self.expr(s, d, cond, cond_id, this_id)?;
+        self.expr(s, d, &cond, cond_id, this_id)?;
         self.stmts(s, d, if_body, if_body_id, Some(this_id))?;
         self.stmts(s, d, else_body, else_body_id, Some(this_id))
     }
@@ -85,14 +106,15 @@ where T: Write + Seek
         cond: &Expr,
         body: &[Stmt],
     ) -> io::Result<()> {
+        let cond = coerce_condition(cond);
         let cond_id = self.id.new_id();
         let body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "CONDITION", cond, cond_id)?;
+        self.input(s, d, "CONDITION", &cond, cond_id, true)?;
         self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
-        self.expr(s, d, cond, cond_id, this_id)?;
+        self.expr(s, d, &cond, cond_id, this_id)?;
         self.stmts(s, d, body, body_id, Some(this_id))
     }
 
@@ -109,7 +131,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, value_id)?;
+        self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
@@ -137,7 +159,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, value_id)?;
+        self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
@@ -184,7 +206,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "ITEM", value, value_id)?;
+        self.input(s, d, "ITEM", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::List(qualified_name, _)) => {
@@ -212,7 +234,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let index_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", index, index_id)?;
+        self.input(s, d, "INDEX", index, index_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::List(qualified_name, _)) => {
@@ -260,8 +282,8 @@ where T: Write + Seek
         let index_id = self.id.new_id();
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", index, index_id)?;
-        self.input(s, d, "ITEM", value, value_id)?;
+        self.input(s, d, "INDEX", index, index_id, false)?;
+        self.input(s, d, "ITEM", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::List(qualified_name, _)) => {
@@ -299,11 +321,8 @@ where T: Write + Seek
         this_id: NodeID,
         block: &Block,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("block's do not support keyword args yet.")
-        }
         if block.args().len() != args.len() {
             d.report(
                 DiagnosticKind::BlockArgsCountMismatch {
@@ -318,7 +337,7 @@ where T: Write + Seek
         let menu_id = block.menu().map(|_| self.id.new_id());
         let mut menu_value = None;
         let mut menu_is_default = menu_id.is_some();
-        for ((&arg_name, (_, arg_value)), &arg_id) in block.args().iter().zip(args).zip(&arg_ids) {
+        for ((&arg_name, arg_value), &arg_id) in block.args().iter().zip(args).zip(&arg_ids) {
             if block.menu().is_some_and(|menu| menu.input == arg_name) {
                 if let Expr::Value { value, span: _ } = &arg_value {
                     menu_value = Some(value.clone());
@@ -328,7 +347,7 @@ where T: Write + Seek
                     self.input_with_shadow(s, d, arg_name, arg_value, arg_id, menu_id.unwrap())?;
                 }
             } else {
-                self.input(s, d, arg_name, arg_value, arg_id)?;
+                self.input(s, d, arg_name, arg_value, arg_id, false)?;
             }
         }
         if menu_is_default {
@@ -344,8 +363,13 @@ where T: Write + Seek
         if let Some(fields) = block.fields() {
             write!(self, r#","fields":{fields}"#)?;
         }
+        if let Block::StopOtherScripts = block {
+            self.write_all(
+                b",\"mutation\":{\"tagName\":\"mutation\",\"children\": [],\"hasnext\": \"true\"}",
+            )?;
+        }
         self.end_obj()?; // node
-        for ((_, arg), arg_id) in args.iter().zip(arg_ids) {
+        for (arg, arg_id) in args.iter().zip(arg_ids) {
             self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = block.menu() {
@@ -355,9 +379,9 @@ where T: Write + Seek
                     .shadow(true),
             )?;
             if let Some(menu_value) = menu_value {
-                self.single_field(menu.input, &menu_value.to_string())?;
+                self.single_field(menu.field, &menu_value.to_string())?;
             } else {
-                self.single_field(menu.input, menu.default)?;
+                self.single_field(menu.field, menu.default)?;
             }
             self.end_obj()?; // node
         }
@@ -371,15 +395,94 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
+        if name == "log" {
+            return self.proc_call_impl(
+                &Proc::new(
+                    "\u{200b}\u{200b}log\u{200b}\u{200b}".into(),
+                    span.clone(),
+                    vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                    false,
+                ),
+                s,
+                d,
+                this_id,
+                name,
+                span,
+                args,
+                true,
+            );
+        }
         let Some(proc) = s.sprite.procs.get(name) else {
+            if name == "breakpoint" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}breakpoint\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                    true,
+                );
+            }
+            if name == "error" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}error\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                    true,
+                );
+            }
+            if name == "warn" {
+                return self.proc_call_impl(
+                    &Proc::new(
+                        "\u{200b}\u{200b}warn\u{200b}\u{200b}".into(),
+                        span.clone(),
+                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
+                        false,
+                    ),
+                    s,
+                    d,
+                    this_id,
+                    name,
+                    span,
+                    args,
+                    true,
+                );
+            }
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
             return Ok(());
         };
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("keyword args not transformed.")
-        }
+        self.proc_call_impl(proc, s, d, this_id, name, span, args, false)
+    }
+
+    fn proc_call_impl(
+        &mut self,
+        proc: &Proc,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        name: &SmolStr,
+        span: &Span,
+        args: &[Expr],
+        compact: bool,
+    ) -> io::Result<()> {
         if proc.args.len() != args.len() {
             d.report(
                 DiagnosticKind::ProcArgsCountMismatch {
@@ -392,11 +495,11 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
         let mut qualified_arg_values: Vec<&Expr> = Vec::new();
         self.begin_inputs()?;
-        for (arg, (_, arg_value)) in proc.args.iter().zip(args) {
+        for (arg, arg_value) in proc.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, arg_value, arg_id)?;
+                    self.input(s, d, &arg.name, arg_value, arg_id, false)?;
                     qualified_args.push((arg.name.clone(), arg_id));
                     qualified_arg_values.push(arg_value);
                 }
@@ -404,7 +507,7 @@ where T: Write + Seek
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         continue;
                     };
                     let struct_literal_fields = match arg_value {
@@ -453,6 +556,7 @@ where T: Write + Seek
                             &qualified_arg_name,
                             &struct_literal_field.value,
                             arg_id,
+                            false,
                         )?;
                         qualified_args.push((qualified_arg_name, arg_id));
                         qualified_arg_values.push(&struct_literal_field.value);
@@ -464,7 +568,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::call(proc.name.clone(), &qualified_args, proc.warp)
+            Mutation::call(proc.name.clone(), &qualified_args, proc.warp, compact)
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {

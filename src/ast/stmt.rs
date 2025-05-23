@@ -1,12 +1,25 @@
+use fxhash::FxHashMap;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use super::{expr::Expr, type_::Type, Name, Value};
+use super::{
+    expr::Expr,
+    type_::Type,
+    Name,
+    Value,
+};
 use crate::{
-    blocks::{BinOp, Block},
+    blocks::{
+        BinOp,
+        Block,
+    },
     misc::SmolStr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Stmt {
     Repeat {
         times: Box<Expr>,
@@ -60,17 +73,20 @@ pub enum Stmt {
     Block {
         block: Block,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     ProcCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     Return {
         value: Box<Expr>,
@@ -79,15 +95,33 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn span(&self) -> &Span {
-        todo!()
+    pub fn span(&self) -> Span {
+        match self {
+            Stmt::Repeat { times, .. } => times.span(),
+            Stmt::Forever { span, .. } => span.clone(),
+            Stmt::Branch { cond, .. } => cond.span(),
+            Stmt::Until { cond, .. } => cond.span(),
+            Stmt::SetVar { name, .. } => name.span(),
+            Stmt::ChangeVar { name, .. } => name.span(),
+            Stmt::Show(name) => name.span(),
+            Stmt::Hide(name) => name.span(),
+            Stmt::AddToList { name, .. } => name.span(),
+            Stmt::DeleteList(name) => name.span(),
+            Stmt::DeleteListIndex { name, .. } => name.span(),
+            Stmt::InsertAtList { name, .. } => name.span(),
+            Stmt::SetListIndex { name, .. } => name.span(),
+            Stmt::Block { span, .. } => span.clone(),
+            Stmt::ProcCall { span, .. } => span.clone(),
+            Stmt::FuncCall { span, .. } => span.clone(),
+            Stmt::Return { value, .. } => value.span(),
+        }
     }
 
     pub fn increment(name: Name) -> Self {
         let span = name.span();
         Self::ChangeVar {
             name,
-            value: Box::new(Value::Int(1).to_expr(span)),
+            value: Box::new(Value::from(1.0).to_expr(span)),
         }
     }
 
@@ -95,7 +129,7 @@ impl Stmt {
         let span = name.span();
         Self::ChangeVar {
             name,
-            value: Box::new(Value::Int(-1).to_expr(span)),
+            value: Box::new(Value::from(-1.0).to_expr(span)),
         }
     }
 
@@ -144,7 +178,7 @@ impl Stmt {
             value: Box::new(BinOp::Add.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
-                Value::Int(1).to_expr(span),
+                Value::from(1.0).to_expr(span),
             )),
         }
     }
@@ -157,7 +191,7 @@ impl Stmt {
             value: Box::new(BinOp::Add.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
-                Value::Int(1).to_expr(span),
+                Value::from(1.0).to_expr(span),
             )),
         }
     }
@@ -167,11 +201,31 @@ impl Stmt {
         Stmt::SetListIndex {
             name: name.clone(),
             index: Box::new(index.clone()),
-            value: Box::new(BinOp::Add.to_expr(
+            value: Box::new(op.to_expr(
                 span.clone(),
-                op.to_expr(span.clone(), Expr::Name(name), index),
+                BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
                 value,
             )),
         }
     }
+}
+
+pub fn split_args(
+    mut args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+) -> (Vec<Expr>, FxHashMap<SmolStr, (Span, Expr)>) {
+    let mut positional = Vec::new();
+    let mut named = FxHashMap::default();
+
+    // Drain the vector so that we consume the arguments.
+    for (maybe_name, expr) in args.drain(..) {
+        if let Some((name, span)) = maybe_name {
+            // Insert into the named arguments map.
+            named.insert(name, (span, expr));
+        } else {
+            // Otherwise, treat it as a positional argument.
+            positional.push(expr);
+        }
+    }
+
+    (positional, named)
 }

@@ -1,12 +1,25 @@
+use fxhash::FxHashMap;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use super::{value::Value, Name, StructLiteralField};
+use super::{
+    value::Value,
+    Name,
+    StructLiteralField,
+};
 use crate::{
-    blocks::{BinOp, Repr, UnOp},
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     misc::SmolStr,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Expr {
     Value {
         value: Value,
@@ -22,12 +35,13 @@ pub enum Expr {
     Repr {
         repr: Repr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
     },
     FuncCall {
         name: SmolStr,
         span: Span,
-        args: Vec<(Option<(SmolStr, Span)>, Expr)>,
+        args: Vec<Expr>,
+        kwargs: FxHashMap<SmolStr, (Span, Expr)>,
     },
     UnOp {
         op: UnOp,
@@ -81,5 +95,11 @@ impl BinOp {
             lhs: Box::new(lhs),
             rhs: Box::new(rhs),
         }
+    }
+}
+
+impl Value {
+    pub fn to_expr(self, span: Span) -> Expr {
+        Expr::Value { value: self, span }
     }
 }

@@ -1,18 +1,35 @@
 use core::str;
 use std::{
-    fs::File,
-    io::{self, Seek, Write},
+    cell::RefCell,
+    io::{
+        self,
+        Seek,
+        Write,
+    },
     path::Path,
+    rc::Rc,
 };
 
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::{
+    FxHashMap,
+    FxHashSet,
+};
 use logos::Span;
-use md5::{Digest, Md5};
+use md5::{
+    Digest,
+    Md5,
+};
 use serde_json::json;
-use zip::{write::SimpleFileOptions, ZipWriter};
+use zip::{
+    write::SimpleFileOptions,
+    ZipWriter,
+};
 
 use super::{
-    cmd::cmd_to_list, node::Node, node_id::NodeID, node_id_factory::NodeIDFactory,
+    cmd::cmd_to_list,
+    node::Node,
+    node_id::NodeID,
+    node_id_factory::NodeIDFactory,
     turbowarp_config::TurbowarpConfig,
 };
 use crate::{
@@ -20,8 +37,15 @@ use crate::{
     blocks::Block,
     codegen::mutation::Mutation,
     config::Config,
-    diagnostic::{DiagnosticKind, SpriteDiagnostics},
-    misc::{write_comma_io, SmolStr},
+    diagnostic::{
+        DiagnosticKind,
+        SpriteDiagnostics,
+    },
+    misc::{
+        write_comma_io,
+        SmolStr,
+    },
+    vfs::VFS,
 };
 
 const STAGE_NAME: &str = "Stage";
@@ -49,7 +73,7 @@ pub fn qualify_struct_var_name(field_name: &str, var_name: &str) -> SmolStr {
     format!("{}.{}", var_name, field_name).into()
 }
 
-impl<'a> S<'a> {
+impl S<'_> {
     pub fn is_name_list(&self, name: &Name) -> bool {
         self.sprite.lists.contains_key(name.basename())
             || self
@@ -280,7 +304,8 @@ where T: Write + Seek
         }
     }
 
-    fn assets(&mut self, input: &Path) -> io::Result<()> {
+    fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
+        let mut fs = fs.borrow_mut();
         let mut added = FxHashSet::default();
         for (path, hash) in &self.costumes {
             if added.contains(hash) {
@@ -290,7 +315,7 @@ where T: Write + Seek
             let (_, extension) = path.rsplit_once('.').unwrap();
             self.zip
                 .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = File::open(input.join(&**path));
+            let file = fs.read_file(&input.join(&**path));
             io::copy(&mut file?, &mut self.zip)?;
         }
         if self.srcpkg_hash.is_some() {
@@ -340,6 +365,7 @@ where T: Write + Seek
 
     pub fn project(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         project: &Project,
         config: &Config,
@@ -367,24 +393,26 @@ where T: Write + Seek
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
+            fs.clone(),
             input,
             STAGE_NAME,
             &project.stage,
             None,
             config,
             stage_diagnostics,
-            Some(broadcasts),
+            &broadcasts,
         )?;
         for (sprite_name, sprite) in &project.sprites {
             write!(self, r#","#)?;
             self.sprite(
+                fs.clone(),
                 input,
                 sprite_name,
                 sprite,
                 Some(&project.stage),
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
-                None,
+                &broadcasts,
             )?;
         }
         write!(self, "]")?; // targets
@@ -400,19 +428,20 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets(input)?;
+        self.assets(fs.clone(), input)?;
         Ok(())
     }
 
     pub fn sprite(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         name: &str,
         sprite: &Sprite,
         stage: Option<&Sprite>,
         config: &Config,
         d: D,
-        broadcasts: Option<FxHashSet<SmolStr>>,
+        broadcasts: &FxHashSet<SmolStr>,
     ) -> io::Result<()> {
         for proc in sprite.procs.values() {
             if !sprite.used_procs.contains(&proc.name) {
@@ -482,9 +511,9 @@ where T: Write + Seek
         }
         write!(self, r#","broadcasts":{{"#)?;
         let mut comma = false;
-        for broadcast in broadcasts.unwrap_or_default() {
+        for broadcast in broadcasts {
             write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:{}"#, json!(*broadcast), json!(*broadcast))?;
+            write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
         }
         write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;
@@ -495,7 +524,18 @@ where T: Write + Seek
             .filter(|proc| sprite.used_procs.contains(&proc.name))
         {
             for var in proc.locals.values() {
-                self.local_var_declaration(sprite, &proc.name, var, &mut comma, d)?;
+                self.local_var_declaration(
+                    S {
+                        sprite,
+                        stage,
+                        proc: None,
+                        func: None,
+                    },
+                    &proc.name,
+                    var,
+                    &mut comma,
+                    d,
+                )?;
             }
         }
         for func in sprite
@@ -504,17 +544,50 @@ where T: Write + Seek
             .filter(|func| sprite.used_funcs.contains(&func.name))
         {
             for var in func.locals.values() {
-                self.local_var_declaration(sprite, &func.name, var, &mut comma, d)?;
+                self.local_var_declaration(
+                    S {
+                        sprite,
+                        stage,
+                        proc: None,
+                        func: None,
+                    },
+                    &func.name,
+                    var,
+                    &mut comma,
+                    d,
+                )?;
             }
         }
         for var in sprite.vars.values().filter(|var| var.is_used) {
-            self.var_declaration(sprite, var, &mut comma, d)?;
+            self.var_declaration(
+                S {
+                    sprite,
+                    stage,
+                    proc: None,
+                    func: None,
+                },
+                var,
+                &mut comma,
+                d,
+            )?;
         }
         write!(self, "}}")?; // variables
         write!(self, r#","lists":{{"#)?;
         let mut comma = false;
         for list in sprite.lists.values().filter(|list| list.is_used) {
-            self.list_declaration(input, sprite, list, &mut comma, d)?;
+            self.list_declaration(
+                fs.clone(),
+                input,
+                S {
+                    stage,
+                    sprite,
+                    proc: None,
+                    func: None,
+                },
+                list,
+                &mut comma,
+                d,
+            )?;
         }
         write!(self, "}}")?; // lists
         write!(self, r#","blocks":{{"#)?;
@@ -575,11 +648,46 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(input, costume, d)?;
+            self.costume(fs.clone(), input, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
+        let mut comma = false;
+        for sound in &sprite.sounds {
+            write_comma_io(&mut self.zip, &mut comma)?;
+            self.sound(fs.clone(), input, sound, d)?;
+        }
         write!(self, "]")?; // sounds
+        if let Some((x_position, _)) = &sprite.x_position {
+            let x_position = x_position.to_string();
+            write!(self, r#","x":{}"#, json!(*x_position))?;
+        }
+        if let Some((y_position, _)) = &sprite.y_position {
+            let y_position = y_position.to_string();
+            write!(self, r#","y":{}"#, json!(*y_position))?;
+        }
+        if let Some((size, _)) = &sprite.size {
+            let size = size.to_string();
+            write!(self, r#","size":{}"#, json!(*size))?;
+        }
+        if let Some((direction, _)) = &sprite.direction {
+            let direction = direction.to_string();
+            write!(self, r#","direction":{}"#, json!(*direction))?;
+        }
+        if let Some((volume, _)) = &sprite.volume {
+            let volume = volume.to_string();
+            write!(self, r#","volume":{}"#, json!(*volume))?;
+        }
+        if let Some((layer_order, _)) = &sprite.layer_order {
+            let layer_order = layer_order.to_string();
+            write!(self, r#","layerOrder":{}"#, json!(*layer_order))?;
+        }
+        if !sprite.hidden {
+            write!(self, r#","visible":true"#)?;
+        } else {
+            write!(self, r#","visible":false"#)?;
+        }
+        write!(self, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
         write!(self, "}}")?; // sprite
         Ok(())
     }
@@ -587,33 +695,44 @@ where T: Write + Seek
     pub fn json_var_declaration(
         &mut self,
         var_name: &str,
+        default: &Option<(Value, Span)>,
         is_cloud: bool,
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
+        let default = match default {
+            Some((value, _)) => value.to_string(),
+            None => arcstr::literal!("0"),
+        };
         if is_cloud {
-            write!(self, "\"{}\":[\"\u{2601} {}\",0,true]", var_name, var_name)
+            write!(
+                self,
+                "\"{}\":[\"\u{2601} {}\",{},true]",
+                var_name,
+                var_name,
+                json!(*default)
+            )
         } else {
-            write!(self, "\"{}\":[\"{}\",0]", var_name, var_name)
+            write!(
+                self,
+                "\"{}\":[\"{}\",{}]",
+                var_name,
+                var_name,
+                json!(*default)
+            )
         }
     }
 
-    pub fn var_declaration(
-        &mut self,
-        sprite: &Sprite,
-        var: &Var,
-        comma: &mut bool,
-        d: D,
-    ) -> io::Result<()> {
+    pub fn var_declaration(&mut self, s: S, var: &Var, comma: &mut bool, d: D) -> io::Result<()> {
         match &var.type_ {
             Type::Value => {
-                self.json_var_declaration(&var.name, var.is_cloud, comma)?;
+                self.json_var_declaration(&var.name, &var.default, var.is_cloud, comma)?;
             }
             Type::Struct {
                 name: type_name,
                 span: type_span,
             } => {
-                let Some(struct_) = sprite.structs.get(type_name) else {
+                let Some(struct_) = s.get_struct(type_name) else {
                     d.report(
                         DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                         type_span,
@@ -622,7 +741,7 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
-                    self.json_var_declaration(&qualified_var_name, false, comma)?;
+                    self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
                 }
             }
         }
@@ -631,7 +750,7 @@ where T: Write + Seek
 
     pub fn local_var_declaration(
         &mut self,
-        sprite: &Sprite,
+        s: S,
         proc_name: &str,
         var: &Var,
         comma: &mut bool,
@@ -640,13 +759,13 @@ where T: Write + Seek
         match &var.type_ {
             Type::Value => {
                 let qualified_var_name = qualify_local_var_name(proc_name, &var.name);
-                self.json_var_declaration(&qualified_var_name, false, comma)?;
+                self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
             }
             Type::Struct {
                 name: type_name,
                 span: type_span,
             } => {
-                let Some(struct_) = sprite.structs.get(type_name) else {
+                let Some(struct_) = s.get_struct(type_name) else {
                     d.report(
                         DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                         type_span,
@@ -658,7 +777,7 @@ where T: Write + Seek
                         proc_name,
                         &qualify_struct_var_name(&field.name, &var.name),
                     );
-                    self.json_var_declaration(&qualified_var_name, false, comma)?;
+                    self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
                 }
             }
         }
@@ -667,8 +786,9 @@ where T: Write + Seek
 
     pub fn list_declaration(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
-        sprite: &Sprite,
+        s: S,
         list: &List,
         comma: &mut bool,
         d: D,
@@ -676,15 +796,25 @@ where T: Write + Seek
         let data = list
             .cmd()
             .and_then(|cmd| {
-                cmd_to_list(cmd, input)
-                    .map_err(|err| d.diagnostics.push(err))
+                cmd_to_list(fs.clone(), cmd, input)
+                    .map_err(|(io_error, stderr)| {
+                        if let Some(io_error) = io_error {
+                            d.report(
+                                DiagnosticKind::IOError(io_error.to_string().into()),
+                                &list.span,
+                            );
+                        }
+                        if let Some(stderr) = stderr {
+                            d.report(DiagnosticKind::CommandFailed { stderr }, &list.span);
+                        }
+                    })
                     .ok()
             })
             .or_else(|| {
                 list.array().map(|array| {
                     array
                         .iter()
-                        .map(|(value, _)| value.to_string())
+                        .map(|(value, _)| String::from(value.to_string().as_str()))
                         .collect::<Vec<_>>()
                 })
             });
@@ -701,7 +831,7 @@ where T: Write + Seek
                 name: type_name,
                 span: type_span,
             } => {
-                let Some(struct_) = sprite.structs.get(type_name) else {
+                let Some(struct_) = s.get_struct(type_name) else {
                     d.report(
                         DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                         type_span,
@@ -735,7 +865,13 @@ where T: Write + Seek
         Ok(())
     }
 
-    pub fn costume(&mut self, input: &Path, costume: &Costume, d: D) -> io::Result<()> {
+    pub fn costume(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
+        costume: &Costume,
+        d: D,
+    ) -> io::Result<()> {
         let path = input.join(&*costume.path);
         let hash = self
             .costumes
@@ -743,14 +879,17 @@ where T: Write + Seek
             .cloned()
             .map(Ok::<_, io::Error>)
             .unwrap_or_else(|| {
-                if !path.is_file() {
-                    d.report(
-                        DiagnosticKind::FileNotFound(costume.path.clone()),
-                        &costume.span,
-                    );
-                    return Ok(Default::default());
-                }
-                let mut file = File::open(&path)?;
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
+                    Ok(file) => file,
+                    Err(error) => {
+                        d.report(
+                            DiagnosticKind::IOError(error.to_string().into()),
+                            &costume.span,
+                        );
+                        return Ok(Default::default());
+                    }
+                };
                 let mut hasher = Md5::new();
                 io::copy(&mut file, &mut hasher)?;
                 let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
@@ -762,6 +901,53 @@ where T: Write + Seek
     }
 
     pub fn costume_entry(&mut self, name: &str, hash: &str, extension: &str) -> io::Result<()> {
+        write!(self, "{{")?;
+        write!(self, r#""name":{}"#, json!(name))?;
+        write!(self, r#","assetId":"{hash}""#)?;
+        if extension == "png" || extension == "bmp" {
+            write!(self, r#","bitmapResolution":1"#)?;
+        }
+        write!(self, r#","dataFormat":"{extension}""#)?;
+        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
+        write!(self, "}}") // costume
+    }
+
+    pub fn sound(
+        &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
+        sound: &Sound,
+        d: D,
+    ) -> io::Result<()> {
+        let path = input.join(&*sound.path);
+        let hash = self
+            .costumes
+            .get(&sound.path)
+            .cloned()
+            .map(Ok::<_, io::Error>)
+            .unwrap_or_else(|| {
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
+                    Ok(file) => file,
+                    Err(error) => {
+                        d.report(
+                            DiagnosticKind::IOError(error.to_string().into()),
+                            &sound.span,
+                        );
+                        return Ok(Default::default());
+                    }
+                };
+                let mut hasher = Md5::new();
+                io::copy(&mut file, &mut hasher)?;
+                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
+                self.costumes.insert(sound.path.clone(), hash.clone());
+                Ok(hash)
+            })?;
+        let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
+        self.sound_entry(&sound.name, &hash, extension)
+    }
+
+    pub fn sound_entry(&mut self, name: &str, hash: &str, extension: &str) -> io::Result<()> {
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(name))?;
         write!(self, r#","assetId":"{hash}""#)?;
@@ -801,7 +987,7 @@ where T: Write + Seek
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         d.report(
                             DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                             type_span,
@@ -838,7 +1024,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp)
+            Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp, false)
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, definition, next_id, Some(this_id))
@@ -875,7 +1061,7 @@ where T: Write + Seek
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         d.report(
                             DiagnosticKind::UnrecognizedStruct(type_name.clone()),
                             type_span,
@@ -912,7 +1098,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::prototype(func.name.clone(), &qualified_args, true)
+            Mutation::prototype(func.name.clone(), &qualified_args, true, false)
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, definition, next_id, Some(this_id))
@@ -954,7 +1140,7 @@ where T: Write + Seek
             if is_last || stmt.is_terminator() {
                 self.stmt(s, d, stmt, this_id, None, parent_id)?;
                 if !is_last {
-                    d.report(DiagnosticKind::FollowedByUnreachableCode, stmt.span());
+                    d.report(DiagnosticKind::FollowedByUnreachableCode, &stmt.span());
                 }
                 break;
             }
@@ -975,6 +1161,9 @@ where T: Write + Seek
         next_id: Option<NodeID>,
         parent_id: Option<NodeID>,
     ) -> io::Result<()> {
+        d.debug_info
+            .blocks
+            .insert(this_id.to_string(), stmt.span().clone());
         self.begin_node(
             Node::new(stmt.opcode(s), this_id)
                 .some_next_id(next_id)
@@ -1010,9 +1199,24 @@ where T: Write + Seek
             Stmt::SetListIndex { name, index, value } => {
                 self.set_list_index(s, d, this_id, name, index, value)
             }
-            Stmt::Block { block, span, args } => self.block(s, d, this_id, block, span, args),
-            Stmt::ProcCall { name, span, args } => self.proc_call(s, d, this_id, name, span, args),
-            Stmt::FuncCall { name, span, args } => self.func_call(s, d, this_id, name, span, args),
+            Stmt::Block {
+                block,
+                span,
+                args,
+                kwargs: _,
+            } => self.block(s, d, this_id, block, span, args),
+            Stmt::ProcCall {
+                name,
+                span,
+                args,
+                kwargs: _,
+            } => self.proc_call(s, d, this_id, name, span, args),
+            Stmt::FuncCall {
+                name,
+                span,
+                args,
+                kwargs: _,
+            } => self.func_call(s, d, this_id, name, span, args),
             Stmt::Return { .. } => panic!(),
         }
     }
@@ -1025,6 +1229,9 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
     ) -> io::Result<()> {
+        d.debug_info
+            .blocks
+            .insert(this_id.to_string(), expr.span().clone());
         match expr {
             Expr::Value { .. } => Ok(()),
             Expr::Name { .. } => Ok(()),
@@ -1032,13 +1239,12 @@ where T: Write + Seek
             Expr::Repr { repr, span, args } => {
                 self.repr(s, d, this_id, parent_id, repr, span, args)
             }
-            Expr::FuncCall { name, .. } => {
-                unreachable!("attempted to codegen {name:#?}")
+            Expr::FuncCall { name, span, .. } => {
+                d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
+                Ok(())
             }
-            Expr::UnOp { op, span, opr } => self.un_op(s, d, this_id, parent_id, op, span, opr),
-            Expr::BinOp { op, span, lhs, rhs } => {
-                self.bin_op(s, d, this_id, parent_id, op, span, lhs, rhs)
-            }
+            Expr::UnOp { op, opr, .. } => self.un_op(s, d, this_id, parent_id, op, opr),
+            Expr::BinOp { op, lhs, rhs, .. } => self.bin_op(s, d, this_id, parent_id, op, lhs, rhs),
             Expr::StructLiteral { name, span, .. } => {
                 d.report(
                     DiagnosticKind::TypeMismatch {

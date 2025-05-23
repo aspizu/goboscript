@@ -1,18 +1,29 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use logos::Span;
 
 use super::{
     node_id::NodeID,
-    sb3::{Sb3, D, S},
+    sb3::{
+        Sb3,
+        D,
+        S,
+    },
 };
-use crate::{ast::Expr, misc::SmolStr};
+use crate::{
+    ast::Expr,
+    misc::SmolStr,
+};
 
 impl<T> Sb3<T>
 where T: Write + Seek
 {
     pub fn on(&mut self, event: &SmolStr) -> io::Result<()> {
-        self.single_field("BROADCAST_OPTION", event)?;
+        self.single_field_id("BROADCAST_OPTION", event)?;
         self.end_obj() // node
     }
 
@@ -50,7 +61,7 @@ where T: Write + Seek
 
     pub fn on_loudness_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, this_id)?;
+        self.input(s, d, "VALUE", value, this_id, false)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "LOUDNESS")?;
         self.end_obj()?; // node
@@ -59,7 +70,7 @@ where T: Write + Seek
 
     pub fn on_timer_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, this_id)?;
+        self.input(s, d, "VALUE", value, this_id, false)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "TIMER")?;
         self.end_obj()?; // node

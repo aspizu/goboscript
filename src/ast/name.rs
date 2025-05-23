@@ -1,8 +1,12 @@
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::misc::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Name {
     Name {
         name: SmolStr,

@@ -1,6 +1,19 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::PathBuf,
+};
 
-pub enum FmtError {}
+pub enum FmtError {
+    AnyhowError(anyhow::Error),
+}
+
+impl<T> From<T> for FmtError
+where T: Into<anyhow::Error>
+{
+    fn from(value: T) -> Self {
+        Self::AnyhowError(value.into())
+    }
+}
 
 pub fn format_file(path: PathBuf) -> Result<(), FmtError> {
     let mut src = fs::read(&path).unwrap();

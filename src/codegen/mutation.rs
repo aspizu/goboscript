@@ -1,42 +1,65 @@
-use std::fmt::{self, Display};
+use std::fmt::{
+    self,
+    Display,
+};
 
 use super::node_id::NodeID;
-use crate::misc::{write_comma_fmt, SmolStr};
+use crate::misc::{
+    write_comma_fmt,
+    SmolStr,
+};
 
 pub struct Mutation<'a> {
     name: SmolStr,
     args: &'a Vec<(SmolStr, NodeID)>,
     warp: bool,
     is_call: bool,
+    compact: bool,
 }
 
 impl<'a> Mutation<'a> {
-    pub fn prototype(name: SmolStr, args: &'a Vec<(SmolStr, NodeID)>, warp: bool) -> Self {
+    pub fn prototype(
+        name: SmolStr,
+        args: &'a Vec<(SmolStr, NodeID)>,
+        warp: bool,
+        compact: bool,
+    ) -> Self {
         Self {
             name,
             args,
             warp,
             is_call: false,
+            compact,
         }
     }
 
-    pub fn call(name: SmolStr, args: &'a Vec<(SmolStr, NodeID)>, warp: bool) -> Self {
+    pub fn call(
+        name: SmolStr,
+        args: &'a Vec<(SmolStr, NodeID)>,
+        warp: bool,
+        compact: bool,
+    ) -> Self {
         Self {
             name,
             args,
             warp,
             is_call: true,
+            compact,
         }
     }
 }
 
-impl<'a> Display for Mutation<'a> {
+impl Display for Mutation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, r#","mutation":{{"tagName":"mutation","children":[]"#)?;
         write!(f, r#","warp":"{}""#, self.warp)?;
         write!(f, r#","proccode":"{}"#, self.name)?;
-        for _ in 0..self.args.len() {
-            write!(f, " %s")?;
+        for (arg_name, _) in self.args {
+            if self.compact {
+                write!(f, " %s")?;
+            } else {
+                write!(f, " {arg_name}: %s")?;
+            }
         }
         write!(f, "\"")?;
         write!(f, r#","argumentids":"["#)?;

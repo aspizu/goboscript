@@ -1,18 +1,39 @@
-use std::io::{self, Seek, Write};
+use std::io::{
+    self,
+    Seek,
+    Write,
+};
 
 use logos::Span;
 
 use super::{
+    input::{
+        coerce_condition,
+        is_expr_boolean,
+    },
     mutation::Mutation,
     node::Node,
     node_id::NodeID,
-    sb3::{qualify_struct_var_name, QualifiedName, Sb3, D, S},
+    sb3::{
+        qualify_struct_var_name,
+        QualifiedName,
+        Sb3,
+        D,
+        S,
+    },
 };
 use crate::{
     ast::*,
-    blocks::{BinOp, Repr, UnOp},
+    blocks::{
+        BinOp,
+        Repr,
+        UnOp,
+    },
     diagnostic::DiagnosticKind,
-    misc::{write_comma_io, SmolStr},
+    misc::{
+        write_comma_io,
+        SmolStr,
+    },
 };
 
 impl<T> Sb3<T>
@@ -34,6 +55,15 @@ where T: Write + Seek
             || s.func
                 .is_some_and(|func| func.args.iter().any(|arg| &arg.name == basename)))
         {
+            if basename == "tw_is_compiled" {
+                return self.arg_impl(this_id, parent_id, "is compiled?", true);
+            }
+            if basename == "tw_is_turbowarp" {
+                return self.arg_impl(this_id, parent_id, "is TurboWarp?", true);
+            }
+            if basename == "tw_is_forkphorus" {
+                return self.arg_impl(this_id, parent_id, "is forkphorus?", true);
+            }
             d.report(
                 DiagnosticKind::UnrecognizedArgument(basename.clone()),
                 &name.span(),
@@ -45,10 +75,29 @@ where T: Write + Seek
             Some(fieldname) => qualify_struct_var_name(fieldname, basename),
             None => basename.clone(),
         };
+
+        self.arg_impl(this_id, parent_id, &qualified_name, false)
+    }
+
+    fn arg_impl(
+        &mut self,
+        this_id: NodeID,
+        parent_id: NodeID,
+        qualified_name: &str,
+        is_boolean: bool,
+    ) -> io::Result<()> {
         self.begin_node(
-            Node::new("argument_reporter_string_number", this_id).parent_id(parent_id),
+            Node::new(
+                if is_boolean {
+                    "argument_reporter_boolean"
+                } else {
+                    "argument_reporter_string_number"
+                },
+                this_id,
+            )
+            .parent_id(parent_id),
         )?;
-        self.single_field("VALUE", &qualified_name)?;
+        self.single_field("VALUE", qualified_name)?;
         self.end_obj() // node
     }
 
@@ -60,15 +109,12 @@ where T: Write + Seek
         parent_id: NodeID,
         repr: &Repr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("repr's do not support keyword args yet.")
-        }
         if args.len() != repr.args().len() {
             d.report(
                 DiagnosticKind::ReprArgsCountMismatch {
-                    repr: repr.clone(),
+                    repr: *repr,
                     given: args.len(),
                 },
                 span,
@@ -81,7 +127,7 @@ where T: Write + Seek
         let mut menu_value = None;
         let mut menu_is_default = menu_id.is_some();
         self.begin_inputs()?;
-        for ((&arg_name, (_, arg_value)), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
+        for ((&arg_name, arg_value), &arg_id) in repr.args().iter().zip(args).zip(&arg_ids) {
             if repr.menu().is_some_and(|menu| menu.input == arg_name) {
                 if let Expr::Value { value, span: _ } = arg_value {
                     menu_value = Some(value.clone());
@@ -91,7 +137,7 @@ where T: Write + Seek
                     self.input_with_shadow(s, d, arg_name, arg_value, arg_id, menu_id.unwrap())?;
                 }
             } else {
-                self.input(s, d, arg_name, arg_value, arg_id)?;
+                self.input(s, d, arg_name, arg_value, arg_id, false)?;
             }
         }
         if menu_is_default {
@@ -108,7 +154,7 @@ where T: Write + Seek
             write!(self, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
-        for ((_, arg), arg_id) in args.iter().zip(arg_ids) {
+        for (arg, arg_id) in args.iter().zip(arg_ids) {
             self.expr(s, d, arg, arg_id, this_id)?;
         }
         if let Some(menu) = repr.menu() {
@@ -134,9 +180,11 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
         op: &UnOp,
-        _span: &Span,
         opr: &Expr,
     ) -> io::Result<()> {
+        if matches!(op, UnOp::Not) && !is_expr_boolean(opr) {
+            return self.un_op(s, d, this_id, parent_id, op, &coerce_condition(opr));
+        }
         if matches!(op, UnOp::Length) {
             if let Expr::Name(Name::Name { name, .. }) = opr {
                 if s.sprite.lists.contains_key(name)
@@ -149,7 +197,7 @@ where T: Write + Seek
         let opr_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, op.input(), opr, opr_id)?;
+        self.input(s, d, op.input(), opr, opr_id, matches!(op, UnOp::Not))?;
         self.end_obj()?; // inputs
         if let Some(fields) = op.fields() {
             write!(self, r#","fields":{fields}"#)?;
@@ -165,10 +213,20 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
         op: &BinOp,
-        _span: &Span,
         lhs: &Expr,
         rhs: &Expr,
     ) -> io::Result<()> {
+        if matches!(op, BinOp::And | BinOp::Or) && !(is_expr_boolean(lhs) && is_expr_boolean(rhs)) {
+            return self.bin_op(
+                s,
+                d,
+                this_id,
+                parent_id,
+                op,
+                &coerce_condition(lhs),
+                &coerce_condition(rhs),
+            );
+        }
         if let BinOp::Of = op {
             if let Expr::Name(name) = lhs {
                 if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(d, name) {
@@ -187,8 +245,9 @@ where T: Write + Seek
         let rhs_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, op.lhs(), lhs, lhs_id)?;
-        self.input(s, d, op.rhs(), rhs, rhs_id)?;
+        let no_empty_shadow = matches!(op, BinOp::And | BinOp::Or);
+        self.input(s, d, op.lhs(), lhs, lhs_id, no_empty_shadow)?;
+        self.input(s, d, op.rhs(), rhs, rhs_id, no_empty_shadow)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         self.expr(s, d, lhs, lhs_id, this_id)?;
@@ -207,7 +266,7 @@ where T: Write + Seek
         let index_id = self.id.new_id();
         self.begin_node(Node::new("data_itemoflist", this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", index, index_id)?;
+        self.input(s, d, "INDEX", index, index_id, false)?;
         self.end_obj()?; // inputs
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
@@ -226,7 +285,7 @@ where T: Write + Seek
         let index_id = self.id.new_id();
         self.begin_node(Node::new("data_itemnumoflist", this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, "ITEM", item, index_id)?;
+        self.input(s, d, "ITEM", item, index_id, false)?;
         self.end_obj()?; // inputs
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
@@ -259,15 +318,12 @@ where T: Write + Seek
         this_id: NodeID,
         name: &SmolStr,
         span: &Span,
-        args: &[(Option<(SmolStr, Span)>, Expr)],
+        args: &[Expr],
     ) -> io::Result<()> {
         let Some(func) = s.sprite.funcs.get(name) else {
             d.report(DiagnosticKind::UnrecognizedFunction(name.clone()), span);
             return Ok(());
         };
-        if args.iter().any(|(keyword, _)| keyword.is_some()) {
-            panic!("func's do not support keyword args yet.")
-        }
         if func.args.len() != args.len() {
             d.report(
                 DiagnosticKind::FuncArgsCountMismatch {
@@ -280,22 +336,22 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = vec![];
         let mut qualified_arg_values: Vec<Expr> = vec![];
         self.begin_inputs()?;
-        for (arg, (_, kwarg)) in func.args.iter().zip(args) {
+        for (arg, arg_value) in func.args.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, kwarg, arg_id)?;
+                    self.input(s, d, &arg.name, arg_value, arg_id, false)?;
                     qualified_args.push((arg.name.clone(), arg_id));
-                    qualified_arg_values.push(kwarg.clone());
+                    qualified_arg_values.push(arg_value.clone());
                 }
                 Type::Struct {
                     name: type_name,
                     span: type_span,
                 } => {
-                    let Some(struct_) = s.sprite.structs.get(type_name) else {
+                    let Some(struct_) = s.get_struct(type_name) else {
                         continue;
                     };
-                    let arg_value = kwarg;
+                    let arg_value = arg_value;
                     let struct_literal_fields = match arg_value {
                         Expr::StructLiteral {
                             name: struct_literal_name,
@@ -342,6 +398,7 @@ where T: Write + Seek
                             &qualified_arg_name,
                             &struct_literal_field.value,
                             arg_id,
+                            false,
                         )?;
                         qualified_args.push((qualified_arg_name, arg_id));
                         qualified_arg_values.push(struct_literal_field.value.as_ref().clone());
@@ -353,7 +410,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::call(func.name.clone(), &qualified_args, true)
+            Mutation::call(func.name.clone(), &qualified_args, true, false)
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {
@@ -365,18 +422,19 @@ where T: Write + Seek
     pub fn expr_dot(
         &mut self,
         s: S,
-        d: D,
-        this_id: NodeID,
-        parent_id: NodeID,
+        _d: D,
+        _this_id: NodeID,
+        _parent_id: NodeID,
         lhs: &Expr,
         rhs: &SmolStr,
-        rhs_span: Span,
+        _rhs_span: Span,
     ) -> io::Result<()> {
         if let Expr::Name(name) = lhs {
-            if let Some(enum_) = s.get_enum(name.basename()) {
+            if let Some(_enum_) = s.get_enum(name.basename()) {
                 return Ok(());
             }
         }
-        panic!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}")
+        eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
+        Ok(())
     }
 }

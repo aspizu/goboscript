@@ -1,7 +1,12 @@
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
 pub struct Config {
+    #[serde(default)]
+    pub std: Option<String>,
     #[serde(default)]
     pub frame_rate: Option<u64>,
     #[serde(default)]

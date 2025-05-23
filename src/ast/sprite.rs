@@ -1,11 +1,20 @@
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::{
+    FxHashMap,
+    FxHashSet,
+};
+use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::*;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Sprite {
     pub costumes: Vec<Costume>,
+    pub sounds: Vec<Sound>,
     pub procs: FxHashMap<SmolStr, Proc>,
     pub proc_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub proc_references: FxHashMap<SmolStr, References>,
@@ -21,4 +30,12 @@ pub struct Sprite {
     pub events: Vec<Event>,
     pub used_procs: FxHashSet<SmolStr>,
     pub used_funcs: FxHashSet<SmolStr>,
+    pub volume: Option<(Value, Span)>,
+    pub layer_order: Option<(Value, Span)>,
+    pub x_position: Option<(Value, Span)>,
+    pub y_position: Option<(Value, Span)>,
+    pub size: Option<(Value, Span)>,
+    pub direction: Option<(Value, Span)>,
+    pub rotation_style: RotationStyle,
+    pub hidden: bool,
 }

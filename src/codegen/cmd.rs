@@ -1,49 +1,51 @@
 use std::{
+    cell::RefCell,
     env::consts::OS,
-    fs::File,
-    io::{self, BufRead, BufReader, Write},
+    io::{
+        self,
+        BufRead,
+        BufReader,
+        Write,
+    },
     path::Path,
-    process::{Command, Stdio},
-    str,
+    process::{
+        Command,
+        Stdio,
+    },
+    rc::Rc,
 };
 
 use crate::{
     ast::Cmd,
-    diagnostic::{Diagnostic, DiagnosticKind},
+    vfs::VFS,
 };
 
-pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
+pub fn cmd_to_list(
+    fs: Rc<RefCell<dyn VFS>>,
+    cmd: &Cmd,
+    input: &Path,
+) -> Result<Vec<String>, (Option<io::Error>, Option<Vec<u8>>)> {
     if cmd
         .program
         .as_ref()
         .is_some_and(|program| &*program.name == "file")
     {
-        let Ok(file) = File::open(input.join(&*cmd.cmd)) else {
-            return Err(Diagnostic {
-                kind: DiagnosticKind::FileNotFound(cmd.cmd.clone()),
-                span: cmd.span.clone(),
-            });
-        };
+        let mut fs = fs.borrow_mut();
+        let file = fs
+            .read_file(&input.join(&*cmd.cmd))
+            .map_err(|err| (Some(err), None))?;
         let reader = BufReader::new(file);
         let lines: Vec<String> = reader.lines().map_while(Result::ok).collect();
         return Ok(lines);
     }
     let mut child = if let Some(program) = &cmd.program {
-        let command = Command::new(&*program.name)
+        Command::new(&*program.name)
             .current_dir(input)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .spawn();
-        if let Err(err) = &command {
-            if err.kind() == io::ErrorKind::NotFound {
-                return Err(Diagnostic {
-                    kind: DiagnosticKind::FileNotFound(program.name.clone()),
-                    span: program.span.clone(),
-                });
-            };
-        }
-        command.unwrap()
+            .spawn()
+            .map_err(|err| (Some(err), None))?
     } else if OS == "windows" {
         unimplemented!()
     } else {
@@ -68,11 +70,6 @@ pub fn cmd_to_list(cmd: &Cmd, input: &Path) -> Result<Vec<String>, Diagnostic> {
         }
         Ok(lines)
     } else {
-        Err(Diagnostic {
-            kind: DiagnosticKind::CommandFailed {
-                stderr: output.stderr,
-            },
-            span: cmd.span.clone(),
-        })
+        Err((None, Some(output.stderr)))
     }
 }

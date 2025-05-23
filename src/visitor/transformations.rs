@@ -1,9 +1,19 @@
+use fxhash::FxHashMap;
 use logos::Span;
 
-use super::pass1::S;
+use super::pass2::S;
 use crate::{
-    ast::{Expr, Name, StructLiteralField, Value},
-    blocks::{BinOp, Repr, UnOp},
+    ast::{
+        Arg,
+        Expr,
+        Name,
+        StructLiteralField,
+        Value,
+    },
+    blocks::{
+        BinOp,
+        UnOp,
+    },
     codegen::sb3::D,
     diagnostic::DiagnosticKind,
     misc::SmolStr,
@@ -166,9 +176,7 @@ pub fn bin_op(expr: &Expr) -> Option<Expr> {
     else {
         return None;
     };
-    lhs_value
-        .binop(*op, rhs_value)
-        .map(|value| value.to_expr(span.clone()))
+    Some(Value::bin_op(*op, lhs_value, rhs_value).to_expr(span.clone()))
 }
 
 pub fn un_op(expr: &Expr) -> Option<Expr> {
@@ -181,7 +189,7 @@ pub fn un_op(expr: &Expr) -> Option<Expr> {
     else {
         return None;
     };
-    opr_value.unop(*op).map(|value| value.to_expr(span.clone()))
+    Some(Value::un_op(*op, opr_value).to_expr(span.clone()))
 }
 
 pub fn minus(expr: &Expr) -> Option<Expr> {
@@ -195,7 +203,7 @@ pub fn minus(expr: &Expr) -> Option<Expr> {
     };
     Some(BinOp::Sub.to_expr(
         span.clone(),
-        Value::Int(0).to_expr(span.clone()),
+        Value::from(0.0).to_expr(span.clone()),
         opr.as_ref().clone(),
     ))
 }
@@ -264,39 +272,44 @@ pub fn floor_div(expr: &Expr) -> Option<Expr> {
     ))
 }
 
-pub fn coerce_condition(expr: &Expr) -> Option<Expr> {
-    if matches!(
-        expr,
-        Expr::UnOp { op: UnOp::Not, .. }
-            | Expr::BinOp {
-                op: BinOp::Eq
-                    | BinOp::Ne
-                    | BinOp::Lt
-                    | BinOp::Le
-                    | BinOp::Gt
-                    | BinOp::Ge
-                    | BinOp::And
-                    | BinOp::Or,
-                ..
-            }
-            | Expr::Repr {
-                repr: Repr::ColorIsTouchingColor
-                    | Repr::KeyPressed
-                    | Repr::MouseDown
-                    | Repr::Touching
-                    | Repr::TouchingColor
-                    | Repr::TouchingEdge
-                    | Repr::TouchingMousePointer,
-                ..
-            }
-    ) {
-        return None;
-    }
-    Some(BinOp::Eq.to_expr(
-        expr.span(),
-        expr.clone(),
-        Value::Int(1).to_expr(expr.span()),
-    ))
-}
+pub fn keyword_arguments(
+    signature: Option<&Vec<Arg>>,
+    args: &mut Vec<Expr>,
+    kwargs: &mut FxHashMap<SmolStr, (Span, Expr)>,
+    _d: D, // currently not used in this implementation
+) {
+    if let Some(sig) = signature {
+        // Build a new vector of arguments in the order given by the signature.
+        let mut new_args = Vec::with_capacity(sig.len());
+        let mut pos = 0;
 
-pub fn func_keyword_args(args: &mut [(Option<(SmolStr, Span)>, Expr)], s: S, d: D) {}
+        for param in sig {
+            if pos < args.len() {
+                // If there is both a positional and keyword argument, we prefer the positional one.
+                // Remove the keyword argument from the map.
+                kwargs.remove(&param.name);
+                // Use the next positional argument.
+                new_args.push(args[pos].clone());
+                pos += 1;
+            } else if let Some((_, kw_expr)) = kwargs.remove(&param.name) {
+                // No more positional args, but there is a matching keyword argument.
+                new_args.push(kw_expr);
+            } else if let Some((default, span)) = &param.default {
+                // Compute the default value if one is provided.
+                new_args.push(default.clone().to_expr(span.clone()));
+            }
+            // If no positional, keyword, or default value exists, then
+            // we simply do not insert anything (and no error is raised).
+        }
+
+        // Append any extra positional arguments that exceed the signature length.
+        while pos < args.len() {
+            new_args.push(args[pos].clone());
+            pos += 1;
+        }
+
+        // Replace the original args with the re-ordered version.
+        *args = new_args;
+    }
+    assert!(kwargs.is_empty(), "kwargs should be empty after processing");
+}

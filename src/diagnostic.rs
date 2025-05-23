@@ -1,4 +1,5 @@
 mod diagnostic_kind;
+pub mod keys;
 mod project_diagnostics;
 mod sprite_diagnostics;
 
@@ -6,11 +7,17 @@ pub use diagnostic_kind::*;
 use lalrpop_util::ParseError;
 use logos::Span;
 pub use project_diagnostics::*;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub use sprite_diagnostics::*;
+use tsify::Tsify;
 
 use crate::lexer::token::Token;
 
-#[derive(Debug)]
+#[derive(Debug, Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub span: Span,

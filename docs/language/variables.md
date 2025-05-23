@@ -2,6 +2,16 @@
 
 ## Declaration/Assignment
 
+There are two ways to declare a variable:
+
+### 1. Declare using a top-level `var` statement.
+
+```goboscript
+var variable_name = const_expr;
+```
+
+### 2. Declare by assigning a value to the variable.
+
 The first assignment to a variable is considered its declaration.
 
 ```goboscript

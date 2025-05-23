@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use clap_derive::{Parser, Subcommand};
+use clap_derive::{
+    Parser,
+    Subcommand,
+};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -24,6 +27,13 @@ pub enum Command {
         output: Option<PathBuf>,
     },
 
+    /// Run a goboscript file using the experimental interpreter.
+    #[command()]
+    Run {
+        #[arg(short, long)]
+        input: PathBuf,
+    },
+
     /// Create a new goboscript project with a blank backdrop, a main sprite with a
     /// blank costume.
     #[command()]
@@ -32,6 +42,10 @@ pub enum Command {
         /// is used. If this is a path to an existing directory, it must be empty.
         #[arg(short = 'n', long)]
         name: Option<PathBuf>,
+
+        /// Version of the standard library to use. Defaults to bleeding-edge.
+        #[arg(short = 's', long)]
+        std: Option<String>,
 
         /// (alias: --fps) Custom frame rate, used by TurboWarp.
         #[arg(short = 'f', long, alias = "fps")]

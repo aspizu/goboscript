@@ -1,30 +1,34 @@
-mod ast;
-mod blocks;
-mod codegen;
-mod config;
-mod diagnostic;
-mod fmt;
-mod frontend;
-mod lexer;
-mod misc;
-mod parser;
-mod preproc;
-mod visitor;
-use std::{process::ExitCode, time::Instant};
+use std::{
+    process::ExitCode,
+    time::Instant,
+};
 
-use colored::Colorize;
+use colored::{
+    Color,
+    Colorize,
+};
+use goboscript::frontend::frontend;
 
 fn main() -> ExitCode {
     pretty_env_logger::init();
     std::panic::set_hook(Box::new(|info| {
         eprintln!(
             "{info}\n{}\nopen an issue at {}",
-            "-9999 aura 💀".red().bold(),
+            "goboscript is cooked 💀".red().bold(),
             "https://github.com/aspizu/goboscript/issues".cyan()
         );
     }));
     let begin = Instant::now();
-    let result = frontend::frontend();
-    eprintln!("{} in {:?}", "Finished".green().bold(), begin.elapsed());
+    let result = frontend();
+    let color = if matches!(result, ExitCode::SUCCESS) {
+        Color::Green
+    } else {
+        Color::Red
+    };
+    eprintln!(
+        "{} in {:?}",
+        "Finished".color(color).bold(),
+        begin.elapsed()
+    );
     result
 }
