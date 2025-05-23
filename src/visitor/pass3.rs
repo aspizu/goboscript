@@ -1,15 +1,9 @@
-use fxhash::FxHashSet;
-
-use crate::{
-    ast::*,
-    misc::SmolStr,
-};
+use crate::ast::*;
 
 struct S<'a> {
     references: &'a mut References,
     proc: Option<&'a Proc>,
     func: Option<&'a Func>,
-    used_args: Option<&'a mut FxHashSet<SmolStr>>,
 }
 
 pub fn visit_project(project: &mut Project) {
@@ -23,28 +17,24 @@ fn visit_sprite(sprite: &mut Sprite) {
     for proc in sprite.procs.values_mut() {
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
         let proc_references = sprite.proc_references.get_mut(&proc.name).unwrap();
-        let used_args = sprite.proc_used_args.get_mut(&proc.name).unwrap();
         visit_stmts(
             proc_definition,
             &mut S {
                 references: proc_references,
                 proc: Some(proc),
                 func: None,
-                used_args: Some(used_args),
             },
         );
     }
     for func in sprite.funcs.values() {
         let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
         let func_references = sprite.func_references.get_mut(&func.name).unwrap();
-        let used_args = sprite.func_used_args.get_mut(&func.name).unwrap();
         visit_stmts(
             func_definition,
             &mut S {
                 references: func_references,
                 proc: None,
                 func: Some(func),
-                used_args: Some(used_args),
             },
         );
     }
@@ -55,7 +45,6 @@ fn visit_sprite(sprite: &mut Sprite) {
                 references: &mut event.references,
                 proc: None,
                 func: None,
-                used_args: None,
             },
         );
     }
@@ -189,13 +178,14 @@ fn visit_expr(expr: &Expr, s: &mut S) {
             lhs,
             rhs: _,
             rhs_span: _,
-        } => {
-            visit_expr(lhs, s);
-        }
+        } => visit_expr(lhs, s),
         Expr::Arg(name) => {
-            if let Some(used_args) = &mut s.used_args {
-                used_args.insert(name.basename().clone());
-            }
+            s.references.args.insert(NameReference {
+                name: name.basename().clone(),
+                field: name.fieldname().cloned(),
+                proc: s.proc.map(|p| p.name.clone()),
+                func: s.func.map(|f| f.name.clone()),
+            });
         }
         Expr::Repr {
             repr: _,

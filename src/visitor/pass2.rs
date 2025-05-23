@@ -22,6 +22,8 @@ use crate::{
 
 #[derive(Copy, Clone)]
 pub struct S<'a> {
+    pub func_args: &'a FxHashMap<SmolStr, Vec<Arg>>,
+    pub proc_args: &'a FxHashMap<SmolStr, Vec<Arg>>,
     pub args: Option<&'a Vec<Arg>>,
     pub local_vars: Option<&'a FxHashMap<SmolStr, Var>>,
     pub vars: &'a FxHashMap<SmolStr, Var>,
@@ -83,7 +85,9 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
         visit_stmts(
             proc_definition,
             S {
-                args: Some(&proc.args),
+                proc_args: &sprite.proc_args,
+                func_args: &sprite.func_args,
+                args: sprite.proc_args.get(&proc.name),
                 local_vars: Some(&sprite.proc_locals[&proc.name]),
                 vars: &sprite.vars,
                 lists: &sprite.lists,
@@ -105,7 +109,9 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
         visit_stmts(
             func_definition,
             S {
-                args: Some(&func.args),
+                proc_args: &sprite.proc_args,
+                func_args: &sprite.func_args,
+                args: sprite.func_args.get(&func.name),
                 local_vars: Some(&sprite.func_locals[&func.name]),
                 vars: &sprite.vars,
                 lists: &sprite.lists,
@@ -126,6 +132,8 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
         visit_stmts(
             &mut event.body,
             S {
+                proc_args: &sprite.proc_args,
+                func_args: &sprite.func_args,
                 args: None,
                 local_vars: None,
                 vars: &sprite.vars,
@@ -271,7 +279,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             args,
             kwargs,
         } => {
-            keyword_arguments(s.procs.get(name).map(|proc| &proc.args), args, kwargs, d);
+            keyword_arguments(s.proc_args.get(name), args, kwargs, d);
             for arg in args {
                 visit_expr(arg, s, d);
             }
@@ -285,7 +293,7 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             args,
             kwargs,
         } => {
-            keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
+            keyword_arguments(s.func_args.get(name), args, kwargs, d);
             for arg in args {
                 visit_expr(arg, s, d);
             }
@@ -338,7 +346,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             args,
             kwargs,
         } => {
-            keyword_arguments(s.funcs.get(name).map(|func| &func.args), args, kwargs, d);
+            keyword_arguments(s.func_args.get(name), args, kwargs, d);
             for arg in args {
                 visit_expr(arg, s, d);
             }

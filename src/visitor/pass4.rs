@@ -11,6 +11,8 @@ use crate::{
 struct Scope<'a> {
     used_procs: &'a mut FxHashSet<SmolStr>,
     used_funcs: &'a mut FxHashSet<SmolStr>,
+    proc_args: &'a mut FxHashMap<SmolStr, Vec<Arg>>,
+    func_args: &'a mut FxHashMap<SmolStr, Vec<Arg>>,
     vars: &'a mut FxHashMap<SmolStr, Var>,
     proc_locals: &'a mut FxHashMap<SmolStr, FxHashMap<SmolStr, Var>>,
     func_locals: &'a mut FxHashMap<SmolStr, FxHashMap<SmolStr, Var>>,
@@ -25,10 +27,28 @@ impl Scope<'_> {
     fn mark_struct_field(
         refr: &NameReference,
         structs: &mut FxHashMap<SmolStr, Struct>,
-        vars: &mut FxHashMap<SmolStr, Var>,
+        vars: &FxHashMap<SmolStr, Var>,
     ) {
         let Some(field) = &refr.field else { return };
         let Some((type_name, _)) = vars[&refr.name].type_.struct_() else {
+            return;
+        };
+        let Some(struct_) = structs.get_mut(type_name) else {
+            return;
+        };
+        let Some(f) = struct_.fields.iter_mut().find(|f| &f.name == field) else {
+            return;
+        };
+        f.is_used = true;
+    }
+
+    fn mark_arg_struct_field(
+        refr: &NameReference,
+        structs: &mut FxHashMap<SmolStr, Struct>,
+        args: &FxHashMap<SmolStr, Arg>,
+    ) {
+        let Some(field) = &refr.field else { return };
+        let Some((type_name, _)) = args[&refr.name].type_.struct_() else {
             return;
         };
         let Some(struct_) = structs.get_mut(type_name) else {
@@ -48,6 +68,8 @@ pub fn visit_project(project: &mut Project) {
             &mut Scope {
                 used_procs: &mut project.stage.used_procs,
                 used_funcs: &mut project.stage.used_funcs,
+                proc_args: &mut project.stage.proc_args,
+                func_args: &mut project.stage.func_args,
                 vars: &mut project.stage.vars,
                 proc_locals: &mut project.stage.proc_locals,
                 func_locals: &mut project.stage.func_locals,
@@ -72,6 +94,8 @@ pub fn visit_project(project: &mut Project) {
                 &mut Scope {
                     used_procs: &mut sprite.used_procs,
                     used_funcs: &mut sprite.used_funcs,
+                    proc_args: &mut sprite.proc_args,
+                    func_args: &mut sprite.func_args,
                     vars: &mut sprite.vars,
                     proc_locals: &mut sprite.proc_locals,
                     func_locals: &mut sprite.func_locals,
@@ -99,6 +123,26 @@ fn resolve_references(
     func_references: &FxHashMap<SmolStr, References>,
     references: &References,
 ) {
+    for refr in &references.args {
+        if let Some(arg) = refr
+            .proc
+            .as_ref()
+            .and_then(|p| scope.proc_args.get_mut(p))
+            .and_then(|a| a.iter_mut().find(|a| a.name == refr.name))
+        {
+            arg.is_used = true;
+            continue;
+        }
+        if let Some(arg) = refr.func.as_ref().and_then(|p| {
+            scope
+                .func_args
+                .get_mut(p)
+                .and_then(|a| a.iter_mut().find(|a| a.name == refr.name))
+        }) {
+            arg.is_used = true;
+            continue;
+        }
+    }
     for refr in &references.names {
         if let Some(var) = refr
             .proc

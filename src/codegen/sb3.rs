@@ -450,13 +450,8 @@ where T: Write + Seek
             if !sprite.used_procs.contains(&proc.name) {
                 d.report(DiagnosticKind::UnusedProc(proc.name.clone()), &proc.span);
             } else {
-                for arg in &proc.args {
-                    if !sprite
-                        .proc_used_args
-                        .get(&proc.name)
-                        .unwrap()
-                        .contains(&arg.name)
-                    {
+                for arg in &sprite.proc_args[&proc.name] {
+                    if !arg.is_used {
                         d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
                     }
                 }
@@ -466,13 +461,8 @@ where T: Write + Seek
             if !sprite.used_funcs.contains(&func.name) {
                 d.report(DiagnosticKind::UnusedFunc(func.name.clone()), &func.span);
             } else {
-                for arg in &func.args {
-                    if !sprite
-                        .func_used_args
-                        .get(&func.name)
-                        .unwrap()
-                        .contains(&arg.name)
-                    {
+                for arg in &sprite.func_args[&func.name] {
+                    if !arg.is_used {
                         d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
                     }
                 }
@@ -989,7 +979,7 @@ where T: Write + Seek
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
-        for arg in &proc.args {
+        for arg in &s.sprite.proc_args[&proc.name] {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
@@ -1063,7 +1053,7 @@ where T: Write + Seek
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
-        for arg in &func.args {
+        for arg in &s.sprite.func_args[&func.name] {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
@@ -1235,7 +1225,19 @@ where T: Write + Seek
                 span,
                 args,
                 kwargs: _,
-            } => self.func_call(s, d, this_id, name, span, args),
+            } => self.func_call(
+                s,
+                d,
+                this_id,
+                name,
+                s.sprite
+                    .func_args
+                    .get(name)
+                    .map(|a| a.as_slice())
+                    .unwrap_or_default(),
+                span,
+                args,
+            ),
             Stmt::Return { .. } => panic!(),
         }
     }

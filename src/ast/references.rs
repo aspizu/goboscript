@@ -12,6 +12,7 @@ pub struct References {
     pub funcs: FxHashSet<SmolStr>,
     pub names: FxHashSet<NameReference>,
     pub structs: FxHashSet<SmolStr>,
+    pub args: FxHashSet<NameReference>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Eq, PartialEq, Hash)]

@@ -47,16 +47,10 @@ Declr: () = {
         sprite.layer_order = Some(layer_order);
     },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
-        sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, w.is_none()));
-        sprite.proc_definitions.insert(n.clone(), b);
-        sprite.proc_references.insert(n.clone(), Default::default());
-        sprite.proc_used_args.insert(n.clone(), Default::default());
+        sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b);
     },
     FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
-        sprite.funcs.insert(n.clone(), Func::new(n.clone(), l..r, t, a));
-        sprite.func_definitions.insert(n.clone(), b);
-        sprite.func_references.insert(n.clone(), Default::default());
-        sprite.func_used_args.insert(n.clone(), Default::default());
+        sprite.add_func(Func::new(n.clone(), l..r, t), a, b);
     },
     <l:@L> ON <r:@R> <event:STR> <b:Stmts> => sprite.events.push(EventKind::On { event }.to_event(l..r, b)),
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),

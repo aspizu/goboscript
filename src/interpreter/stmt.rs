@@ -143,20 +143,21 @@ impl Interpreter {
         span: &Span,
         args: &[Expr],
     ) -> ExceptionResult<()> {
-        let Some(proc) = sprite.procs.get(name) else {
+        let Some(_proc) = sprite.procs.get(name) else {
             if !foreign_proc(self, name, span, args)? {
                 throw!(format!("Procedure {} not found", name), span.clone());
             }
             return Ok(());
         };
-        if proc.args.len() != args.len() {
+        let signature = &sprite.proc_args[name];
+        if signature.len() != args.len() {
             throw!(
-                format!("Expected {} arguments, got {}", proc.args.len(), args.len()),
+                format!("Expected {} arguments, got {}", signature.len(), args.len()),
                 span.clone()
             );
         }
         let mut new_args = FxHashMap::default();
-        for (arg, arg_expr) in proc.args.iter().zip(args) {
+        for (arg, arg_expr) in signature.iter().zip(args) {
             let arg_value = self.run_expr(arg_expr)?;
             new_args.insert(arg.name.clone(), arg_value);
         }
@@ -175,15 +176,15 @@ impl Interpreter {
         span: &Span,
         args: &[Expr],
     ) -> ExceptionResult<()> {
-        let func = sprite.funcs.get(name).unwrap();
-        if func.args.len() != args.len() {
+        let signature = &sprite.func_args[name];
+        if signature.len() != args.len() {
             throw!(
-                format!("Expected {} arguments, got {}", func.args.len(), args.len()),
+                format!("Expected {} arguments, got {}", signature.len(), args.len()),
                 span.clone()
             );
         }
         let mut new_args = FxHashMap::default();
-        for (arg, arg_expr) in func.args.iter().zip(args) {
+        for (arg, arg_expr) in signature.iter().zip(args) {
             let arg_value = self.run_expr(arg_expr)?;
             new_args.insert(arg.name.clone(), arg_value);
         }

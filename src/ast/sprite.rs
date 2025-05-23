@@ -18,11 +18,11 @@ pub struct Sprite {
     pub procs: FxHashMap<SmolStr, Proc>,
     pub proc_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub proc_references: FxHashMap<SmolStr, References>,
-    pub proc_used_args: FxHashMap<SmolStr, FxHashSet<SmolStr>>,
+    pub proc_args: FxHashMap<SmolStr, Vec<Arg>>,
     pub funcs: FxHashMap<SmolStr, Func>,
     pub func_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub func_references: FxHashMap<SmolStr, References>,
-    pub func_used_args: FxHashMap<SmolStr, FxHashSet<SmolStr>>,
+    pub func_args: FxHashMap<SmolStr, Vec<Arg>>,
     pub enums: FxHashMap<SmolStr, Enum>,
     pub structs: FxHashMap<SmolStr, Struct>,
     pub vars: FxHashMap<SmolStr, Var>,
@@ -40,4 +40,22 @@ pub struct Sprite {
     pub direction: Option<(Value, Span)>,
     pub rotation_style: RotationStyle,
     pub hidden: bool,
+}
+
+impl Sprite {
+    pub fn add_proc(&mut self, proc: Proc, args: Vec<Arg>, stmts: Vec<Stmt>) {
+        let name = proc.name.clone();
+        self.procs.insert(name.clone(), proc);
+        self.proc_args.insert(name.clone(), args);
+        self.proc_definitions.insert(name.clone(), stmts);
+        self.proc_references.insert(name, Default::default());
+    }
+
+    pub fn add_func(&mut self, func: Func, args: Vec<Arg>, stmts: Vec<Stmt>) {
+        let name = func.name.clone();
+        self.funcs.insert(name.clone(), func);
+        self.func_args.insert(name.clone(), args);
+        self.func_definitions.insert(name.clone(), stmts);
+        self.func_references.insert(name, Default::default());
+    }
 }

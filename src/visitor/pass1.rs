@@ -1,7 +1,4 @@
-use fxhash::{
-    FxHashMap,
-    FxHashSet,
-};
+use fxhash::FxHashMap;
 
 use crate::{
     ast::*,
@@ -13,7 +10,6 @@ struct S<'a> {
     callsites: &'a mut usize,
     funcs: &'a FxHashMap<SmolStr, Func>,
     func: Option<&'a Func>,
-    used_args: Option<&'a mut FxHashSet<SmolStr>>,
 }
 
 pub fn visit_project(project: &mut Project) {
@@ -28,8 +24,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
     let old_callsites = *callsites;
     for proc in sprite.procs.values_mut() {
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
-        let proc_references = sprite.proc_references.get_mut(&proc.name).unwrap();
-        let used_args = sprite.proc_used_args.get_mut(&proc.name).unwrap();
         visit_stmts(
             proc_definition,
             &mut S {
@@ -37,14 +31,11 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 callsites,
                 funcs: &sprite.funcs,
                 func: None,
-                used_args: Some(used_args),
             },
         );
     }
     for func in sprite.funcs.values() {
         let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
-        let func_references = sprite.func_references.get_mut(&func.name).unwrap();
-        let used_args = sprite.func_used_args.get_mut(&func.name).unwrap();
         visit_stmts(
             func_definition,
             &mut S {
@@ -52,7 +43,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 callsites,
                 funcs: &sprite.funcs,
                 func: Some(func),
-                used_args: Some(used_args),
             },
         );
     }
@@ -64,7 +54,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 callsites,
                 funcs: &sprite.funcs,
                 func: None,
-                used_args: None,
             },
         );
     }
@@ -158,7 +147,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             }
         }
         Stmt::ProcCall {
-            name,
+            name: _,
             span: _,
             args,
             kwargs,
@@ -171,7 +160,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             }
         }
         Stmt::FuncCall {
-            name,
+            name: _,
             span: _,
             args,
             kwargs,
@@ -218,7 +207,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
 fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
     let replace: Option<Expr> = match expr {
         Expr::Value { value: _, span: _ } => None,
-        Expr::Name(name) => None,
+        Expr::Name(_) => None,
         Expr::Dot {
             lhs,
             rhs: _,
@@ -227,12 +216,7 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             visit_expr(lhs, before, s);
             None
         }
-        Expr::Arg(name) => {
-            if let Some(used_args) = &mut s.used_args {
-                used_args.insert(name.basename().clone());
-            }
-            None
-        }
+        Expr::Arg(_) => None,
         Expr::Repr {
             repr: _,
             span: _,
@@ -306,7 +290,7 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             None
         }
         Expr::StructLiteral {
-            name,
+            name: _,
             span: _,
             fields,
         } => {

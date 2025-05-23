@@ -402,9 +402,9 @@ where T: Write + Seek
                 &Proc::new(
                     "\u{200b}\u{200b}log\u{200b}\u{200b}".into(),
                     span.clone(),
-                    vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                     false,
                 ),
+                &[Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                 s,
                 d,
                 this_id,
@@ -420,9 +420,9 @@ where T: Write + Seek
                     &Proc::new(
                         "\u{200b}\u{200b}breakpoint\u{200b}\u{200b}".into(),
                         span.clone(),
-                        vec![],
                         false,
                     ),
+                    &[],
                     s,
                     d,
                     this_id,
@@ -437,9 +437,9 @@ where T: Write + Seek
                     &Proc::new(
                         "\u{200b}\u{200b}error\u{200b}\u{200b}".into(),
                         span.clone(),
-                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                         false,
                     ),
+                    &[Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                     s,
                     d,
                     this_id,
@@ -454,9 +454,9 @@ where T: Write + Seek
                     &Proc::new(
                         "\u{200b}\u{200b}warn\u{200b}\u{200b}".into(),
                         span.clone(),
-                        vec![Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                         false,
                     ),
+                    &[Arg::new("arg0".into(), span.clone(), Type::Value, None)],
                     s,
                     d,
                     this_id,
@@ -469,12 +469,27 @@ where T: Write + Seek
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
             return Ok(());
         };
-        self.proc_call_impl(proc, s, d, this_id, name, span, args, false)
+        self.proc_call_impl(
+            proc,
+            s.sprite
+                .proc_args
+                .get(&proc.name)
+                .map(|v| v.as_slice())
+                .unwrap_or_default(),
+            s,
+            d,
+            this_id,
+            name,
+            span,
+            args,
+            false,
+        )
     }
 
     fn proc_call_impl(
         &mut self,
         proc: &Proc,
+        signature: &[Arg],
         s: S,
         d: D,
         this_id: NodeID,
@@ -483,7 +498,7 @@ where T: Write + Seek
         args: &[Expr],
         compact: bool,
     ) -> io::Result<()> {
-        if proc.args.len() != args.len() {
+        if signature.len() != args.len() {
             d.report(
                 DiagnosticKind::ProcArgsCountMismatch {
                     proc: name.clone(),
@@ -495,7 +510,7 @@ where T: Write + Seek
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
         let mut qualified_arg_values: Vec<&Expr> = Vec::new();
         self.begin_inputs()?;
-        for (arg, arg_value) in proc.args.iter().zip(args) {
+        for (arg, arg_value) in signature.iter().zip(args) {
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();

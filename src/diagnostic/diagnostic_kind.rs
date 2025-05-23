@@ -151,14 +151,14 @@ impl DiagnosticKind {
             DiagnosticKind::ProcArgsCountMismatch { proc, given } => {
                 format!(
                     "procedure expects {} arguments, but {} were given",
-                    sprite.procs[proc].args.len(),
+                    sprite.proc_args[proc].len(),
                     given
                 )
             }
             DiagnosticKind::FuncArgsCountMismatch { func, given } => {
                 format!(
                     "function expects {} arguments, but {} were given",
-                    sprite.funcs[func].args.len(),
+                    sprite.func_args[func].len(),
                     given
                 )
             }
