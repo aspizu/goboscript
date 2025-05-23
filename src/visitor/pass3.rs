@@ -92,6 +92,9 @@ fn resolve_references(
         if let Some(list) = scope.lists.get_mut(name) {
             list.is_used = true;
         }
+        if let Some(enum_) = scope.enums.get_mut(name) {
+            enum_.is_used = true;
+        }
     }
     for struct_name in &references.structs {
         if let Some(struct_) = scope.structs.get_mut(struct_name) {
@@ -109,7 +112,7 @@ fn resolve_references(
         }
     }
     for (enum_name, variant_name) in &references.enum_variants {
-        if let Some(enum_) = &mut scope.enums.get_mut(enum_name) {
+        if let Some(enum_) = scope.enums.get_mut(enum_name) {
             let enum_variant = &mut enum_
                 .variants
                 .iter_mut()
