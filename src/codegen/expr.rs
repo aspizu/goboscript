@@ -137,7 +137,7 @@ where T: Write + Seek
                     self.input_with_shadow(s, d, arg_name, arg_value, arg_id, menu_id.unwrap())?;
                 }
             } else {
-                self.input(s, d, arg_name, arg_value, arg_id)?;
+                self.input(s, d, arg_name, arg_value, arg_id, false)?;
             }
         }
         if menu_is_default {
@@ -197,7 +197,7 @@ where T: Write + Seek
         let opr_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, op.input(), opr, opr_id)?;
+        self.input(s, d, op.input(), opr, opr_id, matches!(op, UnOp::Not))?;
         self.end_obj()?; // inputs
         if let Some(fields) = op.fields() {
             write!(self, r#","fields":{fields}"#)?;
@@ -245,8 +245,9 @@ where T: Write + Seek
         let rhs_id = self.id.new_id();
         self.begin_node(Node::new(op.opcode(), this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, op.lhs(), lhs, lhs_id)?;
-        self.input(s, d, op.rhs(), rhs, rhs_id)?;
+        let no_empty_shadow = matches!(op, BinOp::And | BinOp::Or);
+        self.input(s, d, op.lhs(), lhs, lhs_id, no_empty_shadow)?;
+        self.input(s, d, op.rhs(), rhs, rhs_id, no_empty_shadow)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         self.expr(s, d, lhs, lhs_id, this_id)?;
@@ -265,7 +266,7 @@ where T: Write + Seek
         let index_id = self.id.new_id();
         self.begin_node(Node::new("data_itemoflist", this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", index, index_id)?;
+        self.input(s, d, "INDEX", index, index_id, false)?;
         self.end_obj()?; // inputs
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
@@ -284,7 +285,7 @@ where T: Write + Seek
         let index_id = self.id.new_id();
         self.begin_node(Node::new("data_itemnumoflist", this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
-        self.input(s, d, "ITEM", item, index_id)?;
+        self.input(s, d, "ITEM", item, index_id, false)?;
         self.end_obj()?; // inputs
         self.single_field_id("LIST", name)?;
         self.end_obj()?; // node
@@ -339,7 +340,7 @@ where T: Write + Seek
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, arg_value, arg_id)?;
+                    self.input(s, d, &arg.name, arg_value, arg_id, false)?;
                     qualified_args.push((arg.name.clone(), arg_id));
                     qualified_arg_values.push(arg_value.clone());
                 }
@@ -397,6 +398,7 @@ where T: Write + Seek
                             &qualified_arg_name,
                             &struct_literal_field.value,
                             arg_id,
+                            false,
                         )?;
                         qualified_args.push((qualified_arg_name, arg_id));
                         qualified_arg_values.push(struct_literal_field.value.as_ref().clone());

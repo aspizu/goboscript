@@ -121,7 +121,6 @@ broadcast                         broadcast        BROADCAST_INPUT |            
 broadcast_and_wait                broadcastandwait BROADCAST_INPUT |                        |
 [control]========================================================|==========================|
 wait                              wait              DURATION     |                          |
-wait_until                        wait_until        CONDITION    |                          |
 stop_all                          stop                           | STOP_OPTION=all          |
 stop_this_script                  ...                            | ...=this script          |
 stop_other_scripts                ...                            | ...=other scripts in sprite|

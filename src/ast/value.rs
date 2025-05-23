@@ -2,8 +2,12 @@ mod bin_op;
 mod js;
 mod un_op;
 
+use serde::{
+    Deserialize,
+    Serialize,
+};
+
 use crate::misc::SmolStr;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Value {

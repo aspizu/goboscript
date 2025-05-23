@@ -77,8 +77,9 @@ where T: Write + Seek
         name: &str,
         expr: &Expr,
         this_id: NodeID,
+        no_empty_shadow: bool,
     ) -> io::Result<()> {
-        self._input(s, d, name, expr, this_id, None)
+        self._input(s, d, name, expr, this_id, None, no_empty_shadow)
     }
 
     pub fn input_with_shadow(
@@ -90,7 +91,7 @@ where T: Write + Seek
         this_id: NodeID,
         shadow_id: NodeID,
     ) -> io::Result<()> {
-        self._input(s, d, name, expr, this_id, Some(shadow_id))
+        self._input(s, d, name, expr, this_id, Some(shadow_id), false)
     }
 
     fn _input(
@@ -101,6 +102,7 @@ where T: Write + Seek
         expr: &Expr,
         this_id: NodeID,
         shadow_id: Option<NodeID>,
+        no_empty_shadow: bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
         write!(self, r#""{input_name}":"#)?;
@@ -128,7 +130,7 @@ where T: Write + Seek
             }
             _ => {}
         }
-        self.node_input(input_name, this_id, shadow_id)
+        self.node_input(input_name, this_id, shadow_id, no_empty_shadow)
     }
 
     fn value_input(&mut self, name: &str, value: &Value) -> io::Result<()> {
@@ -187,8 +189,9 @@ where T: Write + Seek
         input_name: &str,
         node_id: NodeID,
         shadow_id: Option<NodeID>,
+        no_empty_shadow: bool,
     ) -> io::Result<()> {
-        if ["CONDITION", "CONDITION2"].contains(&input_name) {
+        if no_empty_shadow {
             return write!(self, "[2,{node_id}]");
         }
         write!(self, "[3,{node_id},")?;

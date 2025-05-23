@@ -95,7 +95,6 @@ impl Interpreter {
             Block::Broadcast => todo!(),
             Block::BroadcastAndWait => todo!(),
             Block::Wait => todo!(),
-            Block::WaitUntil => todo!(),
             Block::StopAll => todo!(),
             Block::StopThisScript => {
                 throw!("__stop_this_script__");

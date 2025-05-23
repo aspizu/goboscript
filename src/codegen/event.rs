@@ -61,7 +61,7 @@ where T: Write + Seek
 
     pub fn on_loudness_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, this_id)?;
+        self.input(s, d, "VALUE", value, this_id, false)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "LOUDNESS")?;
         self.end_obj()?; // node
@@ -70,7 +70,7 @@ where T: Write + Seek
 
     pub fn on_timer_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, this_id)?;
+        self.input(s, d, "VALUE", value, this_id, false)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "TIMER")?;
         self.end_obj()?; // node
