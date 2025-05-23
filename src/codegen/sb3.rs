@@ -482,6 +482,14 @@ where T: Write + Seek
                     &struct_.span,
                 );
             }
+            for field in &struct_.fields {
+                if !field.is_used {
+                    d.report(
+                        DiagnosticKind::UnusedStructField(field.name.clone()),
+                        &field.span,
+                    );
+                }
+            }
         }
         for enum_ in sprite.enums.values() {
             if !enum_.is_used {
@@ -492,7 +500,7 @@ where T: Write + Seek
                     d.report(
                         DiagnosticKind::UnusedEnumVariant(variant.name.clone()),
                         &variant.span,
-                    )
+                    );
                 }
             }
         }

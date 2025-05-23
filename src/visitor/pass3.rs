@@ -19,6 +19,33 @@ struct Scope<'a> {
     global_lists: Option<&'a mut FxHashMap<SmolStr, List>>,
 }
 
+impl Scope<'_> {
+    fn mark_struct_field(&mut self, name: &str, field: &Option<SmolStr>) {
+        let Some(field) = field else { return };
+        let Some((type_name, _)) = self.vars[name].type_.struct_() else {
+            return;
+        };
+        let Some(struct_) = self.structs.get_mut(type_name) else {
+            return;
+        };
+        let Some(f) = struct_.fields.iter_mut().find(|f| &f.name == field) else {
+            return;
+        };
+        f.is_used = true;
+    }
+
+    fn mark_enum_variant(&mut self, name: &str, field: &Option<SmolStr>) {
+        let Some(field) = field else { return };
+        let Some(enum_) = self.enums.get_mut(name) else {
+            return;
+        };
+        let Some(variant) = enum_.variants.iter_mut().find(|v| &v.name == field) else {
+            return;
+        };
+        variant.is_used = true;
+    }
+}
+
 pub fn visit_project(project: &mut Project) {
     // first, visit the stage
     for event in &project.stage.events {
@@ -73,15 +100,19 @@ fn resolve_references(
     func_references: &FxHashMap<SmolStr, References>,
     references: &References,
 ) {
-    for name in &references.names {
-        if let Some(global_vars) = &mut scope.global_vars {
-            if let Some(var) = global_vars.get_mut(name) {
-                var.is_used = true;
-                continue;
-            }
+    for (name, field) in &references.names {
+        if let Some(var) = scope
+            .global_vars
+            .as_mut()
+            .and_then(|global_vars| global_vars.get_mut(name))
+        {
+            var.is_used = true;
+            scope.mark_struct_field(&name, field);
+            continue;
         }
         if let Some(var) = scope.vars.get_mut(name) {
             var.is_used = true;
+            scope.mark_struct_field(&name, field);
         }
         if let Some(global_lists) = &mut scope.global_lists {
             if let Some(list) = global_lists.get_mut(name) {
@@ -94,6 +125,7 @@ fn resolve_references(
         }
         if let Some(enum_) = scope.enums.get_mut(name) {
             enum_.is_used = true;
+            scope.mark_enum_variant(name, field);
         }
     }
     for struct_name in &references.structs {

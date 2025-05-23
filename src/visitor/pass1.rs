@@ -225,7 +225,9 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
     let replace: Option<Expr> = match expr {
         Expr::Value { value: _, span: _ } => None,
         Expr::Name(name) => {
-            s.references.names.insert(name.basename().clone());
+            s.references
+                .names
+                .insert((name.basename().clone(), name.fieldname().cloned()));
             None
         }
         Expr::Dot {
