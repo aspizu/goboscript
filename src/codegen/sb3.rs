@@ -1161,6 +1161,9 @@ where T: Write + Seek
         next_id: Option<NodeID>,
         parent_id: Option<NodeID>,
     ) -> io::Result<()> {
+        d.debug_info
+            .blocks
+            .insert(this_id.to_string(), stmt.span().clone());
         self.begin_node(
             Node::new(stmt.opcode(s), this_id)
                 .some_next_id(next_id)
@@ -1226,6 +1229,9 @@ where T: Write + Seek
         this_id: NodeID,
         parent_id: NodeID,
     ) -> io::Result<()> {
+        d.debug_info
+            .blocks
+            .insert(this_id.to_string(), expr.span().clone());
         match expr {
             Expr::Value { .. } => Ok(()),
             Expr::Name { .. } => Ok(()),

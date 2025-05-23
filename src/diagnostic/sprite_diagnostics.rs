@@ -26,6 +26,7 @@ use super::{
 };
 use crate::{
     ast::Project,
+    codegen::debug_info::DebugInfo,
     standard_library::StandardLibrary,
     translation_unit::{
         Owner,
@@ -40,6 +41,7 @@ pub struct SpriteDiagnostics {
     pub sprite_name: String,
     pub translation_unit: TranslationUnit,
     pub diagnostics: Vec<Diagnostic>,
+    pub debug_info: DebugInfo,
 }
 
 impl SpriteDiagnostics {
@@ -54,6 +56,7 @@ impl SpriteDiagnostics {
             sprite_name,
             translation_unit,
             diagnostics,
+            debug_info: Default::default(),
         }
     }
 
