@@ -1,7 +1,10 @@
 use std::path::Path;
 
 use logos::Span;
-use serde::{Serialize, Deserialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::misc::SmolStr;
 

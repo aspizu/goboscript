@@ -1,6 +1,9 @@
 use fxhash::FxHashMap;
 use logos::Span;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::*;
 use crate::misc::SmolStr;

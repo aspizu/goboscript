@@ -1,5 +1,9 @@
 use std::fmt::Display;
-use serde::{Serialize, Deserialize};
+
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub enum RotationStyle {

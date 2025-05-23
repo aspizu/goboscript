@@ -1,5 +1,8 @@
 use logos::Span;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::value::Value;
 use crate::misc::SmolStr;

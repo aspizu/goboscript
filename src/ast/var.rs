@@ -1,5 +1,8 @@
 use logos::Span;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::{
     type_::Type,
