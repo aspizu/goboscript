@@ -487,6 +487,14 @@ where T: Write + Seek
             if !enum_.is_used {
                 d.report(DiagnosticKind::UnusedEnum(enum_.name.clone()), &enum_.span);
             }
+            for variant in &enum_.variants {
+                if !variant.is_used {
+                    d.report(
+                        DiagnosticKind::UnusedEnumVariant(variant.name.clone()),
+                        &variant.span,
+                    )
+                }
+            }
         }
         self.id.reset();
         write!(self, "{{")?;
