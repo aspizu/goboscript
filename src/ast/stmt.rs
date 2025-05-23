@@ -1,6 +1,9 @@
 use fxhash::FxHashMap;
 use logos::Span;
-use serde::{Serialize, Deserialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::{
     expr::Expr,
@@ -92,8 +95,26 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn span(&self) -> &Span {
-        todo!()
+    pub fn span(&self) -> Span {
+        match self {
+            Stmt::Repeat { times, .. } => times.span(),
+            Stmt::Forever { span, .. } => span.clone(),
+            Stmt::Branch { cond, .. } => cond.span(),
+            Stmt::Until { cond, .. } => cond.span(),
+            Stmt::SetVar { name, .. } => name.span(),
+            Stmt::ChangeVar { name, .. } => name.span(),
+            Stmt::Show(name) => name.span(),
+            Stmt::Hide(name) => name.span(),
+            Stmt::AddToList { name, .. } => name.span(),
+            Stmt::DeleteList(name) => name.span(),
+            Stmt::DeleteListIndex { name, .. } => name.span(),
+            Stmt::InsertAtList { name, .. } => name.span(),
+            Stmt::SetListIndex { name, .. } => name.span(),
+            Stmt::Block { span, .. } => span.clone(),
+            Stmt::ProcCall { span, .. } => span.clone(),
+            Stmt::FuncCall { span, .. } => span.clone(),
+            Stmt::Return { value, .. } => value.span(),
+        }
     }
 
     pub fn increment(name: Name) -> Self {
