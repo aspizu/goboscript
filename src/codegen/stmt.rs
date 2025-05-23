@@ -50,7 +50,7 @@ where T: Write + Seek
         let times_id = self.id.new_id();
         let body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "TIMES", times, times_id)?;
+        self.input(s, d, "TIMES", times, times_id, false)?;
         self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
@@ -88,7 +88,7 @@ where T: Write + Seek
         let if_body_id = self.id.new_id();
         let else_body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "CONDITION", &cond, cond_id)?;
+        self.input(s, d, "CONDITION", &cond, cond_id, true)?;
         self.substack("SUBSTACK", (!if_body.is_empty()).then_some(if_body_id))?;
         self.substack("SUBSTACK2", (!else_body.is_empty()).then_some(else_body_id))?;
         self.end_obj()?; // inputs
@@ -110,7 +110,7 @@ where T: Write + Seek
         let cond_id = self.id.new_id();
         let body_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "CONDITION", &cond, cond_id)?;
+        self.input(s, d, "CONDITION", &cond, cond_id, true)?;
         self.substack("SUBSTACK", (!body.is_empty()).then_some(body_id))?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
@@ -131,7 +131,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, value_id)?;
+        self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
@@ -159,7 +159,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, value_id)?;
+        self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
@@ -206,7 +206,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "ITEM", value, value_id)?;
+        self.input(s, d, "ITEM", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::List(qualified_name, _)) => {
@@ -234,7 +234,7 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let index_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", index, index_id)?;
+        self.input(s, d, "INDEX", index, index_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::List(qualified_name, _)) => {
@@ -282,8 +282,8 @@ where T: Write + Seek
         let index_id = self.id.new_id();
         let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "INDEX", index, index_id)?;
-        self.input(s, d, "ITEM", value, value_id)?;
+        self.input(s, d, "INDEX", index, index_id, false)?;
+        self.input(s, d, "ITEM", value, value_id, false)?;
         self.end_obj()?; // inputs
         match s.qualify_name(d, name) {
             Some(QualifiedName::List(qualified_name, _)) => {
@@ -347,7 +347,7 @@ where T: Write + Seek
                     self.input_with_shadow(s, d, arg_name, arg_value, arg_id, menu_id.unwrap())?;
                 }
             } else {
-                self.input(s, d, arg_name, arg_value, arg_id)?;
+                self.input(s, d, arg_name, arg_value, arg_id, false)?;
             }
         }
         if menu_is_default {
@@ -499,7 +499,7 @@ where T: Write + Seek
             match &arg.type_ {
                 Type::Value => {
                     let arg_id = self.id.new_id();
-                    self.input(s, d, &arg.name, arg_value, arg_id)?;
+                    self.input(s, d, &arg.name, arg_value, arg_id, false)?;
                     qualified_args.push((arg.name.clone(), arg_id));
                     qualified_arg_values.push(arg_value);
                 }
@@ -556,6 +556,7 @@ where T: Write + Seek
                             &qualified_arg_name,
                             &struct_literal_field.value,
                             arg_id,
+                            false,
                         )?;
                         qualified_args.push((qualified_arg_name, arg_id));
                         qualified_arg_values.push(&struct_literal_field.value);
