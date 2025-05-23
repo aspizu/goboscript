@@ -1,4 +1,3 @@
-use fxhash::FxHashMap;
 use logos::Span;
 use serde::{
     Deserialize,
@@ -13,7 +12,6 @@ pub struct Proc {
     pub name: SmolStr,
     pub span: Span,
     pub args: Vec<Arg>,
-    pub locals: FxHashMap<SmolStr, Var>,
     pub warp: bool,
 }
 
@@ -23,7 +21,6 @@ impl Proc {
             name,
             span,
             args,
-            locals: FxHashMap::default(),
             warp,
         }
     }

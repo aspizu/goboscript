@@ -9,7 +9,6 @@ use crate::{
 };
 
 struct S<'a> {
-    references: &'a mut References,
     vars: &'a mut FxHashMap<SmolStr, Var>,
     callsites: &'a mut usize,
     funcs: &'a FxHashMap<SmolStr, Func>,
@@ -34,7 +33,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
         visit_stmts(
             proc_definition,
             &mut S {
-                references: proc_references,
                 vars: &mut sprite.vars,
                 callsites,
                 funcs: &sprite.funcs,
@@ -50,7 +48,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
         visit_stmts(
             func_definition,
             &mut S {
-                references: func_references,
                 vars: &mut sprite.vars,
                 callsites,
                 funcs: &sprite.funcs,
@@ -63,7 +60,6 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
         visit_stmts(
             &mut event.body,
             &mut S {
-                references: &mut event.references,
                 vars: &mut sprite.vars,
                 callsites,
                 funcs: &sprite.funcs,
@@ -167,7 +163,6 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             args,
             kwargs,
         } => {
-            s.references.procs.insert(name.clone());
             for arg in args {
                 visit_expr(arg, &mut before, s);
             }
@@ -181,7 +176,6 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             args,
             kwargs,
         } => {
-            s.references.funcs.insert(name.clone());
             for arg in args {
                 visit_expr(arg, &mut before, s);
             }
@@ -224,12 +218,7 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
 fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
     let replace: Option<Expr> = match expr {
         Expr::Value { value: _, span: _ } => None,
-        Expr::Name(name) => {
-            s.references
-                .names
-                .insert((name.basename().clone(), name.fieldname().cloned()));
-            None
-        }
+        Expr::Name(name) => None,
         Expr::Dot {
             lhs,
             rhs: _,
@@ -321,11 +310,7 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             span: _,
             fields,
         } => {
-            s.references.structs.insert(name.clone());
             for field in fields {
-                // s.references
-                //     .struct_fields
-                //     .insert((name.clone(), field.name.clone()));
                 visit_expr(&mut field.value, before, s);
             }
             None

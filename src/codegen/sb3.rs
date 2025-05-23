@@ -83,8 +83,11 @@ impl S<'_> {
 
     fn get_local_var(&self, name: &str) -> Option<&Var> {
         self.proc
-            .and_then(|proc| proc.locals.get(name))
-            .or_else(|| self.func.and_then(|func| func.locals.get(name)))
+            .and_then(|proc| self.sprite.proc_locals[&proc.name].get(name))
+            .or_else(|| {
+                self.func
+                    .and_then(|func| self.sprite.func_locals[&func.name].get(name))
+            })
     }
 
     fn get_var(&self, name: &str) -> Option<&Var> {
@@ -539,7 +542,7 @@ where T: Write + Seek
             .values()
             .filter(|proc| sprite.used_procs.contains(&proc.name))
         {
-            for var in proc.locals.values() {
+            for var in sprite.proc_locals[&proc.name].values() {
                 self.local_var_declaration(
                     S {
                         sprite,
@@ -559,7 +562,7 @@ where T: Write + Seek
             .values()
             .filter(|func| sprite.used_funcs.contains(&func.name))
         {
-            for var in func.locals.values() {
+            for var in sprite.func_locals[&func.name].values() {
                 self.local_var_declaration(
                     S {
                         sprite,

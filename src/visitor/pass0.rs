@@ -26,17 +26,23 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
         visit_enum(enum_);
     }
     for proc in sprite.procs.values_mut() {
+        sprite
+            .proc_locals
+            .insert(proc.name.clone(), Default::default());
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
         visit_stmts(
             proc_definition,
             &mut V {
-                locals: Some(&mut proc.locals),
+                locals: sprite.proc_locals.get_mut(&proc.name),
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
         );
     }
     for func in sprite.funcs.values_mut() {
+        sprite
+            .func_locals
+            .insert(func.name.clone(), Default::default());
         let name: SmolStr = format!("{}:return", func.name).into();
         sprite.vars.insert(
             name.clone(),
@@ -53,7 +59,7 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
         visit_stmts(
             func_definition,
             &mut V {
-                locals: Some(&mut func.locals),
+                locals: sprite.func_locals.get_mut(&func.name),
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },

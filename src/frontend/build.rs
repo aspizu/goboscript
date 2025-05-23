@@ -139,6 +139,7 @@ pub fn build_impl<'a, T: Write + Seek>(
         &mut sprites_diagnostics,
     );
     visitor::pass3::visit_project(&mut project);
+    visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
     sb3.project(
         fs.clone(),

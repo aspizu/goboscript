@@ -84,7 +84,7 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
             proc_definition,
             S {
                 args: Some(&proc.args),
-                local_vars: Some(&proc.locals),
+                local_vars: Some(&sprite.proc_locals[&proc.name]),
                 vars: &sprite.vars,
                 lists: &sprite.lists,
                 enums: &sprite.enums,
@@ -106,7 +106,7 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
             func_definition,
             S {
                 args: Some(&func.args),
-                local_vars: Some(&func.locals),
+                local_vars: Some(&sprite.func_locals[&func.name]),
                 vars: &sprite.vars,
                 lists: &sprite.lists,
                 enums: &sprite.enums,
