@@ -1,10 +1,11 @@
 use std::path::Path;
 
 use logos::Span;
+use serde::{Serialize, Deserialize};
 
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Sound {
     pub name: SmolStr,
     pub path: SmolStr,

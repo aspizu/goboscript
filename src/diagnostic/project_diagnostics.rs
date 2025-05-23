@@ -3,6 +3,11 @@ use annotate_snippets::{
     Renderer,
 };
 use fxhash::FxHashMap;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use tsify::Tsify;
 
 use super::SpriteDiagnostics;
 use crate::{
@@ -10,6 +15,8 @@ use crate::{
     misc::SmolStr,
 };
 
+#[derive(Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Artifact {
     pub project: Project,
     pub stage_diagnostics: SpriteDiagnostics,

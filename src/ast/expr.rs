@@ -1,5 +1,9 @@
 use fxhash::FxHashMap;
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use super::{
     value::Value,
@@ -15,7 +19,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Expr {
     Value {
         value: Value,

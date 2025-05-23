@@ -3,8 +3,9 @@ mod js;
 mod un_op;
 
 use crate::misc::SmolStr;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Value {
     Boolean(bool),
     Number(f64),
