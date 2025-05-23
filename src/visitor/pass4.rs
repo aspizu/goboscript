@@ -45,10 +45,14 @@ impl Scope<'_> {
     fn mark_arg_struct_field(
         refr: &NameReference,
         structs: &mut FxHashMap<SmolStr, Struct>,
-        args: &FxHashMap<SmolStr, Arg>,
+        args: &Vec<Arg>,
     ) {
         let Some(field) = &refr.field else { return };
-        let Some((type_name, _)) = args[&refr.name].type_.struct_() else {
+        let Some((type_name, _)) = args
+            .iter()
+            .find(|a| a.name == refr.name)
+            .and_then(|a| a.type_.struct_())
+        else {
             return;
         };
         let Some(struct_) = structs.get_mut(type_name) else {
@@ -131,6 +135,14 @@ fn resolve_references(
             .and_then(|a| a.iter_mut().find(|a| a.name == refr.name))
         {
             arg.is_used = true;
+            Scope::mark_arg_struct_field(
+                refr,
+                scope.structs,
+                scope
+                    .proc_args
+                    .get_mut(refr.proc.as_ref().unwrap())
+                    .unwrap(),
+            );
             continue;
         }
         if let Some(arg) = refr.func.as_ref().and_then(|p| {
@@ -140,6 +152,14 @@ fn resolve_references(
                 .and_then(|a| a.iter_mut().find(|a| a.name == refr.name))
         }) {
             arg.is_used = true;
+            Scope::mark_arg_struct_field(
+                refr,
+                scope.structs,
+                scope
+                    .func_args
+                    .get_mut(refr.func.as_ref().unwrap())
+                    .unwrap(),
+            );
             continue;
         }
     }
