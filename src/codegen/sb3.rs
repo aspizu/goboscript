@@ -1140,7 +1140,7 @@ where T: Write + Seek
             if is_last || stmt.is_terminator() {
                 self.stmt(s, d, stmt, this_id, None, parent_id)?;
                 if !is_last {
-                    d.report(DiagnosticKind::FollowedByUnreachableCode, stmt.span());
+                    d.report(DiagnosticKind::FollowedByUnreachableCode, &stmt.span());
                 }
                 break;
             }
