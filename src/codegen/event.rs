@@ -60,21 +60,23 @@ where T: Write + Seek
     }
 
     pub fn on_loudness_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
+        let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, this_id, false)?;
+        self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "LOUDNESS")?;
         self.end_obj()?; // node
-        self.expr(s, d, value, this_id, this_id)
+        self.expr(s, d, value, value_id, this_id)
     }
 
     pub fn on_timer_gt(&mut self, s: S, d: D, this_id: NodeID, value: &Expr) -> io::Result<()> {
+        let value_id = self.id.new_id();
         self.begin_inputs()?;
-        self.input(s, d, "VALUE", value, this_id, false)?;
+        self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
         self.single_field("WHENGREATERTHANMENU", "TIMER")?;
         self.end_obj()?; // node
-        self.expr(s, d, value, this_id, this_id)
+        self.expr(s, d, value, value_id, this_id)
     }
 
     pub fn on_clone(&mut self, _s: S, _d: D, _this_id: NodeID) -> io::Result<()> {
