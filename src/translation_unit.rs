@@ -46,7 +46,7 @@ pub struct Include {
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct TranslationUnit {
-    path: PathBuf,
+    pub path: PathBuf,
     text: Vec<u8>,
     defines: FxHashSet<String>,
     includes: Vec<Include>,

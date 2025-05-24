@@ -3,7 +3,10 @@ use std::{
     fs::{
         self,
     },
-    path::PathBuf,
+    path::{
+        Path,
+        PathBuf,
+    },
     rc::Rc,
 };
 
@@ -67,7 +70,7 @@ impl SpriteDiagnostics {
         });
     }
 
-    pub fn eprint(&self, renderer: &Renderer, project: &Project) {
+    pub fn eprint(&self, cwd: &Path, renderer: &Renderer, project: &Project) {
         let sprite = match self.sprite_name.as_str() {
             "stage" => &project.stage,
             name => &project.sprites[name],
@@ -88,7 +91,12 @@ impl SpriteDiagnostics {
             }
             // TODO: memoize this using a memoization crate.
             let text = fs::read_to_string(&include.path).unwrap();
-            let include_path = include.path.to_str().unwrap();
+            let include_path = include
+                .path
+                .strip_prefix(cwd)
+                .unwrap_or(&include.path)
+                .to_str()
+                .unwrap();
             if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
                 let mut message = level
                     .title(&title)
