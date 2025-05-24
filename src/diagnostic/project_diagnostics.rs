@@ -25,10 +25,12 @@ pub struct Artifact {
 
 impl Artifact {
     pub fn eprint(&self) {
+        let cwd = std::env::current_dir().unwrap().canonicalize().unwrap();
         let renderer = Renderer::styled();
-        self.stage_diagnostics.eprint(&renderer, &self.project);
+        self.stage_diagnostics
+            .eprint(&cwd, &renderer, &self.project);
         for sprite_diagnostics in self.sprites_diagnostics.values() {
-            sprite_diagnostics.eprint(&renderer, &self.project);
+            sprite_diagnostics.eprint(&cwd, &renderer, &self.project);
         }
     }
 
