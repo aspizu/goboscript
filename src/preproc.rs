@@ -150,7 +150,7 @@ impl PreProc {
                     }
                 }
             }
-            line_start = self.buffer[i] == b'\n';
+            line_start = self.buffer.get(i).is_some_and(|c| *c == b'\n');
             i += 1;
         }
         let is_includes_empty = includes.is_empty();
