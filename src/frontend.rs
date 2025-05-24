@@ -26,7 +26,11 @@ use crate::{
 
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
-        Command::Build { input, output } => match build::build(input, output) {
+        Command::Build {
+            input,
+            output,
+            release,
+        } => match build::build(input, output, release) {
             Ok(artifact) => {
                 artifact.eprint();
                 eprintln!();
