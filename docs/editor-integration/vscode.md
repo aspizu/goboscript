@@ -28,7 +28,7 @@ Add to `.vscode/tasks.json`:
   "tasks": [
     {
       "type": "goboscript-build",
-      "problemMatcher": ["$goboscript"],
+      "problemMatcher": ["$rustc"],
       "group": {
         "kind": "build",
         "isDefault": true

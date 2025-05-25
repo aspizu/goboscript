@@ -5,6 +5,12 @@ pub struct NodeIDFactory {
     value: usize,
 }
 
+impl Default for NodeIDFactory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NodeIDFactory {
     pub fn new() -> Self {
         Self { value: 0 }

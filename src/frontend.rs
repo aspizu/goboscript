@@ -2,33 +2,43 @@ pub mod build;
 mod cli;
 mod fmt;
 mod new;
+mod run;
 
 use std::process::ExitCode;
 
-use clap::{CommandFactory, Parser};
-use cli::{Cli, Command};
+use clap::{
+    CommandFactory,
+    Parser,
+};
+use cli::{
+    Cli,
+    Command,
+};
 use colored::Colorize;
-use fmt::FmtError;
 use new::NewError;
+use run::RunError;
 
-use crate::config::Config;
+use crate::{
+    config::Config,
+    fmt::FmtError,
+    interpreter::Exception,
+};
 
 pub fn frontend() -> ExitCode {
     match Cli::parse().command {
         Command::Build { input, output } => match build::build(input, output) {
-            Ok(()) => ExitCode::SUCCESS,
-            Err(build::BuildError::AnyhowError(err)) => {
-                eprintln!("{}: {:?}", "error".red().bold(), err);
-                ExitCode::FAILURE
-            }
-            Err(build::BuildError::ProjectDiagnostics(diagnostics)) => {
-                diagnostics.eprint();
+            Ok(artifact) => {
+                artifact.eprint();
                 eprintln!();
-                if diagnostics.failure() {
+                if artifact.failure() {
                     ExitCode::FAILURE
                 } else {
                     ExitCode::SUCCESS
                 }
+            }
+            Err(err) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
             }
         },
         Command::Completions { shell } => {
@@ -37,6 +47,7 @@ pub fn frontend() -> ExitCode {
         }
         Command::New {
             name,
+            std,
             frame_rate,
             max_clones,
             no_miscellaneous_limits,
@@ -49,6 +60,7 @@ pub fn frontend() -> ExitCode {
             match new::new(
                 name,
                 Config {
+                    std,
                     frame_rate,
                     max_clones,
                     no_miscellaneous_limits: Some(no_miscellaneous_limits),
@@ -80,6 +92,27 @@ pub fn frontend() -> ExitCode {
             Ok(_) => ExitCode::SUCCESS,
             Err(FmtError::AnyhowError(err)) => {
                 eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+        },
+        Command::Run { input } => match run::run(input) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(RunError::ProjectDiagnostics(diagnostics)) => {
+                diagnostics.eprint();
+                eprintln!();
+                if diagnostics.failure() {
+                    ExitCode::FAILURE
+                } else {
+                    ExitCode::SUCCESS
+                }
+            }
+            Err(RunError::AnyhowError(err)) => {
+                eprintln!("{}: {:?}", "error".red().bold(), err);
+                ExitCode::FAILURE
+            }
+            Err(RunError::Exception(Exception { message, span })) => {
+                eprintln!("{}: {:?}", "error".red().bold(), message);
+                eprintln!("{}: {:?}", "span".blue().bold(), span);
                 ExitCode::FAILURE
             }
         },

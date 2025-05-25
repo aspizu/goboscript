@@ -1,10 +1,14 @@
 use std::path::Path;
 
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Costume {
     pub name: SmolStr,
     pub path: SmolStr,

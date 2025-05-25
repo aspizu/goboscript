@@ -1,142 +1,233 @@
-use fxhash::{FxHashMap, FxHashSet};
+use crate::ast::*;
 
-use crate::{ast::*, misc::SmolStr};
-
-struct Scope<'a> {
-    used_procs: &'a mut FxHashSet<SmolStr>,
-    used_funcs: &'a mut FxHashSet<SmolStr>,
-    vars: &'a mut FxHashMap<SmolStr, Var>,
-    lists: &'a mut FxHashMap<SmolStr, List>,
-    structs: &'a mut FxHashMap<SmolStr, Struct>,
-    enums: &'a mut FxHashMap<SmolStr, Enum>,
-    global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
-    global_lists: Option<&'a mut FxHashMap<SmolStr, List>>,
+struct S<'a> {
+    references: &'a mut References,
+    proc: Option<&'a Proc>,
+    func: Option<&'a Func>,
 }
 
 pub fn visit_project(project: &mut Project) {
-    // first, visit the stage
-    for event in &project.stage.events {
-        resolve_references(
-            &mut Scope {
-                used_procs: &mut project.stage.used_procs,
-                used_funcs: &mut project.stage.used_funcs,
-                vars: &mut project.stage.vars,
-                lists: &mut project.stage.lists,
-                structs: &mut project.stage.structs,
-                enums: &mut project.stage.enums,
-                global_vars: None,
-                global_lists: None,
-            },
-            &project.stage.procs,
-            &project.stage.proc_references,
-            &project.stage.funcs,
-            &project.stage.func_references,
-            &event.references,
-        );
-    }
-
-    // then visit each sprite
+    visit_sprite(&mut project.stage);
     for sprite in project.sprites.values_mut() {
-        for event in &sprite.events {
-            resolve_references(
-                &mut Scope {
-                    used_procs: &mut sprite.used_procs,
-                    used_funcs: &mut sprite.used_funcs,
-                    vars: &mut sprite.vars,
-                    lists: &mut sprite.lists,
-                    structs: &mut sprite.structs,
-                    enums: &mut sprite.enums,
-                    global_vars: Some(&mut project.stage.vars),
-                    global_lists: Some(&mut project.stage.lists),
-                },
-                &sprite.procs,
-                &sprite.proc_references,
-                &sprite.funcs,
-                &sprite.func_references,
-                &event.references,
-            );
-        }
+        visit_sprite(sprite);
     }
 }
 
-fn resolve_references(
-    scope: &mut Scope,
-    procs: &FxHashMap<SmolStr, Proc>,
-    proc_references: &FxHashMap<SmolStr, References>,
-    funcs: &FxHashMap<SmolStr, Func>,
-    func_references: &FxHashMap<SmolStr, References>,
-    references: &References,
-) {
-    for name in &references.names {
-        if let Some(global_vars) = &mut scope.global_vars {
-            if let Some(var) = global_vars.get_mut(name) {
-                var.is_used = true;
-                continue;
+fn visit_sprite(sprite: &mut Sprite) {
+    for proc in sprite.procs.values_mut() {
+        let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
+        let proc_references = sprite.proc_references.get_mut(&proc.name).unwrap();
+        visit_stmts(
+            proc_definition,
+            &mut S {
+                references: proc_references,
+                proc: Some(proc),
+                func: None,
+            },
+        );
+    }
+    for func in sprite.funcs.values() {
+        let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
+        let func_references = sprite.func_references.get_mut(&func.name).unwrap();
+        visit_stmts(
+            func_definition,
+            &mut S {
+                references: func_references,
+                proc: None,
+                func: Some(func),
+            },
+        );
+    }
+    for event in &mut sprite.events {
+        visit_stmts(
+            &mut event.body,
+            &mut S {
+                references: &mut event.references,
+                proc: None,
+                func: None,
+            },
+        );
+    }
+}
+
+fn visit_stmts(stmts: &Vec<Stmt>, s: &mut S) {
+    let mut i = 0;
+    while i < stmts.len() {
+        visit_stmt(&stmts[i], s);
+        i += 1;
+    }
+}
+
+fn visit_stmt(stmt: &Stmt, s: &mut S) {
+    match stmt {
+        Stmt::Repeat { times, body } => {
+            visit_expr(times, s);
+            visit_stmts(body, s);
+        }
+        Stmt::Forever { body, span: _ } => visit_stmts(body, s),
+        Stmt::Branch {
+            cond,
+            if_body,
+            else_body,
+        } => {
+            visit_expr(cond, s);
+            visit_stmts(if_body, s);
+            visit_stmts(else_body, s);
+        }
+        Stmt::Until { cond, body } => {
+            visit_expr(cond, s);
+            visit_stmts(body, s);
+        }
+        Stmt::SetVar {
+            name: _,
+            value,
+            type_: _,
+            is_local: _,
+            is_cloud: _,
+        } => {
+            visit_expr(value, s);
+        }
+        Stmt::ChangeVar { name: _, value } => {
+            visit_expr(value, s);
+        }
+        Stmt::Show(_name) => {}
+        Stmt::Hide(_name) => {}
+        Stmt::AddToList { name: _, value } => {
+            visit_expr(value, s);
+        }
+        Stmt::DeleteList(_name) => {}
+        Stmt::DeleteListIndex { name: _, index } => {
+            visit_expr(index, s);
+        }
+        Stmt::InsertAtList {
+            name: _,
+            index,
+            value,
+        } => {
+            visit_expr(index, s);
+            visit_expr(value, s);
+        }
+        Stmt::SetListIndex {
+            name: _,
+            index,
+            value,
+        } => {
+            visit_expr(index, s);
+            visit_expr(value, s);
+        }
+        Stmt::Block {
+            block: _,
+            span: _,
+            args,
+            kwargs,
+        } => {
+            for arg in args {
+                visit_expr(arg, s);
+            }
+            for (_, arg) in kwargs.values() {
+                visit_expr(arg, s);
             }
         }
-        if let Some(var) = scope.vars.get_mut(name) {
-            var.is_used = true;
-        }
-        if let Some(global_lists) = &mut scope.global_lists {
-            if let Some(list) = global_lists.get_mut(name) {
-                list.is_used = true;
-                continue;
+        Stmt::ProcCall {
+            name,
+            span: _,
+            args,
+            kwargs,
+        } => {
+            s.references.procs.insert(name.clone());
+            for arg in args {
+                visit_expr(arg, s);
+            }
+            for (_, arg) in kwargs.values() {
+                visit_expr(arg, s);
             }
         }
-        if let Some(list) = scope.lists.get_mut(name) {
-            list.is_used = true;
-        }
-    }
-    for struct_name in &references.structs {
-        if let Some(struct_) = scope.structs.get_mut(struct_name) {
-            struct_.is_used = true;
-        }
-    }
-    for (struct_name, field_name) in &references.struct_fields {
-        if let Some(struct_) = &mut scope.structs.get_mut(struct_name) {
-            let struct_field = &mut struct_
-                .fields
-                .iter_mut()
-                .find(|field| &field.name == field_name)
-                .unwrap();
-            struct_field.is_used = true;
-        }
-    }
-    for (enum_name, variant_name) in &references.enum_variants {
-        if let Some(enum_) = &mut scope.enums.get_mut(enum_name) {
-            let enum_variant = &mut enum_
-                .variants
-                .iter_mut()
-                .find(|variant| &variant.name == variant_name)
-                .unwrap();
-            enum_variant.is_used = true;
-        }
-    }
-    for proc in &references.procs {
-        if scope.used_procs.insert(proc.clone()) {
-            if let Some(proc) = procs.get(proc) {
-                resolve_references(
-                    scope,
-                    procs,
-                    proc_references,
-                    funcs,
-                    func_references,
-                    proc_references.get(&proc.name).unwrap(),
-                );
+        Stmt::FuncCall {
+            name,
+            span: _,
+            args,
+            kwargs,
+        } => {
+            s.references.funcs.insert(name.clone());
+            for arg in args {
+                visit_expr(arg, s);
+            }
+            for (_, arg) in kwargs.values() {
+                visit_expr(arg, s);
             }
         }
+        Stmt::Return {
+            value: _,
+            visited: _,
+        } => {}
     }
-    for func in &references.funcs {
-        if scope.used_funcs.insert(func.clone()) {
-            if let Some(func) = funcs.get(func) {
-                resolve_references(
-                    scope,
-                    procs,
-                    proc_references,
-                    funcs,
-                    func_references,
-                    func_references.get(&func.name).unwrap(),
-                );
+}
+
+fn visit_expr(expr: &Expr, s: &mut S) {
+    match expr {
+        Expr::Value { value: _, span: _ } => {}
+        Expr::Name(name) => {
+            if !name.is_generated() {
+                s.references.names.insert(NameReference {
+                    name: name.basename().clone(),
+                    field: name.fieldname().cloned(),
+                    proc: s.proc.map(|p| p.name.clone()),
+                    func: s.func.map(|f| f.name.clone()),
+                });
+            }
+        }
+        Expr::Dot {
+            lhs,
+            rhs: _,
+            rhs_span: _,
+        } => visit_expr(lhs, s),
+        Expr::Arg(name) => {
+            s.references.args.insert(NameReference {
+                name: name.basename().clone(),
+                field: name.fieldname().cloned(),
+                proc: s.proc.map(|p| p.name.clone()),
+                func: s.func.map(|f| f.name.clone()),
+            });
+        }
+        Expr::Repr {
+            repr: _,
+            span: _,
+            args,
+        } => {
+            for arg in args {
+                visit_expr(arg, s);
+            }
+        }
+        Expr::FuncCall {
+            name: _,
+            span: _,
+            args: _,
+            kwargs: _,
+        } => {}
+        Expr::UnOp {
+            op: _,
+            span: _,
+            opr,
+        } => {
+            visit_expr(opr, s);
+        }
+        Expr::BinOp {
+            op: _,
+            span: _,
+            lhs,
+            rhs,
+        } => {
+            visit_expr(lhs, s);
+            visit_expr(rhs, s);
+        }
+        Expr::StructLiteral {
+            name,
+            span: _,
+            fields,
+        } => {
+            s.references.structs.insert(name.clone());
+            for field in fields {
+                visit_expr(&field.value, s);
             }
         }
     }

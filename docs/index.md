@@ -27,6 +27,12 @@ additional features like local variables for procedures (custom blocks).
 
 goboscript also performs optimizations, detects problems and unused code.
 
+# Sister Projects
+
+### [**Package Manager**](https://github.com/aspizu/backpack)
+
+### [**Decompiler**](https://github.com/aspizu/sb2gs)
+
 # Contributing
 
 goboscript welcomes contributions in the form of Pull Requests.

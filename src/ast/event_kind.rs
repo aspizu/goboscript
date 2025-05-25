@@ -1,10 +1,18 @@
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use super::{expr::Expr, Event, Stmt};
+use super::{
+    expr::Expr,
+    Event,
+    Stmt,
+};
 use crate::misc::SmolStr;
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum EventKind {
     OnFlag,
     OnKey { key: SmolStr, span: Span },

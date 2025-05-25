@@ -15,17 +15,42 @@ pub Sprite = Declr*;
 Declr: () = {
     ";",
     COSTUMES Comma<Costume> ";",
+    SOUNDS Comma<Sound> ";",
+    HIDE ";" => {
+        sprite.hidden = true;
+    },
+    SET_X <x:Value> => {
+        sprite.x_position = Some(x);
+    },
+    SET_Y <y:Value> => {
+        sprite.y_position = Some(y);
+    },
+    SET_SIZE <size:Value> => {
+        sprite.size = Some(size);
+    },
+    SET_VOLUME <volume:Value> => {
+        sprite.volume = Some(volume);
+    },
+    POINT_IN_DIRECTION <direction:Value> => {
+        sprite.direction = Some(direction);
+    },
+    SET_ROTATION_STYLE_LEFT_RIGHT ";" => {  
+        sprite.rotation_style = RotationStyle::LeftRight;
+    },
+    SET_ROTATION_STYLE_ALL_AROUND ";" => {  
+        sprite.rotation_style = RotationStyle::AllAround;
+    },
+    SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
+        sprite.rotation_style = RotationStyle::DoNotRotate;
+    },
+    SET_LAYER_ORDER <layer_order:Value> => {
+        sprite.layer_order = Some(layer_order);
+    },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
-        sprite.procs.insert(n.clone(), Proc::new(n.clone(), l..r, a, w.is_none()));
-        sprite.proc_definitions.insert(n.clone(), b);
-        sprite.proc_references.insert(n.clone(), Default::default());
-        sprite.proc_used_args.insert(n.clone(), Default::default());
+        sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b);
     },
     FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
-        sprite.funcs.insert(n.clone(), Func::new(n.clone(), l..r, t, a));
-        sprite.func_definitions.insert(n.clone(), b);
-        sprite.func_references.insert(n.clone(), Default::default());
-        sprite.func_used_args.insert(n.clone(), Default::default());
+        sprite.add_func(Func::new(n.clone(), l..r, t), a, b);
     },
     <l:@L> ON <r:@R> <event:STR> <b:Stmts> => sprite.events.push(EventKind::On { event }.to_event(l..r, b)),
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),
@@ -35,11 +60,32 @@ Declr: () = {
     <l:@L> ONLOUDNESS <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnLoudnessGt { value }.to_event(l..r, b)),
     <l:@L> ONTIMER <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
     <l:@L> ONCLONE <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClone.to_event(l..r, b)),
-    STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:SpannedComma<NAME>> "}" => {
+    STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:Comma<StructField>> "}" => {
         sprite.structs.insert(name.clone(), Struct::new(name, l..r, fields));
     },
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
+    },
+    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:Value> ";" => {
+        sprite.vars.insert(name.clone(), Var {
+            name,
+            span: l..r,
+            type_,
+            default: Some(value),
+            is_cloud: false,
+            is_used: false,
+
+        });
+    },
+    CLOUD <l:@L> <name:NAME> <r:@R> ";" => {
+        sprite.vars.insert(name.clone(), Var {
+            name,
+            span: l..r,
+            type_: Type::Value,
+            default: None,
+            is_cloud: true,
+            is_used: false,
+        });
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
         sprite.lists.insert(name.clone(), List::new(name, l..r, type_));
@@ -70,6 +116,12 @@ EnumVariant: EnumVariant = {
 Costume: () = {
     <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
         sprite.costumes.push(Costume::new(path, alias, l..r));
+    }
+}
+
+Sound: () = {
+    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
+        sprite.sounds.push(Sound::new(path, alias, l..r));
     }
 }
 
@@ -146,6 +198,7 @@ Stmt: Stmt = {
                 lhs_span: l..r,
                 rhs,
                 rhs_span: fl..fr,
+                is_generated: false,
             },
             value,
             type_: Type::Value,
@@ -158,7 +211,8 @@ Stmt: Stmt = {
             lhs: name,
             lhs_span: l..r,
             rhs: field,
-            rhs_span: fl..fr
+            rhs_span: fl..fr,
+            is_generated: false,
         })
     },
     <l:@L> <name:NAME> <r:@R> "." <fl:@L> <field:NAME> <fr:@R> "--" ";" => {
@@ -166,7 +220,8 @@ Stmt: Stmt = {
             lhs: name,
             lhs_span: l..r,
             rhs: field,
-            rhs_span: fl..fr
+            rhs_span: fl..fr,
+            is_generated: false,
         })
     },
     <l:@L> <lhs:NAME> <r:@R> "." <fl:@L> <rhs:NAME> <fr:@R> "+=" <value:BoxedExpr> ";" => {
@@ -175,7 +230,8 @@ Stmt: Stmt = {
                 lhs,
                 lhs_span: l..r,
                 rhs,
-                rhs_span: fl..fr
+                rhs_span: fl..fr,
+                is_generated: false,
             },
             value,
         }
@@ -200,8 +256,8 @@ Stmt: Stmt = {
     },
     SHOW <name:NameName> ";" => Stmt::Show(name),
     HIDE <name:NameName> ";" => Stmt::Hide(name),
-    <l:@L> SHOW <r:@R> ";" => Stmt::Block { block: Block::Show, span: l..r, args: vec![] },
-    <l:@L> HIDE <r:@R> ";" => Stmt::Block { block: Block::Hide, span: l..r, args: vec![] },
+    <l:@L> SHOW <r:@R> ";" => Stmt::Block { block: Block::Show, span: l..r, args: vec![], kwargs: Default::default() },
+    <l:@L> HIDE <r:@R> ";" => Stmt::Block { block: Block::Hide, span: l..r, args: vec![], kwargs: Default::default() },
     ADD <value:BoxedExpr> TO <name:NameName> ";" => Stmt::AddToList { name, value },
     INSERT <value:BoxedExpr> AT <name:NameName> "[" <index:BoxedExpr> "]" ";" => {
         Stmt::InsertAtList { name, index, value }
@@ -238,51 +294,63 @@ Stmt: Stmt = {
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:BoxedExpr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "=" <value:BoxedExpr> ";" => {
         Stmt::SetListIndex {
-            name: Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr },
+            name: Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false },
             index,
             value
         }
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "++" ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::increment_index(name, index)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "--" ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::decrement_index(name, index)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "+=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Add, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "-=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Sub, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "*=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Mul, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "/=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Div, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "//=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::FloorDiv, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "%=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Mod, name, index, value)
     },
     <l:@L> <lhs:NAME> <r:@R> "[" <index:Expr> "]" "." <fl:@L> <rhs:NAME> <fr:@R> "&=" <value:Expr> ";" => {
-        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr };
+        let name = Name::DotName { lhs, lhs_span: l..r, rhs, rhs_span: fl..fr, is_generated: false };
         Stmt::augmented_index_assign(BinOp::Join, name, index, value)
     },
-    <l:@L> <name:NAME> <r:@R> <args:Kwargs> ";" => match Block::from_shape(&name, args.len()) {
-        Some(block) => Stmt::Block { block, span: l..r, args },
-        None => Stmt::ProcCall { name, span: l..r, args },
+    <l:@L> <name:NAME> <r:@R> <args:Kwargs> ";" => {
+        let (args, kwargs) = split_args(args);
+        match Block::from_shape(&name, args.len()) {
+            Some(block) => Stmt::Block { block, span: l..r, args, kwargs },
+            None => Stmt::ProcCall { name, span: l..r, args, kwargs },
+        }
     },
+    <l:@L> SET_X <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetX, span: l..r, args: vec![arg], kwargs: Default::default() },
+    <l:@L> SET_Y <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetY, span: l..r, args: vec![arg], kwargs: Default::default() },
+    <l:@L> SET_SIZE <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetSize, span: l..r, args: vec![arg], kwargs: Default::default() },
+    <l:@L> POINT_IN_DIRECTION <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::PointInDirection, span: l..r, args: vec![arg], kwargs: Default::default() },
+    <l:@L> SET_VOLUME <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetVolume, span: l..r, args: vec![arg], kwargs: Default::default() },
+    <l:@L> LOG <r:@R> <arg:Expr> ";" => Stmt::ProcCall { name: "log".into(), span: l..r, args: vec![arg], kwargs: Default::default() },
+    <l:@L> SET_ROTATION_STYLE_LEFT_RIGHT <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleLeftRight, span: l..r, args: vec![], kwargs: Default::default() },
+    <l:@L> SET_ROTATION_STYLE_ALL_AROUND <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleAllAround, span: l..r, args: vec![], kwargs: Default::default() },
+    <l:@L> SET_ROTATION_STYLE_DO_NOT_ROTATE <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleDoNotRotate, span: l..r, args: vec![], kwargs: Default::default() },
 }
 
 Elif: Stmt = {
@@ -320,7 +388,7 @@ Expr: Expr = {
     #[precedence(level="1")]
     Term,
     StructLiteral,
-    #[precedence(level="2")] #[assoc(side="left")]
+    #[precedence(level="2")] #[assoc(side="right")]
     <l:@L> "-"     <e:Expr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
     <l:@L> NOT     <e:Expr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
     <l:@L> LENGTH  <e:Expr> <r:@R> => UnOp::Length .to_expr(l..r, e),
@@ -339,15 +407,15 @@ Expr: Expr = {
     <l:@L> LOG     <e:Expr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
     <l:@L> ANTILN  <e:Expr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
     <l:@L> ANTILOG <e:Expr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
-    #[precedence(level="3")] #[assoc(side="right")]
+    #[precedence(level="3")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> "*" <rhs:Expr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> "/" <rhs:Expr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> "//"<rhs:Expr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> "%" <rhs:Expr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
-    #[precedence(level="4")] #[assoc(side="right")]
+    #[precedence(level="4")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> "+" <rhs:Expr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> "-" <rhs:Expr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
-    #[precedence(level="5")] #[assoc(side="right")]
+    #[precedence(level="5")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> "<" <rhs:Expr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
@@ -362,21 +430,21 @@ Expr: Expr = {
     //         Expr::FuncCall { name: name, span: l..r, args: args }
     //     }
     // },
-    #[precedence(level="7")] #[assoc(side="right")]
+    #[precedence(level="7")] #[assoc(side="left")]
     <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> NOT IN <rhs:Expr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
     <l:@L> <lhs:Expr> "=="<rhs:Expr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> "!="<rhs:Expr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
-    #[precedence(level="8")] #[assoc(side="right")]
+    #[precedence(level="8")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> AND <rhs:Expr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
-    #[precedence(level="9")] #[assoc(side="right")]
+    #[precedence(level="9")] #[assoc(side="left")]
     <l:@L> <lhs:Expr> OR  <rhs:Expr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
 }
 
 IfExpr: Expr = {
     #[precedence(level="1")]
     Term,
-    #[precedence(level="2")] #[assoc(side="left")]
+    #[precedence(level="2")] #[assoc(side="right")]
     <l:@L> "-"     <e:IfExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
     <l:@L> NOT     <e:IfExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
     <l:@L> LENGTH  <e:IfExpr> <r:@R> => UnOp::Length .to_expr(l..r, e),
@@ -395,20 +463,20 @@ IfExpr: Expr = {
     <l:@L> LOG     <e:IfExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
     <l:@L> ANTILN  <e:IfExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
     <l:@L> ANTILOG <e:IfExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
-    #[precedence(level="3")] #[assoc(side="right")]
+    #[precedence(level="3")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> "*" <rhs:IfExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> "/" <rhs:IfExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> "//"<rhs:IfExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> "%" <rhs:IfExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
-    #[precedence(level="4")] #[assoc(side="right")]
+    #[precedence(level="4")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> "+" <rhs:IfExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> "-" <rhs:IfExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
-    #[precedence(level="5")] #[assoc(side="right")]
+    #[precedence(level="5")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> "<" <rhs:IfExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> "<="<rhs:IfExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> ">" <rhs:IfExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> ">="<rhs:IfExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
-    #[precedence(level="6")] #[assoc(side="left")]
+    #[precedence(level="6")] #[assoc(side="right")]
     <l:@L> <lhs:IfExpr> "&" <rhs:IfExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
     // <lhs:IfExpr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
     //     args.insert(0, lhs);
@@ -418,14 +486,14 @@ IfExpr: Expr = {
     //         Expr::FuncCall { name: name, span: l..r, args: args }
     //     }
     // },
-    #[precedence(level="7")] #[assoc(side="right")]
+    #[precedence(level="7")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr>  IN <rhs:IfExpr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> NOT IN <rhs:IfExpr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
     <l:@L> <lhs:IfExpr> "=="<rhs:IfExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:IfExpr> "!="<rhs:IfExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
-    #[precedence(level="8")] #[assoc(side="right")]
+    #[precedence(level="8")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> AND <rhs:IfExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
-    #[precedence(level="9")] #[assoc(side="right")]
+    #[precedence(level="9")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
 }
 
@@ -434,12 +502,12 @@ Term: Expr = {
     <v:Value> => v.0.to_expr(v.1),
     <l:@L> <n:NAME> <r:@R> => Expr::Name(Name::Name { name: n, span: l..r }),
     <l:@L> <n:ARG> <r:@R> => Expr::Arg(Name::Name { name: n, span: l..r }),
-
     <l:@L> <name:NAME> <r:@R> "(" <args:Kwargs> ")" => {
+        let (args, kwargs) = split_args(args);
         if let Some(repr) = Repr::from_shape(&name, args.len()) {
             Expr::Repr { repr, span: l..r, args }
         } else {
-            Expr::FuncCall { name: name, span: l..r, args }
+            Expr::FuncCall { name: name, span: l..r, args, kwargs }
         }
     },
     <l:@L> <term:Term> "[" <index:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, term, index),
@@ -461,8 +529,8 @@ StructLiteralField: StructLiteralField = {
 };
 
 Value: (Value, Span) = { 
-    <l:@L> TRUE      <r:@R> => (Value::from(1), l..r),
-    <l:@L> FALSE     <r:@R> => (Value::from(0), l..r),
+    <l:@L> TRUE      <r:@R> => (Value::from(1.0), l..r),
+    <l:@L> FALSE     <r:@R> => (Value::from(0.0), l..r),
     <l:@L> <v:INT>   <r:@R> => (Value::from(v), l..r),
     <l:@L> <v:HEX>   <r:@R> => (Value::from(v), l..r),
     <l:@L> <v:OCT>   <r:@R> => (Value::from(v), l..r),
@@ -476,7 +544,7 @@ NameName: Name = <l:@L> <n:NAME> <r:@R> => Name::Name { name: n, span: l..r };
 
 #[inline]
 NameDotName: Name = <l:@L> <n:NAME> <r:@R> "." <lf:@L> <f:NAME> <rf:@R> => {
-    Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf }
+    Name::DotName { lhs: n, lhs_span: l..r, rhs: f, rhs_span: lf..rf, is_generated: false }
 };
 
 #[inline]
@@ -487,7 +555,12 @@ Type: Type = {
 
 #[inline]
 Arg: Arg = {
-    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <IfExpr>)?> => Arg::new(name, l..r, type_, default),
+    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => Arg::new(name, l..r, type_, default),
+}
+
+#[inline]
+StructField: (SmolStr, Span, Option<(Value, Span)>) = {
+    <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => (name, l..r, default),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {
@@ -611,5 +684,15 @@ extern {
         LIST           => Token::List,
         CLOUD          => Token::Cloud,
         "|>"           => Token::Pipe,
+        SET_X          => Token::SetX,
+        SET_Y          => Token::SetY,
+        SET_SIZE       => Token::SetSize,
+        POINT_IN_DIRECTION => Token::PointInDirection,
+        SET_VOLUME     => Token::SetVolume,
+        SET_ROTATION_STYLE_LEFT_RIGHT => Token::SetRotationStyleLeftRight,
+        SET_ROTATION_STYLE_ALL_AROUND => Token::SetRotationStyleAllAround,
+        SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
+        SET_LAYER_ORDER => Token::SetLayerOrder,
+        VAR => Token::Var,
     }
 }

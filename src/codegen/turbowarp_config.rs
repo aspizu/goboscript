@@ -1,4 +1,7 @@
-use std::fmt::{self, Display};
+use std::fmt::{
+    self,
+    Display,
+};
 
 use crate::config::Config;
 

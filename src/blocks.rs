@@ -1,9 +1,14 @@
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub struct Menu {
     pub input: &'static str,
     pub opcode: &'static str,
     pub default: &'static str,
+    pub field: &'static str,
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum UnOp {
     Not,
     Length,
@@ -96,7 +101,7 @@ impl UnOp {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum BinOp {
     Add,
     Sub,
@@ -175,7 +180,7 @@ impl BinOp {
         }
     }
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Block {
     Move,
     TurnLeft,
@@ -207,6 +212,8 @@ pub enum Block {
     SwitchCostume,
     NextCostume,
     SwitchBackdrop,
+    PreviousBackdrop,
+    RandomBackdrop,
     NextBackdrop,
     SetSize,
     ChangeSize,
@@ -244,7 +251,6 @@ pub enum Block {
     Broadcast,
     BroadcastAndWait,
     Wait,
-    WaitUntil,
     StopAll,
     StopThisScript,
     StopOtherScripts,
@@ -262,6 +268,14 @@ pub enum Block {
     SetPenColor,
     ChangePenSize,
     SetPenSize,
+    SetPenHue,
+    SetPenSaturation,
+    SetPenBrightness,
+    SetPenTransparency,
+    ChangePenHue,
+    ChangePenSaturation,
+    ChangePenBrightness,
+    ChangePenTransparency,
     Rest,
     SetTempo,
     ChangeTempo,
@@ -273,77 +287,152 @@ impl Block {
             Self::GotoRandomPosition => Some(Menu {
                 opcode: "motion_goto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::GotoMousePointer => Some(Menu {
                 opcode: "motion_goto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_mouse_",
             }),
             Self::Goto1 => Some(Menu {
                 opcode: "motion_goto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::Glide2 => Some(Menu {
                 opcode: "motion_glideto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::GlideToRandomPosition => Some(Menu {
                 opcode: "motion_glideto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_random_",
             }),
             Self::GlideToMousePointer => Some(Menu {
                 opcode: "motion_glideto_menu",
                 input: "TO",
+                field: "TO",
                 default: "_mouse_",
             }),
             Self::PointTowardsMousePointer => Some(Menu {
                 opcode: "motion_pointtowards_menu",
                 input: "TOWARDS",
+                field: "TOWARDS",
                 default: "_mouse_",
             }),
             Self::PointTowardsRandomDirection => Some(Menu {
                 opcode: "motion_pointtowards_menu",
                 input: "TOWARDS",
+                field: "TOWARDS",
                 default: "_random_",
             }),
             Self::PointTowards => Some(Menu {
                 opcode: "motion_pointtowards_menu",
                 input: "TOWARDS",
+                field: "TOWARDS",
                 default: "_random_",
             }),
             Self::SwitchCostume => Some(Menu {
                 opcode: "looks_costume",
                 input: "COSTUME",
+                field: "COSTUME",
                 default: "make gh issue if this bothers u",
             }),
             Self::SwitchBackdrop => Some(Menu {
                 opcode: "looks_backdrops",
                 input: "BACKDROP",
-                default: "make gh issue if this bothers u",
+                field: "BACKDROP",
+                default: "next backdrop",
+            }),
+            Self::PreviousBackdrop => Some(Menu {
+                opcode: "looks_backdrops",
+                input: "BACKDROP",
+                field: "BACKDROP",
+                default: "previous backdrop",
+            }),
+            Self::RandomBackdrop => Some(Menu {
+                opcode: "looks_backdrops",
+                input: "BACKDROP",
+                field: "BACKDROP",
+                default: "random backdrop",
             }),
             Self::PlaySoundUntilDone => Some(Menu {
                 opcode: "sound_sounds_menu",
                 input: "SOUND_MENU",
+                field: "SOUND_MENU",
                 default: "make gh issue if this bothers u",
             }),
             Self::StartSound => Some(Menu {
                 opcode: "sound_sounds_menu",
                 input: "SOUND_MENU",
+                field: "SOUND_MENU",
                 default: "make gh issue if this bothers u",
             }),
             Self::Clone0 => Some(Menu {
                 opcode: "control_create_clone_of_menu",
                 input: "CLONE_OPTION",
+                field: "CLONE_OPTION",
                 default: "_myself_",
             }),
             Self::Clone1 => Some(Menu {
                 opcode: "control_create_clone_of_menu",
                 input: "CLONE_OPTION",
+                field: "CLONE_OPTION",
                 default: "_myself_",
+            }),
+            Self::SetPenHue => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "color",
+            }),
+            Self::SetPenSaturation => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "saturation",
+            }),
+            Self::SetPenBrightness => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "brightness",
+            }),
+            Self::SetPenTransparency => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "transparency",
+            }),
+            Self::ChangePenHue => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "color",
+            }),
+            Self::ChangePenSaturation => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "saturation",
+            }),
+            Self::ChangePenBrightness => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "brightness",
+            }),
+            Self::ChangePenTransparency => Some(Menu {
+                opcode: "pen_menu_colorParam",
+                input: "COLOR_PARAM",
+                field: "colorParam",
+                default: "transparency",
             }),
             _ => None,
         }
@@ -396,6 +485,8 @@ impl Block {
             ("switch_costume", _) => Some(Self::SwitchCostume),
             ("next_costume", _) => Some(Self::NextCostume),
             ("switch_backdrop", _) => Some(Self::SwitchBackdrop),
+            ("previous_backdrop", _) => Some(Self::PreviousBackdrop),
+            ("random_backdrop", _) => Some(Self::RandomBackdrop),
             ("next_backdrop", _) => Some(Self::NextBackdrop),
             ("set_size", _) => Some(Self::SetSize),
             ("change_size", _) => Some(Self::ChangeSize),
@@ -433,7 +524,6 @@ impl Block {
             ("broadcast", _) => Some(Self::Broadcast),
             ("broadcast_and_wait", _) => Some(Self::BroadcastAndWait),
             ("wait", _) => Some(Self::Wait),
-            ("wait_until", _) => Some(Self::WaitUntil),
             ("stop_all", _) => Some(Self::StopAll),
             ("stop_this_script", _) => Some(Self::StopThisScript),
             ("stop_other_scripts", _) => Some(Self::StopOtherScripts),
@@ -452,6 +542,14 @@ impl Block {
             ("set_pen_color", _) => Some(Self::SetPenColor),
             ("change_pen_size", _) => Some(Self::ChangePenSize),
             ("set_pen_size", _) => Some(Self::SetPenSize),
+            ("set_pen_hue", _) => Some(Self::SetPenHue),
+            ("set_pen_saturation", _) => Some(Self::SetPenSaturation),
+            ("set_pen_brightness", _) => Some(Self::SetPenBrightness),
+            ("set_pen_transparency", _) => Some(Self::SetPenTransparency),
+            ("change_pen_hue", _) => Some(Self::ChangePenHue),
+            ("change_pen_saturation", _) => Some(Self::ChangePenSaturation),
+            ("change_pen_brightness", _) => Some(Self::ChangePenBrightness),
+            ("change_pen_transparency", _) => Some(Self::ChangePenTransparency),
             ("rest", _) => Some(Self::Rest),
             ("set_tempo", _) => Some(Self::SetTempo),
             ("change_tempo", _) => Some(Self::ChangeTempo),
@@ -491,6 +589,8 @@ impl Block {
             Self::SwitchCostume => "switch_costume",
             Self::NextCostume => "next_costume",
             Self::SwitchBackdrop => "switch_backdrop",
+            Self::PreviousBackdrop => "previous_backdrop",
+            Self::RandomBackdrop => "random_backdrop",
             Self::NextBackdrop => "next_backdrop",
             Self::SetSize => "set_size",
             Self::ChangeSize => "change_size",
@@ -528,7 +628,6 @@ impl Block {
             Self::Broadcast => "broadcast",
             Self::BroadcastAndWait => "broadcast_and_wait",
             Self::Wait => "wait",
-            Self::WaitUntil => "wait_until",
             Self::StopAll => "stop_all",
             Self::StopThisScript => "stop_this_script",
             Self::StopOtherScripts => "stop_other_scripts",
@@ -546,6 +645,14 @@ impl Block {
             Self::SetPenColor => "set_pen_color",
             Self::ChangePenSize => "change_pen_size",
             Self::SetPenSize => "set_pen_size",
+            Self::SetPenHue => "set_pen_hue",
+            Self::SetPenSaturation => "set_pen_saturation",
+            Self::SetPenBrightness => "set_pen_brightness",
+            Self::SetPenTransparency => "set_pen_transparency",
+            Self::ChangePenHue => "change_pen_hue",
+            Self::ChangePenSaturation => "change_pen_saturation",
+            Self::ChangePenBrightness => "change_pen_brightness",
+            Self::ChangePenTransparency => "change_pen_transparency",
             Self::Rest => "rest",
             Self::SetTempo => "set_tempo",
             Self::ChangeTempo => "change_tempo",
@@ -580,6 +687,8 @@ impl Block {
             "switch_costume",
             "next_costume",
             "switch_backdrop",
+            "previous_backdrop",
+            "random_backdrop",
             "next_backdrop",
             "set_size",
             "change_size",
@@ -617,7 +726,6 @@ impl Block {
             "broadcast",
             "broadcast_and_wait",
             "wait",
-            "wait_until",
             "stop_all",
             "stop_this_script",
             "stop_other_scripts",
@@ -634,6 +742,14 @@ impl Block {
             "set_pen_color",
             "change_pen_size",
             "set_pen_size",
+            "set_pen_hue",
+            "set_pen_saturation",
+            "set_pen_brightness",
+            "set_pen_transparency",
+            "change_pen_hue",
+            "change_pen_saturation",
+            "change_pen_brightness",
+            "change_pen_transparency",
             "rest",
             "set_tempo",
             "change_tempo",
@@ -672,6 +788,8 @@ impl Block {
             Self::SwitchCostume => "looks_switchcostumeto",
             Self::NextCostume => "looks_nextcostume",
             Self::SwitchBackdrop => "looks_switchbackdropto",
+            Self::PreviousBackdrop => "looks_switchbackdropto",
+            Self::RandomBackdrop => "looks_switchbackdropto",
             Self::NextBackdrop => "looks_nextbackdrop",
             Self::SetSize => "looks_setsizeto",
             Self::ChangeSize => "looks_changesizeby",
@@ -709,7 +827,6 @@ impl Block {
             Self::Broadcast => "event_broadcast",
             Self::BroadcastAndWait => "event_broadcastandwait",
             Self::Wait => "control_wait",
-            Self::WaitUntil => "control_wait_until",
             Self::StopAll => "control_stop",
             Self::StopThisScript => "control_stop",
             Self::StopOtherScripts => "control_stop",
@@ -727,6 +844,14 @@ impl Block {
             Self::SetPenColor => "pen_setPenColorToColor",
             Self::ChangePenSize => "pen_changePenSizeBy",
             Self::SetPenSize => "pen_setPenSizeTo",
+            Self::SetPenHue => "pen_setPenColorParamTo",
+            Self::SetPenSaturation => "pen_setPenColorParamTo",
+            Self::SetPenBrightness => "pen_setPenColorParamTo",
+            Self::SetPenTransparency => "pen_setPenColorParamTo",
+            Self::ChangePenHue => "pen_changePenColorParamBy",
+            Self::ChangePenSaturation => "pen_changePenColorParamBy",
+            Self::ChangePenBrightness => "pen_changePenColorParamBy",
+            Self::ChangePenTransparency => "pen_changePenColorParamBy",
             Self::Rest => "music_restForBeats",
             Self::SetTempo => "music_setTempo",
             Self::ChangeTempo => "music_changeTempo",
@@ -765,6 +890,8 @@ impl Block {
             Self::SwitchCostume => &["COSTUME"],
             Self::NextCostume => &[],
             Self::SwitchBackdrop => &["BACKDROP"],
+            Self::PreviousBackdrop => &[],
+            Self::RandomBackdrop => &[],
             Self::NextBackdrop => &[],
             Self::SetSize => &["SIZE"],
             Self::ChangeSize => &["CHANGE"],
@@ -802,7 +929,6 @@ impl Block {
             Self::Broadcast => &["BROADCAST_INPUT"],
             Self::BroadcastAndWait => &["BROADCAST_INPUT"],
             Self::Wait => &["DURATION"],
-            Self::WaitUntil => &["CONDITION"],
             Self::StopAll => &[],
             Self::StopThisScript => &[],
             Self::StopOtherScripts => &[],
@@ -820,6 +946,14 @@ impl Block {
             Self::SetPenColor => &["COLOR"],
             Self::ChangePenSize => &["SIZE"],
             Self::SetPenSize => &["SIZE"],
+            Self::SetPenHue => &["VALUE"],
+            Self::SetPenSaturation => &["VALUE"],
+            Self::SetPenBrightness => &["VALUE"],
+            Self::SetPenTransparency => &["VALUE"],
+            Self::ChangePenHue => &["VALUE"],
+            Self::ChangePenSaturation => &["VALUE"],
+            Self::ChangePenBrightness => &["VALUE"],
+            Self::ChangePenTransparency => &["VALUE"],
             Self::Rest => &["BEATS"],
             Self::SetTempo => &["TEMPO"],
             Self::ChangeTempo => &["TEMPO"],
@@ -858,6 +992,8 @@ impl Block {
             Self::SwitchCostume => None,
             Self::NextCostume => None,
             Self::SwitchBackdrop => None,
+            Self::PreviousBackdrop => None,
+            Self::RandomBackdrop => None,
             Self::NextBackdrop => None,
             Self::SetSize => None,
             Self::ChangeSize => None,
@@ -895,7 +1031,6 @@ impl Block {
             Self::Broadcast => None,
             Self::BroadcastAndWait => None,
             Self::Wait => None,
-            Self::WaitUntil => None,
             Self::StopAll => Some("{\"STOP_OPTION\": [\"all\", null]}"),
             Self::StopThisScript => Some("{\"STOP_OPTION\": [\"this script\", null]}"),
             Self::StopOtherScripts => {
@@ -915,13 +1050,21 @@ impl Block {
             Self::SetPenColor => None,
             Self::ChangePenSize => None,
             Self::SetPenSize => None,
+            Self::SetPenHue => None,
+            Self::SetPenSaturation => None,
+            Self::SetPenBrightness => None,
+            Self::SetPenTransparency => None,
+            Self::ChangePenHue => None,
+            Self::ChangePenSaturation => None,
+            Self::ChangePenBrightness => None,
+            Self::ChangePenTransparency => None,
             Self::Rest => None,
             Self::SetTempo => None,
             Self::ChangeTempo => None,
         }
     }
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Repr {
     XPosition,
     YPosition,
@@ -932,6 +1075,8 @@ pub enum Repr {
     BackdropNumber,
     BackdropName,
     Volume,
+    DistanceToMousePointer,
+    DistanceTo,
     TouchingMousePointer,
     TouchingEdge,
     Touching,
@@ -954,29 +1099,46 @@ pub enum Repr {
     ColorIsTouchingColor,
     Answer,
     Random,
+    Contains,
 }
 
 impl Repr {
     pub fn menu(&self) -> Option<Menu> {
         match self {
+            Self::DistanceToMousePointer => Some(Menu {
+                opcode: "sensing_distancetomenu",
+                input: "DISTANCETOMENU",
+                field: "DISTANCETOMENU",
+                default: "_mouse_",
+            }),
+            Self::DistanceTo => Some(Menu {
+                opcode: "sensing_distancetomenu",
+                input: "DISTANCETOMENU",
+                field: "DISTANCETOMENU",
+                default: "_mouse_",
+            }),
             Self::TouchingMousePointer => Some(Menu {
                 opcode: "sensing_touchingobjectmenu",
                 input: "TOUCHINGOBJECTMENU",
+                field: "TOUCHINGOBJECTMENU",
                 default: "_mouse_",
             }),
             Self::TouchingEdge => Some(Menu {
                 opcode: "sensing_touchingobjectmenu",
                 input: "TOUCHINGOBJECTMENU",
+                field: "TOUCHINGOBJECTMENU",
                 default: "_edge_",
             }),
             Self::Touching => Some(Menu {
                 opcode: "sensing_touchingobjectmenu",
                 input: "TOUCHINGOBJECTMENU",
+                field: "TOUCHINGOBJECTMENU",
                 default: "_mouse_",
             }),
             Self::KeyPressed => Some(Menu {
                 opcode: "sensing_keyoptions",
                 input: "KEY_OPTION",
+                field: "KEY_OPTION",
                 default: "any",
             }),
             _ => None,
@@ -984,9 +1146,7 @@ impl Repr {
     }
 
     pub fn overloads(name: &str) -> &'static [Self] {
-        match name {
-            _ => &[],
-        }
+        &[]
     }
 
     pub fn from_shape(name: &str, args: usize) -> Option<Self> {
@@ -1000,6 +1160,8 @@ impl Repr {
             ("backdrop_number", _) => Some(Self::BackdropNumber),
             ("backdrop_name", _) => Some(Self::BackdropName),
             ("volume", _) => Some(Self::Volume),
+            ("distance_to_mouse_pointer", _) => Some(Self::DistanceToMousePointer),
+            ("distance_to", _) => Some(Self::DistanceTo),
             ("touching_mouse_pointer", _) => Some(Self::TouchingMousePointer),
             ("touching_edge", _) => Some(Self::TouchingEdge),
             ("touching", _) => Some(Self::Touching),
@@ -1022,6 +1184,7 @@ impl Repr {
             ("color_is_touching_color", _) => Some(Self::ColorIsTouchingColor),
             ("answer", _) => Some(Self::Answer),
             ("random", _) => Some(Self::Random),
+            ("contains", _) => Some(Self::Contains),
             _ => None,
         }
     }
@@ -1037,6 +1200,8 @@ impl Repr {
             Self::BackdropNumber => "backdrop_number",
             Self::BackdropName => "backdrop_name",
             Self::Volume => "volume",
+            Self::DistanceToMousePointer => "distance_to_mouse_pointer",
+            Self::DistanceTo => "distance_to",
             Self::TouchingMousePointer => "touching_mouse_pointer",
             Self::TouchingEdge => "touching_edge",
             Self::Touching => "touching",
@@ -1059,6 +1224,7 @@ impl Repr {
             Self::ColorIsTouchingColor => "color_is_touching_color",
             Self::Answer => "answer",
             Self::Random => "random",
+            Self::Contains => "contains",
         }
     }
 
@@ -1073,6 +1239,8 @@ impl Repr {
             "backdrop_number",
             "backdrop_name",
             "volume",
+            "distance_to_mouse_pointer",
+            "distance_to",
             "touching_mouse_pointer",
             "touching_edge",
             "touching",
@@ -1095,6 +1263,7 @@ impl Repr {
             "color_is_touching_color",
             "answer",
             "random",
+            "contains",
         ]
     }
 
@@ -1109,6 +1278,8 @@ impl Repr {
             Self::BackdropNumber => "looks_backdropnumbername",
             Self::BackdropName => "looks_backdropnumbername",
             Self::Volume => "sound_volume",
+            Self::DistanceToMousePointer => "sensing_distanceto",
+            Self::DistanceTo => "sensing_distanceto",
             Self::TouchingMousePointer => "sensing_touchingobject",
             Self::TouchingEdge => "sensing_touchingobject",
             Self::Touching => "sensing_touchingobject",
@@ -1131,6 +1302,7 @@ impl Repr {
             Self::ColorIsTouchingColor => "sensing_coloristouchingcolor",
             Self::Answer => "sensing_answer",
             Self::Random => "operator_random",
+            Self::Contains => "operator_contains",
         }
     }
 
@@ -1145,6 +1317,8 @@ impl Repr {
             Self::BackdropNumber => &[],
             Self::BackdropName => &[],
             Self::Volume => &[],
+            Self::DistanceToMousePointer => &[],
+            Self::DistanceTo => &["DISTANCETOMENU"],
             Self::TouchingMousePointer => &[],
             Self::TouchingEdge => &[],
             Self::Touching => &["TOUCHINGOBJECTMENU"],
@@ -1167,6 +1341,7 @@ impl Repr {
             Self::ColorIsTouchingColor => &["COLOR", "COLOR2"],
             Self::Answer => &[],
             Self::Random => &["FROM", "TO"],
+            Self::Contains => &["STRING1", "STRING2"],
         }
     }
 
@@ -1181,6 +1356,8 @@ impl Repr {
             Self::BackdropNumber => Some("{\"NUMBER_NAME\": [\"number\", null]}"),
             Self::BackdropName => Some("{\"NUMBER_NAME\": [\"name\", null]}"),
             Self::Volume => None,
+            Self::DistanceToMousePointer => None,
+            Self::DistanceTo => None,
             Self::TouchingMousePointer => None,
             Self::TouchingEdge => None,
             Self::Touching => None,
@@ -1203,6 +1380,7 @@ impl Repr {
             Self::ColorIsTouchingColor => None,
             Self::Answer => None,
             Self::Random => None,
+            Self::Contains => None,
         }
     }
 }

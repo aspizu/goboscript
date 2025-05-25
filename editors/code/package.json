@@ -82,22 +82,6 @@
         "required": [],
         "properties": {}
       }
-    ],
-    "problemMatchers": [
-      {
-        "name": "goboscript",
-        "owner": "goboscript-build",
-        "fileLocation": "absolute",
-        "pattern": {
-          "regexp": "^\\[(warning|error)\\] (.*):(\\d+):(\\d+):(\\d+) (.*)",
-          "severity": 1,
-          "file": 2,
-          "line": 3,
-          "column": 4,
-          "endColumn": 5,
-          "message": 6
-        }
-      }
     ]
   }
 }

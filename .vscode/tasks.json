@@ -2,6 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "type": "process",
+            "command": "cargo",
+            "args": ["run", "build", "-i", "playground"],
+            "problemMatcher": ["$rustc"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "label": "Build Playground"
+        },
+        {
             "label": "Build Extension in Background",
             "group": "build",
             "type": "npm",

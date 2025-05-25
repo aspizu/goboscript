@@ -1,7 +1,10 @@
 use fxhash::FxHashMap;
 use glob::glob;
 
-use crate::{ast::*, misc::SmolStr};
+use crate::{
+    ast::*,
+    misc::SmolStr,
+};
 
 struct V<'a> {
     locals: Option<&'a mut FxHashMap<SmolStr, Var>>,
@@ -18,28 +21,36 @@ pub fn visit_project(project: &mut Project) {
 
 fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
     visit_costumes(&mut sprite.costumes);
+    visit_sounds(&mut sprite.sounds);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
     for proc in sprite.procs.values_mut() {
+        sprite
+            .proc_locals
+            .insert(proc.name.clone(), Default::default());
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
         visit_stmts(
             proc_definition,
             &mut V {
-                locals: Some(&mut proc.locals),
+                locals: sprite.proc_locals.get_mut(&proc.name),
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
         );
     }
     for func in sprite.funcs.values_mut() {
-        let name: SmolStr = format!("__return_{}__", func.name).into();
+        sprite
+            .func_locals
+            .insert(func.name.clone(), Default::default());
+        let name: SmolStr = format!("{}:return", func.name).into();
         sprite.vars.insert(
             name.clone(),
             Var {
                 name,
                 span: func.span.clone(),
                 type_: func.type_.clone(),
+                default: None,
                 is_cloud: false,
                 is_used: true,
             },
@@ -48,7 +59,7 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
         visit_stmts(
             func_definition,
             &mut V {
-                locals: Some(&mut func.locals),
+                locals: sprite.func_locals.get_mut(&func.name),
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
@@ -67,15 +78,15 @@ fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
 }
 
 fn visit_enum(enum_: &mut Enum) {
-    let mut index = 0;
+    let mut index = 0.0;
     for variant in &mut enum_.variants {
         if let Some((value, _)) = &variant.value {
-            if let Value::Int(int_value) = value {
-                index = *int_value;
+            if let Value::Number(number) = value {
+                index = *number;
             }
         } else {
-            variant.value = Some((Value::Int(index), variant.span.clone()));
-            index += 1;
+            variant.value = Some((Value::Number(index), variant.span.clone()));
+            index += 1.0;
         }
     }
 }
@@ -103,6 +114,33 @@ fn visit_costumes(new: &mut Vec<Costume>) {
             new.extend(costumes);
         } else {
             new.push(costume);
+        }
+    }
+}
+
+fn visit_sounds(new: &mut Vec<Sound>) {
+    let old: Vec<Sound> = std::mem::take(new);
+    for sound in old {
+        if let Some(suffix) = sound.name.strip_prefix("@ascii/") {
+            new.extend((' '..='~').map(|ch| Sound {
+                name: format!("{suffix}{ch}").into(),
+                path: sound.path.clone(),
+                span: sound.span.clone(),
+            }));
+        } else if sound.path.contains('*') {
+            let mut sounds: Vec<Sound> = glob(&sound.path)
+                .unwrap()
+                .map(Result::unwrap)
+                .map(|path| Sound {
+                    name: path.file_stem().unwrap().to_string_lossy().into(),
+                    path: path.to_string_lossy().into(),
+                    span: sound.span.clone(),
+                })
+                .collect();
+            sounds.sort_by(|a, b| a.name.cmp(&b.name));
+            new.extend(sounds);
+        } else {
+            new.push(sound);
         }
     }
 }
@@ -136,6 +174,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
                 name: basename.clone(),
                 span: name.span(),
                 type_: type_.clone(),
+                default: v.vars.get(basename).and_then(|var| var.default.clone()),
                 is_cloud: *is_cloud,
                 is_used: false,
             };

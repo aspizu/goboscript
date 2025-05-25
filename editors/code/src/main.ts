@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { GoboscriptTaskProvider } from "./goboscript-task-provider"
+import {GoboscriptTaskProvider} from "./goboscript-task-provider"
 
 let goboscriptTaskProvider: vscode.Disposable | undefined
 

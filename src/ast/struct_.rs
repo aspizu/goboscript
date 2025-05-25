@@ -1,9 +1,16 @@
 use logos::Span;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use super::struct_field::StructField;
+use super::{
+    struct_field::StructField,
+    Value,
+};
 use crate::misc::SmolStr;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Struct {
     pub name: SmolStr,
     pub span: Span,
@@ -12,15 +19,20 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(name: SmolStr, span: Span, fields: Vec<(SmolStr, Span)>) -> Self {
+    pub fn new(
+        name: SmolStr,
+        span: Span,
+        fields: Vec<(SmolStr, Span, Option<(Value, Span)>)>,
+    ) -> Self {
         Self {
             name,
             span,
             fields: fields
                 .into_iter()
-                .map(|(name, span)| StructField {
+                .map(|(name, span, default)| StructField {
                     name,
                     span,
+                    default,
                     is_used: false,
                 })
                 .collect(),

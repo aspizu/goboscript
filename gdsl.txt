@@ -78,7 +78,9 @@ say                               say               MESSAGE      |              
 think                             think             ...          |                          |
 switch_costume                    switchcostumeto   COSTUME      |                          | COSTUME:looks_costume=make gh issue if this bothers u
 next_costume                      nextcostume                    |                          |
-switch_backdrop                   switchbackdropto  BACKDROP     |                          | BACKDROP:looks_backdrops=make gh issue if this bothers u
+switch_backdrop                   switchbackdropto  BACKDROP     |                          | BACKDROP:looks_backdrops=next backdrop
+previous_backdrop                 switchbackdropto               |                          | BACKDROP:looks_backdrops=previous backdrop
+random_backdrop                   switchbackdropto               |                          | BACKDROP:looks_backdrops=random backdrop
 next_backdrop                     nextbackdrop                   |                          |
 set_size                          setsizeto         SIZE         |                          |
 change_size                       changesizeby      CHANGE       |                          |
@@ -119,7 +121,6 @@ broadcast                         broadcast        BROADCAST_INPUT |            
 broadcast_and_wait                broadcastandwait BROADCAST_INPUT |                        |
 [control]========================================================|==========================|
 wait                              wait              DURATION     |                          |
-wait_until                        wait_until        CONDITION    |                          |
 stop_all                          stop                           | STOP_OPTION=all          |
 stop_this_script                  ...                            | ...=this script          |
 stop_other_scripts                ...                            | ...=other scripts in sprite|
@@ -139,6 +140,14 @@ pen_up                            penUp                          |              
 set_pen_color                     setPenColorToColor COLOR       |                          |
 change_pen_size                   changePenSizeBy   SIZE         |                          |
 set_pen_size                      setPenSizeTo      ...          |                          |
+set_pen_hue                       setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=color
+set_pen_saturation                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
+set_pen_brightness                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
+set_pen_transparency              setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
+change_pen_hue                    changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=color
+change_pen_saturation             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
+change_pen_brightness             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
+change_pen_transparency           changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
 [music]==========================================================|==========================|
 rest                              restForBeats      BEATS        |                          |
 set_tempo                         setTempo          TEMPO        |                          |
@@ -161,6 +170,8 @@ backdrop_name                     ...                            | ...=name     
 [sound]==========================================================|====================|=
 volume                            volume                         |                    | 
 [sensing]========================================================|====================|=
+distance_to_mouse_pointer         distanceto                     |                    | DISTANCETOMENU:sensing_distancetomenu=_mouse_
+distance_to                       distanceto  DISTANCETOMENU     |                    | DISTANCETOMENU:sensing_distancetomenu=_mouse_
 touching_mouse_pointer            touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
 touching_edge                     touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_edge_
 touching                          touchingobject TOUCHINGOBJECTMENU|                  | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
@@ -184,3 +195,4 @@ color_is_touching_color           coloristouchingcolor COLOR,COLOR2|            
 answer                            answer                         |                    | 
 [operator]=======================================================|====================|=
 random                            random            FROM,TO      |                    | 
+contains                          contains          STRING1,STRING2|                  |

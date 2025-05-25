@@ -1,21 +1,32 @@
 use annotate_snippets::Level;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use tsify::Tsify;
 
-use super::SpriteDiagnostics;
 use crate::{
-    ast::{Project, Sprite, Type},
-    blocks::{Block, Repr},
+    ast::{
+        Sprite,
+        Type,
+    },
+    blocks::{
+        Block,
+        Repr,
+    },
     lexer::token::Token,
     misc::SmolStr,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Tsify, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub enum DiagnosticKind {
     // Errors
     InvalidToken,
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
     ExtraToken(Token),
-    FileNotFound(SmolStr),
+    IOError(SmolStr),
     UnrecognizedReporter(SmolStr),
     UnrecognizedBlock(SmolStr),
     UnrecognizedVariable(SmolStr),
@@ -27,7 +38,7 @@ pub enum DiagnosticKind {
     UnrecognizedArgument(SmolStr),
     UnrecognizedStructField(SmolStr),
     UnrecognizedEnumVariant(SmolStr),
-    UnrecognizedKey(SmolStr),
+    UnrecognizedStandardLibraryHeader,
     NoCostumes,
     BlockArgsCountMismatch {
         block: Block,
@@ -45,6 +56,10 @@ pub enum DiagnosticKind {
         func: SmolStr,
         given: usize,
     },
+    MacroArgsCountMismatch {
+        expected: usize,
+        given: usize,
+    },
     CommandFailed {
         stderr: Vec<u8>,
     },
@@ -57,8 +72,13 @@ pub enum DiagnosticKind {
         type_name: SmolStr,
         field_name: SmolStr,
     },
+    MissingField {
+        struct_name: SmolStr,
+        field_name: SmolStr,
+    },
     // Warnings
     FollowedByUnreachableCode,
+    UnrecognizedKey(SmolStr),
     UnusedVariable(SmolStr),
     UnusedList(SmolStr),
     UnusedEnum(SmolStr),
@@ -95,7 +115,7 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::ExtraToken(_) => "extra token".to_string(),
-            DiagnosticKind::FileNotFound(_) => "file not found".to_string(),
+            DiagnosticKind::IOError(error) => format!("{error}"),
             DiagnosticKind::UnrecognizedReporter(_) => "unrecognized reporter".to_string(),
             DiagnosticKind::UnrecognizedBlock(_) => "unrecognized block".to_string(),
             DiagnosticKind::UnrecognizedVariable(_) => "unrecognized variable".to_string(),
@@ -108,6 +128,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnrecognizedStructField(_) => "unrecognized struct field".to_string(),
             DiagnosticKind::UnrecognizedEnumVariant(_) => "unrecognized enum variant".to_string(),
             DiagnosticKind::UnrecognizedKey(_) => "unrecognized key".to_string(),
+            DiagnosticKind::UnrecognizedStandardLibraryHeader => {
+                "unrecognized standard library header".to_string()
+            }
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(
@@ -128,15 +151,21 @@ impl DiagnosticKind {
             DiagnosticKind::ProcArgsCountMismatch { proc, given } => {
                 format!(
                     "procedure expects {} arguments, but {} were given",
-                    sprite.procs[proc].args.len(),
+                    sprite.proc_args[proc].len(),
                     given
                 )
             }
             DiagnosticKind::FuncArgsCountMismatch { func, given } => {
                 format!(
                     "function expects {} arguments, but {} were given",
-                    sprite.funcs[func].args.len(),
+                    sprite.func_args[func].len(),
                     given
+                )
+            }
+            DiagnosticKind::MacroArgsCountMismatch { expected, given } => {
+                format!(
+                    "macro expects {} arguments, but {} were given",
+                    expected, given
                 )
             }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
@@ -160,6 +189,12 @@ impl DiagnosticKind {
             } => {
                 format!("struct {type_name} does not have field {field_name}")
             }
+            DiagnosticKind::MissingField {
+                struct_name,
+                field_name,
+            } => {
+                format!("struct {struct_name} is missing field {field_name}")
+            }
         }
     }
 
@@ -171,6 +206,22 @@ impl DiagnosticKind {
             _ => None,
         }
     }
+
+    pub fn should_be_suppressed(&self) -> bool {
+        match self {
+            DiagnosticKind::UnrecognizedArgument(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedArg(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedEnum(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedEnumVariant(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedList(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedProc(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedFunc(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedStruct(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedVariable(name) => name.starts_with('_'),
+            DiagnosticKind::UnusedStructField(name) => name.starts_with('_'),
+            _ => false,
+        }
+    }
 }
 
 impl From<&DiagnosticKind> for Level {
@@ -180,7 +231,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedEof(_)
             | DiagnosticKind::UnrecognizedToken(_, _)
             | DiagnosticKind::ExtraToken(_)
-            | DiagnosticKind::FileNotFound(_)
+            | DiagnosticKind::IOError(_)
             | DiagnosticKind::UnrecognizedReporter(_)
             | DiagnosticKind::UnrecognizedBlock(_)
             | DiagnosticKind::UnrecognizedVariable(_)
@@ -192,18 +243,21 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedArgument(_)
             | DiagnosticKind::UnrecognizedStructField(_)
             | DiagnosticKind::UnrecognizedEnumVariant(_)
-            | DiagnosticKind::UnrecognizedKey(_)
+            | DiagnosticKind::UnrecognizedStandardLibraryHeader
             | DiagnosticKind::NoCostumes
             | DiagnosticKind::BlockArgsCountMismatch { .. }
             | DiagnosticKind::ReprArgsCountMismatch { .. }
             | DiagnosticKind::ProcArgsCountMismatch { .. }
             | DiagnosticKind::FuncArgsCountMismatch { .. }
+            | DiagnosticKind::MacroArgsCountMismatch { .. }
             | DiagnosticKind::CommandFailed { .. }
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
+            | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. } => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
+            | DiagnosticKind::UnrecognizedKey(_)
             | DiagnosticKind::UnusedVariable(_)
             | DiagnosticKind::UnusedList(_)
             | DiagnosticKind::UnusedEnum(_)
