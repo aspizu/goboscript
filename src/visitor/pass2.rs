@@ -614,28 +614,34 @@ fn struct_literal(s: S, d: D, name: &SmolStr, span: &Span, fields: &mut Vec<Stru
         return;
     };
     let mut new_fields: Vec<StructLiteralField> = vec![];
-    for field in &struct_.fields {
-        let provided_field = fields
-            .iter()
-            .position(|f| f.name == field.name)
-            .map(|idx| fields.remove(idx));
-        if let Some(provided_field) = provided_field {
-            new_fields.push(provided_field);
-        } else if let Some((default, span)) = &field.default {
-            new_fields.push(StructLiteralField {
-                name: field.name.clone(),
-                span: span.clone(),
-                value: Box::new(default.clone().to_expr(span.clone())),
-            });
-        } else {
-            d.report(
-                DiagnosticKind::MissingField {
-                    struct_name: struct_.name.clone(),
-                    field_name: field.name.clone(),
-                },
-                span,
-            );
+
+    // First, add any provided fields in their original order
+    let mut provided_field_names = std::collections::HashSet::new();
+    for field in fields.iter() {
+        provided_field_names.insert(&field.name);
+        new_fields.push(field.clone());
+    }
+
+    // Then, add default values for missing fields
+    for struct_field in &struct_.fields {
+        if !provided_field_names.contains(&struct_field.name) {
+            if let Some((default, default_span)) = &struct_field.default {
+                new_fields.push(StructLiteralField {
+                    name: struct_field.name.clone(),
+                    span: default_span.clone(),
+                    value: Box::new(default.clone().to_expr(default_span.clone())),
+                });
+            } else {
+                d.report(
+                    DiagnosticKind::MissingField {
+                        struct_name: struct_.name.clone(),
+                        field_name: struct_field.name.clone(),
+                    },
+                    span,
+                );
+            }
         }
     }
+
     *fields = new_fields;
 }

@@ -89,3 +89,34 @@ onflag {
     my_struct bar = foo;
 }
 ```
+
+# Limitations
+
+## Variables
+
+During struct variable assignment, fields are assigned sequentially. Consequently, if a 
+field references another field of the same struct during assignment, it will use the 
+updated value of previously assigned fields rather than their original values.
+
+For example:
+
+```goboscript
+pair = Pair { left: 100, right: 200 };
+pair = Pair { left: pair.left + 100, right: pair.left };
+# Result: pair = Pair { left: 200, right: 200 };
+```
+
+In this case, the `pair.left` field is assigned first with the value 200, and 
+subsequently `pair.right` references the updated value of `pair.left`.
+
+This behavior can be mitigated by reordering the fields in the struct literal:
+
+```goboscript
+pair = Pair { right: pair.left, left: pair.left + 100 };
+```
+
+Same issues apply to all augmented assignment operators (`+=`)
+
+## Lists
+
+The issue with order of assignment applies to struct lists as well.
