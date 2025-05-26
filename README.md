@@ -119,4 +119,4 @@ tools/run check path/to/project.sb3
 goboscript was one of the first-place winners of FOSS HACK 25, and was awarded a 50,000 Rs. prize.
 FOSS HACK 25 was a open-source hackathon conducted on 22nd - 23rd February 2025 by the FOSS United
 Foundation. During the 48-hour hackathon, I had worked on several goboscript issues and feature
-implementation. Thank you FOSS United for the platform and oportunity.
+implementation. Thank you FOSS United for the platform and opportunity.
