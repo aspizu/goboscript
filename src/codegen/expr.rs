@@ -354,7 +354,6 @@ where T: Write + Seek
                     let Some(struct_) = s.get_struct(type_name) else {
                         continue;
                     };
-                    let arg_value = arg_value;
                     let struct_literal_fields = match arg_value {
                         Expr::StructLiteral {
                             name: struct_literal_name,

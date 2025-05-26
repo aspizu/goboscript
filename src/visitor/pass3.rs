@@ -40,7 +40,7 @@ fn visit_sprite(sprite: &mut Sprite) {
     }
     for event in &mut sprite.events {
         visit_stmts(
-            &mut event.body,
+            &event.body,
             &mut S {
                 references: &mut event.references,
                 proc: None,
@@ -50,11 +50,9 @@ fn visit_sprite(sprite: &mut Sprite) {
     }
 }
 
-fn visit_stmts(stmts: &Vec<Stmt>, s: &mut S) {
-    let mut i = 0;
-    while i < stmts.len() {
-        visit_stmt(&stmts[i], s);
-        i += 1;
+fn visit_stmts(stmts: &[Stmt], s: &mut S) {
+    for stmt in stmts {
+        visit_stmt(stmt, s);
     }
 }
 

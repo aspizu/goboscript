@@ -1,4 +1,4 @@
-/// Adapted from: https://github.com/boa-dev/boa
+// Adapted from: https://github.com/boa-dev/boa
 // MIT License
 //
 // Copyright (c) 2019 Jason Williams

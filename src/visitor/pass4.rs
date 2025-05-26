@@ -45,7 +45,7 @@ impl Scope<'_> {
     fn mark_arg_struct_field(
         refr: &NameReference,
         structs: &mut FxHashMap<SmolStr, Struct>,
-        args: &Vec<Arg>,
+        args: &[Arg],
     ) {
         let Some(field) = &refr.field else { return };
         let Some((type_name, _)) = args

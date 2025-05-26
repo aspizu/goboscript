@@ -767,7 +767,7 @@ where T: Write + Seek
                     &var.name,
                     var.default
                         .as_ref()
-                        .map(|default| s.evaluate_const_expr(d, &default)),
+                        .map(|default| s.evaluate_const_expr(d, default)),
                     var.is_cloud,
                     comma,
                 )?;
