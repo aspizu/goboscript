@@ -301,9 +301,9 @@ pub fn keyword_arguments(
             } else if let Some((_, kw_expr)) = kwargs.remove(&param.name) {
                 // No more positional args, but there is a matching keyword argument.
                 new_args.push(kw_expr);
-            } else if let Some((default, span)) = &param.default {
+            } else if let Some(default) = &param.default {
                 // Compute the default value if one is provided.
-                new_args.push(default.clone().to_expr(span.clone()));
+                new_args.push(default.clone().into());
             }
             // If no positional, keyword, or default value exists, then
             // we simply do not insert anything (and no error is raised).

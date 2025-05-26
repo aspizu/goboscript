@@ -213,6 +213,34 @@ impl S<'_> {
         );
         None
     }
+
+    pub fn evaluate_const_expr(&self, d: D, const_expr: &ConstExpr) -> Value {
+        match const_expr {
+            ConstExpr::Value { value, .. } => value.clone(),
+            ConstExpr::EnumVariant {
+                enum_name,
+                enum_name_span,
+                variant_name,
+                variant_name_span,
+            } => {
+                let Some(enum_) = self.get_enum(enum_name) else {
+                    d.report(
+                        DiagnosticKind::UnrecognizedEnum(enum_name.clone()),
+                        enum_name_span,
+                    );
+                    return Value::from(0.0);
+                };
+                let Some(variant) = enum_.variants.iter().find(|v| v.name == *variant_name) else {
+                    d.report(
+                        DiagnosticKind::UnrecognizedEnumVariant(variant_name.clone()),
+                        variant_name_span,
+                    );
+                    return Value::from(0.0);
+                };
+                variant.value.as_ref().unwrap().0.clone()
+            }
+        }
+    }
 }
 
 impl Stmt {
@@ -704,13 +732,13 @@ where T: Write + Seek
     pub fn json_var_declaration(
         &mut self,
         var_name: &str,
-        default: &Option<(Value, Span)>,
+        default: Option<Value>,
         is_cloud: bool,
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
         let default = match default {
-            Some((value, _)) => value.to_string(),
+            Some(value) => value.to_string(),
             None => arcstr::literal!("0"),
         };
         if is_cloud {
@@ -735,7 +763,14 @@ where T: Write + Seek
     pub fn var_declaration(&mut self, s: S, var: &Var, comma: &mut bool, d: D) -> io::Result<()> {
         match &var.type_ {
             Type::Value => {
-                self.json_var_declaration(&var.name, &var.default, var.is_cloud, comma)?;
+                self.json_var_declaration(
+                    &var.name,
+                    var.default
+                        .as_ref()
+                        .map(|default| s.evaluate_const_expr(d, &default)),
+                    var.is_cloud,
+                    comma,
+                )?;
             }
             Type::Struct {
                 name: type_name,
@@ -750,7 +785,7 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
-                    self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
+                    self.json_var_declaration(&qualified_var_name, None, false, comma)?;
                 }
             }
         }
@@ -768,7 +803,7 @@ where T: Write + Seek
         match &var.type_ {
             Type::Value => {
                 let qualified_var_name = qualify_local_var_name(proc_name, &var.name);
-                self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
+                self.json_var_declaration(&qualified_var_name, None, false, comma)?;
             }
             Type::Struct {
                 name: type_name,
@@ -786,7 +821,7 @@ where T: Write + Seek
                         proc_name,
                         &qualify_struct_var_name(&field.name, &var.name),
                     );
-                    self.json_var_declaration(&qualified_var_name, &None, false, comma)?;
+                    self.json_var_declaration(&qualified_var_name, None, false, comma)?;
                 }
             }
         }
@@ -823,7 +858,7 @@ where T: Write + Seek
                 list.array().map(|array| {
                     array
                         .iter()
-                        .map(|(value, _)| String::from(value.to_string().as_str()))
+                        .map(|value| s.evaluate_const_expr(d, value).to_string().to_string())
                         .collect::<Vec<_>>()
                 })
             });

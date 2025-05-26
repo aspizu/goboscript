@@ -91,36 +91,36 @@ impl Interpreter {
     }
 
     pub fn run_project(&mut self, input: &Path, project: &Project) -> ExceptionResult<()> {
-        for (var_name, var) in &project.stage.vars {
-            self.vars.insert(
-                var_name.clone(),
-                var.default
-                    .clone()
-                    .map(|(value, _)| value)
-                    .unwrap_or(0.0.into()),
-            );
-        }
-        for (list_name, list) in &project.stage.lists {
-            let values = match &list.default {
-                Some(ListDefault::Values(values)) => {
-                    values.iter().map(|(value, _)| value.clone()).collect()
-                }
-                Some(ListDefault::Cmd(cmd)) => {
-                    cmd_to_list(Rc::new(RefCell::new(RealFS::new())), cmd, input)
-                        .unwrap_or_default()
-                        .into_iter()
-                        .map(Value::from)
-                        .collect()
-                }
-                None => vec![],
-            };
-            self.lists.insert(list_name.clone(), values);
-        }
-        for event in &project.stage.events {
-            if matches!(event.kind, EventKind::OnFlag) {
-                self.run_script(&project.stage, &event.body)?;
-            }
-        }
+        // for (var_name, var) in &project.stage.vars {
+        //     self.vars.insert(
+        //         var_name.clone(),
+        //         var.default
+        //             .clone()
+        //             .map(|(value, _)| value)
+        //             .unwrap_or(0.0.into()),
+        //     );
+        // }
+        // for (list_name, list) in &project.stage.lists {
+        //     let values = match &list.default {
+        //         Some(ListDefault::Values(values)) => {
+        //             values.iter().map(|(value, _)| value.clone()).collect()
+        //         }
+        //         Some(ListDefault::Cmd(cmd)) => {
+        //             cmd_to_list(Rc::new(RefCell::new(RealFS::new())), cmd, input)
+        //                 .unwrap_or_default()
+        //                 .into_iter()
+        //                 .map(Value::from)
+        //                 .collect()
+        //         }
+        //         None => vec![],
+        //     };
+        //     self.lists.insert(list_name.clone(), values);
+        // }
+        // for event in &project.stage.events {
+        //     if matches!(event.kind, EventKind::OnFlag) {
+        //         self.run_script(&project.stage, &event.body)?;
+        //     }
+        // }
         Ok(())
     }
 
