@@ -66,12 +66,12 @@ Declr: () = {
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
-    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:Value> ";" => {
+    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <default:ConstExpr> ";" => {
         sprite.vars.insert(name.clone(), Var {
             name,
             span: l..r,
             type_,
-            default: Some(value),
+            default: Some(default),
             is_cloud: false,
             is_used: false,
 
@@ -93,7 +93,7 @@ Declr: () = {
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <cmd:Cmd> ";" => {
         sprite.lists.insert(name.clone(), List::new_cmd(name, l..r, type_, cmd));
     },
-    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<Value>> "]" ";" => {
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<ConstExpr>> "]" ";" => {
         sprite.lists.insert(name.clone(), List::new_array(name, l..r, type_, default));
     }
 }
@@ -539,6 +539,20 @@ Value: (Value, Span) = {
     <l:@L> <v:STR>   <r:@R> => (Value::from(v), l..r),
 }
 
+ConstExpr: ConstExpr = { 
+    <l:@L> TRUE      <r:@R> => ConstExpr::Value { value: Value::from(1.0), span: l..r },
+    <l:@L> FALSE     <r:@R> => ConstExpr::Value { value: Value::from(0.0), span: l..r },
+    <l:@L> <v:INT>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <l:@L> <v:HEX>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <l:@L> <v:OCT>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <l:@L> <v:BIN>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <l:@L> <v:FLOAT> <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <l:@L> <v:STR>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <el:@L> <enum_name:NAME> <er:@R> "." <vl:@L> <variant_name:NAME> <vr:@R> => ConstExpr::EnumVariant {
+        enum_name, variant_name, enum_name_span: el..er, variant_name_span: vl..vr,
+    },
+}
+
 #[inline]
 NameName: Name = <l:@L> <n:NAME> <r:@R> => Name::Name { name: n, span: l..r };
 
@@ -555,12 +569,12 @@ Type: Type = {
 
 #[inline]
 Arg: Arg = {
-    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => Arg::new(name, l..r, type_, default),
+    <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <ConstExpr>)?> => Arg::new(name, l..r, type_, default),
 }
 
 #[inline]
-StructField: (SmolStr, Span, Option<(Value, Span)>) = {
-    <l:@L> <name:NAME> <r:@R> <default:("=" <Value>)?> => (name, l..r, default),
+StructField: (SmolStr, Span, Option<ConstExpr>) = {
+    <l:@L> <name:NAME> <r:@R> <default:("=" <ConstExpr>)?> => (name, l..r, default),
 }
 
 SpannedComma<T>: Vec<(T, Span)> = {

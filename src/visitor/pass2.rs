@@ -625,11 +625,11 @@ fn struct_literal(s: S, d: D, name: &SmolStr, span: &Span, fields: &mut Vec<Stru
     // Then, add default values for missing fields
     for struct_field in &struct_.fields {
         if !provided_field_names.contains(&struct_field.name) {
-            if let Some((default, default_span)) = &struct_field.default {
+            if let Some(default) = &struct_field.default {
                 new_fields.push(StructLiteralField {
                     name: struct_field.name.clone(),
-                    span: default_span.clone(),
-                    value: Box::new(default.clone().to_expr(default_span.clone())),
+                    span: default.span(),
+                    value: Box::new(default.clone().into()),
                 });
             } else {
                 d.report(

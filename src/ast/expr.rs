@@ -7,6 +7,7 @@ use serde::{
 
 use super::{
     value::Value,
+    ConstExpr,
     Name,
     StructLiteralField,
 };
@@ -101,5 +102,25 @@ impl BinOp {
 impl Value {
     pub fn to_expr(self, span: Span) -> Expr {
         Expr::Value { value: self, span }
+    }
+}
+
+impl From<ConstExpr> for Expr {
+    fn from(const_expr: ConstExpr) -> Self {
+        match const_expr {
+            ConstExpr::Value { value, span } => Expr::Value { value, span },
+            ConstExpr::EnumVariant {
+                enum_name,
+                enum_name_span,
+                variant_name,
+                variant_name_span,
+            } => Expr::Name(Name::DotName {
+                lhs: enum_name,
+                lhs_span: enum_name_span,
+                rhs: variant_name,
+                rhs_span: variant_name_span,
+                is_generated: false,
+            }),
+        }
     }
 }

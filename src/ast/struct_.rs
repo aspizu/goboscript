@@ -6,7 +6,7 @@ use serde::{
 
 use super::{
     struct_field::StructField,
-    Value,
+    ConstExpr,
 };
 use crate::misc::SmolStr;
 
@@ -19,11 +19,7 @@ pub struct Struct {
 }
 
 impl Struct {
-    pub fn new(
-        name: SmolStr,
-        span: Span,
-        fields: Vec<(SmolStr, Span, Option<(Value, Span)>)>,
-    ) -> Self {
+    pub fn new(name: SmolStr, span: Span, fields: Vec<(SmolStr, Span, Option<ConstExpr>)>) -> Self {
         Self {
             name,
             span,

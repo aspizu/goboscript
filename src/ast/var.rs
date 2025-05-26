@@ -6,7 +6,7 @@ use serde::{
 
 use super::{
     type_::Type,
-    Value,
+    ConstExpr,
 };
 use crate::misc::SmolStr;
 
@@ -15,7 +15,7 @@ pub struct Var {
     pub name: SmolStr,
     pub span: Span,
     pub type_: Type,
-    pub default: Option<(Value, Span)>,
+    pub default: Option<ConstExpr>,
     pub is_cloud: bool,
     pub is_used: bool,
 }

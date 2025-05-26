@@ -6,7 +6,7 @@ use serde::{
 
 use super::{
     type_::Type,
-    Value,
+    ConstExpr,
 };
 use crate::misc::SmolStr;
 
@@ -21,7 +21,7 @@ pub struct List {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ListDefault {
-    Values(Vec<(Value, Span)>),
+    Values(Vec<ConstExpr>),
     Cmd(Cmd),
 }
 
@@ -59,7 +59,7 @@ impl List {
         }
     }
 
-    pub fn new_array(name: SmolStr, span: Span, type_: Type, default: Vec<(Value, Span)>) -> Self {
+    pub fn new_array(name: SmolStr, span: Span, type_: Type, default: Vec<ConstExpr>) -> Self {
         Self {
             name,
             span,
@@ -76,7 +76,7 @@ impl List {
         }
     }
 
-    pub fn array(&self) -> Option<&[(Value, Span)]> {
+    pub fn array(&self) -> Option<&[ConstExpr]> {
         match &self.default {
             Some(ListDefault::Values(array)) => Some(array),
             _ => None,

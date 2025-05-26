@@ -6,7 +6,7 @@ use serde::{
 
 use super::{
     type_::Type,
-    Value,
+    ConstExpr,
 };
 use crate::misc::SmolStr;
 
@@ -15,12 +15,12 @@ pub struct Arg {
     pub name: SmolStr,
     pub span: Span,
     pub type_: Type,
-    pub default: Option<(Value, Span)>,
+    pub default: Option<ConstExpr>,
     pub is_used: bool,
 }
 
 impl Arg {
-    pub fn new(name: SmolStr, span: Span, type_: Type, default: Option<(Value, Span)>) -> Self {
+    pub fn new(name: SmolStr, span: Span, type_: Type, default: Option<ConstExpr>) -> Self {
         Self {
             name,
             span,
