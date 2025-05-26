@@ -12,6 +12,19 @@ struct my_struct {
 }
 ```
 
+## Default values
+
+Struct fields can have default values.
+
+```goboscript
+struct my_struct {
+    field = "default_value"
+}
+
+my_struct v = my_struct {};
+# -> v.field == "default_value"
+```
+
 ## Usage
 
 ### Declaring a struct variable
