@@ -120,3 +120,13 @@ goboscript was one of the first-place winners of FOSS HACK 25, and was awarded a
 FOSS HACK 25 was a open-source hackathon conducted on 22nd - 23rd February 2025 by the FOSS United
 Foundation. During the 48-hour hackathon, I had worked on several goboscript issues and feature
 implementation. Thank you FOSS United for the platform and opportunity.
+
+## Star History
+
+<a href="https://www.star-history.com/#aspizu/goboscript&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=aspizu/goboscript&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=aspizu/goboscript&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=aspizu/goboscript&type=Date" />
+ </picture>
+</a>
