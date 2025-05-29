@@ -115,7 +115,8 @@ where T: Write + Seek
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         self.expr(s, d, &cond, cond_id, this_id)?;
-        self.stmts(s, d, body, body_id, Some(this_id))
+        self.stmts(s, d, body, body_id, Some(this_id))?;
+        self.expr(s, d, &cond, cond_id, this_id)
     }
 
     pub fn set_var(
