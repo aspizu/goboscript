@@ -39,6 +39,14 @@ the callsite.
 %define macro_name(arg1, arg2) replacement text
 ```
 
+You can use a backslash `\` at the end of a line to continue the replacement text onto the next line:
+
+```goboscript
+%define long_macro this is a very long \
+                   replacement text that spans \
+                   multiple lines
+```
+
 ## Remove a macro definition
 
 ```goboscript
