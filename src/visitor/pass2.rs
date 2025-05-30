@@ -62,6 +62,13 @@ impl S<'_> {
                 .and_then(|global_structs| global_structs.get(name))
         })
     }
+
+    pub fn get_enum(&self, name: &str) -> Option<&Enum> {
+        self.enums.get(name).or_else(|| {
+            self.global_enums
+                .and_then(|global_enums| global_enums.get(name))
+        })
+    }
 }
 
 pub fn visit_project(
@@ -376,6 +383,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, transformations::bin_op);
     transformations::apply(expr, transformations::un_op);
     transformations::apply(expr, |expr| transformations::variable_field_access(expr, s));
+    transformations::apply(expr, |expr| transformations::enum_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::arg_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::list_field_access(expr, s));
     transformations::apply(expr, |expr| {

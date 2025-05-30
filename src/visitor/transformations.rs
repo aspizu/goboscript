@@ -133,6 +133,38 @@ pub fn variable_field_access(expr: &Expr, s: S) -> Option<Expr> {
     })
 }
 
+pub fn enum_field_access(expr: &Expr, s: S) -> Option<Expr> {
+    let Expr::Name(name) = expr else {
+        return None;
+    };
+    if name.fieldname().is_some() {
+        return None;
+    }
+    let basename = name.basename();
+    let span = name.span();
+    let enum_ = s.get_enum(basename)?;
+    Some(Expr::StructLiteral {
+        name: enum_.name.clone(),
+        span: enum_.span.clone(),
+        fields: enum_
+            .variants
+            .iter()
+            .map(|variant| StructLiteralField {
+                name: variant.name.clone(),
+                span: variant.span.clone(),
+                value: Expr::Name(Name::DotName {
+                    lhs: enum_.name.clone(),
+                    lhs_span: span.clone(),
+                    rhs: variant.name.clone(),
+                    rhs_span: variant.span.clone(),
+                    is_generated: true,
+                })
+                .into(),
+            })
+            .collect(),
+    })
+}
+
 pub fn arg_field_access(expr: &Expr, s: S) -> Option<Expr> {
     let Expr::Arg(name) = expr else {
         return None;
