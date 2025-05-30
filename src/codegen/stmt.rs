@@ -544,17 +544,16 @@ where T: Write + Seek
                                 );
                                 continue;
                             }
-                            if struct_literal_fields.len() != struct_.fields.len() {
-                                panic!()
+                            let mut fields = vec![];
+                            for struct_field in &struct_.fields {
+                                fields.push(
+                                    struct_literal_fields
+                                        .iter()
+                                        .find(|f| f.name == struct_field.name)
+                                        .unwrap(),
+                                );
                             }
-                            for (struct_field, struct_literal_field) in
-                                struct_.fields.iter().zip(struct_literal_fields)
-                            {
-                                if struct_field.name != struct_literal_field.name {
-                                    panic!()
-                                }
-                            }
-                            struct_literal_fields
+                            fields
                         }
                         _ => {
                             continue;
