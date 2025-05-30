@@ -36,6 +36,7 @@ impl Scope<'_> {
         let Some(struct_) = structs.get_mut(type_name) else {
             return;
         };
+        struct_.is_used = true;
         let Some(f) = struct_.fields.iter_mut().find(|f| &f.name == field) else {
             return;
         };
@@ -234,6 +235,13 @@ fn resolve_references(
                 variant.is_used = true;
                 continue;
             }
+        }
+    }
+    for refr in &references.generated_names {
+        // if the only use of a struct is to construct it using a struct literal, the names will be
+        // generated, so mark as used here.
+        if let Some(struct_) = scope.structs.get_mut(&refr.name) {
+            struct_.is_used = true;
         }
     }
     for struct_name in &references.structs {
