@@ -11,6 +11,7 @@ pub struct References {
     pub procs: FxHashSet<SmolStr>,
     pub funcs: FxHashSet<SmolStr>,
     pub names: FxHashSet<NameReference>,
+    pub generated_names: FxHashSet<NameReference>,
     pub structs: FxHashSet<SmolStr>,
     pub args: FxHashSet<NameReference>,
 }

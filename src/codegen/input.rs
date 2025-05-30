@@ -109,25 +109,6 @@ where T: Write + Seek
         match expr {
             Expr::Value { value, span: _ } => return self.value_input(input_name, value),
             Expr::Name(name) => return self.name_input(s, d, input_name, name, shadow_id),
-            Expr::Dot { lhs, rhs, rhs_span } => {
-                if let Expr::Name(lhs_name) = &**lhs {
-                    if let Some(enum_) = s.get_enum(lhs_name.basename()) {
-                        if let Some(variant) =
-                            enum_.variants.iter().find(|variant| &variant.name == rhs)
-                        {
-                            return self
-                                .value_input(input_name, &variant.value.as_ref().unwrap().0);
-                        } else {
-                            d.report(
-                                DiagnosticKind::UnrecognizedEnumVariant(
-                                    lhs_name.basename().clone(),
-                                ),
-                                rhs_span,
-                            );
-                        }
-                    }
-                }
-            }
             _ => {}
         }
         self.node_input(input_name, this_id, shadow_id, no_empty_shadow)
@@ -172,6 +153,22 @@ where T: Write + Seek
         name: &Name,
         shadow_id: Option<NodeID>,
     ) -> io::Result<()> {
+        if let Some(enum_) = s.get_enum(name.basename()) {
+            if let Some(variant_name) = name.fieldname() {
+                if let Some(variant) = enum_
+                    .variants
+                    .iter()
+                    .find(|variant| variant_name == &variant.name)
+                {
+                    return self.value_input(input_name, &variant.value.as_ref().unwrap().0);
+                } else {
+                    d.report(
+                        DiagnosticKind::UnrecognizedEnumVariant(variant_name.clone()),
+                        &name.fieldspan(),
+                    );
+                }
+            }
+        }
         match s.qualify_name(d, name) {
             Some(QualifiedName::Var(name, _)) => {
                 write!(self, "[3,[12,{},{}],", json!(*name), json!(*name))?;
