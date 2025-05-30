@@ -134,7 +134,10 @@ pub fn variable_field_access(expr: &Expr, s: S) -> Option<Expr> {
 }
 
 pub fn enum_field_access(expr: &Expr, s: S) -> Option<Expr> {
-    let Expr::Name(name) = expr else {
+    let Expr::Dot { lhs, rhs, rhs_span } = expr else {
+        return None;
+    };
+    let Expr::Name(name) = (**lhs).clone() else {
         return None;
     };
     if name.fieldname().is_some() {
@@ -143,26 +146,13 @@ pub fn enum_field_access(expr: &Expr, s: S) -> Option<Expr> {
     let basename = name.basename();
     let span = name.span();
     let enum_ = s.get_enum(basename)?;
-    Some(Expr::StructLiteral {
-        name: enum_.name.clone(),
-        span: enum_.span.clone(),
-        fields: enum_
-            .variants
-            .iter()
-            .map(|variant| StructLiteralField {
-                name: variant.name.clone(),
-                span: variant.span.clone(),
-                value: Expr::Name(Name::DotName {
-                    lhs: enum_.name.clone(),
-                    lhs_span: span.clone(),
-                    rhs: variant.name.clone(),
-                    rhs_span: variant.span.clone(),
-                    is_generated: true,
-                })
-                .into(),
-            })
-            .collect(),
-    })
+    Some(Expr::Name(Name::DotName {
+        lhs: enum_.name.clone(),
+        lhs_span: span.clone(),
+        rhs: rhs.clone(),
+        rhs_span: rhs_span.clone(),
+        is_generated: false, // this is technically generated but we want diagnostics to be emitted
+    }))
 }
 
 pub fn arg_field_access(expr: &Expr, s: S) -> Option<Expr> {
