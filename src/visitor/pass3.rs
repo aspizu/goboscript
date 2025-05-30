@@ -162,7 +162,6 @@ fn visit_stmt(stmt: &Stmt, s: &mut S) {
 }
 
 fn visit_expr(expr: &Expr, s: &mut S) {
-    dbg!(expr);
     match expr {
         Expr::Value { value: _, span: _ } => {}
         Expr::Name(name) => {
