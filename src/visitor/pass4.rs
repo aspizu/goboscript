@@ -225,6 +225,7 @@ fn resolve_references(
             continue;
         }
         if let Some(enum_) = scope.enums.get_mut(&refr.name) {
+            enum_.is_used = true;
             if let Some(variant) = refr
                 .field
                 .as_ref()
