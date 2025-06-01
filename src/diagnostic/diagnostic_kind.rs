@@ -88,6 +88,7 @@ pub enum DiagnosticKind {
     UnusedArg(SmolStr),
     UnusedStructField(SmolStr),
     UnusedEnumVariant(SmolStr),
+    EmptyStruct(SmolStr),
 }
 
 impl DiagnosticKind {
@@ -195,6 +196,9 @@ impl DiagnosticKind {
             } => {
                 format!("struct {struct_name} is missing field {field_name}")
             }
+            DiagnosticKind::EmptyStruct(name) => {
+                format!("struct {name} is empty; structs must have at least one field")
+            }
         }
     }
 
@@ -245,6 +249,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedEnumVariant(_)
             | DiagnosticKind::UnrecognizedStandardLibraryHeader
             | DiagnosticKind::NoCostumes
+            | DiagnosticKind::EmptyStruct(_)
             | DiagnosticKind::BlockArgsCountMismatch { .. }
             | DiagnosticKind::ReprArgsCountMismatch { .. }
             | DiagnosticKind::ProcArgsCountMismatch { .. }
