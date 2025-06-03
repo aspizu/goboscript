@@ -26,7 +26,7 @@ impl Value {
             UnOp::Log => opr.to_number().log(10.0).into(),
             UnOp::AntiLn => (10.0_f64).powf(opr.to_number()).into(),
             UnOp::AntiLog => opr.to_number().exp().into(),
-            UnOp::Minus => unreachable!(),
+            UnOp::Minus => (-opr.to_number()).into(),
         }
     }
 }

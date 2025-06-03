@@ -499,7 +499,14 @@ IfExpr: Expr = {
 
 Term: Expr = {
     "(" <Expr> ")",
-    <v:Value> => v.0.to_expr(v.1),
+    <l:@L> TRUE      <r:@R> => Value::from(1.0).to_expr(l..r),
+    <l:@L> FALSE     <r:@R> => Value::from(0.0).to_expr(l..r),
+    <l:@L> <v:INT>   <r:@R> => Value::from(v).to_expr(l..r),
+    <l:@L> <v:HEX>   <r:@R> => Value::from(v).to_expr(l..r),
+    <l:@L> <v:OCT>   <r:@R> => Value::from(v).to_expr(l..r),
+    <l:@L> <v:BIN>   <r:@R> => Value::from(v).to_expr(l..r),
+    <l:@L> <v:FLOAT> <r:@R> => Value::from(v).to_expr(l..r),
+    <l:@L> <v:STR>   <r:@R> => Value::from(v).to_expr(l..r),
     <l:@L> <n:NAME> <r:@R> => Expr::Name(Name::Name { name: n, span: l..r }),
     <l:@L> <n:ARG> <r:@R> => Expr::Arg(Name::Name { name: n, span: l..r }),
     <l:@L> <name:NAME> <r:@R> "(" <args:Kwargs> ")" => {
@@ -537,17 +544,11 @@ Value: (Value, Span) = {
     <l:@L> <v:BIN>   <r:@R> => (Value::from(v), l..r),
     <l:@L> <v:FLOAT> <r:@R> => (Value::from(v), l..r),
     <l:@L> <v:STR>   <r:@R> => (Value::from(v), l..r),
+    "-" <v:Value> => (Value::un_op(UnOp::Minus, &v.0), v.1),
 }
 
 ConstExpr: ConstExpr = { 
-    <l:@L> TRUE      <r:@R> => ConstExpr::Value { value: Value::from(1.0), span: l..r },
-    <l:@L> FALSE     <r:@R> => ConstExpr::Value { value: Value::from(0.0), span: l..r },
-    <l:@L> <v:INT>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
-    <l:@L> <v:HEX>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
-    <l:@L> <v:OCT>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
-    <l:@L> <v:BIN>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
-    <l:@L> <v:FLOAT> <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
-    <l:@L> <v:STR>   <r:@R> => ConstExpr::Value { value: Value::from(v), span: l..r },
+    <v:Value> => ConstExpr::Value { value: v.0, span: v.1 },
     <el:@L> <enum_name:NAME> <er:@R> "." <vl:@L> <variant_name:NAME> <vr:@R> => ConstExpr::EnumVariant {
         enum_name, variant_name, enum_name_span: el..er, variant_name_span: vl..vr,
     },
