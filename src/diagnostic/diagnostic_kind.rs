@@ -180,7 +180,7 @@ impl DiagnosticKind {
             DiagnosticKind::UnusedProc(name) => format!("unused procedure {name}"),
             DiagnosticKind::UnusedFunc(name) => format!("unused function {name}"),
             DiagnosticKind::UnusedArg(name) => format!("unused argument {name}"),
-            DiagnosticKind::UnusedStructField(name) => format!("unused struct field {name}"),
+            DiagnosticKind::UnusedStructField(name) => format!("unused struct field {name} (never read)"),
             DiagnosticKind::UnusedEnumVariant(name) => format!("unused enum variant {name}"),
             DiagnosticKind::NotStruct => "not a struct".to_string(),
             DiagnosticKind::StructDoesNotHaveField {
