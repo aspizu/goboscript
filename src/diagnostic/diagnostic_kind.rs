@@ -207,6 +207,11 @@ impl DiagnosticKind {
             DiagnosticKind::NoCostumes => {
                 Some("if this is a header, move it inside a directory such as `lib/`".to_string())
             }
+            DiagnosticKind::UnrecognizedToken(token, expected) => match token {
+                Token::FloorDiv => Some("Use # for comments".to_owned()),
+                Token::Var => Some("var should only be used at top-level.".to_owned()),
+                _ => None,
+            },
             _ => None,
         }
     }
