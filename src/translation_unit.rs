@@ -56,7 +56,10 @@ pub struct TranslationUnit {
 
 impl TranslationUnit {
     pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> Self {
-        let text = fs.borrow_mut().read_to_vec(&path).unwrap();
+        let mut text = fs.borrow_mut().read_to_vec(&path).unwrap();
+        if text.last().is_none_or(|&c| c != b'\n') {
+            text.push(b'\n');
+        }
         let mut instance = Self {
             text,
             path,
