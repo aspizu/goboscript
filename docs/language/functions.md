@@ -28,6 +28,46 @@ func my_function(x, y) MyStruct {
 
 ---
 
+## Returning Struct Variables
+
+Functions can return struct variables by specifying the struct type as the return type.
+
+### Basic Struct Return Example
+
+```goboscript
+struct Vector {
+    x,
+    y
+}
+
+func vec_add(Vector lhs, Vector rhs) Vector {
+    return Vector {
+        x: $lhs.x + $rhs.x,
+        y: $lhs.y + $rhs.y
+    };
+}
+```
+
+### Using the Returned Struct
+
+```goboscript
+# Create vectors
+Vector vec1 = Vector { x: 10, y: 20 };
+Vector vec2 = Vector { x: 5, y: 15 };
+
+# Call function that returns a struct
+Vector result = vec_add(vec1, vec2);
+
+# Access the returned struct's fields
+say result.x; # Outputs: 15
+say result.y; # Outputs: 35
+```
+
+!!!NOTE
+    When returning struct variables from functions, the return type must be explicitly
+    specified when returning a struct
+---
+
 ## Default Argument Values
 
 Function parameters can have **default values**, allowing callers to omit them:
