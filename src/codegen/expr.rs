@@ -305,8 +305,13 @@ where T: Write + Seek
         let list = s.get_list(name).unwrap();
         if let Some((type_name, _type_span)) = list.type_.struct_() {
             let struct_ = s.get_struct(type_name).unwrap();
-            let qualified_name = qualify_struct_var_name(&struct_.fields[0].name, name);
-            self.single_field_id("LIST", &qualified_name)?;
+            if struct_.fields.is_empty() {
+                // For empty structs, we can't access fields[0], so we use the list name directly
+                self.single_field_id("LIST", name)?;
+            } else {
+                let qualified_name = qualify_struct_var_name(&struct_.fields[0].name, name);
+                self.single_field_id("LIST", &qualified_name)?;
+            }
         } else {
             self.single_field_id("LIST", name)?;
         }

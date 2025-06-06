@@ -76,6 +76,7 @@ pub enum DiagnosticKind {
         struct_name: SmolStr,
         field_name: SmolStr,
     },
+    EmptyStruct(SmolStr),
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
@@ -180,7 +181,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnusedProc(name) => format!("unused procedure {name}"),
             DiagnosticKind::UnusedFunc(name) => format!("unused function {name}"),
             DiagnosticKind::UnusedArg(name) => format!("unused argument {name}"),
-            DiagnosticKind::UnusedStructField(name) => format!("unused struct field {name} (never read)"),
+            DiagnosticKind::UnusedStructField(name) => {
+                format!("unused struct field {name} (never read)")
+            }
             DiagnosticKind::UnusedEnumVariant(name) => format!("unused enum variant {name}"),
             DiagnosticKind::NotStruct => "not a struct".to_string(),
             DiagnosticKind::StructDoesNotHaveField {
@@ -194,6 +197,9 @@ impl DiagnosticKind {
                 field_name,
             } => {
                 format!("struct {struct_name} is missing field {field_name}")
+            }
+            DiagnosticKind::EmptyStruct(name) => {
+                format!("struct {name} is empty and cannot be used with lists")
             }
         }
     }
@@ -254,7 +260,8 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
             | DiagnosticKind::MissingField { .. }
-            | DiagnosticKind::StructDoesNotHaveField { .. } => Level::Error,
+            | DiagnosticKind::StructDoesNotHaveField { .. }
+            | DiagnosticKind::EmptyStruct(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)

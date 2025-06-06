@@ -882,6 +882,10 @@ where T: Write + Seek
                     );
                     return Ok(());
                 };
+                if struct_.fields.is_empty() {
+                    d.report(DiagnosticKind::EmptyStruct(type_name.clone()), type_span);
+                    return Ok(());
+                }
                 for (i, field) in struct_.fields.iter().enumerate() {
                     let qualified_list_name = qualify_struct_var_name(&field.name, &list.name);
                     write_comma_io(&mut self.zip, comma)?;

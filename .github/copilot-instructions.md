@@ -439,3 +439,6 @@ local is not supported inside onflag
 
 Do not use `&&` in shell commands, use `;` instead.
 No need to run `goboscript build`, project is rebuilt everytime a file is saved.
+
+Use `sh tools/run compile` to test the playground project. Always use the playground
+project to test goboscript.
