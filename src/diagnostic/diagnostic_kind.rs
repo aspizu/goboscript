@@ -198,9 +198,7 @@ impl DiagnosticKind {
             } => {
                 format!("struct {struct_name} is missing field {field_name}")
             }
-            DiagnosticKind::EmptyStruct(name) => {
-                format!("struct {name} is empty and cannot be used with lists")
-            }
+            DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
         }
     }
 
