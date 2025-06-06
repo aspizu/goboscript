@@ -305,7 +305,7 @@ pub fn keyword_arguments(
     signature: Option<&Vec<Arg>>,
     args: &mut Vec<Expr>,
     kwargs: &mut FxHashMap<SmolStr, (Span, Expr)>,
-    _d: D, // currently not used in this implementation
+    d: D,
 ) {
     if let Some(sig) = signature {
         // Build a new vector of arguments in the order given by the signature.
@@ -340,5 +340,12 @@ pub fn keyword_arguments(
         // Replace the original args with the re-ordered version.
         *args = new_args;
     }
-    assert!(kwargs.is_empty(), "kwargs should be empty after processing");
+
+    // Generate diagnostics for any remaining unknown keyword arguments
+    for (name, (span, _)) in kwargs.drain() {
+        d.report(
+            crate::diagnostic::DiagnosticKind::UnrecognizedArgument(name),
+            &span,
+        );
+    }
 }
