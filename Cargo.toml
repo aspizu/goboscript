@@ -55,4 +55,8 @@ crate-type = ["cdylib", "rlib"]
 wasm-opt = ["--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 
 [profile.release]
-debug = true
+debug = false
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
