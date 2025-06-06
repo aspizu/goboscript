@@ -140,6 +140,7 @@ pub fn build_impl<'a, T: Write + Seek>(
     );
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
+    visitor::pass5::visit_project(&mut project, &mut stage_diagnostics, &mut sprites_diagnostics);
     log::info!("{:#?}", project);
     sb3.project(
         fs.clone(),
