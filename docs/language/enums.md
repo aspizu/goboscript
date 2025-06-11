@@ -34,6 +34,7 @@ enum Direction {
     F, #       3
 
 }
+```
 
 ## Get enum value
 
