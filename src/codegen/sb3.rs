@@ -27,6 +27,7 @@ use zip::{
 
 use super::{
     cmd::cmd_to_list,
+    debug_info::ArtifactRef,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -38,6 +39,7 @@ use crate::{
     codegen::mutation::Mutation,
     config::Config,
     diagnostic::{
+        Artifact,
         DiagnosticKind,
         SpriteDiagnostics,
     },
@@ -306,6 +308,7 @@ where T: Write + Seek
     pub costumes: FxHashMap<SmolStr, SmolStr>,
     pub srcpkg_hash: Option<String>,
     pub srcpkg: Option<Vec<u8>>,
+    pub release: bool,
 }
 
 impl<T> Write for Sb3<T>
@@ -323,7 +326,7 @@ where T: Write + Seek
 impl<T> Sb3<T>
 where T: Write + Seek
 {
-    pub fn new(file: T) -> Self {
+    pub fn new(file: T, release: bool) -> Self {
         Self {
             zip: ZipWriter::new(file),
             id: NodeIDFactory::new(),
@@ -332,6 +335,7 @@ where T: Write + Seek
             costumes: FxHashMap::default(),
             srcpkg_hash: None,
             srcpkg: None,
+            release,
         }
     }
 
@@ -460,6 +464,19 @@ where T: Write + Seek
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
         self.assets(fs.clone(), input)?;
+        if !self.release {
+            self.zip
+                .start_file("artifact.json", SimpleFileOptions::default())?;
+            write!(
+                self.zip,
+                "{}",
+                json!(ArtifactRef {
+                    project,
+                    stage_diagnostics,
+                    sprites_diagnostics,
+                })
+            )?;
+        }
         Ok(())
     }
 

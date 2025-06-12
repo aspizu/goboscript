@@ -39,12 +39,16 @@ use crate::{
     visitor,
 };
 
-pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
+pub fn build(
+    input: Option<PathBuf>,
+    output: Option<PathBuf>,
+    release: bool,
+) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
-    let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
+    let sb3 = Sb3::new(BufWriter::new(File::create(&output)?), release);
     let fs = Rc::new(RefCell::new(RealFS::new()));
     build_impl(fs, canonical_input, sb3, None)
 }

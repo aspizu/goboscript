@@ -16,10 +16,12 @@ pub struct Sprite {
     pub costumes: Vec<Costume>,
     pub sounds: Vec<Sound>,
     pub procs: FxHashMap<SmolStr, Proc>,
+    #[serde(skip)]
     pub proc_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub proc_references: FxHashMap<SmolStr, References>,
     pub proc_args: FxHashMap<SmolStr, Vec<Arg>>,
     pub funcs: FxHashMap<SmolStr, Func>,
+    #[serde(skip)]
     pub func_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub func_references: FxHashMap<SmolStr, References>,
     pub func_args: FxHashMap<SmolStr, Vec<Arg>>,
@@ -29,6 +31,7 @@ pub struct Sprite {
     pub proc_locals: FxHashMap<SmolStr, FxHashMap<SmolStr, Var>>,
     pub func_locals: FxHashMap<SmolStr, FxHashMap<SmolStr, Var>>,
     pub lists: FxHashMap<SmolStr, List>,
+    #[serde(skip)]
     pub events: Vec<Event>,
     pub used_procs: FxHashSet<SmolStr>,
     pub used_funcs: FxHashSet<SmolStr>,
