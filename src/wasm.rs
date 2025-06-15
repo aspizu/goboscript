@@ -40,7 +40,7 @@ pub struct Build {
 pub fn build(fs: JsValue) -> JsValue {
     let fs: MemFS = serde_wasm_bindgen::from_value(fs).unwrap();
     let mut file = Vec::new();
-    let sb3 = Sb3::new(Cursor::new(&mut file));
+    let sb3 = Sb3::new(Cursor::new(&mut file), true);
     let stdlib = StandardLibrary {
         path: "stdlib".into(),
         version: Version::new(0, 0, 0),
