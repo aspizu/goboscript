@@ -1,5 +1,3 @@
-# ![](./docs/assets/goboscript.svg) goboscript
-
 [![Discord](https://img.shields.io/discord/1383762986887282829?style=flat&logo=discord&label=Discord)](https://discord.gg/MMfMkRuhAf) ![image](https://shields.io/crates/l/goboscript) 
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
