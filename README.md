@@ -64,7 +64,7 @@ goboscript is written in Rust. You'll need to install the [Rust toolchain](https
 for development.
 
 > [!NOTE]
-> To install goboscript, follow instructions at [aspizu.github.io/goboscript](https://aspizu.github.io/goboscript).
+> To install goboscript, follow instructions at <https://aspizu.github.io/goboscript/install/>
 > These instructions are for people who want to develop goboscript itself.
 
 ```sh
