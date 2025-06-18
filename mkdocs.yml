@@ -31,6 +31,8 @@ nav:
           - Notepad++: editor-integration/notepad++.md
 theme:
     name: material
+    logo: assets/goboscript.svg
+    favicon: assets/goboscript.svg
     features:
         - navigation.instant
         - navigation.instant.prefetch
@@ -48,7 +50,7 @@ theme:
         - content.tabs.link
     font:
         text: Inter Tight
-        code: Source Code Pro
+        code: Cascadia Code
     palette:
         # Note: Using the system theme works with the insiders version
         # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
