@@ -16,8 +16,20 @@ nav:
           - Operators: language/operators.md
           - Control Flow: language/control-flow.md
           - Hat Blocks: language/hat-blocks.md
-          - Blocks: language/blocks.md
-          - Reporters: language/reporters.md
+          - Blocks:
+                - Motion: language/blocks/motion.md
+                - Looks: language/blocks/looks.md
+                - Sound: language/blocks/sound.md
+                - Events: language/blocks/events.md
+                - Control: language/blocks/control.md
+                - Sensing: language/blocks/sensing.md
+                - Pen: language/blocks/pen.md
+                - Music: language/blocks/music.md
+          - Reporters:
+                - Motion: language/reporters/motion.md
+                - Looks: language/reporters/looks.md
+                - Sound: language/reporters/sound.md
+                - Sensing: language/reporters/sensing.md
           - Custom Blocks: language/custom-blocks.md
           - Functions: language/functions.md
           - Enums: language/enums.md
@@ -99,6 +111,9 @@ plugins:
     - search
 extra_css:
     - stylesheets/extra.css
+extra_javascript:
+    - javascripts/extra.js
+    - javascripts/scratchblocks.min.js
 extra:
     social:
         - icon: fontawesome/brands/github
