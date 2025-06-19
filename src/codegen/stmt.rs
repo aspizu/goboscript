@@ -339,7 +339,32 @@ where T: Write + Seek
         let mut menu_is_default = menu_id.is_some();
         for ((&arg_name, arg_value), &arg_id) in block.args().iter().zip(args).zip(&arg_ids) {
             if block.menu().is_some_and(|menu| menu.input == arg_name) {
-                if let Expr::Value { value, span: _ } = &arg_value {
+                if let Expr::Value {
+                    value,
+                    span: arg_span,
+                } = &arg_value
+                {
+                    // Validate costume names for switch_costume blocks
+                    if let Block::SwitchCostume = block {
+                        let costume_name = value.to_string();
+                        if !s.sprite.costumes.iter().any(|c| c.name == costume_name) {
+                            d.report(
+                                DiagnosticKind::InvalidCostumeName(costume_name.into()),
+                                arg_span,
+                            );
+                        }
+                    }
+                    // Validate backdrop names for switch_backdrop blocks
+                    if let Block::SwitchBackdrop = block {
+                        let backdrop_name = value.to_string();
+                        let stage = s.stage.unwrap_or(s.sprite);
+                        if !stage.costumes.iter().any(|c| c.name == backdrop_name) {
+                            d.report(
+                                DiagnosticKind::InvalidBackdropName(backdrop_name.into()),
+                                arg_span,
+                            );
+                        }
+                    }
                     menu_value = Some(value.clone());
                     continue;
                 } else {
