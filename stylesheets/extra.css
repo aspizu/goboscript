@@ -1,0 +1,122 @@
+:root {
+    --black: #0d1b2a;
+    --white: #ffffff;
+    --radiate: #64ffda;
+    --flare: #1565c0;
+    --rock: #4db6ac;
+    --galaxy: #0d1b2a;
+    --space: #1b263b;
+    --comet: #415a77;
+    --cosmic: #26c6da;
+    --sun: #00e5ff;
+    --electron: #4dd0e1;
+    --aurora: #00bcd4;
+    --constellation: #0277bd;
+    --neutron: #b2dfdb;
+    --proton: #80cbc4;
+    --nebula: #b3e5fc;
+    --supernova: #81d4fa;
+    --starlight: #e0f2f1;
+    --lunar: #f1f8e9;
+    --asteroid: #c8e6c9;
+    --crater: #dcedc8;
+}
+
+[data-md-color-scheme="astral-light"] {
+    --md-default-bg-color--dark: var(--black);
+    --md-primary-fg-color: var(--galaxy);
+    --md-typeset-a-color: var(--flare);
+    --md-accent-fg-color: var(--cosmic);
+}
+
+[data-md-color-scheme="astral-dark"] {
+    --md-default-bg-color: var(--galaxy);
+    --md-default-fg-color: var(--white);
+    --md-default-fg-color--light: var(--white);
+    --md-default-fg-color--lighter: var(--white);
+    --md-primary-fg-color: var(--space);
+    --md-primary-bg-color: var(--white);
+    --md-accent-fg-color: var(--cosmic);
+
+    --md-typeset-color: var(--white);
+    --md-typeset-a-color: var(--radiate);
+    --md-typeset-mark-color: var(--sun);
+
+    --md-code-fg-color: var(--white);
+    --md-code-bg-color: var(--space);
+
+    --md-code-hl-comment-color: var(--asteroid);
+    --md-code-hl-punctuation-color: var(--asteroid);
+    --md-code-hl-generic-color: var(--supernova);
+    --md-code-hl-variable-color: var(--starlight);
+    --md-code-hl-string-color: var(--radiate);
+    --md-code-hl-keyword-color: var(--supernova);
+    --md-code-hl-operator-color: var(--supernova);
+    --md-code-hl-number-color: var(--electron);
+    --md-code-hl-special-color: var(--electron);
+    --md-code-hl-function-color: var(--neutron);
+    --md-code-hl-constant-color: var(--radiate);
+    --md-code-hl-name-color: var(--md-code-fg-color);
+
+    --md-typeset-del-color: hsla(6, 90%, 60%, 0.15);
+    --md-typeset-ins-color: hsla(150, 90%, 44%, 0.15);
+
+    --md-typeset-table-color: hsla(0, 0%, 100%, 0.12);
+    --md-typeset-table-color--light: hsla(0, 0%, 100%, 0.035);
+}
+
+[data-md-color-scheme="astral-light"] img[src$="#only-dark"],
+[data-md-color-scheme="astral-light"] img[src$="#gh-dark-mode-only"] {
+    display: none; /* Hide dark images in light mode */
+}
+
+[data-md-color-scheme="astral-light"] img[src$="#only-light"],
+[data-md-color-scheme="astral-light"] img[src$="#gh-light-mode-only"] {
+    display: inline; /* Show light images in light mode */
+}
+
+[data-md-color-scheme="astral-dark"] img[src$="#only-light"],
+[data-md-color-scheme="astral-dark"] img[src$="#gh-light-mode-only"] {
+    display: none; /* Hide light images in dark mode */
+}
+
+[data-md-color-scheme="astral-dark"] img[src$="#only-dark"],
+[data-md-color-scheme="astral-dark"] img[src$="#gh-dark-mode-only"] {
+    display: inline; /* Show dark images in dark mode */
+}
+
+/* See: https://github.com/squidfunk/mkdocs-material/issues/175#issuecomment-616694465 */
+.md-typeset__table {
+    min-width: 100%;
+}
+
+.md-typeset table:not([class]) {
+    display: table;
+}
+
+/* See: https://github.com/astral-sh/ruff/issues/8519 */
+[data-md-color-scheme="astral-dark"] details summary a {
+    color: var(--flare);
+}
+
+/* See: https://github.com/astral-sh/ruff/issues/9046 */
+[data-md-color-scheme="astral-dark"] div.admonition {
+    color: var(--md-code-fg-color);
+    background-color: var(--md-code-bg-color);
+}
+
+/* See: https://mkdocstrings.github.io/recipes/#prevent-selection-of-prompts-and-output-in-python-code-blocks */
+.highlight .gp,
+.highlight .go {
+    /* Generic.Prompt, Generic.Output */
+    user-select: none;
+}
+
+/* Styling for anchor link headers */
+.toclink {
+    color: unset !important;
+}
+
+.toclink:hover {
+    color: var(--md-accent-fg-color) !important;
+}
