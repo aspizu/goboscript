@@ -45,11 +45,24 @@
 | `x not in y` | ![](../assets/notin.png){width="125"} |
 | `x[y]` | ![](../assets/letterof.png){width="125"} |
 
-## Random
+## Reporters
+
+### pick random () to ()
 
 ```goboscript
 random(x, y)
 ```
 
-![](../assets/random.png){width="200"}
+```_ {.scratchblocks}
+(pick random (x) to (y))
+```
 
+### () contains ()
+
+```goboscript
+contains(string, substring)
+```
+
+```_ {.scratchblocks}
+<(string) contains (substring)?>
+```
