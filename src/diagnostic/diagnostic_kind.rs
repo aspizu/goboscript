@@ -40,6 +40,8 @@ pub enum DiagnosticKind {
     UnrecognizedEnumVariant(SmolStr),
     UnrecognizedStandardLibraryHeader,
     NoCostumes,
+    InvalidCostumeName(SmolStr),
+    InvalidBackdropName(SmolStr),
     BlockArgsCountMismatch {
         block: Block,
         given: usize,
@@ -133,6 +135,12 @@ impl DiagnosticKind {
                 "unrecognized standard library header".to_string()
             }
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
+            DiagnosticKind::InvalidCostumeName(name) => {
+                format!("costume '{}' does not exist", name)
+            }
+            DiagnosticKind::InvalidBackdropName(name) => {
+                format!("backdrop '{}' does not exist", name)
+            }
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(
                     "block {:?} expects {} arguments, but {} were given",
@@ -207,6 +215,20 @@ impl DiagnosticKind {
             DiagnosticKind::NoCostumes => {
                 Some("if this is a header, move it inside a directory such as `lib/`".to_string())
             }
+            DiagnosticKind::InvalidCostumeName(name) => {
+                if name.contains('.') {
+                    Some("costume names should not include file extensions - they are automatically derived from the file name without extension".to_string())
+                } else {
+                    None
+                }
+            }
+            DiagnosticKind::InvalidBackdropName(name) => {
+                if name.contains('.') {
+                    Some("backdrop names should not include file extensions - they are automatically derived from the file name without extension".to_string())
+                } else {
+                    None
+                }
+            }
             DiagnosticKind::UnrecognizedToken(token, expected) => match token {
                 Token::FloorDiv => Some("Use # for comments".to_owned()),
                 Token::Var => Some("var should only be used at top-level.".to_owned()),
@@ -264,7 +286,9 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::NotStruct
             | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. }
-            | DiagnosticKind::EmptyStruct(_) => Level::Error,
+            | DiagnosticKind::EmptyStruct(_)
+            | DiagnosticKind::InvalidCostumeName(_)
+            | DiagnosticKind::InvalidBackdropName(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)
