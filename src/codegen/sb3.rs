@@ -120,7 +120,7 @@ impl S<'_> {
 
     fn qualify_field<T>(
         &self,
-        d: D,
+        d: Option<D>,
         span: &Span,
         qualified_var_name: SmolStr,
         field_name: Option<SmolStr>,
@@ -134,7 +134,9 @@ impl S<'_> {
             Type::Value => match field_name {
                 None => Some(variant(qualified_var_name, type_.clone())),
                 Some(_) => {
-                    d.report(DiagnosticKind::NotStruct, span);
+                    if let Some(d) = d {
+                        d.report(DiagnosticKind::NotStruct, span);
+                    }
                     None
                 }
             },
@@ -149,13 +151,15 @@ impl S<'_> {
                 Some(field_name) => {
                     let struct_ = self.get_struct(type_name)?;
                     if !struct_.fields.iter().any(|field| field.name == field_name) {
-                        d.report(
-                            DiagnosticKind::StructDoesNotHaveField {
-                                type_name: type_name.clone(),
-                                field_name: field_name.clone(),
-                            },
-                            type_span,
-                        );
+                        if let Some(d) = d {
+                            d.report(
+                                DiagnosticKind::StructDoesNotHaveField {
+                                    type_name: type_name.clone(),
+                                    field_name: field_name.clone(),
+                                },
+                                type_span,
+                            );
+                        }
                         None
                     } else {
                         Some(variant(
@@ -168,7 +172,7 @@ impl S<'_> {
         }
     }
 
-    pub fn qualify_name(&self, d: D, name: &Name) -> Option<QualifiedName> {
+    pub fn qualify_name(&self, d: Option<D>, name: &Name) -> Option<QualifiedName> {
         let basename = name.basename();
         let fieldname = name.fieldname().cloned();
         if let Some(list) = self.get_list(basename) {
@@ -207,10 +211,12 @@ impl S<'_> {
                 QualifiedName::Var,
             );
         }
-        d.report(
-            DiagnosticKind::UnrecognizedVariable(basename.clone()),
-            &name.span(),
-        );
+        if let Some(d) = d {
+            d.report(
+                DiagnosticKind::UnrecognizedVariable(basename.clone()),
+                &name.span(),
+            );
+        }
         None
     }
 

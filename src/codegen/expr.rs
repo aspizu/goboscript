@@ -184,8 +184,8 @@ where T: Write + Seek
         op: &UnOp,
         opr: &Expr,
     ) -> io::Result<()> {
-        if matches!(op, UnOp::Not) && !is_expr_boolean(opr) {
-            return self.un_op(s, d, this_id, parent_id, op, &coerce_condition(opr));
+        if matches!(op, UnOp::Not) && !is_expr_boolean(opr, s) {
+            return self.un_op(s, d, this_id, parent_id, op, &coerce_condition(opr, s));
         }
         if matches!(op, UnOp::Length) {
             if let Expr::Name(Name::Name { name, .. }) = opr {
@@ -218,27 +218,31 @@ where T: Write + Seek
         lhs: &Expr,
         rhs: &Expr,
     ) -> io::Result<()> {
-        if matches!(op, BinOp::And | BinOp::Or) && !(is_expr_boolean(lhs) && is_expr_boolean(rhs)) {
+        if matches!(op, BinOp::And | BinOp::Or)
+            && !(is_expr_boolean(lhs, s) && is_expr_boolean(rhs, s))
+        {
             return self.bin_op(
                 s,
                 d,
                 this_id,
                 parent_id,
                 op,
-                &coerce_condition(lhs),
-                &coerce_condition(rhs),
+                &coerce_condition(lhs, s),
+                &coerce_condition(rhs, s),
             );
         }
         if let BinOp::Of = op {
             if let Expr::Name(name) = lhs {
-                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(d, name) {
+                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(Some(d), name)
+                {
                     return self.list_index(s, d, this_id, parent_id, &qualified_name, rhs);
                 }
             }
         }
         if let BinOp::In = op {
             if let Expr::Name(name) = rhs {
-                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(d, name) {
+                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(Some(d), name)
+                {
                     return self.list_contains(s, d, this_id, parent_id, &qualified_name, lhs);
                 }
             }

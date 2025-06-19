@@ -30,7 +30,17 @@ use crate::{
     misc::write_comma_io,
 };
 
-pub fn is_expr_boolean(expr: &Expr) -> bool {
+pub fn is_expr_boolean(expr: &Expr, s: S) -> bool {
+    if let Expr::BinOp {
+        op: BinOp::Of, lhs, ..
+    } = expr
+    {
+        if let Expr::Name(name) = &**lhs {
+            if let Some(QualifiedName::List(..)) = s.qualify_name(None, name) {
+                return true;
+            }
+        }
+    }
     matches!(
         expr,
         Expr::UnOp { op: UnOp::Not, .. }
@@ -60,8 +70,8 @@ pub fn is_expr_boolean(expr: &Expr) -> bool {
     )
 }
 
-pub fn coerce_condition(expr: &Expr) -> Expr {
-    if is_expr_boolean(expr) {
+pub fn coerce_condition(expr: &Expr, s: S) -> Expr {
+    if is_expr_boolean(expr, s) {
         return expr.clone();
     }
     BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(true).to_expr(0..0))
@@ -169,7 +179,7 @@ where T: Write + Seek
                 }
             }
         }
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(name, _)) => {
                 write!(self, "[3,[12,{},{}],", json!(*name), json!(*name))?;
             }

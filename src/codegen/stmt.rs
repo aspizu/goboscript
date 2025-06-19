@@ -83,7 +83,7 @@ where T: Write + Seek
         if_body: &[Stmt],
         else_body: &[Stmt],
     ) -> io::Result<()> {
-        let cond = coerce_condition(cond);
+        let cond = coerce_condition(cond, s);
         let cond_id = self.id.new_id();
         let if_body_id = self.id.new_id();
         let else_body_id = self.id.new_id();
@@ -106,7 +106,7 @@ where T: Write + Seek
         cond: &Expr,
         body: &[Stmt],
     ) -> io::Result<()> {
-        let cond = coerce_condition(cond);
+        let cond = coerce_condition(cond, s);
         let cond_id = self.id.new_id();
         let body_id = self.id.new_id();
         self.begin_inputs()?;
@@ -133,7 +133,7 @@ where T: Write + Seek
         self.begin_inputs()?;
         self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
                 self.single_field_id("VARIABLE", &qualified_name)?
             }
@@ -161,7 +161,7 @@ where T: Write + Seek
         self.begin_inputs()?;
         self.input(s, d, "VALUE", value, value_id, false)?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
                 self.single_field_id("VARIABLE", &qualified_name)?
             }
@@ -180,7 +180,7 @@ where T: Write + Seek
     pub fn show(&mut self, s: S, d: D, name: &Name) -> io::Result<()> {
         self.begin_inputs()?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
                 self.single_field_id("VARIABLE", &qualified_name)?
             }
@@ -208,7 +208,7 @@ where T: Write + Seek
         self.begin_inputs()?;
         self.input(s, d, "ITEM", value, value_id, false)?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::List(qualified_name, _)) => {
                 self.single_field_id("LIST", &qualified_name)?
             }
@@ -236,7 +236,7 @@ where T: Write + Seek
         self.begin_inputs()?;
         self.input(s, d, "INDEX", index, index_id, false)?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::List(qualified_name, _)) => {
                 self.single_field_id("LIST", &qualified_name)?
             }
@@ -255,7 +255,7 @@ where T: Write + Seek
     pub fn delete_list(&mut self, s: S, d: D, name: &Name) -> io::Result<()> {
         self.begin_inputs()?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::List(qualified_name, _)) => {
                 self.single_field_id("LIST", &qualified_name)?
             }
@@ -285,7 +285,7 @@ where T: Write + Seek
         self.input(s, d, "INDEX", index, index_id, false)?;
         self.input(s, d, "ITEM", value, value_id, false)?;
         self.end_obj()?; // inputs
-        match s.qualify_name(d, name) {
+        match s.qualify_name(Some(d), name) {
             Some(QualifiedName::List(qualified_name, _)) => {
                 self.single_field_id("LIST", &qualified_name)?
             }
