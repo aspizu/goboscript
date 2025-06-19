@@ -71,14 +71,12 @@ theme:
               icon: material/brightness-auto
               name: Switch to light mode
         - media: "(prefers-color-scheme: light)"
-          scheme: default
-          primary: white
+          scheme: astral-light
           toggle:
               icon: material/brightness-7
               name: Switch to dark mode
         - media: "(prefers-color-scheme: dark)"
-          scheme: slate
-          primary: black
+          scheme: astral-dark
           toggle:
               icon: material/brightness-4
               name: Switch to system preference
@@ -103,8 +101,6 @@ markdown_extensions:
     - pymdownx.keys
     - pymdownx.tasklist:
           custom_checkbox: true
-    - pymdownx.highlight:
-          anchor_linenums: true
     - pymdownx.tabbed:
           alternate_style: true
 plugins:
