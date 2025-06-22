@@ -1,0 +1,58 @@
+---
+import "@fontsource-variable/inter"
+import "@fontsource/cascadia-code"
+import GoboscriptLogo from "../../public/goboscript.svg"
+import Column from "../components/Column.astro"
+import ControlFlowSection from "../components/ControlFlowSection.astro"
+import CustomBlocksSection from "../components/CustomBlocksSection.astro"
+import EventsSection from "../components/EventsSection.astro"
+import InstallationUsageSection from "../components/InstallationUsageSection.astro"
+import ListsSection from "../components/ListsSection.astro"
+import OperatorsSection from "../components/OperatorsSection.astro"
+import StageSpritesSection from "../components/StageSpritesSection.astro"
+import SyntaxSection from "../components/SyntaxSection.astro"
+import TurboWarpConfigSection from "../components/TurboWarpConfigSection.astro"
+import VariablesSection from "../components/VariablesSection.astro"
+import "../styles/main.css"
+---
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="./goboscript.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <title>goboscript cheatsheet</title>
+    </head>
+    <body class="bg-neutral-400">
+        <div class="aspect-[22/17] min-w-[1056px] w-[1056px] bg-white shadow-xs">
+            <div class="grid auto-cols-fr grid-flow-col p-4 gap-4 h-full w-full">
+                <Column>
+                    <div class="flex items-center gap-4">
+                        <GoboscriptLogo />
+                        <div class="flex flex-col">
+                            <h2 class="text-neutral-600 text-sm">
+                                Overview & Reference
+                            </h2>
+                            <h1 class="text-2xl">goboscript cheatsheet</h1>
+                        </div>
+                    </div>
+                    <InstallationUsageSection />
+                    <TurboWarpConfigSection />
+                    <StageSpritesSection />
+                </Column>
+                <Column>
+                    <SyntaxSection />
+                    <OperatorsSection />
+                    <VariablesSection />
+                    <ControlFlowSection />
+                </Column>
+                <Column>
+                    <ListsSection />
+                    <EventsSection />
+                    <CustomBlocksSection />
+                </Column>
+            </div>
+        </div>
+    </body>
+</html>

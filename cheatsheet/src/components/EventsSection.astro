@@ -1,0 +1,46 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Events</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode>onflag {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When green flag clicked</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>onkey "up arrow" {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When key pressed</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>onclick {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When this sprite clicked</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>onbackdrop "backdrop" {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When backdrop switches to</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>onloudness &gt; 100 {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When loudness &gt;</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>ontimer &gt; 100 {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When timer &gt;</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>onclone {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When I start as a clone</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>on "message" {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>When I receive message</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

@@ -1,0 +1,31 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Installation & Usage</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode
+                >cargo install --git https://github.com/aspizu/goboscript</SectionItemCode
+            >
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>goboscript new [-n]</SectionItemCode>
+            <SectionItemText>create new project</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>goboscript build [-i] [-o]</SectionItemCode>
+            <SectionItemText>compile project to .sb3</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>goboscript fmt [-i]</SectionItemCode>
+            <SectionItemText>reformat .gs files</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

@@ -1,0 +1,42 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Variables</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode> var variable = 1; </SectionItemCode>
+            <SectionItemText>
+                Default variable value (top-level statement)
+            </SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>variable = 1;</SectionItemCode>
+            <SectionItemText>Set variable to</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>variable += 1;</SectionItemCode>
+            <SectionItemText>Change variable by</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>variable++;</SectionItemCode>
+            <SectionItemCode>variable--;</SectionItemCode>
+            <SectionItemText>Change variable by +1/-1</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>variable *= 1;</SectionItemCode>
+            <SectionItemText>Compound assignment</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>show variable;</SectionItemCode>
+            <SectionItemCode>hide variable;</SectionItemCode>
+            <SectionItemText>Show/hide variable monitor</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

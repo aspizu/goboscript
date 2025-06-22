@@ -1,0 +1,61 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Operators</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode>+</SectionItemCode>
+            <SectionItemCode>-</SectionItemCode>
+            <SectionItemCode>*</SectionItemCode>
+            <SectionItemCode>/</SectionItemCode>
+            <SectionItemText>Arithmetic operators</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>&lt;</SectionItemCode>
+            <SectionItemCode>&gt;</SectionItemCode>
+            <SectionItemCode>&lt;=</SectionItemCode>
+            <SectionItemCode>&gt;=</SectionItemCode>
+            <SectionItemCode>==</SectionItemCode>
+            <SectionItemCode>!=</SectionItemCode>
+            <SectionItemText>Comparison operators</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>not</SectionItemCode>
+            <SectionItemCode>and</SectionItemCode>
+            <SectionItemCode>or</SectionItemCode>
+            <SectionItemText>Boolean operators</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>&</SectionItemCode>
+            <SectionItemText>Join operator</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>%</SectionItemCode>
+            <SectionItemText>Modulo operator</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>antiln(value)</SectionItemCode>
+            <SectionItemText>e ^ of value</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>antilog(value)</SectionItemCode>
+            <SectionItemText>10 ^ of value</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>string_or_list[i]</SectionItemCode>
+            <SectionItemText>Letter of string & item of list</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>in</SectionItemCode>
+            <SectionItemCode>not in</SectionItemCode>
+            <SectionItemText>String & list contains</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

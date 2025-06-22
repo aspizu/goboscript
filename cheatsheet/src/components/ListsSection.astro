@@ -1,0 +1,72 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Lists</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode>list list_name = [];</SectionItemCode>
+            <SectionItemText>Default list value (top-level statement)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>list list_name = file```path.txt```;</SectionItemCode>
+            <SectionItemText>Read list from text file</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>list list_name = ```command```;</SectionItemCode>
+            <SectionItemText>Read list from output of shell command</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>add value to list_name;</SectionItemCode>
+            <SectionItemText>Add item</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>delete list_name[index];</SectionItemCode>
+            <SectionItemText>Delete item at index</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>delete list_name;</SectionItemCode>
+            <SectionItemText>Delete all items</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>insert value at list_name[index];</SectionItemCode>
+            <SectionItemText>Insert item at index</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>list_name[index] = value;</SectionItemCode>
+            <SectionItemText>Replace item at index</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>list_name[index] = value;</SectionItemCode>
+            <SectionItemText>Replace item at index</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>item in list_name</SectionItemCode>
+            <SectionItemText>Get index of item</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>length(list_name)</SectionItemCode>
+            <SectionItemText>Get length</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>show list_name;</SectionItemCode>
+            <SectionItemCode>hide list_name;</SectionItemCode>
+            <SectionItemText>Show/hide list monitor</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>list_name["random"]</SectionItemCode>
+            <SectionItemCode>list_name["last"]</SectionItemCode>
+            <SectionItemText>Get random/list item</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>list_name[index] *= 2;</SectionItemCode>
+            <SectionItemText>Compound assignment</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

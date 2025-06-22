@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+    --font-sans: Inter Variable;
+    --font-mono: Cascadia Code;
+}
+
+:root {
+    font-size: 10px;
+}

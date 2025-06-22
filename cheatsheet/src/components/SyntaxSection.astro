@@ -1,0 +1,38 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Syntax</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode># only single-only comments</SectionItemCode>
+            <SectionItemText>Comments</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>0b1111</SectionItemCode>
+            <SectionItemCode>0o17</SectionItemCode>
+            <SectionItemCode>15</SectionItemCode>
+            <SectionItemCode>0xF</SectionItemCode>
+            <SectionItemCode>3.14159</SectionItemCode>
+            <SectionItemText>Numbers</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>"Hello"</SectionItemCode>
+            <SectionItemCode>"\u1234"</SectionItemCode>
+            <SectionItemCode>"\n"</SectionItemCode>
+            <SectionItemCode>"\t"</SectionItemCode>
+            <SectionItemText>Strings</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>true == 1</SectionItemCode>
+            <SectionItemCode>false == 0</SectionItemCode>
+            <SectionItemText>Boolean constants</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

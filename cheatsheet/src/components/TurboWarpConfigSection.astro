@@ -1,0 +1,46 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>TurboWarp Configuration</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode>frame_rate = 60</SectionItemCode>
+            <SectionItemText>(default: 30)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>max_clones = inf</SectionItemCode>
+            <SectionItemText>(default: 300)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>no_miscellaneous_limits = true</SectionItemCode>
+            <SectionItemText>(default: false)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>no_sprite_fencing = true</SectionItemCode>
+            <SectionItemText>(default: false)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>frame_interpolation = true</SectionItemCode>
+            <SectionItemText>(default: false)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>high_quality_pen = true</SectionItemCode>
+            <SectionItemText>(default: false)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>stage_width = 480</SectionItemCode>
+            <SectionItemText>(default: 480)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>stage_height = 360</SectionItemCode>
+            <SectionItemText>(default: 360)</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

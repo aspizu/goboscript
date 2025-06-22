@@ -1,0 +1,68 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Stage & Sprites</SectionHeader>
+    <SectionContent>
+        <SectionItem
+            ><SectionItemCode>%include file</SectionItemCode>
+            <SectionItemText>Include contents of file.gs in sprite</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>costumes "*.svg", "path.svg" as "alias";</SectionItemCode>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>sounds "*.mp3", "path.mp3" as "alias";</SectionItemCode>
+            <SectionItemText>.mp3, .wav</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_x 100;</SectionItemCode>
+            <SectionItemText>Default X position</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_y 100;</SectionItemCode>
+            <SectionItemText>Default Y position</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_size 100;</SectionItemCode>
+            <SectionItemText>Default size</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>point_in_direction 100;</SectionItemCode>
+            <SectionItemText>Default direction</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_volume 100;</SectionItemCode>
+            <SectionItemText>Default volume</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>hide;</SectionItemCode>
+            <SectionItemText>Hidden by default</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_rotation_style_left_right;</SectionItemCode>
+            <SectionItemText>Default rotation style left-right</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_rotation_style_all_around;</SectionItemCode>
+            <SectionItemText>Default rotation style all around</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_rotation_style_do_not_rotate;</SectionItemCode>
+            <SectionItemText>Default rotation style don't rotate</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>set_layer_order 100;</SectionItemCode>
+            <SectionItemText
+                >The layer order is the order in which the sprites are drawn, and
+                scripts are executed</SectionItemText
+            >
+        </SectionItem>
+    </SectionContent>
+</Section>

@@ -1,0 +1,38 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Control Flow</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode>repeat times {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Repeat times</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>until condition {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Repeat until</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>forever {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Forever</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>if {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>If</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>elif {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Else if chain</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>else {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Else</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>

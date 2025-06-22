@@ -1,0 +1,27 @@
+---
+import Section from "./Section.astro"
+import SectionContent from "./SectionContent.astro"
+import SectionHeader from "./SectionHeader.astro"
+import SectionItem from "./SectionItem.astro"
+import SectionItemCode from "./SectionItemCode.astro"
+import SectionItemText from "./SectionItemText.astro"
+---
+
+<Section>
+    <SectionHeader>Custom Blocks</SectionHeader>
+    <SectionContent>
+        <SectionItem>
+            <SectionItemCode>proc block_name arg {"{"} ... {"}"}</SectionItemCode>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode
+                >nowarp proc block_name args {"{"} ... {"}"}</SectionItemCode
+            >
+            <SectionItemText>Run without screen refresh unchecked</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>$argument_name</SectionItemCode>
+            <SectionItemText>Get custom block parameter value</SectionItemText>
+        </SectionItem>
+    </SectionContent>
+</Section>
