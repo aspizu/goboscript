@@ -708,24 +708,24 @@ where T: Write + Seek
         }
         write!(self, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
-            let x_position = x_position.to_string();
-            write!(self, r#","x":{}"#, json!(*x_position))?;
+            let x_position = x_position.to_js_number();
+            write!(self, r#","x":{}"#, json!(x_position))?;
         }
         if let Some((y_position, _)) = &sprite.y_position {
-            let y_position = y_position.to_string();
-            write!(self, r#","y":{}"#, json!(*y_position))?;
+            let y_position = y_position.to_js_number();
+            write!(self, r#","y":{}"#, json!(y_position))?;
         }
         if let Some((size, _)) = &sprite.size {
-            let size = size.to_string();
-            write!(self, r#","size":{}"#, json!(*size))?;
+            let size = size.to_js_number();
+            write!(self, r#","size":{}"#, json!(size))?;
         }
         if let Some((direction, _)) = &sprite.direction {
-            let direction = direction.to_string();
-            write!(self, r#","direction":{}"#, json!(*direction))?;
+            let direction = direction.to_js_number();
+            write!(self, r#","direction":{}"#, json!(direction))?;
         }
         if let Some((volume, _)) = &sprite.volume {
-            let volume = volume.to_string();
-            write!(self, r#","volume":{}"#, json!(*volume))?;
+            let volume = volume.to_js_number();
+            write!(self, r#","volume":{}"#, json!(volume))?;
         }
         if let Some((layer_order, _)) = &sprite.layer_order {
             let layer_order = (layer_order.to_js_number() as i64).max(1);
