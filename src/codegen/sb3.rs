@@ -728,8 +728,8 @@ where T: Write + Seek
             write!(self, r#","volume":{}"#, json!(*volume))?;
         }
         if let Some((layer_order, _)) = &sprite.layer_order {
-            let layer_order = layer_order.to_string();
-            write!(self, r#","layerOrder":{}"#, json!(*layer_order))?;
+            let layer_order = (layer_order.to_js_number() as i64).max(1);
+            write!(self, r#","layerOrder":{}"#, json!(layer_order))?;
         }
         if !sprite.hidden {
             write!(self, r#","visible":true"#)?;
