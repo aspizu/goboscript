@@ -420,7 +420,7 @@ Expr: Expr = {
     <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
     <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
-    #[precedence(level="6")] #[assoc(side="left")]
+    #[precedence(level="6")] #[assoc(side="right")]
     <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
     // <lhs:Expr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
     //     args.insert(0, lhs);
