@@ -690,7 +690,6 @@ extern {
         DELETE         => Token::Delete,
         INSERT         => Token::Insert,
         AT             => Token::At,
-        OF             => Token::Of,
         AS             => Token::As,
         ENUM           => Token::Enum,
         STRUCT         => Token::Struct,

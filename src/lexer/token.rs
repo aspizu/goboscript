@@ -204,8 +204,6 @@ pub enum Token {
     Insert,
     #[token("at")]
     At,
-    #[token("of")]
-    Of,
     #[token("as")]
     As,
     #[token("enum")]
@@ -341,7 +339,6 @@ impl Display for Token {
             Token::Delete => write!(f, "delete"),
             Token::Insert => write!(f, "insert"),
             Token::At => write!(f, "at"),
-            Token::Of => write!(f, "of"),
             Token::As => write!(f, "as"),
             Token::Enum => write!(f, "enum"),
             Token::Struct => write!(f, "struct"),
