@@ -229,3 +229,13 @@ user_answer = answer();
 ```_ {.scratchblocks}
 (answer)
 ```
+
+### difficult to name thing of thing block
+
+```goboscript
+backdrop_number = "Stage"."backdrop #";
+```
+
+```_ {.scratchblocks}
+([backdrop #] of (Stage v))
+```
