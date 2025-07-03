@@ -374,6 +374,9 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
                 visit_expr(&mut field.value, s, d);
             }
         }
+        Expr::Property { object, .. } => {
+            visit_expr(object, s, d);
+        }
     }
     transformations::apply(expr, transformations::minus);
     transformations::apply(expr, transformations::less_than_equal);

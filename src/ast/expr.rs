@@ -60,6 +60,11 @@ pub enum Expr {
         span: Span,
         fields: Vec<StructLiteralField>,
     },
+    Property {
+        object: Box<Expr>,
+        property: SmolStr,
+        span: Span,
+    },
 }
 
 impl Expr {
@@ -74,6 +79,7 @@ impl Expr {
             Self::UnOp { span, .. } => span.clone(),
             Self::BinOp { span, .. } => span.clone(),
             Self::StructLiteral { span, .. } => span.clone(),
+            Self::Property { span, .. } => span.clone(),
         }
     }
 }

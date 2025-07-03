@@ -520,6 +520,9 @@ Term: Expr = {
     <l:@L> <term:Term> "[" <index:Expr> "]" <r:@R> => BinOp::Of.to_expr(l..r, term, index),
     <lhs:Term> "." <l:@L> <rhs:NAME> <r:@R> => {
         Expr::Dot { lhs: Box::new(lhs), rhs, rhs_span: l..r }
+    },
+    <object:Term> "." <l:@L> <property:STR> <r:@R> => {
+        Expr::Property { object: Box::new(object), property, span: l..r }
     }
 }
 

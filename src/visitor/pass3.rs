@@ -231,5 +231,12 @@ fn visit_expr(expr: &Expr, s: &mut S) {
                 visit_expr(&field.value, s);
             }
         }
+        Expr::Property {
+            object,
+            property: _,
+            span: _,
+        } => {
+            visit_expr(object, s);
+        }
     }
 }

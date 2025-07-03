@@ -448,4 +448,54 @@ where T: Write + Seek
         eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
         Ok(())
     }
+
+    pub fn property(
+        &mut self,
+        s: S,
+        d: D,
+        this_id: NodeID,
+        parent_id: NodeID,
+        object: &Expr,
+        property: &SmolStr,
+        _span: &Span,
+    ) -> io::Result<()> {
+        let menu_id = self.id.new_id();
+        let (object_value, is_default) = if let Expr::Value {
+            value: Value::String(object_value),
+            ..
+        } = object
+        {
+            (object_value, true)
+        } else {
+            (
+                if property == "Stage" {
+                    &arcstr::literal!("backdrop #")
+                } else {
+                    &arcstr::literal!("x position")
+                },
+                false,
+            )
+        };
+        self.begin_node(
+            Node::new("sensing_of_object_menu", menu_id)
+                .parent_id(this_id)
+                .shadow(true),
+        )?;
+        self.begin_inputs()?;
+        self.end_obj()?; // inputs
+        self.single_field("OBJECT", object_value)?;
+        self.end_obj()?; // node (sensing_of_object_menu)
+        let object_id = self.id.new_id();
+        self.begin_node(Node::new("sensing_of", this_id).parent_id(parent_id))?;
+        self.begin_inputs()?;
+        if is_default {
+            write!(self, r#""OBJECT":[1,{}]"#, menu_id)?;
+        } else {
+            self.input_with_shadow(s, d, "OBJECT", object, object_id, menu_id)?;
+        }
+        self.end_obj()?; // inputs
+        self.single_field("PROPERTY", property)?;
+        self.end_obj()?; // node (sensing_of)
+        self.expr(s, d, object, object_id, this_id)
+    }
 }

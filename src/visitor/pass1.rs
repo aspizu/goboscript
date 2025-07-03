@@ -299,6 +299,14 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             }
             None
         }
+        Expr::Property {
+            object,
+            property: _,
+            span: _,
+        } => {
+            visit_expr(object, before, s);
+            None
+        }
     };
     if let Some(replace) = replace {
         *expr = replace;
