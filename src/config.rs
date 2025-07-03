@@ -8,6 +8,8 @@ pub struct Config {
     #[serde(default)]
     pub std: Option<String>,
     #[serde(default)]
+    pub bitmap_resolution: Option<u64>,
+    #[serde(default)]
     pub frame_rate: Option<u64>,
     #[serde(default)]
     pub max_clones: Option<f64>,

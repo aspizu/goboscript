@@ -40,6 +40,10 @@ pub enum Command {
         #[arg(short = 's', long)]
         std: Option<String>,
 
+        // (alias: --bmpres) Bitmap resolution. (default: 1)
+        #[arg(short = 'b', long, alias = "bmpres")]
+        bitmap_resolution: Option<u64>,
+
         /// (alias: --fps) Custom frame rate, used by TurboWarp.
         #[arg(short = 'f', long, alias = "fps")]
         frame_rate: Option<u64>,

@@ -45,6 +45,7 @@ pub fn frontend() -> ExitCode {
         Command::New {
             name,
             std,
+            bitmap_resolution,
             frame_rate,
             max_clones,
             no_miscellaneous_limits,
@@ -58,6 +59,7 @@ pub fn frontend() -> ExitCode {
                 name,
                 Config {
                     std,
+                    bitmap_resolution,
                     frame_rate,
                     max_clones,
                     no_miscellaneous_limits: Some(no_miscellaneous_limits),

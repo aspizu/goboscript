@@ -697,7 +697,7 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(fs.clone(), input, costume, d)?;
+            self.costume(config, fs.clone(), input, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
@@ -923,6 +923,7 @@ where T: Write + Seek
 
     pub fn costume(
         &mut self,
+        config: &Config,
         fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
         costume: &Costume,
@@ -953,15 +954,25 @@ where T: Write + Seek
                 Ok(hash)
             })?;
         let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
-        self.costume_entry(&costume.name, &hash, extension)
+        self.costume_entry(config, &costume.name, &hash, extension)
     }
 
-    pub fn costume_entry(&mut self, name: &str, hash: &str, extension: &str) -> io::Result<()> {
+    pub fn costume_entry(
+        &mut self,
+        config: &Config,
+        name: &str,
+        hash: &str,
+        extension: &str,
+    ) -> io::Result<()> {
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(name))?;
         write!(self, r#","assetId":"{hash}""#)?;
         if extension == "png" || extension == "bmp" {
-            write!(self, r#","bitmapResolution":1"#)?;
+            write!(
+                self,
+                r#","bitmapResolution":{}"#,
+                json!(config.bitmap_resolution.unwrap_or(1))
+            )?;
         }
         write!(self, r#","dataFormat":"{extension}""#)?;
         write!(self, r#","md5ext":"{hash}.{extension}""#)?;
