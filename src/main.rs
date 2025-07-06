@@ -7,7 +7,7 @@ use colored::{
     Color,
     Colorize,
 };
-use goboscript::frontend::frontend;
+use libgoboscript::frontend::frontend;
 
 fn main() -> ExitCode {
     pretty_env_logger::init();

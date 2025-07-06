@@ -48,6 +48,7 @@ rand = "0.9.1"
 lalrpop = "0.22.0"
 
 [lib]
+name = "libgoboscript"
 crate-type = ["cdylib", "rlib"]
 
 # <https://github.com/rustwasm/wasm-pack/issues/1441>
