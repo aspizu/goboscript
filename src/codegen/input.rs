@@ -80,6 +80,21 @@ pub fn coerce_condition(expr: &Expr, s: S) -> Expr {
 impl<T> Sb3<T>
 where T: Write + Seek
 {
+    pub fn stmt_input(
+        &mut self,
+        s: S,
+        d: D,
+        name: &str,
+        expr: &Expr,
+        this_id: NodeID,
+        no_empty_shadow: bool,
+    ) -> io::Result<()> {
+        self.nesting = 0;
+        self.input(s, d, name, expr, this_id, no_empty_shadow)?;
+        self.max_nesting = self.max_nesting.max(self.nesting);
+        Ok(())
+    }
+
     pub fn input(
         &mut self,
         s: S,
@@ -181,9 +196,11 @@ where T: Write + Seek
         }
         match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(name, _)) => {
+                self.nesting += 1;
                 write!(self, "[3,[12,{},{}],", json!(*name), json!(*name))?;
             }
             Some(QualifiedName::List(name, _)) => {
+                self.nesting += 1;
                 write!(self, "[3,[13,{},{}],", json!(*name), json!(*name))?;
             }
             None => {}
@@ -198,6 +215,7 @@ where T: Write + Seek
         shadow_id: Option<NodeID>,
         no_empty_shadow: bool,
     ) -> io::Result<()> {
+        self.nesting += 1;
         if no_empty_shadow {
             return write!(self, "[2,{node_id}]");
         }
