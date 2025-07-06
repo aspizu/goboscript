@@ -9,7 +9,12 @@ use crate::{
     translation_unit::TranslationUnit,
 };
 
-lalrpop_mod!(grammar, "/parser/grammar.rs");
+lalrpop_mod!(
+    #[allow(clippy::all)]
+    #[allow(unused)]
+    grammar,
+    "/parser/grammar.rs"
+);
 
 pub fn parse(translation_unit: &TranslationUnit) -> Result<Sprite, Diagnostic> {
     let mut tokens = vec![];
