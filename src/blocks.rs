@@ -1145,7 +1145,7 @@ impl Repr {
         }
     }
 
-    pub fn overloads(name: &str) -> &'static [Self] {
+    pub fn overloads(_name: &str) -> &'static [Self] {
         &[]
     }
 

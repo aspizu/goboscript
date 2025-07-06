@@ -1,12 +1,9 @@
 use crate::misc::SmolStr;
 use logos::Span;
-use lalrpop_util::ParseError;
 use crate::ast::*;
 use crate::blocks::*;
 use crate::diagnostic::*;
 use crate::lexer::token::*;
-use crate::lexer::adaptor::*;
-use crate::misc::*;
 
 grammar<'a>(sprite: &'a mut Sprite);
 
