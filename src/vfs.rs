@@ -108,8 +108,7 @@ impl VFS for MemFS {
         let mut seen = std::collections::HashSet::new();
 
         for key in self.files.keys() {
-            if key.starts_with(normalized_path) {
-                let remainder = &key[normalized_path.len()..];
+            if let Some(remainder) = key.strip_prefix(normalized_path) {
                 if let Some(pos) = remainder.find('/') {
                     let entry = &remainder[..pos];
                     if seen.insert(entry) {

@@ -349,7 +349,7 @@ where T: Write + Seek
                         let costume_name = value.to_string();
                         if !s.sprite.costumes.iter().any(|c| c.name == costume_name) {
                             d.report(
-                                DiagnosticKind::InvalidCostumeName(costume_name.into()),
+                                DiagnosticKind::InvalidCostumeName(costume_name),
                                 arg_span,
                             );
                         }
@@ -360,7 +360,7 @@ where T: Write + Seek
                         let stage = s.stage.unwrap_or(s.sprite);
                         if !stage.costumes.iter().any(|c| c.name == backdrop_name) {
                             d.report(
-                                DiagnosticKind::InvalidBackdropName(backdrop_name.into()),
+                                DiagnosticKind::InvalidBackdropName(backdrop_name),
                                 arg_span,
                             );
                         }
