@@ -49,7 +49,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     build_impl(fs, canonical_input, sb3, None)
 }
 
-pub fn build_impl<'a, T: Write + Seek>(
+pub fn build_impl<T: Write + Seek>(
     fs: Rc<RefCell<dyn VFS>>,
     input: PathBuf,
     mut sb3: Sb3<T>,
