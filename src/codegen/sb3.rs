@@ -312,6 +312,8 @@ where T: Write + Seek
     pub costumes: FxHashMap<SmolStr, SmolStr>,
     pub srcpkg_hash: Option<String>,
     pub srcpkg: Option<Vec<u8>>,
+    pub nesting: i32,
+    pub max_nesting: i32,
 }
 
 impl<T> Write for Sb3<T>
@@ -338,6 +340,8 @@ where T: Write + Seek
             costumes: FxHashMap::default(),
             srcpkg_hash: None,
             srcpkg: None,
+            nesting: 0,
+            max_nesting: 0,
         }
     }
 
