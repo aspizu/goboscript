@@ -13,6 +13,8 @@ pub struct Node {
     parent_id: Option<NodeID>,
     top_level: bool,
     shadow: bool,
+    x: Option<i32>,
+    y: Option<i32>,
 }
 
 impl Node {
@@ -24,6 +26,8 @@ impl Node {
             parent_id: None,
             top_level: false,
             shadow: false,
+            x: None,
+            y: None,
         }
     }
 
@@ -44,6 +48,22 @@ impl Node {
 
     pub fn some_next_id(self, next_id: Option<NodeID>) -> Self {
         Self { next_id, ..self }
+    }
+
+    pub fn x(self, x: i32) -> Self {
+        Self { x: Some(x), ..self }
+    }
+
+    pub fn y(self, y: i32) -> Self {
+        Self { y: Some(y), ..self }
+    }
+
+    pub fn xy(self, x: i32, y: i32) -> Self {
+        Self {
+            x: Some(x),
+            y: Some(y),
+            ..self
+        }
     }
 
     pub fn some_parent_id(self, parent_id: Option<NodeID>) -> Self {
@@ -74,6 +94,12 @@ impl Display for Node {
             write!(f, ",\"shadow\":true")?;
         } else {
             write!(f, ",\"shadow\":false")?;
+        }
+        if let Some(x) = self.x {
+            write!(f, ",\"x\":{x}")?;
+        }
+        if let Some(y) = self.y {
+            write!(f, ",\"y\":{y}")?;
         }
         Ok(())
     }
