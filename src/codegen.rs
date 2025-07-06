@@ -1,3 +1,4 @@
+pub mod cleanup;
 pub mod cmd;
 pub mod debug_info;
 pub mod event;
