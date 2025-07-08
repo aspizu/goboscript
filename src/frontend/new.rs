@@ -6,6 +6,7 @@ use std::{
     },
     io::Write,
     path::PathBuf,
+    process::Command,
 };
 
 use crate::config::Config;
@@ -34,7 +35,7 @@ macro_rules! write_templates {
     };
 }
 
-pub fn new(name: Option<PathBuf>, config: Config) -> Result<(), NewError> {
+pub fn new(name: Option<PathBuf>, no_git: bool, config: Config) -> Result<(), NewError> {
     let is_name_explicit = name.is_some();
     let name = name.unwrap_or_else(|| env::current_dir().unwrap());
     let _ = fs::create_dir(&name);
@@ -54,6 +55,10 @@ pub fn new(name: Option<PathBuf>, config: Config) -> Result<(), NewError> {
         )?;
         file.write_all(toml_data.as_bytes())?;
     }
-    write_templates!(name, "stage.gs", "main.gs", "blank.svg");
+    write_templates!(&name, "stage.gs", "main.gs", "blank.svg");
+    if !no_git {
+        let _ = Command::new("git").arg("init").arg(&name).spawn();
+        write_templates!(&name, ".gitignore");
+    }
     Ok(())
 }

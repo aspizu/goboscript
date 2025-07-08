@@ -36,6 +36,10 @@ pub enum Command {
         #[arg(short = 'n', long)]
         name: Option<PathBuf>,
 
+        /// Do not initialize a Git repository.
+        #[arg(short = 'G', long)]
+        no_git: bool,
+
         /// Version of the standard library to use. Defaults to bleeding-edge.
         #[arg(short = 's', long)]
         std: Option<String>,

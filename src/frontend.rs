@@ -44,6 +44,7 @@ pub fn frontend() -> ExitCode {
         }
         Command::New {
             name,
+            no_git,
             std,
             bitmap_resolution,
             frame_rate,
@@ -57,6 +58,7 @@ pub fn frontend() -> ExitCode {
         } => {
             match new::new(
                 name,
+                no_git,
                 Config {
                     layers: None,
                     std,
