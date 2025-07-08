@@ -58,6 +58,7 @@ pub fn frontend() -> ExitCode {
             match new::new(
                 name,
                 Config {
+                    layers: None,
                     std,
                     bitmap_resolution,
                     frame_rate,

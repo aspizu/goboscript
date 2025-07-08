@@ -6,6 +6,8 @@ use serde::{
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Clone)]
 pub struct Config {
     #[serde(default)]
+    pub layers: Option<Vec<String>>,
+    #[serde(default)]
     pub std: Option<String>,
     #[serde(default)]
     pub bitmap_resolution: Option<u64>,
