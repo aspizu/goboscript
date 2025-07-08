@@ -1,6 +1,10 @@
 use std::{
     env,
-    fs,
+    fs::{
+        self,
+        File,
+    },
+    io::Write,
     path::PathBuf,
 };
 
@@ -42,7 +46,13 @@ pub fn new(name: Option<PathBuf>, config: Config) -> Result<(), NewError> {
     }
     let config_path = name.join("goboscript.toml");
     if config != Default::default() {
-        fs::write(config_path, toml::to_string(&config).unwrap())?;
+        let mut file = File::create(config_path)?;
+        let toml_data = toml::to_string(&config).unwrap();
+        file.write_all(
+            "# Configuration Reference: <https://aspizu.github.io/goboscript/configuration>\n"
+                .as_bytes(),
+        )?;
+        file.write_all(toml_data.as_bytes())?;
     }
     write_templates!(name, "stage.gs", "main.gs", "blank.svg");
     Ok(())
