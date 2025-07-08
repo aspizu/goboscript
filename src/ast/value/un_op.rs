@@ -24,8 +24,8 @@ impl Value {
             UnOp::Atan => (opr.to_number().atan() * 180.0 / PI).into(),
             UnOp::Ln => opr.to_number().ln().into(),
             UnOp::Log => opr.to_number().log(10.0).into(),
-            UnOp::AntiLn => (10.0_f64).powf(opr.to_number()).into(),
-            UnOp::AntiLog => opr.to_number().exp().into(),
+            UnOp::AntiLn => opr.to_number().exp().into(),
+            UnOp::AntiLog => (10.0_f64).powf(opr.to_number()).into(),
             UnOp::Minus => (-opr.to_number()).into(),
         }
     }
