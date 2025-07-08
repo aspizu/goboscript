@@ -39,6 +39,18 @@ use crate::{
     visitor,
 };
 
+fn assign_layer_orders(project: &mut Project, config: &Config) {
+    let mut layer_order: usize = 1;
+    if let Some(layers) = &config.layers {
+        for layer in layers {
+            if let Some(sprite) = project.sprites.get_mut(&**layer) {
+                sprite.layer_order = Some((layer_order.into(), 0..0));
+                layer_order += 1;
+            }
+        }
+    }
+}
+
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
@@ -141,6 +153,7 @@ pub fn build_impl<T: Write + Seek>(
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
+    assign_layer_orders(&mut project, &config);
     sb3.project(
         fs.clone(),
         &input,
