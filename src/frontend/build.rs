@@ -74,9 +74,15 @@ fn run_pre_build_hook(input: &Path, config: &Config) -> anyhow::Result<()> {
     let Some(command) = config.pre_build.as_ref() else {
         return Ok(());
     };
-    create_hook(command, input)
+    let status = create_hook(command, input)
         .status()
         .context("pre-build hook failed")?;
+    if !status.success() {
+        return Err(anyhow!(
+            "pre-build hook exited with non-zero status: {}",
+            status
+        ));
+    }
     Ok(())
 }
 
@@ -84,9 +90,15 @@ fn run_post_build_hook(output: &Path, config: &Config) -> anyhow::Result<()> {
     let Some(command) = config.post_build.as_ref() else {
         return Ok(());
     };
-    create_hook(command, output.parent().unwrap())
+    let status = create_hook(command, output.parent().unwrap())
         .status()
         .context("post-build hook failed")?;
+    if !status.success() {
+        return Err(anyhow!(
+            "post-build hook exited with non-zero status: {}",
+            status
+        ));
+    }
     Ok(())
 }
 
