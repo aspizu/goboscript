@@ -75,7 +75,7 @@ fn run_pre_build_hook(input: &Path, config: &Config) -> anyhow::Result<()> {
         return Ok(());
     };
     create_hook(command, input)
-        .spawn()
+        .status()
         .context("pre-build hook failed")?;
     Ok(())
 }
@@ -85,7 +85,7 @@ fn run_post_build_hook(output: &Path, config: &Config) -> anyhow::Result<()> {
         return Ok(());
     };
     create_hook(command, output.parent().unwrap())
-        .spawn()
+        .status()
         .context("post-build hook failed")?;
     Ok(())
 }
