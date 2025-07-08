@@ -60,6 +60,8 @@ pub fn frontend() -> ExitCode {
                 name,
                 no_git,
                 Config {
+                    pre_build: None,
+                    post_build: None,
                     layers: None,
                     std,
                     bitmap_resolution,

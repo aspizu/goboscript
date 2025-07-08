@@ -7,7 +7,11 @@ use std::{
         Seek,
         Write,
     },
-    path::PathBuf,
+    path::{
+        Path,
+        PathBuf,
+    },
+    process::Command,
     rc::Rc,
 };
 
@@ -51,6 +55,41 @@ fn assign_layer_orders(project: &mut Project, config: &Config) {
     }
 }
 
+fn create_hook<'a>(command: &str, cwd: &Path) -> Command {
+    #[cfg(target_os = "windows")]
+    {
+        let mut cmd = Command::new(r"C:\Program Files\PowerShell\7\pwsh.exe");
+        cmd.current_dir(cwd).arg("-c").arg(command);
+        cmd
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let mut cmd = Command::new("/bin/sh");
+        cmd.current_dir(cwd).arg("-c").arg(command);
+        cmd
+    }
+}
+
+fn run_pre_build_hook(input: &Path, config: &Config) -> anyhow::Result<()> {
+    let Some(command) = config.pre_build.as_ref() else {
+        return Ok(());
+    };
+    create_hook(command, input)
+        .spawn()
+        .context("pre-build hook failed")?;
+    Ok(())
+}
+
+fn run_post_build_hook(output: &Path, config: &Config) -> anyhow::Result<()> {
+    let Some(command) = config.post_build.as_ref() else {
+        return Ok(());
+    };
+    create_hook(command, output.parent().unwrap())
+        .spawn()
+        .context("post-build hook failed")?;
+    Ok(())
+}
+
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
@@ -58,12 +97,13 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
     let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     let fs = Rc::new(RefCell::new(RealFS::new()));
-    build_impl(fs, canonical_input, sb3, None)
+    build_impl(fs, canonical_input, output, sb3, None)
 }
 
 pub fn build_impl<T: Write + Seek>(
     fs: Rc<RefCell<dyn VFS>>,
     input: PathBuf,
+    output: PathBuf,
     mut sb3: Sb3<T>,
     stdlib: Option<StandardLibrary>,
 ) -> anyhow::Result<Artifact> {
@@ -74,6 +114,7 @@ pub fn build_impl<T: Write + Seek>(
         .unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
+    run_pre_build_hook(&input, &config)?;
     let stdlib = if let Some(stdlib) = stdlib {
         stdlib
     } else if let Some(std) = &config.std {
@@ -162,6 +203,8 @@ pub fn build_impl<T: Write + Seek>(
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     )?;
+    drop(sb3);
+    run_post_build_hook(&output, &config)?;
     Ok(Artifact {
         project,
         stage_diagnostics,
