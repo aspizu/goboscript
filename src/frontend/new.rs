@@ -46,15 +46,13 @@ pub fn new(name: Option<PathBuf>, no_git: bool, config: Config) -> Result<(), Ne
         });
     }
     let config_path = name.join("goboscript.toml");
-    if config != Default::default() {
-        let mut file = File::create(config_path)?;
-        let toml_data = toml::to_string(&config).unwrap();
-        file.write_all(
-            "# Configuration Reference: <https://aspizu.github.io/goboscript/configuration>\n"
-                .as_bytes(),
-        )?;
-        file.write_all(toml_data.as_bytes())?;
-    }
+    let mut file = File::create(config_path)?;
+    let toml_data = toml::to_string(&config).unwrap();
+    file.write_all(
+        "# Configuration Reference: <https://aspizu.github.io/goboscript/configuration>\n"
+            .as_bytes(),
+    )?;
+    file.write_all(toml_data.as_bytes())?;
     write_templates!(&name, "stage.gs", "main.gs", "blank.svg");
     if !no_git {
         let _ = Command::new("git").arg("init").arg(&name).spawn();
