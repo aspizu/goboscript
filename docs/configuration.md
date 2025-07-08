@@ -3,6 +3,14 @@
 goboscript uses a `goboscript.toml` configuration file to store project-specific
 configuration.
 
+## Standard Library Version
+
+If not provided, the latest version is picked (Updates fetched daily)
+
+```toml
+std = "2.1.0" # default is unset
+```
+
 ## Turbowarp options
 
 goboscript can generate a turbowarp configuration comment inside the Stage.
@@ -11,7 +19,7 @@ goboscript can generate a turbowarp configuration comment inside the Stage.
 ### Frame Rate
 
 ```toml
-frame_rate = 60
+frame_rate = 60 # default is 30
 ```
 
 ### Max Clones
@@ -31,30 +39,30 @@ max_clones = inf
 ### No Miscellaneous Limits
 
 ```toml
-no_miscellaneous_limits = true
+no_miscellaneous_limits = true # default is false
 ```
 
 ### No Sprite Fencing
 
 ```toml
-no_sprite_fencing = true
+no_sprite_fencing = true # default is false
 ```
 
 ### Frame Interpolation
 
 ```toml
-frame_interpolation = true
+frame_interpolation = true # default is false
 ```
 
 ### High Quality Pen
 
 ```toml
-high_quality_pen = true
+high_quality_pen = true # default is false
 ```
 
 ### Stage Width & Height
 
 ```toml
-stage_width = 640
-stage_height = 480
+stage_width = 640 # default is 480
+stage_height = 480 # default is 360
 ```
