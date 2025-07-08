@@ -3,6 +3,50 @@
 goboscript uses a `goboscript.toml` configuration file to store project-specific
 configuration.
 
+## Build Hooks
+
+Build hooks allow you to run custom commands before and after the build process.
+
+### Pre-build Hook
+
+Run a command before the build starts. The command is executed in the project directory.
+
+```toml
+pre_build = "echo 'Starting build...'"
+```
+
+### Post-build Hook
+
+Run a command after the build completes successfully. The command is executed in the
+directory containing the output file.
+
+```toml
+post_build = "echo 'Build completed!'"
+```
+
+### Platform-specific Behavior
+
+- **Windows**: Commands are executed using PowerShell 7 (`pwsh.exe`)
+- **Unix/Linux/macOS**: Commands are executed using `/bin/sh`
+
+### Examples
+
+```toml
+# Copy assets before building
+pre_build = "cp -r assets/* ."
+
+# Open the generated file after building
+post_build = "open *.sb3"
+```
+
+```toml
+# Windows PowerShell examples
+pre_build = "Get-ChildItem -Path assets -Recurse | Copy-Item -Destination ."
+post_build = "Start-Process *.sb3"
+```
+
+**Note**: If a hook command fails (exits with non-zero status), the build process will be aborted.
+
 ## Standard Library Version
 
 If not provided, the latest version is picked (Updates fetched daily)
