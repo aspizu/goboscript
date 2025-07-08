@@ -11,6 +11,14 @@ If not provided, the latest version is picked (Updates fetched daily)
 std = "2.1.0" # default is unset
 ```
 
+## Sprites layer order
+
+Specify the order in which sprites are layered, by default the order is undefined.
+
+```toml
+layers = ["sprite_name_1", "sprite_name_2"]
+```
+
 ## Turbowarp options
 
 goboscript can generate a turbowarp configuration comment inside the Stage.
