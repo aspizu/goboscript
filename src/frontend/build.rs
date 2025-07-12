@@ -196,7 +196,7 @@ pub fn build_impl<T: Write + Seek>(
             sprites_diagnostics,
         });
     }
-    visitor::pass0::visit_project(&mut project);
+    visitor::pass0::visit_project(&input, &mut project);
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(
         &mut project,

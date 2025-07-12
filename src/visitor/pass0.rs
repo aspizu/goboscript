@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use fxhash::FxHashMap;
 use glob::glob;
 
@@ -12,16 +14,16 @@ struct V<'a> {
     global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
 }
 
-pub fn visit_project(project: &mut Project) {
-    visit_sprite(&mut project.stage, None);
+pub fn visit_project(input: &Path, project: &mut Project) {
+    visit_sprite(input, &mut project.stage, None);
     for sprite in project.sprites.values_mut() {
-        visit_sprite(sprite, Some(&mut project.stage));
+        visit_sprite(input, sprite, Some(&mut project.stage));
     }
 }
 
-fn visit_sprite(sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
-    visit_costumes(&mut sprite.costumes);
-    visit_sounds(&mut sprite.sounds);
+fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
+    visit_costumes(input, &mut sprite.costumes);
+    visit_sounds(input, &mut sprite.sounds);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -91,7 +93,7 @@ fn visit_enum(enum_: &mut Enum) {
     }
 }
 
-fn visit_costumes(new: &mut Vec<Costume>) {
+fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
     let old: Vec<Costume> = std::mem::take(new);
     for costume in old {
         if let Some(suffix) = costume.name.strip_prefix("@ascii/") {
@@ -101,7 +103,7 @@ fn visit_costumes(new: &mut Vec<Costume>) {
                 span: costume.span.clone(),
             }));
         } else if costume.path.contains('*') {
-            let mut costumes: Vec<Costume> = glob(&costume.path)
+            let mut costumes: Vec<Costume> = glob(input.join(&*costume.path).to_str().unwrap())
                 .unwrap()
                 .map(Result::unwrap)
                 .map(|path| Costume {
@@ -118,7 +120,7 @@ fn visit_costumes(new: &mut Vec<Costume>) {
     }
 }
 
-fn visit_sounds(new: &mut Vec<Sound>) {
+fn visit_sounds(input: &Path, new: &mut Vec<Sound>) {
     let old: Vec<Sound> = std::mem::take(new);
     for sound in old {
         if let Some(suffix) = sound.name.strip_prefix("@ascii/") {
@@ -128,7 +130,7 @@ fn visit_sounds(new: &mut Vec<Sound>) {
                 span: sound.span.clone(),
             }));
         } else if sound.path.contains('*') {
-            let mut sounds: Vec<Sound> = glob(&sound.path)
+            let mut sounds: Vec<Sound> = glob(input.join(&*sound.path).to_str().unwrap())
                 .unwrap()
                 .map(Result::unwrap)
                 .map(|path| Sound {
