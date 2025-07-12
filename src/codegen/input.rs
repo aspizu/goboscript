@@ -147,7 +147,7 @@ where T: Write + Seek
                 if name == "BROADCAST_INPUT" {
                     write!(self, "[1,[11,{},{}]]", json!(**string), json!(**string))
                 } else if let Some(color) = color {
-                    write!(self, "[1,[9,{}]]", json!(color.to_hex_string()))
+                    write!(self, "[1,[9,{}]]", json!(color.to_css_hex()))
                 } else {
                     write!(self, "[1,[10,{}]]", json!(**string))
                 }
