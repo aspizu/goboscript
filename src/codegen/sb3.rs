@@ -439,13 +439,15 @@ where T: Write + Seek
             stage_diagnostics,
             &broadcasts,
         )?;
-        for (sprite_name, sprite) in &project.sprites {
+        let mut sprite_names: Vec<_> = project.sprites.keys().collect();
+        sprite_names.sort();
+        for sprite_name in sprite_names {
             write!(self, r#","#)?;
             self.sprite(
                 fs.clone(),
                 input,
                 sprite_name,
-                sprite,
+                &project.sprites[sprite_name],
                 Some(&project.stage),
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
