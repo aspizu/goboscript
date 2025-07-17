@@ -5,7 +5,7 @@ use crate::blocks::*;
 use crate::diagnostic::*;
 use crate::lexer::token::*;
 
-grammar<'a>(sprite: &'a mut Sprite);
+grammar<'a>(sprite: &'a mut Sprite, diagnostics: &'a mut Vec<Diagnostic>);
 
 pub Sprite = Declr*;
 
@@ -31,10 +31,10 @@ Declr: () = {
     POINT_IN_DIRECTION <direction:Value> => {
         sprite.direction = Some(direction);
     },
-    SET_ROTATION_STYLE_LEFT_RIGHT ";" => {  
+    SET_ROTATION_STYLE_LEFT_RIGHT ";" => {
         sprite.rotation_style = RotationStyle::LeftRight;
     },
-    SET_ROTATION_STYLE_ALL_AROUND ";" => {  
+    SET_ROTATION_STYLE_ALL_AROUND ";" => {
         sprite.rotation_style = RotationStyle::AllAround;
     },
     SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
@@ -44,10 +44,10 @@ Declr: () = {
         sprite.layer_order = Some(layer_order);
     },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
-        sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b);
+        sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b, diagnostics);
     },
     FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
-        sprite.add_func(Func::new(n.clone(), l..r, t), a, b);
+        sprite.add_func(Func::new(n.clone(), l..r, t), a, b, diagnostics);
     },
     <l:@L> ON <r:@R> <event:STR> <b:Stmts> => sprite.events.push(EventKind::On { event }.to_event(l..r, b)),
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),

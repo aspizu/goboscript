@@ -65,6 +65,8 @@ pub enum DiagnosticKind {
     CommandFailed {
         stderr: Vec<u8>,
     },
+    ProcedureRedefinition(SmolStr),
+    FunctionRedefinition(SmolStr),
     TypeMismatch {
         expected: Type,
         given: Type,
@@ -178,6 +180,12 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
+            DiagnosticKind::ProcedureRedefinition(name) => {
+                format!("procedure '{}' is already defined", name)
+            }
+            DiagnosticKind::FunctionRedefinition(name) => {
+                format!("function '{}' is already defined", name)
+            }
             DiagnosticKind::TypeMismatch { expected, given } => {
                 format!("type mismatch: expected {}, but got {}", expected, given)
             }
@@ -282,6 +290,8 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::FuncArgsCountMismatch { .. }
             | DiagnosticKind::MacroArgsCountMismatch { .. }
             | DiagnosticKind::CommandFailed { .. }
+            | DiagnosticKind::ProcedureRedefinition(_)
+            | DiagnosticKind::FunctionRedefinition(_)
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
             | DiagnosticKind::MissingField { .. }

@@ -9,7 +9,13 @@ use serde::{
 };
 
 use super::*;
-use crate::misc::SmolStr;
+use crate::{
+    diagnostic::{
+        Diagnostic,
+        DiagnosticKind,
+    },
+    misc::SmolStr,
+};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Sprite {
@@ -43,16 +49,42 @@ pub struct Sprite {
 }
 
 impl Sprite {
-    pub fn add_proc(&mut self, proc: Proc, args: Vec<Arg>, stmts: Vec<Stmt>) {
+    pub fn add_proc(
+        &mut self,
+        proc: Proc,
+        args: Vec<Arg>,
+        stmts: Vec<Stmt>,
+        diagnostics: &mut Vec<Diagnostic>,
+    ) {
         let name = proc.name.clone();
+        if self.procs.contains_key(&name) {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::ProcedureRedefinition(name),
+                span: proc.span.clone(),
+            });
+            return;
+        }
         self.procs.insert(name.clone(), proc);
         self.proc_args.insert(name.clone(), args);
         self.proc_definitions.insert(name.clone(), stmts);
         self.proc_references.insert(name, Default::default());
     }
 
-    pub fn add_func(&mut self, func: Func, args: Vec<Arg>, stmts: Vec<Stmt>) {
+    pub fn add_func(
+        &mut self,
+        func: Func,
+        args: Vec<Arg>,
+        stmts: Vec<Stmt>,
+        diagnostics: &mut Vec<Diagnostic>,
+    ) {
         let name = func.name.clone();
+        if self.funcs.contains_key(&name) {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::FunctionRedefinition(name),
+                span: func.span.clone(),
+            });
+            return;
+        }
         self.funcs.insert(name.clone(), func);
         self.func_args.insert(name.clone(), args);
         self.func_definitions.insert(name.clone(), stmts);

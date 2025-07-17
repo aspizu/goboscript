@@ -150,11 +150,8 @@ pub fn build_impl<T: Write + Seek>(
         return Err(anyhow!("{} not found", stage_path.display()));
     }
     let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib);
-    let stage = parser::parse(&stage_diagnostics.translation_unit)
-        .map_err(|err| {
-            stage_diagnostics.diagnostics.push(err);
-        })
-        .unwrap_or_default();
+    let (stage, parse_diagnostics) = parser::parse(&stage_diagnostics.translation_unit);
+    stage_diagnostics.diagnostics.extend(parse_diagnostics);
     let mut sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics> = Default::default();
     let mut sprites: FxHashMap<SmolStr, Sprite> = Default::default();
     let files = fs.borrow_mut().read_dir(&input)?;
@@ -178,9 +175,8 @@ pub fn build_impl<T: Write + Seek>(
             .unwrap()
             .into();
         let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib);
-        let sprite = parser::parse(&sprite_diagnostics.translation_unit)
-            .map_err(|err| sprite_diagnostics.diagnostics.push(err))
-            .unwrap_or_default();
+        let (sprite, parse_diagnostics) = parser::parse(&sprite_diagnostics.translation_unit);
+        sprite_diagnostics.diagnostics.extend(parse_diagnostics);
         sprites_diagnostics.insert(sprite_name.clone(), sprite_diagnostics);
         sprites.insert(sprite_name, sprite);
     }
