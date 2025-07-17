@@ -3,6 +3,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use suggestions;
 use tsify::Tsify;
 
 use crate::{
@@ -37,7 +38,10 @@ pub enum DiagnosticKind {
     UnrecognizedFunction(SmolStr),
     UnrecognizedArgument(SmolStr),
     UnrecognizedStructField(SmolStr),
-    UnrecognizedEnumVariant(SmolStr),
+    UnrecognizedEnumVariant {
+        enum_name: SmolStr,
+        variant_name: SmolStr,
+    },
     UnrecognizedStandardLibraryHeader,
     NoCostumes,
     InvalidCostumeName(SmolStr),
@@ -131,7 +135,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnrecognizedFunction(_) => "unrecognized function".to_string(),
             DiagnosticKind::UnrecognizedArgument(_) => "unrecognized argument".to_string(),
             DiagnosticKind::UnrecognizedStructField(_) => "unrecognized struct field".to_string(),
-            DiagnosticKind::UnrecognizedEnumVariant(_) => "unrecognized enum variant".to_string(),
+            DiagnosticKind::UnrecognizedEnumVariant { variant_name, .. } => {
+                format!("unrecognized enum variant {}", variant_name)
+            }
             DiagnosticKind::UnrecognizedKey(_) => "unrecognized key".to_string(),
             DiagnosticKind::UnrecognizedStandardLibraryHeader => {
                 "unrecognized standard library header".to_string()
@@ -218,7 +224,7 @@ impl DiagnosticKind {
         }
     }
 
-    pub fn help(&self) -> Option<String> {
+    pub fn help(&self, sprite: &Sprite) -> Option<String> {
         match self {
             DiagnosticKind::NoCostumes => {
                 Some("if this is a header, move it inside a directory such as `lib/`".to_string())
@@ -227,7 +233,9 @@ impl DiagnosticKind {
                 if name.contains('.') {
                     Some("costume names should not include file extensions - they are automatically derived from the file name without extension".to_string())
                 } else {
-                    None
+                    let costume_names: Vec<&str> =
+                        sprite.costumes.iter().map(|c| c.name.as_str()).collect();
+                    Self::suggestion_help(name, &costume_names)
                 }
             }
             DiagnosticKind::InvalidBackdropName(name) => {
@@ -237,12 +245,81 @@ impl DiagnosticKind {
                     None
                 }
             }
+            DiagnosticKind::UnrecognizedVariable(name) => {
+                let var_names: Vec<&str> = sprite.vars.keys().map(|s| s.as_str()).collect();
+                Self::suggestion_help(name, &var_names)
+            }
+            DiagnosticKind::UnrecognizedList(name) => {
+                let list_names: Vec<&str> = sprite.lists.keys().map(|s| s.as_str()).collect();
+                Self::suggestion_help(name, &list_names)
+            }
+            DiagnosticKind::UnrecognizedEnum(name) => {
+                let enum_names: Vec<&str> = sprite.enums.keys().map(|s| s.as_str()).collect();
+                Self::suggestion_help(name, &enum_names)
+            }
+            DiagnosticKind::UnrecognizedStruct(name) => {
+                let struct_names: Vec<&str> = sprite.structs.keys().map(|s| s.as_str()).collect();
+                Self::suggestion_help(name, &struct_names)
+            }
+            DiagnosticKind::UnrecognizedProcedure(name) => {
+                let proc_names: Vec<&str> = sprite.procs.keys().map(|s| s.as_str()).collect();
+                Self::suggestion_help(name, &proc_names)
+            }
+            DiagnosticKind::UnrecognizedFunction(name) => {
+                let func_names: Vec<&str> = sprite.funcs.keys().map(|s| s.as_str()).collect();
+                Self::suggestion_help(name, &func_names)
+            }
+            DiagnosticKind::StructDoesNotHaveField {
+                type_name,
+                field_name,
+            } => {
+                if let Some(struct_type) = sprite.structs.get(type_name) {
+                    let field_names: Vec<&str> =
+                        struct_type.fields.iter().map(|f| f.name.as_str()).collect();
+                    Self::suggestion_help(field_name, &field_names)
+                } else {
+                    None
+                }
+            }
+            DiagnosticKind::UnrecognizedEnumVariant {
+                enum_name,
+                variant_name,
+            } => {
+                if let Some(enum_type) = sprite.enums.get(enum_name) {
+                    let variant_names: Vec<&str> =
+                        enum_type.variants.iter().map(|v| v.name.as_str()).collect();
+                    Self::suggestion_help(variant_name, &variant_names)
+                } else {
+                    None
+                }
+            }
+            DiagnosticKind::UnrecognizedArgument(_name) => {
+                // TODO: Provide suggestions based on current procedure/function context
+                // For now, we don't have access to current context, so no suggestions
+                None
+            }
             DiagnosticKind::UnrecognizedToken(token, ..) => match token {
                 Token::FloorDiv => Some("Use # for comments".to_owned()),
                 Token::Var => Some("var should only be used at top-level.".to_owned()),
                 _ => None,
             },
             _ => None,
+        }
+    }
+
+    fn suggestion_help(input: &str, possible_values: &[&str]) -> Option<String> {
+        let suggestions = suggestions::provide_suggestions(input, possible_values);
+        match suggestions.len() {
+            0 => None,
+            1 => Some(format!("did you mean `{}`?", suggestions[0])),
+            _ => Some(format!(
+                "did you mean one of: {}?",
+                suggestions
+                    .iter()
+                    .map(|s| format!("`{}`", s))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )),
         }
     }
 
@@ -258,6 +335,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnusedStruct(name) => name.starts_with('_'),
             DiagnosticKind::UnusedVariable(name) => name.starts_with('_'),
             DiagnosticKind::UnusedStructField(name) => name.starts_with('_'),
+            DiagnosticKind::UnrecognizedEnumVariant { variant_name, .. } => {
+                variant_name.starts_with('_')
+            }
             _ => false,
         }
     }
@@ -281,7 +361,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedFunction(_)
             | DiagnosticKind::UnrecognizedArgument(_)
             | DiagnosticKind::UnrecognizedStructField(_)
-            | DiagnosticKind::UnrecognizedEnumVariant(_)
+            | DiagnosticKind::UnrecognizedEnumVariant { .. }
             | DiagnosticKind::UnrecognizedStandardLibraryHeader
             | DiagnosticKind::NoCostumes
             | DiagnosticKind::BlockArgsCountMismatch { .. }

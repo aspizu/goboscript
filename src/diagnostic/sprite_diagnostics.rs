@@ -78,7 +78,7 @@ impl SpriteDiagnostics {
         for diagnostic in &self.diagnostics {
             let level: Level = (&diagnostic.kind).into();
             let title = diagnostic.kind.to_string(sprite);
-            let help = diagnostic.kind.help();
+            let help = diagnostic.kind.help(sprite);
             let help = help.as_ref();
             let (start, include) = self
                 .translation_unit

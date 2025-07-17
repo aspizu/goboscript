@@ -238,7 +238,10 @@ impl S<'_> {
                 };
                 let Some(variant) = enum_.variants.iter().find(|v| v.name == *variant_name) else {
                     d.report(
-                        DiagnosticKind::UnrecognizedEnumVariant(variant_name.clone()),
+                        DiagnosticKind::UnrecognizedEnumVariant {
+                            enum_name: enum_name.clone(),
+                            variant_name: variant_name.clone(),
+                        },
                         variant_name_span,
                     );
                     return Value::from(0.0);

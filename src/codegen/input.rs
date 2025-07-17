@@ -173,7 +173,10 @@ where T: Write + Seek
                     return self.value_input(input_name, &variant.value.as_ref().unwrap().0);
                 } else {
                     d.report(
-                        DiagnosticKind::UnrecognizedEnumVariant(variant_name.clone()),
+                        DiagnosticKind::UnrecognizedEnumVariant { 
+                            enum_name: name.basename().clone(),
+                            variant_name: variant_name.clone(),
+                        },
                         &name.fieldspan(),
                     );
                 }
