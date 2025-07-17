@@ -210,6 +210,8 @@ pub enum Token {
     Enum,
     #[token("struct")]
     Struct,
+    #[token("switch")]
+    Switch,
     #[token("true")]
     True,
     #[token("false")]
@@ -342,6 +344,7 @@ impl Display for Token {
             Token::As => write!(f, "as"),
             Token::Enum => write!(f, "enum"),
             Token::Struct => write!(f, "struct"),
+            Token::Switch => write!(f, "switch"),
             Token::True => write!(f, "true"),
             Token::False => write!(f, "false"),
             Token::List => write!(f, "list"),

@@ -158,6 +158,17 @@ fn visit_stmt(stmt: &Stmt, s: &mut S) {
             value: _,
             visited: _,
         } => {}
+        Stmt::Switch {
+            value,
+            cases,
+            span: _,
+        } => {
+            visit_expr(value, s);
+            for case in cases {
+                visit_expr(&case.value, s);
+                visit_stmts(&case.body, s);
+            }
+        }
     }
 }
 
