@@ -383,6 +383,16 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, transformations::greater_than_equal);
     transformations::apply(expr, transformations::not_equal);
     transformations::apply(expr, transformations::floor_div);
+    transformations::apply(expr, transformations::add_zero_left);
+    transformations::apply(expr, transformations::add_zero_right);
+    transformations::apply(expr, transformations::sub_zero);
+    transformations::apply(expr, transformations::mul_one_left);
+    transformations::apply(expr, transformations::mul_one_right);
+    transformations::apply(expr, transformations::div_one);
+    transformations::apply(expr, transformations::mul_zero_left);
+    transformations::apply(expr, transformations::mul_zero_right);
+    transformations::apply(expr, transformations::join_empty_left);
+    transformations::apply(expr, transformations::join_empty_right);
     transformations::apply(expr, transformations::bin_op);
     transformations::apply(expr, transformations::un_op);
     transformations::apply(expr, |expr| transformations::variable_field_access(expr, s));

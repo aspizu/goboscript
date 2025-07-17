@@ -301,6 +301,234 @@ pub fn floor_div(expr: &Expr) -> Option<Expr> {
     ))
 }
 
+pub fn add_zero_left(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Add,
+        lhs,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = lhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 0.0 {
+        return None;
+    }
+    Some(rhs.as_ref().clone())
+}
+
+pub fn add_zero_right(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Add,
+        lhs,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = rhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 0.0 {
+        return None;
+    }
+    Some(lhs.as_ref().clone())
+}
+
+pub fn sub_zero(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Sub,
+        rhs,
+        lhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = rhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 0.0 {
+        return None;
+    }
+    Some(lhs.as_ref().clone())
+}
+
+pub fn mul_one_left(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Mul,
+        lhs,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = lhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 1.0 {
+        return None;
+    }
+    Some(rhs.as_ref().clone())
+}
+
+pub fn mul_one_right(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Mul,
+        lhs,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = rhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 1.0 {
+        return None;
+    }
+    Some(lhs.as_ref().clone())
+}
+
+pub fn div_one(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Div,
+        rhs,
+        lhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = rhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 1.0 {
+        return None;
+    }
+    Some(lhs.as_ref().clone())
+}
+
+pub fn mul_zero_left(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Mul,
+        span,
+        lhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = lhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 0.0 {
+        return None;
+    }
+    Some(Value::from(0.0).to_expr(span.clone()))
+}
+
+pub fn mul_zero_right(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Mul,
+        span,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+    let Expr::Value { value, .. } = rhs.as_ref() else {
+        return None;
+    };
+    let Value::Number(n) = value else {
+        return None;
+    };
+    if *n != 0.0 {
+        return None;
+    }
+    Some(Value::from(0.0).to_expr(span.clone()))
+}
+
+pub fn join_empty_left(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Join,
+        lhs,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+
+    let Expr::Value { value, .. } = lhs.as_ref() else {
+        return None;
+    };
+
+    let Value::String(s) = value else {
+        return None;
+    };
+
+    if !s.is_empty() {
+        return None;
+    }
+
+    Some(rhs.as_ref().clone())
+}
+
+pub fn join_empty_right(expr: &Expr) -> Option<Expr> {
+    let Expr::BinOp {
+        op: BinOp::Join,
+        lhs,
+        rhs,
+        ..
+    } = expr
+    else {
+        return None;
+    };
+
+    let Expr::Value { value, .. } = rhs.as_ref() else {
+        return None;
+    };
+
+    let Value::String(s) = value else {
+        return None;
+    };
+
+    if !s.is_empty() {
+        return None;
+    }
+
+    Some(lhs.as_ref().clone())
+}
+
 pub fn keyword_arguments(
     signature: Option<&Vec<Arg>>,
     args: &mut Vec<Expr>,
