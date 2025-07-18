@@ -66,3 +66,26 @@ impl Name {
         }
     }
 }
+
+impl PartialEq for Name {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Name::Name { name: name1, .. }, Name::Name { name: name2, .. }) => name1 == name2,
+            (
+                Name::DotName {
+                    lhs: lhs1,
+                    rhs: rhs1,
+                    ..
+                },
+                Name::DotName {
+                    lhs: lhs2,
+                    rhs: rhs2,
+                    ..
+                },
+            ) => lhs1 == lhs2 && rhs1 == rhs2,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for Name {}

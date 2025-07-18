@@ -194,7 +194,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
                     visit_stmt_return(value)
                 }
             }
-            Stmt::Switch { value, cases, span } => Some(vec![switchcase(value, cases, span)]),
+            Stmt::Switch { value, cases, span } => Some(vec![switchcase(value, cases, span, d)]),
             _ => None,
         };
         if let Some(replace) = replace {

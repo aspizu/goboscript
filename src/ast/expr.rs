@@ -130,3 +130,17 @@ impl From<ConstExpr> for Expr {
         }
     }
 }
+
+impl PartialEq for Expr {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            // Simple expressions that can be compared
+            (Expr::Value { value: v1, .. }, Expr::Value { value: v2, .. }) => v1 == v2,
+            (Expr::Name(n1), Expr::Name(n2)) => n1 == n2,
+            (Expr::Arg(n1), Expr::Arg(n2)) => n1 == n2,
+
+            // Complex expressions always return false
+            _ => false,
+        }
+    }
+}

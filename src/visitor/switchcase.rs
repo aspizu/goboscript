@@ -11,6 +11,8 @@ use crate::{
         BinOp,
         UnOp,
     },
+    codegen::sb3::D,
+    diagnostic::DiagnosticKind,
 };
 
 fn casearm(value: &Expr, cases: &[Case], span: &Span, index: usize) -> Stmt {
@@ -100,7 +102,19 @@ fn searchtree(value: &Expr, cases: &[Case], span: &Span) -> Stmt {
     }
 }
 
-pub fn switchcase(value: &Expr, cases: &[Case], span: &Span) -> Stmt {
+pub fn switchcase(value: &Expr, cases: &[Case], span: &Span, d: D) -> Stmt {
+    // Check for duplicate case patterns
+    let mut seen_cases: Vec<&Box<Expr>> = Vec::new();
+    for case in cases {
+        for seen_case in &seen_cases {
+            if case.value.as_ref() == seen_case.as_ref() {
+                d.report(DiagnosticKind::DuplicateSwitchCasePattern, &case.span);
+                break;
+            }
+        }
+        seen_cases.push(&case.value);
+    }
+
     let all_integers = cases.iter().all(|case| {
         matches!(
             *case.value,
