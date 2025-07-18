@@ -300,6 +300,7 @@ impl Stmt {
             Stmt::ProcCall { .. } => "procedures_call",
             Stmt::FuncCall { .. } => "procedures_call",
             Stmt::Return { .. } => "data_setvariableto",
+            Stmt::Switch { .. } => "",
         }
     }
 }
@@ -1302,6 +1303,7 @@ where T: Write + Seek
                 args,
             ),
             Stmt::Return { .. } => panic!(),
+            Stmt::Switch { .. } => unreachable!(),
         }
     }
 

@@ -192,3 +192,22 @@ pub enum ListIndex {
     Index(usize),
     All,
 }
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Value::Boolean(a), Value::Boolean(b)) => a == b,
+            (Value::Number(a), Value::Number(b)) => {
+                // Handle NaN case - NaN != NaN in IEEE 754
+                if a.is_nan() && b.is_nan() {
+                    true
+                } else {
+                    a == b
+                }
+            }
+            (Value::String(a), Value::String(b)) => a == b,
+            // Different variants are not equal
+            _ => false,
+        }
+    }
+}

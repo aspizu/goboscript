@@ -197,6 +197,17 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
                 }
             }
         }
+        Stmt::Switch {
+            value,
+            cases,
+            span: _,
+        } => {
+            visit_expr(value, &mut before, s);
+            for case in cases {
+                visit_expr(&mut case.value, &mut before, s);
+                visit_stmts(&mut case.body, s);
+            }
+        }
     }
     if let Some(replace) = replace {
         *stmt = replace;
