@@ -101,15 +101,15 @@ fn searchtree(value: &Expr, cases: &[Case], span: &Span) -> Stmt {
 }
 
 pub fn switchcase(value: &Expr, cases: &[Case], span: &Span) -> Stmt {
-    if cases.iter().all(|case| {
+    let all_integers = cases.iter().all(|case| {
         matches!(
             *case.value,
-            Expr::Value {
-                value: Value::Number(n),
-                ..
+            Expr::Value {value: Value::Number(n),..
             } if n.fract() == 0.0
         )
-    }) {
+    });
+    // <25 doesn't benefit from search tree
+    if cases.len() > 25 && all_integers {
         searchtree(value, cases, span)
     } else {
         casearm(value, cases, span, 0)
