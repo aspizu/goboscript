@@ -356,7 +356,7 @@ Stmt: Stmt = {
 }
 
 Case: Case = {
-    <l:@L> <value:BoxedIfExpr> <r:@R> <body:Stmts> => Case {
+    <l:@L> CASE <value:BoxedIfExpr> <r:@R> <body:Stmts> => Case {
         value,
         body,
         span: l..r
@@ -722,5 +722,6 @@ extern {
         SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
         SWITCH => Token::Switch,
+        CASE => Token::Case,
     }
 }
