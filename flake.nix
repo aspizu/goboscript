@@ -7,23 +7,17 @@
   };
 
   outputs = inputs@{ self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachSystem [
-      "x86_64-linux"
-      "aarch64-darwin"
-    ]
-      (system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        rec {
-          packages.goboscript = pkgs.callPackage ./default.nix { };
+  flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-darwin" ] (system: let
+    pkgs = nixpkgs.legacyPackages.${system};
+  in rec {
+    packages.goboscript = pkgs.callPackage ./default.nix { };
 
-          legacyPackages = packages;
+    legacyPackages = packages;
 
-          defaultPackage = packages.goboscript;
+    defaultPackage = packages.goboscript;
 
-          devShell = pkgs.mkShell {
-            buildInputs = with pkgs; [ cargo rustc git ];
-          };
-        });
+    devShell = pkgs.mkShell {
+      buildInputs = with pkgs; [ cargo rustc git ];
+    };
+  });
 }
