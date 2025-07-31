@@ -629,6 +629,8 @@ where T: Write + Seek
         let mut comma = false;
         for list in sprite.lists.values().filter(|list| list.is_used) {
             self.list_declaration(
+                fs.clone(),
+                input,
                 S {
                     stage,
                     sprite,
@@ -844,25 +846,37 @@ where T: Write + Seek
 
     pub fn list_declaration(
         &mut self,
+        fs: Rc<RefCell<dyn VFS>>,
+        input: &Path,
         s: S,
         list: &List,
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = list.array().map(|array| {
-            array
-                .iter()
-                .map(|value| s.evaluate_const_expr(d, value).to_string().to_string())
-                .collect::<Vec<_>>()
-        });
+        let data = match &list.default {
+            Some(ListDefault::Values(values)) => values
+                .into_iter()
+                .map(|v| s.evaluate_const_expr(d, v).to_string())
+                .collect(),
+            Some(ListDefault::File { path, span }) => {
+                let content = fs.borrow_mut().read_to_string(&input.join(path.as_str()));
+                if let Err(error) = content {
+                    d.report(DiagnosticKind::IOError(error.to_string().into()), span);
+                    vec![]
+                } else {
+                    let content = content.unwrap();
+                    let (_, ext) = path.rsplit_once('.').unwrap_or_default();
+                    match ext {
+                        _ => content.lines().map(SmolStr::from).collect(),
+                    }
+                }
+            }
+            None => vec![],
+        };
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;
-                if let Some(cmd) = data {
-                    write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(cmd))?;
-                } else {
-                    write!(self, r#""{}":["{}",[]]"#, list.name, list.name)?;
-                }
+                write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(data))?;
             }
             Type::Struct {
                 name: type_name,
@@ -878,24 +892,16 @@ where T: Write + Seek
                 for (i, field) in struct_.fields.iter().enumerate() {
                     let qualified_list_name = qualify_struct_var_name(&field.name, &list.name);
                     write_comma_io(&mut self.zip, comma)?;
-                    if let Some(cmd) = &data {
-                        let column = (0..(cmd.len() / struct_.fields.len()))
-                            .map(|j| &cmd[j * struct_.fields.len() + i])
-                            .collect::<Vec<_>>();
-                        write!(
-                            self,
-                            r#""{}":["{}",{}]"#,
-                            qualified_list_name,
-                            qualified_list_name,
-                            json!(column)
-                        )?;
-                    } else {
-                        write!(
-                            self,
-                            r#""{}":["{}",[]]"#,
-                            qualified_list_name, qualified_list_name
-                        )?;
-                    }
+                    let column = (0..(data.len() / struct_.fields.len()))
+                        .map(|j| &data[j * struct_.fields.len() + i])
+                        .collect::<Vec<_>>();
+                    write!(
+                        self,
+                        r#""{}":["{}",{}]"#,
+                        qualified_list_name,
+                        qualified_list_name,
+                        json!(column)
+                    )?;
                 }
             }
         }

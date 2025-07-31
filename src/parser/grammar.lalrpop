@@ -89,7 +89,10 @@ Declr: () = {
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<ConstExpr>> "]" ";" => {
         sprite.lists.insert(name.clone(), List::new_array(name, l..r, type_, default));
-    }
+    },
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> <pl:@L> <path:STR> <pr:@R> ";" => {
+        sprite.lists.insert(name.clone(), List::new_file(name, l..r, type_, path, pl..pr));
+    },
 }
 
 EnumVariant: EnumVariant = {
