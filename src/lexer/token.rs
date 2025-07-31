@@ -40,8 +40,6 @@ pub enum Token {
     Float(f64),
     #[regex(r#""([^"\\]|\\["\\/bfnrt]|\\u[0-9a-zA-Z]{4})*""#, string)]
     Str(SmolStr),
-    #[regex(r#"```([^`]|\n)*```"#, cmd)]
-    Cmd(SmolStr),
     #[token("costumes")]
     Costumes,
     #[token("sounds")]
@@ -257,7 +255,6 @@ impl Display for Token {
             Token::Hex(value) => write!(f, "hex{}", value),
             Token::Float(value) => write!(f, "float{}", value),
             Token::Str(value) => write!(f, "str{}", value),
-            Token::Cmd(value) => write!(f, "cmd{}", value),
             Token::Costumes => write!(f, "costumes"),
             Token::Sounds => write!(f, "sounds"),
             Token::Local => write!(f, "local"),

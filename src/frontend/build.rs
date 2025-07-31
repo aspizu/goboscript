@@ -58,13 +58,12 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
     let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     let fs = Rc::new(RefCell::new(RealFS::new()));
-    build_impl(fs, canonical_input, output, sb3, None)
+    build_impl(fs, canonical_input, sb3, None)
 }
 
 pub fn build_impl<T: Write + Seek>(
     fs: Rc<RefCell<dyn VFS>>,
     input: PathBuf,
-    output: PathBuf,
     mut sb3: Sb3<T>,
     stdlib: Option<StandardLibrary>,
 ) -> anyhow::Result<Artifact> {

@@ -26,7 +26,6 @@ use zip::{
 };
 
 use super::{
-    cmd::cmd_to_list,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -630,8 +629,6 @@ where T: Write + Seek
         let mut comma = false;
         for list in sprite.lists.values().filter(|list| list.is_used) {
             self.list_declaration(
-                fs.clone(),
-                input,
                 S {
                     stage,
                     sprite,
@@ -847,38 +844,17 @@ where T: Write + Seek
 
     pub fn list_declaration(
         &mut self,
-        fs: Rc<RefCell<dyn VFS>>,
-        input: &Path,
         s: S,
         list: &List,
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = list
-            .cmd()
-            .and_then(|cmd| {
-                cmd_to_list(fs.clone(), cmd, input)
-                    .map_err(|(io_error, stderr)| {
-                        if let Some(io_error) = io_error {
-                            d.report(
-                                DiagnosticKind::IOError(io_error.to_string().into()),
-                                &list.span,
-                            );
-                        }
-                        if let Some(stderr) = stderr {
-                            d.report(DiagnosticKind::CommandFailed { stderr }, &list.span);
-                        }
-                    })
-                    .ok()
-            })
-            .or_else(|| {
-                list.array().map(|array| {
-                    array
-                        .iter()
-                        .map(|value| s.evaluate_const_expr(d, value).to_string().to_string())
-                        .collect::<Vec<_>>()
-                })
-            });
+        let data = list.array().map(|array| {
+            array
+                .iter()
+                .map(|value| s.evaluate_const_expr(d, value).to_string().to_string())
+                .collect::<Vec<_>>()
+        });
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;

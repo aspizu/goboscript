@@ -22,14 +22,6 @@ pub struct List {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ListDefault {
     Values(Vec<ConstExpr>),
-    Cmd(Cmd),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Cmd {
-    pub program: Option<Program>,
-    pub cmd: SmolStr,
-    pub span: Span,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -49,16 +41,6 @@ impl List {
         }
     }
 
-    pub fn new_cmd(name: SmolStr, span: Span, type_: Type, default: Cmd) -> Self {
-        Self {
-            name,
-            span,
-            type_,
-            default: Some(ListDefault::Cmd(default)),
-            is_used: false,
-        }
-    }
-
     pub fn new_array(name: SmolStr, span: Span, type_: Type, default: Vec<ConstExpr>) -> Self {
         Self {
             name,
@@ -66,13 +48,6 @@ impl List {
             type_,
             default: Some(ListDefault::Values(default)),
             is_used: false,
-        }
-    }
-
-    pub fn cmd(&self) -> Option<&Cmd> {
-        match &self.default {
-            Some(ListDefault::Cmd(cmd)) => Some(cmd),
-            _ => None,
         }
     }
 

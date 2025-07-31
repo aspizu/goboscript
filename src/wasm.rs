@@ -48,7 +48,6 @@ pub fn build(fs: JsValue) -> JsValue {
     let artifact = build_impl(
         Rc::new(RefCell::new(fs)),
         "project".into(),
-        "project".into(),
         sb3,
         Some(stdlib),
     )

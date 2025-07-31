@@ -87,21 +87,8 @@ Declr: () = {
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
         sprite.lists.insert(name.clone(), List::new(name, l..r, type_));
     },
-    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <cmd:Cmd> ";" => {
-        sprite.lists.insert(name.clone(), List::new_cmd(name, l..r, type_, cmd));
-    },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<ConstExpr>> "]" ";" => {
         sprite.lists.insert(name.clone(), List::new_array(name, l..r, type_, default));
-    }
-}
-
-Cmd: Cmd = {
-    <pl:@L> <program:NAME?> <pr:@R> <cl:@L> <cmd:CMD> <cr:@R> => {
-        Cmd {
-            program: program.map(|program| Program { name: program, span: pl..pr }),
-            cmd,
-            span: cl..cr 
-        }
     }
 }
 
@@ -608,7 +595,6 @@ extern {
         HEX            => Token::Hex(<i64>),
         FLOAT          => Token::Float(<f64>),
         STR            => Token::Str(<SmolStr>),
-        CMD            => Token::Cmd(<SmolStr>),
         COSTUMES       => Token::Costumes,
         SOUNDS         => Token::Sounds,
         LOCAL          => Token::Local,
