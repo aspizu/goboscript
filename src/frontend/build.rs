@@ -7,11 +7,7 @@ use std::{
         Seek,
         Write,
     },
-    path::{
-        Path,
-        PathBuf,
-    },
-    process::Command,
+    path::PathBuf,
     rc::Rc,
 };
 
@@ -55,53 +51,6 @@ fn assign_layer_orders(project: &mut Project, config: &Config) {
     }
 }
 
-fn create_hook<'a>(command: &str, cwd: &Path) -> Command {
-    #[cfg(target_os = "windows")]
-    {
-        let mut cmd = Command::new(r"C:\Program Files\PowerShell\7\pwsh.exe");
-        cmd.current_dir(cwd).arg("-c").arg(command);
-        cmd
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        let mut cmd = Command::new("/bin/sh");
-        cmd.current_dir(cwd).arg("-c").arg(command);
-        cmd
-    }
-}
-
-fn run_pre_build_hook(input: &Path, config: &Config) -> anyhow::Result<()> {
-    let Some(command) = config.pre_build.as_ref() else {
-        return Ok(());
-    };
-    let status = create_hook(command, input)
-        .status()
-        .context("pre-build hook failed")?;
-    if !status.success() {
-        return Err(anyhow!(
-            "pre-build hook exited with non-zero status: {}",
-            status
-        ));
-    }
-    Ok(())
-}
-
-fn run_post_build_hook(output: &Path, config: &Config) -> anyhow::Result<()> {
-    let Some(command) = config.post_build.as_ref() else {
-        return Ok(());
-    };
-    let status = create_hook(command, output.parent().unwrap())
-        .status()
-        .context("post-build hook failed")?;
-    if !status.success() {
-        return Err(anyhow!(
-            "post-build hook exited with non-zero status: {}",
-            status
-        ));
-    }
-    Ok(())
-}
-
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
@@ -126,7 +75,6 @@ pub fn build_impl<T: Write + Seek>(
         .unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
-    run_pre_build_hook(&input, &config)?;
     let stdlib = if let Some(stdlib) = stdlib {
         stdlib
     } else if let Some(std) = &config.std {
@@ -212,7 +160,6 @@ pub fn build_impl<T: Write + Seek>(
         &mut sprites_diagnostics,
     )?;
     drop(sb3);
-    run_post_build_hook(&output, &config)?;
     Ok(Artifact {
         project,
         stage_diagnostics,
