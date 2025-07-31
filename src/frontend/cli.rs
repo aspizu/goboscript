@@ -19,7 +19,7 @@ pub enum Command {
     /// Compile a goboscript project to `.sb3`
     #[command(alias = "b")]
     Build {
-        #[arg(short, long)]
+        #[arg()]
         /// Project directory, if not given, the current directory is used.
         input: Option<PathBuf>,
         #[arg(short, long)]
@@ -33,7 +33,7 @@ pub enum Command {
     New {
         /// Name of directory to create new project, if not given, the current directory
         /// is used. If this is a path to an existing directory, it must be empty.
-        #[arg(short = 'n', long)]
+        #[arg()]
         name: Option<PathBuf>,
 
         /// Do not initialize a Git repository.
