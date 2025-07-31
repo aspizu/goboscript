@@ -17,7 +17,7 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Compile a goboscript project to `.sb3`
-    #[command()]
+    #[command(alias = "b")]
     Build {
         #[arg(short, long)]
         /// Project directory, if not given, the current directory is used.
@@ -29,7 +29,7 @@ pub enum Command {
 
     /// Create a new goboscript project with a blank backdrop, a main sprite with a
     /// blank costume.
-    #[command()]
+    #[command(alias = "n")]
     New {
         /// Name of directory to create new project, if not given, the current directory
         /// is used. If this is a path to an existing directory, it must be empty.
@@ -83,7 +83,7 @@ pub enum Command {
     },
 
     /// Format a goboscript project.
-    #[command()]
+    #[command(alias = "f")]
     Fmt {
         /// Project directory or file, if not given, the current directory is used.
         #[arg(short, long)]
