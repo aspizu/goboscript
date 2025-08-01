@@ -31,7 +31,12 @@ use crate::{
     },
     misc::SmolStr,
     parser,
-    standard_library::StandardLibrary,
+    standard_library::{
+        fetch_standard_library,
+        new_standard_library,
+        standard_library_from_latest,
+        StandardLibrary,
+    },
     vfs::{
         RealFS,
         VFS,
@@ -83,14 +88,14 @@ pub fn build_impl<T: Write + Seek>(
             .unwrap_or(std)
             .parse()
             .with_context(|| format!("std version `{}` is not a valid semver version", std))?;
-        StandardLibrary::new(std, &dirs.config_dir().join("std"))
+        new_standard_library(std, &dirs.config_dir().join("std"))
     } else {
         let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
-        StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
+        standard_library_from_latest(&dirs.config_dir().join("std"))?
     };
     // v0.0.0 means stdlib is from wasm
     if stdlib.version.major != 0 {
-        stdlib.fetch()?;
+        fetch_standard_library(&stdlib)?;
     }
     let stage_path = input.join("stage.gs");
     if !fs.borrow_mut().is_file(&stage_path) {
