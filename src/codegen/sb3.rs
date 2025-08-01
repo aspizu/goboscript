@@ -611,7 +611,7 @@ where T: Write + Seek
                 )?;
             }
         }
-        for var in sprite.vars.values().filter(|var| var.is_used) {
+        for var in sprite.vars.values() {
             self.var_declaration(
                 S {
                     sprite,
@@ -627,7 +627,7 @@ where T: Write + Seek
         write!(self, "}}")?; // variables
         write!(self, r#","lists":{{"#)?;
         let mut comma = false;
-        for list in sprite.lists.values().filter(|list| list.is_used) {
+        for list in sprite.lists.values() {
             self.list_declaration(
                 fs.clone(),
                 input,
