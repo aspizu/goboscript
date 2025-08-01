@@ -34,7 +34,10 @@ use super::{
 use crate::{
     ast::*,
     blocks::Block,
-    codegen::mutation::Mutation,
+    codegen::{
+        datalists::read_list,
+        mutation::Mutation,
+    },
     config::Config,
     diagnostic::{
         DiagnosticKind,
@@ -858,19 +861,13 @@ where T: Write + Seek
                 .into_iter()
                 .map(|v| s.evaluate_const_expr(d, v).to_string())
                 .collect(),
-            Some(ListDefault::File { path, span }) => {
-                let content = fs.borrow_mut().read_to_string(&input.join(path.as_str()));
-                if let Err(error) = content {
-                    d.report(DiagnosticKind::IOError(error.to_string().into()), span);
+            Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
+                Ok(data) => data,
+                Err(error) => {
+                    d.report(error, span);
                     vec![]
-                } else {
-                    let content = content.unwrap();
-                    let (_, ext) = path.rsplit_once('.').unwrap_or_default();
-                    match ext {
-                        _ => content.lines().map(SmolStr::from).collect(),
-                    }
                 }
-            }
+            },
             None => vec![],
         };
         match &list.type_ {
