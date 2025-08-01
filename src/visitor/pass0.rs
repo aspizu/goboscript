@@ -46,17 +46,19 @@ fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite
             .func_locals
             .insert(func.name.clone(), Default::default());
         let name: SmolStr = format!("{}:return", func.name).into();
-        sprite.vars.insert(
-            name.clone(),
-            Var {
-                name,
-                span: func.span.clone(),
-                type_: func.type_.clone(),
-                default: None,
-                is_cloud: false,
-                is_used: true,
-            },
-        );
+        if !sprite.vars.contains_key(&name) {
+            sprite.vars.insert(
+                name.clone(),
+                Var {
+                    name,
+                    span: func.span.clone(),
+                    type_: func.type_.clone(),
+                    default: None,
+                    is_cloud: false,
+                    is_used: true,
+                },
+            );
+        }
         let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
         visit_stmts(
             func_definition,
@@ -204,24 +206,28 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
             {
                 return;
             }
-            if let Some(existing_declaration) = v.vars.get(basename) {
-                // This condition ensures that variables with a specific type (e.g., a struct type) are not overwritten
-                // by a previous statement that didn't specify a type (which defaults to type `Value`).
-                // In this context, variables don't need to be explicitly declared if the type is `Value`.
-                // The syntax for setting variables is as follows:
-                // - For `Value` type: `variable_name = value;`
-                // - For a specific struct type: `typeName variable_name = value;`
-                //
-                // Since the visitor processes every variable assignment statement, this check ensures that if an
-                // existing variable has a specific type (not `Value`), it is preserved when a new statement tries to
-                // reassign it without a type (defaulting to `Value`). Only variables that are of type `Value` can be
-                // overwritten by the new assignment.
+            //if let Some(existing_declaration) = v.vars.get(basename) {
+            // This condition ensures that variables with a specific type (e.g., a struct type) are not overwritten
+            // by a previous statement that didn't specify a type (which defaults to type `Value`).
+            // In this context, variables don't need to be explicitly declared if the type is `Value`.
+            // The syntax for setting variables is as follows:
+            // - For `Value` type: `variable_name = value;`
+            // - For a specific struct type: `typeName variable_name = value;`
+            //
+            // Since the visitor processes every variable assignment statement, this check ensures that if an
+            // existing variable has a specific type (not `Value`), it is preserved when a new statement tries to
+            // reassign it without a type (defaulting to `Value`). Only variables that are of type `Value` can be
+            // overwritten by the new assignment.
 
-                // TODO: Make redeclaration of variables with different struct types an error.
-                if existing_declaration.type_.is_value() {
-                    v.vars.insert(basename.clone(), var);
-                }
-            } else {
+            // TODO: Make redeclaration of variables with different struct types an error.
+            // if existing_declaration.type_.is_value() {
+            //     v.vars.insert(basename.clone(), var);
+            // }
+            if !v.vars.contains_key(basename)
+                && v.global_vars
+                    .as_ref()
+                    .is_some_and(|vars| !vars.contains_key(basename))
+            {
                 v.vars.insert(basename.clone(), var);
             }
         }
