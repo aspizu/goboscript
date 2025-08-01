@@ -63,15 +63,14 @@ Declr: () = {
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
         sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
     },
-    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <default:ConstExpr> ";" => {
+    VAR <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <ConstExpr>)?> ";" => {
         sprite.vars.insert(name.clone(), Var {
             name,
             span: l..r,
             type_,
-            default: Some(default),
+            default,
             is_cloud: false,
             is_used: false,
-
         });
     },
     CLOUD <l:@L> <name:NAME> <r:@R> ";" => {

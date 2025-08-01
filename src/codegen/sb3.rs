@@ -804,7 +804,15 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
-                    self.json_var_declaration(&qualified_var_name, None, false, comma)?;
+                    self.json_var_declaration(
+                        &qualified_var_name,
+                        field
+                            .default
+                            .as_ref()
+                            .map(|default| s.evaluate_const_expr(d, default)),
+                        false,
+                        comma,
+                    )?;
                 }
             }
         }
