@@ -55,10 +55,12 @@ pub fn frontend() -> ExitCode {
             high_quality_pen,
             stage_width,
             stage_height,
+            makefile,
         } => {
             match new::new(
                 name,
                 no_git,
+                makefile,
                 Config {
                     pre_build: None,
                     post_build: None,

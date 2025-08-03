@@ -80,6 +80,10 @@ pub enum Command {
         /// (alias: --height) Custom stage height, used by TurboWarp.
         #[arg(short = 'H', long, alias = "height")]
         stage_height: Option<u64>,
+
+        /// Generate a Makefile for building the project.
+        #[arg(short = 'm', long)]
+        makefile: bool,
     },
 
     /// Format a goboscript project.
