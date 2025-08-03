@@ -63,6 +63,7 @@ and `goboscript` was ported to Rust.
 # Contributing
 
 goboscript welcomes contributions in the form of Pull Requests.
+No LLM generated code will be accepted.
 
 goboscript is written in Rust. You'll need to install the [Rust toolchain](https://www.rust-lang.org/tools/install)
 for development.
