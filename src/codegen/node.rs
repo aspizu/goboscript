@@ -57,24 +57,28 @@ impl Display for Node {
         write!(f, "\"opcode\":\"{}\"", self.opcode)?;
         if let Some(next_id) = self.next_id {
             write!(f, ",\"next\":{next_id}")?;
-        } else {
-            write!(f, ",\"next\":null")?;
         }
+        // else {
+        //     write!(f, ",\"next\":null")?;
+        // }
         if let Some(parent_id) = self.parent_id {
             write!(f, ",\"parent\":{parent_id}")?;
-        } else {
-            write!(f, ",\"parent\":null")?;
         }
+        // else {
+        //     write!(f, ",\"parent\":null")?;
+        // }
         if self.top_level {
             write!(f, ",\"topLevel\":true")?;
-        } else {
-            write!(f, ",\"topLevel\":false")?;
         }
+        // else {
+        //     write!(f, ",\"topLevel\":false")?;
+        // }
         if self.shadow {
             write!(f, ",\"shadow\":true")?;
-        } else {
-            write!(f, ",\"shadow\":false")?;
         }
+        // else {
+        //     write!(f, ",\"shadow\":false")?;
+        // }
         Ok(())
     }
 }
