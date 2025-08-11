@@ -1,3 +1,5 @@
+> **★ Star the repo to support the project!**
+
 [![Discord](https://img.shields.io/discord/1383762986887282829?style=flat&logo=discord&label=Discord)](https://discord.gg/MMfMkRuhAf) ![image](https://shields.io/crates/l/goboscript) 
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
@@ -31,6 +33,8 @@ abstractions such as:
 
 All these abstractions are compiled down to regular Scratch code.
 
+![](./assets/cheatsheet.webp)
+
 ### [Scratch Forum topic](https://scratch.mit.edu/discuss/topic/747370/)
 
 ## Sister Projects
@@ -57,6 +61,7 @@ and `goboscript` was ported to Rust.
 # Contributing
 
 goboscript welcomes contributions in the form of Pull Requests.
+No LLM generated code will be accepted.
 
 goboscript is written in Rust. You'll need to install the [Rust toolchain](https://www.rust-lang.org/tools/install)
 for development.
@@ -75,7 +80,7 @@ cd goboscript
 After cloning the repository, run goboscript locally from the repository root with:
 
 ```sh
-cargo run -- build -i your_project/
+cargo run -- build your_project/
 ```
 
 But, to make development easier, and to validate the generated Scratch project - use

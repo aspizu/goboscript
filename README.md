@@ -82,7 +82,7 @@ cd goboscript
 After cloning the repository, run goboscript locally from the repository root with:
 
 ```sh
-cargo run -- build -i your_project/
+cargo run -- build your_project/
 ```
 
 But, to make development easier, and to validate the generated Scratch project - use
