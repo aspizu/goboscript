@@ -27,9 +27,18 @@ struct Tag {
     name: String,
 }
 
+fn create_client() -> reqwest::Result<reqwest::blocking::Client> {
+    reqwest::blocking::Client::builder()
+        .user_agent("goboscript")
+        .build()
+}
+
 fn get_latest_version() -> anyhow::Result<Version> {
-    let url = "https://api.github.com/repos/goboscript/std/tags";
-    let response = reqwest::blocking::get(url)?;
+    let client = create_client()?;
+    let response = client
+        .get("https://api.github.com/repos/goboscript/std/tags")
+        .send()
+        .context("Failed to fetch tags from GitHub")?;
     let tags = response.json::<Vec<Tag>>()?;
     let mut tags: Vec<_> = tags
         .into_iter()
@@ -44,8 +53,13 @@ fn fetch_package(version: &Version, path: &Path) -> anyhow::Result<()> {
         return Ok(());
     }
     fs::create_dir_all(path)?;
-    let url = format!("https://api.github.com/repos/goboscript/std/zipball/refs/tags/v{version}");
-    let response = reqwest::blocking::get(url)?;
+    let client = create_client()?;
+    let response = client
+        .get(format!(
+            "https://api.github.com/repos/goboscript/std/zipball/refs/tags/v{version}"
+        ))
+        .send()
+        .context("Failed to fetch standard library package")?;
     let mut zipfile = Cursor::new(response.bytes()?);
     let mut zipfile = ZipArchive::new(&mut zipfile)?;
     for i in 0..zipfile.len() {
