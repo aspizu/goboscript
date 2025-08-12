@@ -22,6 +22,9 @@ be added automatically.
 If the include path is a directory, the file inside the directory with the same name as
 the directory will be included.
 
+By default, the include path is relative to the project root directory. To include a
+file relative to the current file, use `./` or `../`
+
 ## Define
 
 Define a macro. That identifier will be substituted with the subsequent text.

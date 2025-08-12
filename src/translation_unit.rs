@@ -220,11 +220,16 @@ impl TranslationUnit {
         begin: usize,
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
+        let parent = self.includes[self.current_include].path.parent().unwrap();
         let mut fs = fs.borrow_mut();
         let mut buffer = vec![];
 
         let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
             (Owner::StandardLibrary, stdlib.path.join(path))
+        } else if let Some(path) = path.strip_prefix("./") {
+            (Owner::Local, parent.join(path))
+        } else if let Some(path) = path.strip_prefix("../") {
+            (Owner::Local, parent.parent().unwrap().join(path))
         } else {
             (Owner::Local, self.path.parent().unwrap().join(path))
         };
