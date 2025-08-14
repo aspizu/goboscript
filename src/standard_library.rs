@@ -122,6 +122,7 @@ pub fn standard_library_from_latest(cache_path: &Path) -> anyhow::Result<Standar
     let version = get_latest_version()?;
 
     // Update cache with new version info
+    fs::create_dir_all(cache_path)?;
     fs::write(verinfo, format!("{}/{}", version, now)).unwrap();
 
     Ok(StandardLibrary {
