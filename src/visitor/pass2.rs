@@ -18,6 +18,7 @@ use crate::{
         SpriteDiagnostics,
     },
     misc::SmolStr,
+    visitor::switchcase::switchcase,
 };
 
 #[derive(Copy, Clone)]
@@ -193,6 +194,7 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
                     visit_stmt_return(value)
                 }
             }
+            Stmt::Switch { value, cases, span } => Some(vec![switchcase(value, cases, span, d)]),
             _ => None,
         };
         if let Some(replace) = replace {
@@ -309,6 +311,17 @@ fn visit_stmt(stmt: &mut Stmt, s: S, d: D) {
             }
         }
         Stmt::Return { value, .. } => visit_expr(value, s, d),
+        Stmt::Switch {
+            value,
+            cases,
+            span: _,
+        } => {
+            visit_expr(value, s, d);
+            for case in cases {
+                visit_expr(&mut case.value, s, d);
+                visit_stmts(&mut case.body, s, d, false);
+            }
+        }
     }
 }
 
