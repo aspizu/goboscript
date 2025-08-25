@@ -1,14 +1,20 @@
 # Install
 
-## Install from binaries
+## Auto Install
 
-Pre-built binaries are available for Windows, macOS, and Linux.
+Recommended method to install. Also installs sb2gs and backpack.
 
-Download the latest release from <https://github.com/aspizu/goboscript/releases>, and
-extract the archive to a folder in your `PATH`.
+### Unix
 
-On Windows, you can copy the `goboscript.exe` file to `C:\Windows\System32` to make it
-available from the command line.
+```shell
+curl -fsSL https://raw.githubusercontent.com/aspizu/goboscript/refs/heads/main/install.sh | sh
+```
+
+### Windows
+
+```shell
+iwr https://raw.githubusercontent.com/aspizu/goboscript/refs/heads/main/install.ps1 | iex
+```
 
 ## Install from source
 
@@ -42,18 +48,4 @@ To update the installation:
 
 ```shell
 cargo install --git https://github.com/aspizu/goboscript --force
-```
-
-## Install from crates.io
-
-This installs the latest stable version from crates.io with a single command.
-
-```shell
-cargo install goboscript
-```
-
-To update the installation:
-
-```shell
-cargo install goboscript --force
 ```
