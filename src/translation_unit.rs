@@ -220,6 +220,10 @@ impl TranslationUnit {
         begin: usize,
         stdlib: &StandardLibrary,
     ) -> Result<(), Diagnostic> {
+        while self.includes[self.current_include].unit_range.end < begin {
+            self.current_include += 1;
+        }
+
         let parent = self.includes[self.current_include].path.parent().unwrap();
         let mut fs = fs.borrow_mut();
         let mut buffer = vec![];
@@ -245,6 +249,9 @@ impl TranslationUnit {
             span: path_span,
         })?;
         file.read_to_end(&mut buffer).unwrap();
+        if buffer.last().is_none_or(|&c| c != b'\n') {
+            buffer.push(b'\n');
+        }
         self.text.splice(begin..begin, buffer.iter().cloned());
 
         // split current include into two parts
