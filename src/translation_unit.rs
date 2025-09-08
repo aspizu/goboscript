@@ -249,6 +249,9 @@ impl TranslationUnit {
             span: path_span,
         })?;
         file.read_to_end(&mut buffer).unwrap();
+        if buffer.last().is_none_or(|&c| c != b'\n') {
+            buffer.push(b'\n');
+        }
         self.text.splice(begin..begin, buffer.iter().cloned());
 
         // split current include into two parts
