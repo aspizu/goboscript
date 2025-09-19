@@ -1,4 +1,5 @@
 mod arg;
+mod case;
 mod const_expr;
 mod costume;
 mod enum_;
@@ -24,6 +25,7 @@ mod value;
 mod var;
 
 pub use arg::*;
+pub use case::*;
 pub use const_expr::*;
 pub use costume::*;
 pub use enum_::*;
