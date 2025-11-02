@@ -87,7 +87,10 @@ pub fn frontend() -> ExitCode {
                 }) => {
                     eprintln!("{}: {} is not empty", "error".red().bold(), name.display());
                     if !is_name_explicit {
-                        eprintln!("{}: use --name to specify a name", "hint".blue().bold());
+                        eprintln!(
+                            "{}: pass a name as a positional argument to create a new directory",
+                            "hint".blue().bold()
+                        );
                     }
                     ExitCode::FAILURE
                 }
