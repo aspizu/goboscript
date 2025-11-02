@@ -19,6 +19,13 @@ list list_name = [1, 2, 3];
 list type_name list_name;
 ```
 
+### Read contents from a text file
+
+```goboscript
+list list_name "filepath.txt";
+list type_name list_name "filepath.txt";
+```
+
 ## Operations
 
 ### Add item to list
