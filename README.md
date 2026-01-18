@@ -35,7 +35,7 @@ abstractions such as:
 
 All these abstractions are compiled down to regular Scratch code.
 
-![](./docs/assets/cheatsheet.webp)
+![](https://github.com/aspizu/goboscript/raw/main/docs/assets/cheatsheet.webp)
 
 ### [Scratch Forum topic](https://scratch.mit.edu/discuss/topic/747370/)
 
