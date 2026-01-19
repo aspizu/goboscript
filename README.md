@@ -39,6 +39,8 @@ All these abstractions are compiled down to regular Scratch code.
 
 ### [Scratch Forum topic](https://scratch.mit.edu/discuss/topic/747370/)
 
+### [Made With goboscript Studio](https://scratch.mit.edu/studios/51262907/)
+
 ## Sister Projects
 
  - [std](https://github.com/goboscript/std): The goboscript standard library.
