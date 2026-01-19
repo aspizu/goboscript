@@ -1,6 +1,8 @@
+# ![](./docs/assets/goboscript.svg) goboscript
+
 > **★ Star the repo to support the project!**
 
-[![Discord](https://img.shields.io/discord/1383762986887282829?style=flat&logo=discord&label=Discord)](https://discord.gg/MMfMkRuhAf) ![image](https://shields.io/crates/l/goboscript) 
+![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1383762986887282829?style=flat&logo=discord&label=Discord)](https://discord.gg/MMfMkRuhAf) ![image](https://shields.io/crates/l/goboscript) 
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
 
@@ -33,9 +35,11 @@ abstractions such as:
 
 All these abstractions are compiled down to regular Scratch code.
 
-![](./assets/cheatsheet.webp)
+![](https://github.com/aspizu/goboscript/raw/main/docs/assets/cheatsheet.webp)
 
 ### [Scratch Forum topic](https://scratch.mit.edu/discuss/topic/747370/)
+
+### [Made With goboscript Studio](https://scratch.mit.edu/studios/51262907/)
 
 ## Sister Projects
 
