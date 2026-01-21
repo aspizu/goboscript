@@ -2,7 +2,7 @@
 
 > **★ Star the repo to support the project!**
 
-![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1383762986887282829?style=flat&logo=discord&label=Discord)](https://discord.gg/MMfMkRuhAf) ![image](https://shields.io/crates/l/goboscript) 
+![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1462182798210109505?style=flat&logo=discord&label=Discord)](https://discord.gg/mKQqsJ6UtK) ![image](https://shields.io/crates/l/goboscript) 
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
 
