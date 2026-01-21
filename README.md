@@ -6,7 +6,7 @@
 
 ![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
 
-[**Installation and documentation**](https://aspizu.github.io/goboscript)
+[**Installation and documentation**](https://aspiz.uk/goboscript)
 
 goboscript is a text-based programming language that compiles to Scratch. Write
 Scratch projects in text, and compile it into a `.sb3` file -- which can be opened
@@ -71,7 +71,7 @@ goboscript is written in Rust. You'll need to install the [Rust toolchain](https
 for development.
 
 > [!NOTE]
-> To install goboscript, follow instructions at <https://aspizu.github.io/goboscript/install/>
+> To install goboscript, follow instructions at <https://aspiz.uk/goboscript/install/>
 > These instructions are for people who want to develop goboscript itself.
 
 ```sh
