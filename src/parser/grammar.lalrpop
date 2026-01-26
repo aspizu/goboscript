@@ -337,6 +337,19 @@ Stmt: Stmt = {
     <l:@L> SET_ROTATION_STYLE_LEFT_RIGHT <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleLeftRight, span: l..r, args: vec![], kwargs: Default::default() },
     <l:@L> SET_ROTATION_STYLE_ALL_AROUND <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleAllAround, span: l..r, args: vec![], kwargs: Default::default() },
     <l:@L> SET_ROTATION_STYLE_DO_NOT_ROTATE <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleDoNotRotate, span: l..r, args: vec![], kwargs: Default::default() },
+    <l:@L> SWITCH <r:@R> <value:BoxedIfExpr> "{" <cases:Case*> "}" => Stmt::Switch {
+        value,
+        cases,
+        span: l..r
+    }
+}
+
+Case: Case = {
+    <l:@L> CASE <value:BoxedIfExpr> <r:@R> <body:Stmts> => Case {
+        value,
+        body,
+        span: l..r
+    }
 }
 
 Elif: Stmt = {
@@ -696,5 +709,7 @@ extern {
         SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
         SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
+        SWITCH => Token::Switch,
+        CASE => Token::Case,
     }
 }
