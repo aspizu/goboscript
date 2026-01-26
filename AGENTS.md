@@ -1,0 +1,444 @@
+This project is written in goboscript a programming language that compiles to Scratch.
+Only single-line comments are supported, so use `#` for comments.
+While loops are not supported, instead `until` loops are used.
+For loops are not supported, instead use `repeat` loops.
+A `stage.gs` file is required. Atleast one costume is required `costumes "path.png";`
+each .gs file is a sprite.
+
+Use `%define CONSTANT VALUE` for constants;
+If the constant is an expression wrap it in double parenthesis
+`%define EXAMPLE ((1 + 2))`
+
+### Rules of variables
+
+- Use `$` to access parameters in procedures and functions.
+- DO NOT use `$` for global or local variables or lists.
+- Use `var` to declare global variables top-level only.
+- Use `local` to declare local variables inside procedures and functions, not inside `onflag`.
+- `var` cannot be used inside functions, procedures or `onflag`.
+- Global variables are available in all included files, no need to declare them again.
+
+````goboscript
+# This is a single-line comment
+
+# Numbers
+var integer = 42;        # Integer
+var float_num = 3.14;    # Float
+var binary = 0b1010;     # Binary (value: 10)
+var hex = 0xFF;          # Hexadecimal (value: 255)
+var octal = 0o777;       # Octal (value: 511)
+
+# Strings
+var greeting = "Hello, World!";
+var escaped = "Quotes: \"example\"";
+var unicode = "\u1234";  # Unicode character
+
+# Booleans
+var flag = true;         # Will be compiled as 1
+var not_flag = false;    # Will be compiled as 0
+# Variable declaration and assignment
+x = 10;
+y = 20;
+sum = x + y;         # Addition: 30
+diff = x - y;        # Subtraction: -10
+product = x * y;     # Multiplication: 200
+quotient = y / x;    # Division: 2
+floor_div = y // x;  # Floor division: 2
+remainder = y % x;   # Modulo: 0
+text = "Hello" & " World"; # String concatenation: "Hello World"
+
+# Compound assignment
+x += 5;                  # x = x + 5
+y -= 3;                  # y = y - 3
+product *= 2;            # product = product * 2
+quotient /= 4;           # quotient = quotient / 4
+text &= "!";             # text = text & "!"
+
+# Comparison operators
+is_equal = x == y;   # Equal to
+not_equal = x != y;  # Not equal to
+greater = x > y;     # Greater than
+less = x < y;        # Less than
+greater_equal = x >= y; # Greater than or equal to
+less_equal = x <= y;    # Less than or equal to
+
+# Logical operators
+both = x > 0 and y > 0;  # Logical AND
+either = x > 0 or y < 0; # Logical OR
+inverse = not x > 0;     # Logical NOT
+condition = true;
+x = 10;
+
+# Simple if statement
+if x > 5 {
+    say "x is greater than 5";
+}
+
+# If-else statement
+if x % 2 == 0 {
+    say "x is even";
+} else {
+    say "x is odd";
+}
+
+# If-elif-else statement
+if x < 0 {
+    say "x is negative";
+} elif x == 0 {
+    say "x is zero";
+} else {
+    say "x is positive";
+}
+
+# Boolean coercion
+if timer() {  # Equivalent to: if timer() == 1
+    say "Timer is active";
+}
+# Repeat loop (fixed number of iterations)
+repeat 5 {
+    say "Repeated message";
+}
+
+# Repeat with counter
+var i = 1;
+repeat 10 {
+    say "Iteration " & i;
+    i++;
+}
+
+# Until loop (continues until condition is true)
+var counter = 0;
+until counter > 5 {
+    say "Counter: " & counter;
+    counter++;
+}
+
+# Forever loop (infinite loop)
+forever {
+    say "Press stop to exit";
+    if key space pressed? {
+        stop_this_script;
+    }
+}
+# Define a procedure
+proc greet_user {
+    say "Hello, user!";
+}
+
+# Procedure with parameters
+proc personalized_greeting name {
+    say "Hello, " & $name & "!";
+}
+
+# Procedure with local variables
+proc calculate_sum a, b {
+    local result = $a + $b;
+    say "Sum: " & result;
+}
+
+onflag {
+    # Call procedures
+    greet_user;
+    personalized_greeting "John";
+    calculate_sum 5, 10;
+}
+# Define a function
+func add(x, y) {
+    return $x + $y;
+}
+
+# Function with type
+func create_greeting(name) {
+    return "Hello, " & $name & "!";
+}
+
+onflag {
+    message = create_greeting("World");
+    say message;  # Outputs: "Hello, World!"
+}
+# Declare an empty list
+list my_list;
+
+# Add items to a list
+add "apple" to my_list;
+add "banana" to my_list;
+add "cherry" to my_list;
+
+# Access list items (1-indexed)
+first_item = my_list[1];  # "apple"
+
+# Replace items
+my_list[2] = "blueberry";     # Replace "banana" with "blueberry"
+
+# Insert at position
+insert "apricot" at my_list[1]; # Insert at the beginning
+
+# Delete an item
+delete my_list[3];
+
+# Check length
+size = length my_list;
+
+# Check if an item is in the list
+if "cherry" in my_list {
+    say "Found cherry!";
+}
+
+# Get random item
+random_fruit = my_list["random"];
+
+# Clear the list
+delete my_list;
+
+# Load list from file
+list data = file ```data.txt```;
+# Define a struct
+struct Point {
+    x,
+    y
+}
+
+# Create a struct instance
+Point p = Point { x: 10, y: 20 };
+
+# Access struct fields
+say "Coordinates: " & p.x & ", " & p.y;
+
+# Define an enum
+enum Direction {
+    North,  # 0
+    East,   # 1
+    South,  # 2
+    West    # 3
+}
+
+# Use enum values
+current_direction = Direction.North;
+if current_direction == Direction.North {
+    say "Heading north";
+}
+
+# Enum with explicit values
+enum Color {
+    Red = "red",
+    Green = "green",
+    Blue = "blue"
+}
+
+say "Selected color: " & Color.Red;
+````
+
+```
+UNARY OPERATORS
+
+VARIANT  OPCODE   INPUT   | FIELDS
+==========================|=============
+Not      not      OPERAND |
+Length   length   STRING  |
+Round    round    NUM     |
+Abs      mathop   ...     | OPERATOR=abs
+Floor    ...      ...     | ...=floor
+Ceil     ...      ...     | ...=ceiling
+Sqrt     ...      ...     | ...=sqrt
+Sin      ...      ...     | ...=sin
+Cos      ...      ...     | ...=cos
+Tan      ...      ...     | ...=tan
+Asin     ...      ...     | ...=asin
+Acos     ...      ...     | ...=acos
+Atan     ...      ...     | ...=atan
+Ln       ...      ...     | ...=ln
+Log      ...      ...     | ...=log
+AntiLn   ...      ...     | ...=e ^
+AntiLog  ...      ...     | ...=10 ^
+Minus~
+
+BINARY OPERATORS
+
+VARIANT  OPCODE     LHS       RHS
+=======================================
+Add      add        NUM1      NUM2
+Sub      subtract   ...       ...
+Mul      multiply   ...       ...
+Div      divide     ...       ...
+Mod      mod        ...       ...
+Lt       lt         OPERAND1  OPERAND2
+Gt       gt         ...       ...
+Eq       equals     ...       ...
+And      and        ...       ...
+Or       or         ...       ...
+Join     join       STRING1   STRING2
+In       contains   STRING2   STRING1
+Of       letter_of  STRING    LETTER
+Le~
+Ge~
+Ne~
+FloorDiv~
+
+BLOCKS
+
+----------------------------------------------------------------------------------------------------
+VARIANT                           OPCODE            ARGS         | FIELDS                   | MENU (For now, only one menu is supported)
+[motion]=========================================================|==========================|=======
+move                              movesteps         STEPS        |                          |
+turn_left                         turnleft          DEGREES      |                          |
+turn_right                        turnright         ...          |                          |
+goto_random_position              goto                           |                          | TO:motion_goto_menu=_random_
+goto_mouse_pointer                ...                            |                          | ...=_mouse_
+goto                              ...               TO           |                          | ...=_random_
+goto                              gotoxy            X,Y          |                          |
+glide                             glidesecstoxy     X,Y,SECS     |                          |
+glide_to_random_position          glideto           SECS         |                          | TO:motion_glideto_menu=_random_
+glide_to_mouse_pointer            ...               ...          |                          | ...=_mouse_
+glide                             ...               TO,SECS      |                          | ...=_random_
+point_in_direction                pointindirection  DIRECTION    |                          |
+point_towards_mouse_pointer       pointtowards                   |                          | TOWARDS:motion_pointtowards_menu=_mouse_
+point_towards_random_direction    ...                            |                          | ...=_random_
+point_towards                     ...               TOWARDS      |                          | ...=_random_
+change_x                          changexby         DX           |                          |
+set_x                             setx              X            |                          |
+change_y                          changeyby         DY           |                          |
+set_y                             sety              Y            |                          |
+if_on_edge_bounce                 ifonedgebounce                 |                          |
+set_rotation_style_left_right     setrotationstyle               | STYLE=left-right         |
+set_rotation_style_do_not_rotate  ...                            | ...=don't rotate         |
+set_rotation_style_all_around     ...                            | ...=all around           |
+[looks]==========================================================|==========================|
+say                               sayforsecs        MESSAGE,SECS |                          |
+think                             thinkforsecs      ...          |                          |
+say                               say               MESSAGE      |                          |
+think                             think             ...          |                          |
+switch_costume                    switchcostumeto   COSTUME      |                          | COSTUME:looks_costume=make gh issue if this bothers u
+next_costume                      nextcostume                    |                          |
+switch_backdrop                   switchbackdropto  BACKDROP     |                          | BACKDROP:looks_backdrops=next backdrop
+previous_backdrop                 switchbackdropto               |                          | BACKDROP:looks_backdrops=previous backdrop
+random_backdrop                   switchbackdropto               |                          | BACKDROP:looks_backdrops=random backdrop
+next_backdrop                     nextbackdrop                   |                          |
+set_size                          setsizeto         SIZE         |                          |
+change_size                       changesizeby      CHANGE       |                          |
+change_color_effect               changeeffectby    ...          | EFFECT=COLOR             |
+change_fisheye_effect             ...               ...          | ...=FISHEYE              |
+change_whirl_effect               ...               ...          | ...=WHIRL                |
+change_pixelate_effect            ...               ...          | ...=PIXELATE             |
+change_mosaic_effect              ...               ...          | ...=MOSAIC               |
+change_brightness_effect          ...               ...          | ...=BRIGHTNESS           |
+change_ghost_effect               ...               ...          | ...=GHOST                |
+set_color_effect                  seteffectto       VALUE        | ...=COLOR                |
+set_fisheye_effect                ...               ...          | ...=FISHEYE              |
+set_whirl_effect                  ...               ...          | ...=WHIRL                |
+set_pixelate_effect               ...               ...          | ...=PIXELATE             |
+set_mosaic_effect                 ...               ...          | ...=MOSAIC               |
+set_brightness_effect             ...               ...          | ...=BRIGHTNESS           |
+set_ghost_effect                  ...               ...          | ...=GHOST                |
+clear_graphic_effects             cleargraphiceffects            |                          |
+show                              show                           |                          |
+hide                              hide                           |                          |
+goto_front                        gotofrontback                  | FRONT_BACK=front         |
+goto_back                         ...                            | ...=back                 |
+go_forward                        goforwardbackwardlayers NUM    | FORWARD_BACKWARD=forward |
+go_backward                       ...               ...          | ...=backward             |
+[sound]==========================================================|==========================|
+play_sound_until_done             playuntildone     SOUND_MENU   |                          | SOUND_MENU:sound_sounds_menu=make gh issue if this bothers u
+start_sound                       play              ...          |                          | ...=make gh issue if this bothers u
+stop_all_sounds                   stopallsounds                  |                          |
+change_pitch_effect               changeeffectby    VALUE        | EFFECT=PITCH             |
+change_pan_effect                 ...               ...          | ...=PAN                  |
+set_pitch_effect                  seteffectto       ...          | ...=PITCH                |
+set_pan_effect                    ...               ...          | ...=PAN                  |
+change_volume                     changevolumeby    VOLUME       |                          |
+set_volume                        setvolumeto       ...          |                          |
+clear_sound_effects               cleareffects                   |                          |
+[event]==========================================================|==========================|
+broadcast                         broadcast        BROADCAST_INPUT |                        |
+broadcast_and_wait                broadcastandwait BROADCAST_INPUT |                        |
+[control]========================================================|==========================|
+wait                              wait              DURATION     |                          |
+stop_all                          stop                           | STOP_OPTION=all          |
+stop_this_script                  ...                            | ...=this script          |
+stop_other_scripts                ...                            | ...=other scripts in sprite|
+delete_this_clone                 delete_this_clone              |                          |
+clone                             create_clone_of                |                          | CLONE_OPTION:control_create_clone_of_menu=_myself_
+clone                             ...               CLONE_OPTION |                          | ...=_myself_
+[sensing]========================================================|==========================|
+ask                               askandwait        QUESTION     |                          |
+set_drag_mode_draggable           setdragmode                    | DRAG_MODE=draggable      |
+set_drag_mode_not_draggable       ...                            | ...=not draggable        |
+reset_timer                       resettimer                     |                          |
+[pen]============================================================|==========================|
+erase_all                         clear                          |                          |
+stamp                             stamp                          |                          |
+pen_down                          penDown                        |                          |
+pen_up                            penUp                          |                          |
+set_pen_color                     setPenColorToColor COLOR       |                          |
+change_pen_size                   changePenSizeBy   SIZE         |                          |
+set_pen_size                      setPenSizeTo      ...          |                          |
+set_pen_hue                       setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=color
+set_pen_saturation                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
+set_pen_brightness                setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
+set_pen_transparency              setPenColorParamTo VALUE       |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
+change_pen_hue                    changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=color
+change_pen_saturation             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=saturation
+change_pen_brightness             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
+change_pen_transparency           changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
+[music]==========================================================|==========================|
+rest                              restForBeats      BEATS        |                          |
+set_tempo                         setTempo          TEMPO        |                          |
+change_tempo                      changeTempo       ...          |                          |
+
+REPORTERS
+
+----------------------------------------------------------------------------------------------
+VARIANT                           OPCODE            ARGS         | FIELDS             | MENUS
+[motion]=========================================================|====================|
+x_position                        xposition                      |                    |
+y_position                        yposition                      |                    |
+direction                         direction                      |                    |
+[looks]==========================================================|====================|=
+size                              size                           |                    |
+costume_number                    costumenumbername              | NUMBER_NAME=number |
+costume_name                      ...                            | ...=name           |
+backdrop_number                   backdropnumbername             | ...=number         |
+backdrop_name                     ...                            | ...=name           |
+[sound]==========================================================|====================|=
+volume                            volume                         |                    |
+[sensing]========================================================|====================|=
+distance_to_mouse_pointer         distanceto                     |                    | DISTANCETOMENU:sensing_distancetomenu=_mouse_
+distance_to                       distanceto  DISTANCETOMENU     |                    | DISTANCETOMENU:sensing_distancetomenu=_mouse_
+touching_mouse_pointer            touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
+touching_edge                     touchingobject                 |                    | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_edge_
+touching                          touchingobject TOUCHINGOBJECTMENU|                  | TOUCHINGOBJECTMENU:sensing_touchingobjectmenu=_mouse_
+key_pressed                       keypressed        KEY_OPTION   |                    | KEY_OPTION:sensing_keyoptions=any
+mouse_down                        mousedown                      |                    |
+mouse_x                           mousex                         |                    |
+mouse_y                           mousey                         |                    |
+loudness                          loudness                       |                    |
+timer                             timer                          |                    |
+current_year                      current                        | CURRENTMENU=YEAR   |
+current_month                     ...                            | ...=MONTH          |
+current_date                      ...                            | ...=DATE           |
+current_day_of_week               ...                            | ...=DAYOFWEEK      |
+current_hour                      ...                            | ...=HOUR           |
+current_minute                    ...                            | ...=MINUTE         |
+current_second                    ...                            | ...=SECOND         |
+days_since_2000                   dayssince2000                  |                    |
+username                          username                       |                    |
+touching_color                    touchingcolor     COLOR        |                    |
+color_is_touching_color           coloristouchingcolor COLOR,COLOR2|                  |
+answer                            answer                         |                    |
+[operator]=======================================================|====================|=
+random                            random            FROM,TO      |                    |
+contains                          contains          STRING1,STRING2|                  |
+```
+
+Prefer procedures over functions when you do not need to return a value.
+You should not use var inside a procedure or function, use local instead.
+var is for declaring global variables.
+goboscript requires local variables to be initialized when declared.
+Procedures cannot return values, using the return statement in a procedure will cause an error.
+
+local is not supported inside onflag
+
+Do not use `&&` in shell commands, use `;` instead.
+No need to run `goboscript build`, project is rebuilt everytime a file is saved.
+
+Use `sh tools/run compile` to test the playground project. Always use the playground
+project to test goboscript.

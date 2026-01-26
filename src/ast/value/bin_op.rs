@@ -12,7 +12,25 @@ impl Value {
             BinOp::Add => lhs.to_number().add(rhs.to_number()).into(),
             BinOp::Sub => lhs.to_number().sub(rhs.to_number()).into(),
             BinOp::Mul => lhs.to_number().mul(rhs.to_number()).into(),
-            BinOp::Div => lhs.to_number().div(rhs.to_number()).into(),
+            BinOp::Div => {
+                // Special handling for division by zero to preserve NaN/Infinity expressions
+                let lhs_num = lhs.to_number();
+                let rhs_num = rhs.to_number();
+                if rhs_num == 0.0 {
+                    // Division by zero - return NaN/Infinity as appropriate
+                    if lhs_num == 0.0 {
+                        Value::Number(f64::NAN)
+                    } else if lhs_num > 0.0 {
+                        Value::Number(f64::INFINITY)
+                    } else if lhs_num < 0.0 {
+                        Value::Number(f64::NEG_INFINITY)
+                    } else {
+                        Value::Number(lhs_num) // Shouldn't happen but handle anyway
+                    }
+                } else {
+                    lhs_num.div(rhs_num).into()
+                }
+            }
             BinOp::Mod => modulo(lhs.to_number(), rhs.to_number()).into(),
             BinOp::Lt => (Value::compare(lhs, rhs) < 0.0).into(),
             BinOp::Gt => (Value::compare(lhs, rhs) > 0.0).into(),
