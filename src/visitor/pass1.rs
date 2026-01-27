@@ -93,8 +93,10 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             visit_stmts(else_body, s);
         }
         Stmt::Until { cond, body } => {
-            visit_expr(cond, &mut before, s);
+            let mut cond_callsites = vec![];
+            visit_expr(cond, &mut cond_callsites, s);
             visit_stmts(body, s);
+            body.extend(cond_callsites);
         }
         Stmt::SetVar {
             name: _,
