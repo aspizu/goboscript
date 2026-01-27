@@ -129,8 +129,19 @@ where T: Write + Seek
             Value::Boolean(boolean) => {
                 write!(self, "[1,[4,{}]]", json!(*boolean as i64))
             }
+            Value::Number(number) if number.is_infinite() || number.is_nan() => match number {
+                n if n.is_infinite() && *n > 0.0 => {
+                    write!(self, "[1,[4,\"Infinity\"]]")
+                }
+                n if n.is_infinite() && *n < 0.0 => {
+                    write!(self, "[1,[4,\"-Infinity\"]]")
+                }
+                _ => {
+                    write!(self, "[1,[4,\"NaN\"]]")
+                }
+            },
             Value::Number(number) if number.fract() == 0.0 => {
-                write!(self, "[1,[4,{}]]", json!(number))
+                write!(self, "[1,[4,{}]]", json!(*number as i64))
             }
             Value::Number(number) => {
                 write!(self, "[1,[4,{}]]", json!(number))
@@ -173,7 +184,7 @@ where T: Write + Seek
                     return self.value_input(input_name, &variant.value.as_ref().unwrap().0);
                 } else {
                     d.report(
-                        DiagnosticKind::UnrecognizedEnumVariant { 
+                        DiagnosticKind::UnrecognizedEnumVariant {
                             enum_name: name.basename().clone(),
                             variant_name: variant_name.clone(),
                         },
