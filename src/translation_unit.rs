@@ -129,19 +129,44 @@ impl TranslationUnit {
                     if self.text[i..].starts_with(b"include") {
                         self.text[i - 1] = b'#';
                         i += b"include".len();
-                        let path = self.text[i..]
+                        let line = self.text[i..]
                             .split(|c| *c == b'\n' || *c == b'\r')
                             .next()
                             .unwrap();
-                        let path_span = i..(i + path.len());
-                        i += path.len();
+                        let line_str = str::from_utf8(line).unwrap();
+
+                        // Parse the path and check for unexpected text
+                        let trimmed = line_str.trim_start();
+                        let path_end = trimmed
+                            .find(|c: char| c.is_whitespace() || c == ';')
+                            .unwrap_or(trimmed.len());
+                        let path = &trimmed[..path_end];
+                        let after_path = &trimmed[path_end..];
+
+                        // Check if there's anything after the path besides optional whitespace and semicolon
+                        let after_path_chars: Vec<char> =
+                            after_path.chars().filter(|c| !c.is_whitespace()).collect();
+                        let is_valid = after_path_chars.is_empty()
+                            || (after_path_chars.len() == 1 && after_path_chars[0] == ';');
+
+                        if !is_valid {
+                            let error_start = i + (line_str.len() - trimmed.len()) + path_end;
+                            let error_end = i + line.len();
+                            diagnostics.push(Diagnostic {
+                                kind: DiagnosticKind::UnexpectedTextAfterInclude,
+                                span: error_start..error_end,
+                            });
+                        }
+
+                        let path_span = i..(i + line.len());
+                        i += line.len();
                         if self.text[i..].starts_with(b"\r") {
                             i += 1;
                         }
                         if self.text[i..].starts_with(b"\n") {
                             i += 1;
                         }
-                        let path = str::from_utf8(path).unwrap().trim().to_owned();
+                        let path = path.to_owned();
                         if !self.included.contains(&path) {
                             if let Err(err) = self.include(fs.clone(), &path, path_span, i, stdlib)
                             {

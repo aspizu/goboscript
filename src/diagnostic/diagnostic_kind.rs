@@ -43,6 +43,7 @@ pub enum DiagnosticKind {
         variant_name: SmolStr,
     },
     UnrecognizedStandardLibraryHeader,
+    UnexpectedTextAfterInclude,
     NoCostumes,
     InvalidCostumeName(SmolStr),
     InvalidBackdropName(SmolStr),
@@ -141,6 +142,9 @@ impl DiagnosticKind {
             DiagnosticKind::UnrecognizedKey(_) => "unrecognized key".to_string(),
             DiagnosticKind::UnrecognizedStandardLibraryHeader => {
                 "unrecognized standard library header".to_string()
+            }
+            DiagnosticKind::UnexpectedTextAfterInclude => {
+                "unexpected text after include path".to_string()
             }
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
             DiagnosticKind::InvalidCostumeName(name) => {
@@ -363,6 +367,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedStructField(_)
             | DiagnosticKind::UnrecognizedEnumVariant { .. }
             | DiagnosticKind::UnrecognizedStandardLibraryHeader
+            | DiagnosticKind::UnexpectedTextAfterInclude
             | DiagnosticKind::NoCostumes
             | DiagnosticKind::BlockArgsCountMismatch { .. }
             | DiagnosticKind::ReprArgsCountMismatch { .. }
