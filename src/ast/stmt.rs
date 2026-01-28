@@ -19,7 +19,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Stmt {
     Repeat {
         times: Box<Expr>,
