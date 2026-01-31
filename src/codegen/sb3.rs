@@ -869,13 +869,15 @@ where T: Write + Seek
                 .into_iter()
                 .map(|v| s.evaluate_const_expr(d, v).to_string())
                 .collect(),
-            Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
-                Ok(data) => data,
-                Err(error) => {
-                    d.report(error, span);
-                    vec![]
+            Some(ListDefault::File { path, span }) => {
+                match read_list(fs, input, path, s.sprite.path.as_deref()) {
+                    Ok(data) => data,
+                    Err(error) => {
+                        d.report(error, span);
+                        vec![]
+                    }
                 }
-            },
+            }
             None => vec![],
         };
         match &list.type_ {
