@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use fxhash::{
     FxHashMap,
     FxHashSet,
@@ -21,7 +19,6 @@ use crate::{
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Sprite {
-    pub path: Option<PathBuf>,
     pub costumes: Vec<Costume>,
     pub sounds: Vec<Sound>,
     pub procs: FxHashMap<SmolStr, Proc>,

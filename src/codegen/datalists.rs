@@ -82,10 +82,10 @@ pub fn read_list(
     fs: Rc<RefCell<dyn VFS>>,
     input: &Path,
     path: &SmolStr,
-    base_path: Option<&Path>,
+    current_file_path: &Path,
 ) -> Result<Vec<SmolStr>, DiagnosticKind> {
     let (_, ext) = path.rsplit_once('.').unwrap_or_default();
-    let resolved_path = resolve_path(base_path, path, input);
+    let resolved_path = resolve_path(Some(current_file_path), path, input);
     let mut fs = fs.borrow_mut();
     let mut file = fs
         .read_file(&resolved_path)

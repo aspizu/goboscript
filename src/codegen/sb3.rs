@@ -870,7 +870,15 @@ where T: Write + Seek
                 .map(|v| s.evaluate_const_expr(d, v).to_string())
                 .collect(),
             Some(ListDefault::File { path, span }) => {
-                match read_list(fs, input, path, s.sprite.path.as_deref()) {
+                // Get the current file path from translation unit based on span
+                let current_file_path = if d.translation_unit.get_text().len() > span.start {
+                    let (_, include) = d.translation_unit.translate_position(span.start);
+                    &include.path
+                } else {
+                    // Fallback to input path if span is invalid
+                    input
+                };
+                match read_list(fs, input, path, &current_file_path) {
                     Ok(data) => data,
                     Err(error) => {
                         d.report(error, span);
