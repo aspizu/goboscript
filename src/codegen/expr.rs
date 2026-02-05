@@ -5,6 +5,7 @@ use std::io::{
 };
 
 use logos::Span;
+use serde_json::json;
 
 use super::{
     input::{
@@ -246,6 +247,38 @@ where T: Write + Seek
                     return self.list_contains(s, d, this_id, parent_id, &qualified_name, lhs);
                 }
             }
+            // Handle struct field access: "value" in struct_list.field
+            if let Expr::Dot {
+                lhs,
+                rhs,
+                rhs_span: _,
+            } = rhs
+            {
+                if let Expr::Name(name) = lhs.as_ref() {
+                    if let Some(QualifiedName::List(list_name, _)) = s.qualify_name(Some(d), name) {
+                        let list = s.get_list(&list_name).unwrap();
+                        if let Some((type_name, _type_span)) = list.type_.struct_() {
+                            let struct_ = s.get_struct(type_name).unwrap();
+                            // Verify the field exists in the struct
+                            if struct_
+                                .fields
+                                .iter()
+                                .any(|field| field.name == rhs.as_str())
+                            {
+                                let qualified_name = qualify_struct_var_name(rhs, name.basename());
+                                return self.list_contains(
+                                    s,
+                                    d,
+                                    this_id,
+                                    parent_id,
+                                    &qualified_name,
+                                    lhs,
+                                );
+                            }
+                        }
+                    }
+                }
+            }
         }
         let lhs_id = self.id.new_id();
         let rhs_id = self.id.new_id();
@@ -433,7 +466,7 @@ where T: Write + Seek
     pub fn expr_dot(
         &mut self,
         s: S,
-        _d: D,
+        d: D,
         _this_id: NodeID,
         _parent_id: NodeID,
         lhs: &Expr,
@@ -443,6 +476,33 @@ where T: Write + Seek
         if let Expr::Name(name) = lhs {
             if let Some(_enum_) = s.get_enum(name.basename()) {
                 return Ok(());
+            }
+
+            // Check if this is a struct list field access
+            // First check if this is a list directly
+            if let Some(list) = s.get_list(name.basename()) {
+                if let Some((type_name, _type_span)) = list.type_.struct_() {
+                    // This is a struct list, check if field exists in struct
+                    let struct_ = s.get_struct(type_name).unwrap();
+                    // Verify the field exists in the struct
+                    if struct_
+                        .fields
+                        .iter()
+                        .any(|field| field.name == rhs.as_str())
+                    {
+                        let qualified_name = qualify_struct_var_name(rhs, name.basename());
+                        let qualified_list_name = QualifiedName::List(qualified_name, Type::Value);
+                        match qualified_list_name {
+                            QualifiedName::Var(qname, _) => {
+                                write!(self, "[3,[12,{},{}],", json!(*qname), json!(*qname))?;
+                            }
+                            QualifiedName::List(qname, _) => {
+                                write!(self, "[3,[13,{},{}],", json!(*qname), json!(*qname))?;
+                            }
+                        }
+                        return write!(self, "[10, \"\"]]");
+                    }
+                }
             }
         }
         eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
