@@ -348,10 +348,7 @@ where T: Write + Seek
                     if let Block::SwitchCostume = block {
                         let costume_name = value.to_string();
                         if !s.sprite.costumes.iter().any(|c| c.name == costume_name) {
-                            d.report(
-                                DiagnosticKind::InvalidCostumeName(costume_name),
-                                arg_span,
-                            );
+                            d.report(DiagnosticKind::InvalidCostumeName(costume_name), arg_span);
                         }
                     }
                     // Validate backdrop names for switch_backdrop blocks
@@ -359,10 +356,7 @@ where T: Write + Seek
                         let backdrop_name = value.to_string();
                         let stage = s.stage.unwrap_or(s.sprite);
                         if !stage.costumes.iter().any(|c| c.name == backdrop_name) {
-                            d.report(
-                                DiagnosticKind::InvalidBackdropName(backdrop_name),
-                                arg_span,
-                            );
+                            d.report(DiagnosticKind::InvalidBackdropName(backdrop_name), arg_span);
                         }
                     }
                     menu_value = Some(value.clone());
