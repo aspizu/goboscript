@@ -1,118 +1,117 @@
 site_name: goboscript
 nav:
-    - README: index.md
-    - Install: install.md
-    - Getting Started:
-          - Getting Started: getting-started/index.md
-          - Basic Examples: getting-started/basic-examples.md
-    - Configuration: configuration.md
-    - Language:
-          - Syntax: language/syntax.md
-          - Sprites: language/sprites.md
-          - Costumes: language/costumes.md
-          - Sounds: language/sounds.md
-          - Variables: language/variables.md
-          - Lists: language/lists.md
-          - Operators: language/operators.md
-          - Control Flow: language/control-flow.md
-          - Hat Blocks: language/hat-blocks.md
-          - Blocks:
-                - Motion: language/blocks/motion.md
-                - Looks: language/blocks/looks.md
-                - Sound: language/blocks/sound.md
-                - Events: language/blocks/events.md
-                - Control: language/blocks/control.md
-                - Sensing: language/blocks/sensing.md
-                - Pen: language/blocks/pen.md
-                - Music: language/blocks/music.md
-          - Reporters:
-                - Motion: language/reporters/motion.md
-                - Looks: language/reporters/looks.md
-                - Sound: language/reporters/sound.md
-                - Sensing: language/reporters/sensing.md
-          - Custom Blocks: language/custom-blocks.md
-          - Functions: language/functions.md
-          - Enums: language/enums.md
-          - Structs: language/structs.md
-          - Macros: language/macros.md
-    - Standard Library: standard-library.md
-    - Editor Integration:
-          - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
-          - Visual Studio Code: editor-integration/vscode.md
-          - Sublime Text: editor-integration/sublime-text.md
-          - Notepad++: editor-integration/notepad++.md
+  - Getting Started:
+      - Getting Started: getting-started/index.md
+      - Basic Examples: getting-started/basic-examples.md
+  - Install: install.md
+  - Configuration: configuration.md
+  - Language:
+      - Syntax: language/syntax.md
+      - Sprites: language/sprites.md
+      - Costumes: language/costumes.md
+      - Sounds: language/sounds.md
+      - Variables: language/variables.md
+      - Lists: language/lists.md
+      - Operators: language/operators.md
+      - Control Flow: language/control-flow.md
+      - Hat Blocks: language/hat-blocks.md
+      - Blocks:
+          - Motion: language/blocks/motion.md
+          - Looks: language/blocks/looks.md
+          - Sound: language/blocks/sound.md
+          - Events: language/blocks/events.md
+          - Control: language/blocks/control.md
+          - Sensing: language/blocks/sensing.md
+          - Pen: language/blocks/pen.md
+          - Music: language/blocks/music.md
+      - Reporters:
+          - Motion: language/reporters/motion.md
+          - Looks: language/reporters/looks.md
+          - Sound: language/reporters/sound.md
+          - Sensing: language/reporters/sensing.md
+      - Custom Blocks: language/custom-blocks.md
+      - Functions: language/functions.md
+      - Enums: language/enums.md
+      - Structs: language/structs.md
+      - Macros: language/macros.md
+  - Standard Library: standard-library.md
+  - Editor Integration:
+      - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
+      - Visual Studio Code: editor-integration/vscode.md
+      - Sublime Text: editor-integration/sublime-text.md
+      - Notepad++: editor-integration/notepad++.md
 theme:
-    name: material
-    logo: assets/goboscript.svg
-    favicon: assets/goboscript.svg
-    features:
-        - navigation.instant
-        - navigation.instant.prefetch
-        - navigation.instant.progress
-        - navigation.instant.preview
-        - navigation.tracking
-        - navigation.tabs
-        - navigation.tabs.sticky
-        - navigation.expand
-        - content.code.annotate
-        - toc.follow
-        - navigation.path
-        - navigation.top
-        - content.code.copy
-        - content.tabs.link
-    font:
-        text: Inter Tight
-        code: Cascadia Code
-    palette:
-        # Note: Using the system theme works with the insiders version
-        # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
-        - media: "(prefers-color-scheme)"
-          toggle:
-              icon: material/brightness-auto
-              name: Switch to light mode
-        - media: "(prefers-color-scheme: light)"
-          scheme: astral-light
-          toggle:
-              icon: material/brightness-7
-              name: Switch to dark mode
-        - media: "(prefers-color-scheme: dark)"
-          scheme: astral-dark
-          toggle:
-              icon: material/brightness-4
-              name: Switch to system preference
+  name: material
+  logo: assets/goboscript.svg
+  favicon: assets/goboscript.svg
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.instant.preview
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - content.code.annotate
+    - toc.follow
+    - navigation.path
+    - navigation.top
+    - content.code.copy
+    - content.tabs.link
+  font:
+    text: Inter Tight
+    code: Cascadia Code
+  palette:
+    # Note: Using the system theme works with the insiders version
+    # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: astral-light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: astral-dark
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
 repo_url: https://github.com/aspizu/goboscript
 repo_name: goboscript
 site_author: Priyanshu Dangare
-site_url: https://aspizu.github.io/goboscript
+site_url: https://aspiz.uk/goboscript/docs
 markdown_extensions:
-    - admonition
-    - pymdownx.details
-    - toc:
-          permalink: "#"
-    - pymdownx.snippets
-    - pymdownx.magiclink
-    - attr_list
-    - md_in_html
-    - pymdownx.highlight:
-          anchor_linenums: true
-    - pymdownx.inlinehilite
-    - pymdownx.superfences
-    - markdown.extensions.attr_list
-    - pymdownx.keys
-    - pymdownx.tasklist:
-          custom_checkbox: true
-    - pymdownx.tabbed:
-          alternate_style: true
+  - admonition
+  - pymdownx.details
+  - toc:
+      permalink: "#"
+  - pymdownx.snippets
+  - pymdownx.magiclink
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - markdown.extensions.attr_list
+  - pymdownx.keys
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
 plugins:
-    - search
+  - search
 extra_css:
-    - stylesheets/extra.css
+  - stylesheets/extra.css
 extra_javascript:
-    - javascripts/extra.js
-    - javascripts/scratchblocks.min.js
+  - javascripts/extra.js
+  - javascripts/scratchblocks.min.js
 extra:
-    social:
-        - icon: fontawesome/brands/github
-          link: https://github.com/aspizu
-        - icon: fontawesome/brands/discord
-          link: https://discord.gg/MMfMkRuhAf
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/aspizu
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/mKQqsJ6UtK
