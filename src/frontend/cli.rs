@@ -1,14 +1,28 @@
 use std::path::PathBuf;
 
+use annotate_snippets::renderer::{
+    AnsiColor,
+    Effects,
+};
+use clap::builder::Styles;
 use clap_derive::{
     Parser,
     Subcommand,
 };
 
+const CLAP_STYLES: Styles = Styles::styled()
+    .header(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .literal(AnsiColor::Cyan.on_default().effects(Effects::BOLD))
+    .placeholder(AnsiColor::Cyan.on_default());
+
 #[derive(Debug, Parser)]
 #[command(
     version = env!("CARGO_PKG_VERSION"),
+    about = "goboscript is the Scratch compiler.",
+    long_about = "goboscript is the Scratch compiler.",
 )]
+#[command(styles=CLAP_STYLES)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
