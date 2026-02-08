@@ -4,7 +4,11 @@
 
 ![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1462182798210109505?style=flat&logo=discord&label=Discord)](https://discord.gg/mKQqsJ6UtK) ![image](https://shields.io/crates/l/goboscript) 
 
-![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og-image-dark.webp" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/og-image-light.webp" />
+  <img alt="goboscript screenshot" src="docs/assets/og-image-light.webp" />
+</picture>
 
 [**Installation and documentation**](https://aspiz.uk/goboscript)
 
