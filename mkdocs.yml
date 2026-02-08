@@ -1,9 +1,9 @@
 site_name: goboscript
 nav:
+  - Install: install.md
   - Getting Started:
       - Getting Started: getting-started/index.md
       - Basic Examples: getting-started/basic-examples.md
-  - Install: install.md
   - Configuration: configuration.md
   - Language:
       - Syntax: language/syntax.md
@@ -110,6 +110,7 @@ extra_javascript:
   - javascripts/extra.js
   - javascripts/scratchblocks.min.js
 extra:
+  homepage: https://github.com/aspizu/goboscript
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/aspizu

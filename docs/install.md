@@ -1,20 +1,14 @@
 # Install
 
-## Auto Install
+=== "unix"
+    ```shell
+    curl -fsSL https://aspiz.uk/goboscript.sh | sh
+    ```
 
-Recommended method to install. Also installs sb2gs and backpack.
-
-### Unix
-
-```shell
-curl -fsSL https://raw.githubusercontent.com/aspizu/goboscript/refs/heads/main/install.sh | sh
-```
-
-### Windows
-
-```shell
-iwr https://raw.githubusercontent.com/aspizu/goboscript/refs/heads/main/install.ps1 | iex
-```
+=== "Windows"
+    ```shell
+    iwr https://aspiz.uk/goboscript.ps1 | iex
+    ```
 
 ## Install from source
 
