@@ -1,4 +1,4 @@
-site_name: goboscript
+site_name: goboscript Documentation
 nav:
   - Install: install.md
   - Getting Started:
