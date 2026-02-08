@@ -35,7 +35,11 @@ abstractions such as:
 
 All these abstractions are compiled down to regular Scratch code.
 
-![](https://github.com/aspizu/goboscript/raw/main/docs/assets/cheatsheet.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cheatsheet-dark.png" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/cheatsheet-light.png" />
+  <img alt="goboscript overview & reference" src="docs/assets/cheatsheet-light.png" />
+</picture>
 
 ### [Scratch Forum topic](https://scratch.mit.edu/discuss/topic/747370/)
 
