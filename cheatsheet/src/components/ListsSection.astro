@@ -15,12 +15,8 @@ import SectionItemText from "./SectionItemText.astro"
             <SectionItemText>Default list value (top-level statement)</SectionItemText>
         </SectionItem>
         <SectionItem>
-            <SectionItemCode>list list_name = file```path.txt```;</SectionItemCode>
+            <SectionItemCode>list list_name "path/to/file.txt";</SectionItemCode>
             <SectionItemText>Read list from text file</SectionItemText>
-        </SectionItem>
-        <SectionItem>
-            <SectionItemCode>list list_name = ```command```;</SectionItemCode>
-            <SectionItemText>Read list from output of shell command</SectionItemText>
         </SectionItem>
         <SectionItem>
             <SectionItemCode>add value to list_name;</SectionItemCode>
@@ -57,12 +53,12 @@ import SectionItemText from "./SectionItemText.astro"
         <SectionItem>
             <SectionItemCode>show list_name;</SectionItemCode>
             <SectionItemCode>hide list_name;</SectionItemCode>
-            <SectionItemText>Show/hide list monitor</SectionItemText>
+            <SectionItemText>Show / Hide list monitor</SectionItemText>
         </SectionItem>
         <SectionItem>
             <SectionItemCode>list_name["random"]</SectionItemCode>
             <SectionItemCode>list_name["last"]</SectionItemCode>
-            <SectionItemText>Get random/list item</SectionItemText>
+            <SectionItemText>Get random / last item</SectionItemText>
         </SectionItem>
         <SectionItem>
             <SectionItemCode>list_name[index] *= 2;</SectionItemCode>

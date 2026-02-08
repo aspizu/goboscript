@@ -11,21 +11,21 @@ import SectionItemText from "./SectionItemText.astro"
     <SectionHeader>Installation & Usage</SectionHeader>
     <SectionContent>
         <SectionItem>
-            <SectionItemCode
-                >cargo install --git https://github.com/aspizu/goboscript</SectionItemCode
-            >
+            <SectionItemCode>
+                curl -fsSL https://aspiz.uk/goboscript.sh | sh
+            </SectionItemCode>
         </SectionItem>
         <SectionItem>
-            <SectionItemCode>goboscript new [-n]</SectionItemCode>
-            <SectionItemText>create new project</SectionItemText>
+            <SectionItemCode>goboscript new [NAME]</SectionItemCode>
+            <SectionItemText>Create and initialize a new project</SectionItemText>
         </SectionItem>
         <SectionItem>
-            <SectionItemCode>goboscript build [-i] [-o]</SectionItemCode>
-            <SectionItemText>compile project to .sb3</SectionItemText>
+            <SectionItemCode>goboscript build [INPUT]</SectionItemCode>
+            <SectionItemText>Compile project to .sb3</SectionItemText>
         </SectionItem>
         <SectionItem>
             <SectionItemCode>goboscript fmt [-i]</SectionItemCode>
-            <SectionItemText>reformat .gs files</SectionItemText>
+            <SectionItemText>Reformat .gs files</SectionItemText>
         </SectionItem>
     </SectionContent>
 </Section>

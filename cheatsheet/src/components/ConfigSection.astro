@@ -8,8 +8,20 @@ import SectionItemText from "./SectionItemText.astro"
 ---
 
 <Section>
-    <SectionHeader>TurboWarp Configuration</SectionHeader>
+    <SectionHeader>goboscript.toml</SectionHeader>
     <SectionContent>
+        <SectionItem>
+            <SectionItemCode>std = "2.1.0"</SectionItemCode>
+            <SectionItemText>(default: latest)</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>layers = [] </SectionItemCode>
+            <SectionItemText>sprite order</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>bitmap_resolution = 2</SectionItemCode>
+            <SectionItemText>(default: 1)</SectionItemText>
+        </SectionItem>
         <SectionItem>
             <SectionItemCode>frame_rate = 60</SectionItemCode>
             <SectionItemText>(default: 30)</SectionItemText>
