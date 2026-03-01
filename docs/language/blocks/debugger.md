@@ -7,7 +7,7 @@ log message;
 ```
 
 ```_ {.scratchblocks}
-log (message)
+log (message) :: #009970
 ```
 
 ### warn ()
@@ -17,7 +17,7 @@ warn message;
 ```
 
 ```_ {.scratchblocks}
-warn (message)
+warn (message) :: #009970
 ```
 
 ### error ()
@@ -27,7 +27,7 @@ error message;
 ```
 
 ```_ {.scratchblocks}
-error (message)
+error (message) :: #009970
 ```
 
 ### breakpoint
@@ -37,5 +37,5 @@ breakpoint;
 ```
 
 ```_ {.scratchblocks}
-breakpoint
+breakpoint :: #009970
 ```
