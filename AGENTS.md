@@ -358,6 +358,11 @@ stop_other_scripts                ...                            | ...=other scr
 delete_this_clone                 delete_this_clone              |                          |
 clone                             create_clone_of                |                          | CLONE_OPTION:control_create_clone_of_menu=_myself_
 clone                             ...               CLONE_OPTION |                          | ...=_myself_
+[debugger]=======================================================|
+log                               log               MESSAGE     |                          |
+warn                              warn              MESSAGE     |                          |
+error                             error             MESSAGE     |                          |
+breakpoint                        breakpoint        ...         |                          |
 [sensing]========================================================|==========================|
 ask                               askandwait        QUESTION     |                          |
 set_drag_mode_draggable           setdragmode                    | DRAG_MODE=draggable      |
