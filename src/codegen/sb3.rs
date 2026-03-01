@@ -544,6 +544,20 @@ where T: Write + Seek
                 }
             }
         }
+        let mut costumes = FxHashSet::default();
+        for costume in &sprite.costumes {
+            if costumes.contains(&costume.name) {
+                d.report(
+                    if stage.is_none() {
+                        DiagnosticKind::DuplicateBackdrop(costume.name.clone())
+                    } else {
+                        DiagnosticKind::DuplicateCostume(costume.name.clone())
+                    },
+                    &costume.span,
+                );
+            }
+            costumes.insert(&costume.name);
+        }
         self.id.reset();
         write!(self, "{{")?;
         write!(self, r#""isStage":{}"#, name == STAGE_NAME)?;

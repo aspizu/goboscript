@@ -45,6 +45,8 @@ pub enum DiagnosticKind {
     UnrecognizedStandardLibraryHeader,
     UnexpectedTextAfterInclude,
     NoCostumes,
+    DuplicateCostume(SmolStr),
+    DuplicateBackdrop(SmolStr),
     InvalidCostumeName(SmolStr),
     InvalidBackdropName(SmolStr),
     BlockArgsCountMismatch {
@@ -147,6 +149,12 @@ impl DiagnosticKind {
                 "unexpected text after include path".to_string()
             }
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
+            DiagnosticKind::DuplicateCostume(name) => {
+                format!("duplicate definition of costume with the name '{name}'")
+            }
+            DiagnosticKind::DuplicateBackdrop(name) => {
+                format!("duplicate definition of backdrop with the name '{name}'")
+            }
             DiagnosticKind::InvalidCostumeName(name) => {
                 format!("costume '{}' does not exist", name)
             }
@@ -232,6 +240,9 @@ impl DiagnosticKind {
         match self {
             DiagnosticKind::NoCostumes => {
                 Some("if this is a header, move it inside a directory such as `lib/`".to_string())
+            }
+            DiagnosticKind::DuplicateBackdrop(_) | DiagnosticKind::DuplicateCostume(_) => {
+                Some("Use `as \"alternative name\";` to create a duplicate".to_owned())
             }
             DiagnosticKind::InvalidCostumeName(name) => {
                 if name.contains('.') {
@@ -383,6 +394,8 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::StructDoesNotHaveField { .. }
             | DiagnosticKind::EmptyStruct(_)
             | DiagnosticKind::InvalidCostumeName(_)
+            | DiagnosticKind::DuplicateCostume(_)
+            | DiagnosticKind::DuplicateBackdrop(_)
             | DiagnosticKind::InvalidBackdropName(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
