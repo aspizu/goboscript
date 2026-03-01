@@ -4,9 +4,9 @@ goboscript has a C-like preprocessor. This allows you to define macros and
 include files.
 
 !!! note
-The preprocessor directives start with a `%` character. The `%` character must
-always appear at the start of a line. There cannot be any indentation before the
-`%` character.
+    The preprocessor directives start with a `%` character. The `%` character must
+    always appear at the start of a line. There cannot be any indentation before the
+    `%` character.
 
 ## Include
 
