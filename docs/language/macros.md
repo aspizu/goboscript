@@ -4,9 +4,9 @@ goboscript has a C-like preprocessor. This allows you to define macros and
 include files.
 
 !!! note
-    The preprocessor directives start with a `%` character. The `%` character must
-    always appear at the start of a line. There cannot be any indentation before the
-    `%` character.
+The preprocessor directives start with a `%` character. The `%` character must
+always appear at the start of a line. There cannot be any indentation before the
+`%` character.
 
 ## Include
 
@@ -42,7 +42,15 @@ the callsite.
 %define macro_name(arg1, arg2) replacement text
 ```
 
-You can use a backslash `\` at the end of a line to continue the replacement text onto the next line:
+Since `()` are interpreted as function parameter brackets, use double parentheses to include them in the expansion:
+
+```goboscript
+%define foo ((1 + 2))
+```
+
+This expands to `((1 + 2))`, allowing you to control operator precedence in macro substitutions.
+
+Use `\` at the end of a line to continue the replacement text across multiple lines:
 
 ```goboscript
 %define long_macro this is a very long \
