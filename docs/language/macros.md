@@ -58,6 +58,25 @@ Use `\` at the end of a line to continue the replacement text across multiple li
                    multiple lines
 ```
 
+## Define with overloaded arguments
+
+Macros with arguments can be overloaded by defining multiple versions with different
+numbers of arguments. The correct version will be selected based on the number of
+arguments passed at the callsite.
+```goboscript
+%define MACRO(A) "MACRO(A)"
+%define MACRO(A, B) "MACRO(A, B)"
+
+onflag {
+    say MACRO(1);      # expands to "MACRO(A)"
+    say MACRO(1, 1);   # expands to "MACRO(A, B)"
+}
+```
+
+Each overload is stored independently, so defining `MACRO` with one argument does not
+affect the definition of `MACRO` with two arguments. Using `%undef macro_name` removes
+all overloads for that name at once.
+
 ## Remove a macro definition
 
 ```goboscript
