@@ -465,7 +465,7 @@ where T: Write + Seek
     pub fn expr_dot(
         &mut self,
         s: S,
-        d: D,
+        _d: D,
         _this_id: NodeID,
         _parent_id: NodeID,
         lhs: &Expr,
