@@ -173,6 +173,9 @@ my_list[2] = "blueberry";     # Replace "banana" with "blueberry"
 # Insert at position
 insert "apricot" at my_list[1]; # Insert at the beginning
 
+# get char of string
+c = "string"[1];
+
 # Delete an item
 delete my_list[3];
 
