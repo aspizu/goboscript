@@ -241,31 +241,23 @@ where T: Write + Seek
             }
         }
         if let BinOp::In = op {
-            if let Expr::Name(name) = rhs {
-                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(Some(d), name)
-                {
-                    return self.list_contains(s, d, this_id, parent_id, &qualified_name, lhs);
-                }
-            }
-            // Handle struct field access: "value" in struct_list.field
             if let Expr::Dot {
-                lhs,
-                rhs,
+                lhs: dot_lhs,
+                rhs: dot_rhs,
                 rhs_span: _,
             } = rhs
             {
-                if let Expr::Name(name) = lhs.as_ref() {
-                    if let Some(QualifiedName::List(list_name, _)) = s.qualify_name(Some(d), name) {
-                        let list = s.get_list(&list_name).unwrap();
+                if let Expr::Name(name) = dot_lhs.as_ref() {
+                    if let Some(list) = s.get_list(name.basename()) {
                         if let Some((type_name, _type_span)) = list.type_.struct_() {
                             let struct_ = s.get_struct(type_name).unwrap();
-                            // Verify the field exists in the struct
                             if struct_
                                 .fields
                                 .iter()
-                                .any(|field| field.name == rhs.as_str())
+                                .any(|field| field.name == dot_rhs.as_str())
                             {
-                                let qualified_name = qualify_struct_var_name(rhs, name.basename());
+                                let qualified_name =
+                                    qualify_struct_var_name(dot_rhs, name.basename());
                                 return self.list_contains(
                                     s,
                                     d,
@@ -277,6 +269,13 @@ where T: Write + Seek
                             }
                         }
                     }
+                }
+            }
+
+            if let Expr::Name(name) = rhs {
+                if let Some(QualifiedName::List(qualified_name, _)) = s.qualify_name(Some(d), name)
+                {
+                    return self.list_contains(s, d, this_id, parent_id, &qualified_name, lhs);
                 }
             }
         }
