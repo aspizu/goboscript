@@ -15,6 +15,7 @@ use anyhow::{
     anyhow,
     Context,
 };
+use colored::Colorize;
 use directories::ProjectDirs;
 use fxhash::FxHashMap;
 
@@ -142,6 +143,7 @@ pub fn build_impl<T: Write + Seek>(
             project,
             stage_diagnostics,
             sprites_diagnostics,
+            block_count: 0,
         });
     }
     visitor::pass0::visit_project(&input, &mut project);
@@ -163,10 +165,12 @@ pub fn build_impl<T: Write + Seek>(
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     )?;
+    let node_count = sb3.block_count;
     drop(sb3);
     Ok(Artifact {
         project,
         stage_diagnostics,
         sprites_diagnostics,
+        block_count: node_count,
     })
 }

@@ -21,6 +21,7 @@ pub struct Artifact {
     pub project: Project,
     pub stage_diagnostics: SpriteDiagnostics,
     pub sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics>,
+    pub block_count: usize,
 }
 
 impl Artifact {

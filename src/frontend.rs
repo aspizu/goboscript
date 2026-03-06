@@ -27,6 +27,14 @@ pub fn frontend() -> ExitCode {
             Ok(artifact) => {
                 artifact.eprint();
                 eprintln!();
+                if artifact.block_count > 0 {
+                    eprintln!(
+                        "{} {} {}",
+                        "Emitted".dimmed(),
+                        artifact.block_count.to_string().dimmed(),
+                        "blocks".dimmed()
+                    );
+                }
                 if artifact.failure() {
                     ExitCode::FAILURE
                 } else {

@@ -317,6 +317,7 @@ where T: Write + Seek
     pub costumes: FxHashMap<SmolStr, SmolStr>,
     pub srcpkg_hash: Option<String>,
     pub srcpkg: Option<Vec<u8>>,
+    pub block_count: usize,
 }
 
 impl<T> Write for Sb3<T>
@@ -343,6 +344,7 @@ where T: Write + Seek
             costumes: FxHashMap::default(),
             srcpkg_hash: None,
             srcpkg: None,
+            block_count: 0,
         }
     }
 
@@ -371,6 +373,7 @@ where T: Write + Seek
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
+        self.block_count += 1;
         write_comma_io(&mut self.zip, &mut self.node_comma)?;
         write!(self, "{node}")
     }

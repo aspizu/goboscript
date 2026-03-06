@@ -195,9 +195,11 @@ where T: Write + Seek
         }
         match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(name, _)) => {
+                self.block_count += 1;
                 write!(self, "[3,[12,{},{}],", json!(*name), json!(*name))?;
             }
             Some(QualifiedName::List(name, _)) => {
+                self.block_count += 1;
                 write!(self, "[3,[13,{},{}],", json!(*name), json!(*name))?;
             }
             None => {}
