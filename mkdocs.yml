@@ -1,4 +1,4 @@
-site_name: goboscript Documentation
+site_name: goboscript docs
 nav:
   - Install: install.md
   - Getting Started:
@@ -83,7 +83,7 @@ theme:
 repo_url: https://github.com/aspizu/goboscript
 repo_name: goboscript
 site_author: Priyanshu Dangare
-site_url: https://aspiz.uk/goboscript/docs
+site_url: https://aspiz.uk/goboscript/docs/
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -117,4 +117,4 @@ extra:
       link: https://github.com/aspizu
     - icon: fontawesome/brands/discord
       link: https://discord.gg/mKQqsJ6UtK
-use_directory_urls: false
+use_directory_urls: true
