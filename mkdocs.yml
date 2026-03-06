@@ -117,4 +117,4 @@ extra:
       link: https://github.com/aspizu
     - icon: fontawesome/brands/discord
       link: https://discord.gg/mKQqsJ6UtK
-use_directory_urls: true
+use_directory_urls: false
