@@ -62,6 +62,7 @@ theme:
     - content.action.edit
     - content.action.view
     - content.tabs.link
+    - content.tooltips
   font:
     text: Inter Tight
     code: Cascadia Code
