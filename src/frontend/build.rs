@@ -15,7 +15,6 @@ use anyhow::{
     anyhow,
     Context,
 };
-use colored::Colorize;
 use directories::ProjectDirs;
 use fxhash::FxHashMap;
 

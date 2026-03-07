@@ -18,7 +18,7 @@ const CLAP_STYLES: Styles = Styles::styled()
 
 #[derive(Debug, Parser)]
 #[command(
-    version = env!("CARGO_PKG_VERSION"),
+    version = option_env!("GIT_HASH").unwrap_or(env!("CARGO_PKG_VERSION")),
     about = "goboscript is the Scratch compiler.",
     long_about = "goboscript is the Scratch compiler.",
 )]
