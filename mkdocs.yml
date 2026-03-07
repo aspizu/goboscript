@@ -78,12 +78,12 @@ theme:
         icon: material/brightness-auto
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: default
+      scheme: astral-light
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+      scheme: astral-dark
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
