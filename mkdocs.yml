@@ -60,11 +60,13 @@ theme:
     - navigation.top
     - content.code.copy
     - content.action.edit
+    - content.action.view
     - content.tabs.link
   font:
     text: Inter Tight
     code: Cascadia Code
   icon:
+    repo: fontawesome/brands/github
     edit: material/pencil
     view: material/eye
   palette:
@@ -110,6 +112,12 @@ markdown_extensions:
       alternate_style: true
 plugins:
   - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - git-committers:
+      repository: aspizu/goboscript
+      branch: main
+  - git-authors
 extra_css:
   - stylesheets/extra.css
 extra_javascript:
