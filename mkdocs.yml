@@ -113,8 +113,6 @@ markdown_extensions:
       alternate_style: true
 plugins:
   - search
-  - git-revision-date-localized:
-      enable_creation_date: true
   - git-committers:
       repository: aspizu/goboscript
       branch: main
