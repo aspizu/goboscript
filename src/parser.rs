@@ -26,9 +26,11 @@ fn tokenize(translation_unit: &TranslationUnit) -> (Vec<SpannedToken>, Vec<Diagn
     let mut tokens = Vec::new();
     let mut diagnostics = Vec::new();
 
-    adaptor::Lexer::new(translation_unit.get_text()).for_each(|result| match result {
-        Ok(token) => tokens.push(token),
-        Err(diagnostic) => diagnostics.push(diagnostic),
+    adaptor::Lexer::new(std::str::from_utf8(&translation_unit.text).unwrap()).for_each(|result| {
+        match result {
+            Ok(token) => tokens.push(token),
+            Err(diagnostic) => diagnostics.push(diagnostic),
+        }
     });
 
     (tokens, diagnostics)

@@ -11,10 +11,7 @@ use std::{
     rc::Rc,
 };
 
-use anyhow::{
-    anyhow,
-    Context,
-};
+use anyhow::Context;
 use directories::ProjectDirs;
 use fxhash::FxHashMap;
 
@@ -98,10 +95,8 @@ pub fn build_impl<T: Write + Seek>(
         fetch_standard_library(&stdlib)?;
     }
     let stage_path = input.join("stage.gs");
-    if !fs.borrow_mut().is_file(&stage_path) {
-        return Err(anyhow!("{} not found", stage_path.display()));
-    }
-    let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib);
+    let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib)
+        .context("failed to read stage.gs")?;
     let (stage, parse_diagnostics) = parser::parse(&stage_diagnostics.translation_unit);
     stage_diagnostics.diagnostics.extend(parse_diagnostics);
     let mut sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics> = Default::default();
@@ -126,7 +121,8 @@ pub fn build_impl<T: Write + Seek>(
             .to_str()
             .unwrap()
             .into();
-        let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib);
+        let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib)
+            .with_context(|| format!("failed to read {}.gs", sprite_name))?;
         let (sprite, parse_diagnostics) = parser::parse(&sprite_diagnostics.translation_unit);
         sprite_diagnostics.diagnostics.extend(parse_diagnostics);
         sprites_diagnostics.insert(sprite_name.clone(), sprite_diagnostics);
