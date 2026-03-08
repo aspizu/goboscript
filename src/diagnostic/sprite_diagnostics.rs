@@ -3,6 +3,7 @@ use std::{
     fs::{
         self,
     },
+    io,
     path::{
         Path,
         PathBuf,
@@ -32,6 +33,7 @@ use crate::{
     codegen::debug_info::DebugInfo,
     standard_library::StandardLibrary,
     translation_unit::{
+        parse_translation_unit,
         Owner,
         TranslationUnit,
     },
@@ -48,19 +50,21 @@ pub struct SpriteDiagnostics {
 }
 
 impl SpriteDiagnostics {
-    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf, stdlib: &StandardLibrary) -> Self {
+    pub fn new(
+        fs: Rc<RefCell<dyn VFS>>,
+        path: PathBuf,
+        stdlib: &StandardLibrary,
+    ) -> io::Result<Self> {
         let sprite_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-        let mut translation_unit = TranslationUnit::new(fs.clone(), path);
+        let mut unit = TranslationUnit::new(fs.clone(), path)?;
         let mut diagnostics = vec![];
-        if let Err(diagnostic) = translation_unit.pre_process(fs.clone(), stdlib) {
-            diagnostics.extend(diagnostic);
-        }
-        Self {
+        parse_translation_unit(&mut unit, fs, stdlib, &mut diagnostics);
+        Ok(Self {
             sprite_name,
-            translation_unit,
+            translation_unit: unit,
             diagnostics,
             debug_info: Default::default(),
-        }
+        })
     }
 
     pub fn report(&mut self, kind: DiagnosticKind, span: &Span) {

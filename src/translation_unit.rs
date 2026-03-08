@@ -1,6 +1,6 @@
 use std::{
     cell::RefCell,
-    io::Read,
+    io,
     path::PathBuf,
     rc::Rc,
     str,
@@ -47,290 +47,30 @@ pub struct Include {
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct TranslationUnit {
     pub path: PathBuf,
-    text: Vec<u8>,
+    pub text: Vec<u8>,
     defines: FxHashSet<String>,
     includes: Vec<Include>,
-    included: FxHashSet<String>,
+    included: FxHashSet<PathBuf>,
     current_include: usize,
 }
 
 impl TranslationUnit {
-    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> Self {
-        let mut text = fs.borrow_mut().read_to_vec(&path).unwrap();
-        if text.last().is_none_or(|&c| c != b'\n') {
-            text.push(b'\n');
-        }
-        let mut instance = Self {
-            text,
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> io::Result<Self> {
+        let mut unit = Self {
+            text: fs.borrow_mut().read_to_vec(&path)?,
             path,
             defines: Default::default(),
             includes: Default::default(),
             included: Default::default(),
             current_include: 0,
         };
-        instance.includes.push(Include {
-            unit_range: 0..instance.text.len(),
-            source_range: 0..instance.text.len(),
-            path: instance.path.clone(),
+        unit.includes.push(Include {
+            unit_range: 0..unit.text.len(),
+            source_range: 0..unit.text.len(),
+            path: unit.path.clone(),
             owner: Owner::Local,
         });
-        instance
-    }
-
-    pub fn pre_process(
-        &mut self,
-        fs: Rc<RefCell<dyn VFS>>,
-        stdlib: &StandardLibrary,
-    ) -> Result<(), Vec<Diagnostic>> {
-        self.parse(fs, 0, stdlib)
-    }
-
-    pub fn get_text(&self) -> &str {
-        str::from_utf8(&self.text).unwrap()
-    }
-
-    fn parse(
-        &mut self,
-        fs: Rc<RefCell<dyn VFS>>,
-        begin: usize,
-        stdlib: &StandardLibrary,
-    ) -> Result<(), Vec<Diagnostic>> {
-        let mut diagnostics = vec![];
-        let mut comment = 0;
-        let mut i = begin;
-        while i < self.text.len() {
-            if 0 < comment {
-                if self.text[i..].starts_with(b"\n%") {
-                    i += b"\n%".len();
-                    self.text[i - 1] = b'#';
-                    if self.text[i..].starts_with(b"if") {
-                        comment += 1;
-                    } else if self.text[i..].starts_with(b"endif") {
-                        comment -= 1;
-                    }
-                } else if self.text[i..].starts_with(b"\n") {
-                    i += 1;
-                    if i < self.text.len() {
-                        self.text[i] = b'#';
-                    }
-                } else {
-                    i += 1;
-                }
-            } else {
-                let mut begin = false;
-                if self.text[i..].starts_with(b"\n%") {
-                    i += b"\n%".len();
-                    begin = true;
-                } else if i == 0 && self.text.starts_with(b"%") {
-                    i += b"%".len();
-                    begin = true;
-                }
-                if begin {
-                    if self.text[i..].starts_with(b"include") {
-                        self.text[i - 1] = b'#';
-                        i += b"include".len();
-                        let line = self.text[i..]
-                            .split(|c| *c == b'\n' || *c == b'\r')
-                            .next()
-                            .unwrap();
-                        let line_str = str::from_utf8(line).unwrap();
-
-                        // Parse the path and check for unexpected text
-                        let trimmed = line_str.trim_start();
-                        let path_end = trimmed
-                            .find(|c: char| c.is_whitespace() || c == ';')
-                            .unwrap_or(trimmed.len());
-                        let path = &trimmed[..path_end];
-                        let after_path = &trimmed[path_end..];
-
-                        // Check if there's anything after the path besides optional whitespace and semicolon
-                        let after_path_chars: Vec<char> =
-                            after_path.chars().filter(|c| !c.is_whitespace()).collect();
-                        let is_valid = after_path_chars.is_empty()
-                            || (after_path_chars.len() == 1 && after_path_chars[0] == ';');
-
-                        if !is_valid {
-                            let error_start = i + (line_str.len() - trimmed.len()) + path_end;
-                            let error_end = i + line.len();
-                            diagnostics.push(Diagnostic {
-                                kind: DiagnosticKind::UnexpectedTextAfterInclude,
-                                span: error_start..error_end,
-                            });
-                        }
-
-                        let path_span = i..(i + line.len());
-                        i += line.len();
-                        if self.text[i..].starts_with(b"\r") {
-                            i += 1;
-                        }
-                        if self.text[i..].starts_with(b"\n") {
-                            i += 1;
-                        }
-                        let path = path.to_owned();
-                        if !self.included.contains(&path) {
-                            if let Err(err) = self.include(fs.clone(), &path, path_span, i, stdlib)
-                            {
-                                diagnostics.push(err);
-                            }
-                            self.included.insert(path);
-                        }
-                        if self.text[i..].starts_with(b"%") {
-                            i -= 1;
-                        }
-                    } else if self.text[i..].starts_with(b"define") {
-                        i += b"define".len();
-                        let name = self.text[i..]
-                            .split(|c| *c == b'\n' || *c == b'\r')
-                            .next()
-                            .unwrap();
-                        i += name.len();
-                        if self.text[i..].starts_with(b"\r") {
-                            i += 1;
-                        }
-                        let name = str::from_utf8(name).unwrap().trim();
-                        self.defines.insert(name.to_string());
-                    } else if self.text[i..].starts_with(b"undef") {
-                        i += b"undef".len();
-                        let name = self.text[i..]
-                            .split(|c| *c == b'\n' || *c == b'\r')
-                            .next()
-                            .unwrap();
-                        i += name.len();
-                        if self.text[i..].starts_with(b"\r") {
-                            i += 1;
-                        }
-                        let name = str::from_utf8(name).unwrap().trim();
-                        self.defines.remove(name);
-                    } else if self.text[i..].starts_with(b"if") {
-                        self.text[i - 1] = b'#';
-                        i += b"if".len();
-                        let mut invert = false;
-                        if self.text[i..].starts_with(b" not ") {
-                            i += b" not ".len();
-                            invert = true;
-                        }
-                        let name = self.text[i..]
-                            .split(|c| *c == b'\n' || *c == b'\r')
-                            .next()
-                            .unwrap();
-                        i += name.len();
-                        if self.text[i..].starts_with(b"\r") {
-                            i += 1;
-                        }
-                        let name = str::from_utf8(name).unwrap().trim();
-                        if self.defines.contains(name) == invert {
-                            comment = 1;
-                        }
-                    } else if self.text[i..].starts_with(b"endif") {
-                        self.text[i - 1] = b'#';
-                        i += b"endif".len();
-                    }
-                } else {
-                    i += 1;
-                }
-            }
-        }
-        if diagnostics.is_empty() {
-            Ok(())
-        } else {
-            Err(diagnostics)
-        }
-    }
-
-    fn include(
-        &mut self,
-        fs: Rc<RefCell<dyn VFS>>,
-        path: &str,
-        path_span: Span,
-        begin: usize,
-        stdlib: &StandardLibrary,
-    ) -> Result<(), Diagnostic> {
-        while self.includes[self.current_include].unit_range.end < begin {
-            self.current_include += 1;
-        }
-
-        let parent = self.includes[self.current_include].path.parent().unwrap();
-        let mut fs = fs.borrow_mut();
-        let mut buffer = vec![];
-
-        let (owner, mut path) = if let Some(path) = path.strip_prefix("std/") {
-            (Owner::StandardLibrary, stdlib.path.join(path))
-        } else if let Some(path) = path.strip_prefix("./") {
-            (Owner::Local, parent.join(path))
-        } else if let Some(path) = path.strip_prefix("../") {
-            (Owner::Local, parent.parent().unwrap().join(path))
-        } else {
-            (Owner::Local, self.path.parent().unwrap().join(path))
-        };
-        let mut path_with_extension = path.clone();
-        path_with_extension.set_extension("gs");
-        if !fs.is_file(&path_with_extension) && fs.is_dir(&path) {
-            let file_name = path.file_name().unwrap().to_owned();
-            path.push(file_name);
-        }
-        path.set_extension("gs");
-        let mut file = fs.read_file(&path).map_err(|error| Diagnostic {
-            kind: DiagnosticKind::IOError(error.to_string().into()),
-            span: path_span,
-        })?;
-        file.read_to_end(&mut buffer).unwrap();
-        if buffer.last().is_none_or(|&c| c != b'\n') {
-            buffer.push(b'\n');
-        }
-        self.text.splice(begin..begin, buffer.iter().cloned());
-
-        // split current include into two parts
-
-        let current_include = self.includes.remove(self.current_include);
-
-        // buffer before the include stmt
-        let top_unit_range = current_include.unit_range.start..begin;
-        self.includes.insert(
-            self.current_include,
-            Include {
-                unit_range: top_unit_range.clone(),
-                source_range: current_include.source_range.start
-                    ..(current_include.source_range.start + top_unit_range.len()),
-                path: current_include.path.clone(),
-                owner: current_include.owner,
-            },
-        );
-
-        // insert a new include in the middle
-        self.includes.insert(
-            self.current_include + 1,
-            Include {
-                unit_range: begin..begin + buffer.len(),
-                source_range: 0..buffer.len(),
-                path,
-                owner,
-            },
-        );
-
-        // buffer after the include stmt
-        let bottom_unit_range = begin..current_include.unit_range.end;
-        self.includes.insert(
-            self.current_include + 2,
-            Include {
-                unit_range: bottom_unit_range.clone(),
-                source_range: (current_include.source_range.start + top_unit_range.len())
-                    ..(current_include.source_range.start
-                        + top_unit_range.len()
-                        + bottom_unit_range.len()),
-                path: current_include.path,
-                owner: current_include.owner,
-            },
-        );
-
-        // adjust
-        for include in &mut self.includes[self.current_include + 2..] {
-            include.unit_range.start += buffer.len();
-            include.unit_range.end += buffer.len();
-        }
-
-        self.current_include += 1;
-
-        Ok(())
+        Ok(unit)
     }
 
     pub fn translate_position(&self, position: usize) -> (usize, &Include) {
@@ -345,4 +85,232 @@ impl TranslationUnit {
         }
         panic!("invalid position {position} in {}", self.path.display());
     }
+}
+
+pub fn parse_translation_unit(
+    unit: &mut TranslationUnit,
+    fs: Rc<RefCell<dyn VFS>>,
+    stdlib: &StandardLibrary,
+    mut diagnostics: &mut Vec<Diagnostic>,
+) {
+    let mut i = 0;
+    let mut skip_depth = 0;
+    while i < unit.text.len() {
+        if skip_depth > 0 {
+            if i == 0 || unit.text[i - 1] == b'\n' {
+                if unit.text[i..].starts_with(b"%if") {
+                    unit.text[i] = b'#';
+                    i += b"%if".len();
+                    skip_depth += 1;
+                } else if unit.text[i..].starts_with(b"%else") {
+                    unit.text[i] = b'#';
+                    i += b"%else".len();
+                    if skip_depth == 1 {
+                        skip_depth = 0;
+                    }
+                } else if unit.text[i..].starts_with(b"%endif") {
+                    unit.text[i] = b'#';
+                    i += b"%endif".len();
+                    skip_depth -= 1;
+                } else {
+                    unit.text[i] = b'#';
+                    i += 1;
+                }
+            } else {
+                i += 1;
+            }
+        } else if (i == 0 || unit.text[i - 1] == b'\n') && unit.text[i] == b'%' {
+            if unit.text[i..].starts_with(b"%include") {
+                unit.text[i] = b'#';
+                i += b"%include".len();
+                while i < unit.text.len() && unit.text[i] == b' ' {
+                    i += 1;
+                }
+                if i >= unit.text.len() {
+                    continue;
+                }
+                let start = i;
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map(|j| i + j + 1)
+                    .unwrap_or(unit.text.len());
+                let path = std::str::from_utf8(&unit.text[i..j])
+                    .unwrap()
+                    .trim()
+                    .to_owned();
+                i = j;
+                add_include_to_translation_unit(
+                    unit,
+                    path,
+                    start..j,
+                    i,
+                    fs.clone(),
+                    stdlib,
+                    &mut diagnostics,
+                );
+            } else if unit.text[i..].starts_with(b"%define") {
+                i += b"%define".len();
+                while i < unit.text.len() && unit.text[i] == b' ' {
+                    i += 1;
+                }
+                if i >= unit.text.len() {
+                    continue;
+                }
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map(|j| i + j + 1)
+                    .unwrap_or(unit.text.len());
+                let x = unit.text[i..j]
+                    .iter()
+                    .position(|c| *c == b' ')
+                    .map(|x| i + x)
+                    .unwrap_or(j);
+                let name = std::str::from_utf8(&unit.text[i..x])
+                    .unwrap()
+                    .trim()
+                    .to_owned();
+                unit.defines.insert(name);
+                i = j;
+            } else if unit.text[i..].starts_with(b"%undef") {
+                i += b"%undef".len();
+                while i < unit.text.len() && unit.text[i] == b' ' {
+                    i += 1;
+                }
+                if i >= unit.text.len() {
+                    continue;
+                }
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map(|j| i + j + 1)
+                    .unwrap_or(unit.text.len());
+                let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
+                unit.defines.remove(name);
+                i = j;
+            } else if unit.text[i..].starts_with(b"%if") {
+                unit.text[i] = b'#';
+                i += b"%if".len();
+                while i < unit.text.len() && unit.text[i] == b' ' {
+                    i += 1;
+                }
+                if i >= unit.text.len() {
+                    continue;
+                }
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map(|j| i + j + 1)
+                    .unwrap_or(unit.text.len());
+                let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
+                if !unit.defines.contains(name) {
+                    skip_depth = 1;
+                }
+            } else if unit.text[i..].starts_with(b"%else") {
+                unit.text[i] = b'#';
+                i += b"%else".len();
+            } else if unit.text[i..].starts_with(b"%endif") {
+                unit.text[i] = b'#';
+                i += b"%endif".len();
+            }
+        } else {
+            i += 1;
+        }
+    }
+}
+
+fn add_include_to_translation_unit(
+    unit: &mut TranslationUnit,
+    path: String,
+    span: Span,
+    start: usize,
+    fs: Rc<RefCell<dyn VFS>>,
+    stdlib: &StandardLibrary,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let mut fs = fs.borrow_mut();
+
+    let parent = unit.includes[unit.current_include].path.parent().unwrap();
+    let (owner, path) = if let Some(path) = path.strip_prefix("std/") {
+        (Owner::StandardLibrary, stdlib.path.join(path))
+    } else if path.starts_with("./") || path.starts_with("../") {
+        (Owner::Local, parent.join(path))
+    } else {
+        (Owner::Local, unit.path.parent().unwrap().join(path))
+    };
+
+    let mut path = path.normalize_lexically().unwrap();
+
+    if unit.included.contains(&path) {
+        return;
+    }
+
+    unit.included.insert(path.clone());
+
+    if path.extension().is_none_or(|ext| ext != "gs") {
+        path = path.with_added_extension("gs");
+    }
+
+    let buffer = match fs.read_to_vec(&path) {
+        Ok(buffer) => buffer,
+        Err(error) => {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::IOError(error.to_string().into()),
+                span,
+            });
+            return;
+        }
+    };
+
+    unit.text.splice(start..start, buffer.iter().cloned());
+
+    let current_include = unit.includes.remove(unit.current_include);
+
+    // buffer before the include stmt
+    let top_unit_range = current_include.unit_range.start..start;
+    unit.includes.insert(
+        unit.current_include,
+        Include {
+            unit_range: top_unit_range.clone(),
+            source_range: current_include.source_range.start
+                ..(current_include.source_range.start + top_unit_range.len()),
+            path: current_include.path.clone(),
+            owner: current_include.owner,
+        },
+    );
+
+    // insert a new include in the middle
+    unit.includes.insert(
+        unit.current_include + 1,
+        Include {
+            unit_range: start..start + buffer.len(),
+            source_range: 0..buffer.len(),
+            path,
+            owner,
+        },
+    );
+
+    // buffer after the include stmt
+    let bottom_unit_range = start..current_include.unit_range.end;
+    unit.includes.insert(
+        unit.current_include + 2,
+        Include {
+            unit_range: bottom_unit_range.clone(),
+            source_range: (current_include.source_range.start + top_unit_range.len())
+                ..(current_include.source_range.start
+                    + top_unit_range.len()
+                    + bottom_unit_range.len()),
+            path: current_include.path,
+            owner: current_include.owner,
+        },
+    );
+
+    // adjust
+    for include in &mut unit.includes[unit.current_include + 2..] {
+        include.unit_range.start += buffer.len();
+        include.unit_range.end += buffer.len();
+    }
+
+    unit.current_include += 1;
 }

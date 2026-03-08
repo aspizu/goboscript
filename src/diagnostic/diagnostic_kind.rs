@@ -42,8 +42,6 @@ pub enum DiagnosticKind {
         enum_name: SmolStr,
         variant_name: SmolStr,
     },
-    UnrecognizedStandardLibraryHeader,
-    UnexpectedTextAfterInclude,
     NoCostumes,
     DuplicateCostume(SmolStr),
     DuplicateBackdrop(SmolStr),
@@ -142,12 +140,6 @@ impl DiagnosticKind {
                 format!("unrecognized enum variant {}", variant_name)
             }
             DiagnosticKind::UnrecognizedKey(_) => "unrecognized key".to_string(),
-            DiagnosticKind::UnrecognizedStandardLibraryHeader => {
-                "unrecognized standard library header".to_string()
-            }
-            DiagnosticKind::UnexpectedTextAfterInclude => {
-                "unexpected text after include path".to_string()
-            }
             DiagnosticKind::NoCostumes => "no costumes".to_string(),
             DiagnosticKind::DuplicateCostume(name) => {
                 format!("duplicate definition of costume with the name '{name}'")
@@ -377,8 +369,6 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedArgument(_)
             | DiagnosticKind::UnrecognizedStructField(_)
             | DiagnosticKind::UnrecognizedEnumVariant { .. }
-            | DiagnosticKind::UnrecognizedStandardLibraryHeader
-            | DiagnosticKind::UnexpectedTextAfterInclude
             | DiagnosticKind::NoCostumes
             | DiagnosticKind::BlockArgsCountMismatch { .. }
             | DiagnosticKind::ReprArgsCountMismatch { .. }
