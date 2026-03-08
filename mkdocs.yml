@@ -68,8 +68,8 @@ theme:
     code: Cascadia Code
   icon:
     repo: fontawesome/brands/github
-    edit: material/pencil
-    view: material/eye
+    edit: material/file-edit
+    view: material/language-markdown
   palette:
     # Note: Using the system theme works with the insiders version
     # https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/#automatic-light-dark-mode
@@ -78,12 +78,14 @@ theme:
         icon: material/brightness-auto
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: astral-light
+      scheme: light
+      primary: white
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      scheme: astral-dark
+      scheme: slate
+      primary: black
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
