@@ -38,6 +38,12 @@ pub enum Stmt {
         cond: Box<Expr>,
         body: Vec<Stmt>,
     },
+    For {
+        init: Box<Stmt>,
+        cond: Box<Expr>,
+        inc: Box<Stmt>,
+        body: Vec<Stmt>,
+    },
     SetVar {
         name: Name,
         value: Box<Expr>,
@@ -101,6 +107,7 @@ impl Stmt {
             Stmt::Forever { span, .. } => span.clone(),
             Stmt::Branch { cond, .. } => cond.span(),
             Stmt::Until { cond, .. } => cond.span(),
+            Stmt::For { init, .. } => init.span(),
             Stmt::SetVar { name, .. } => name.span(),
             Stmt::ChangeVar { name, .. } => name.span(),
             Stmt::Show(name) => name.span(),

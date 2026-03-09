@@ -277,6 +277,7 @@ impl Stmt {
                 }
             }
             Stmt::Until { .. } => "control_repeat_until",
+            Stmt::For { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
             Stmt::ChangeVar { .. } => "data_changevariableby",
             Stmt::Show(name) => {
@@ -1254,6 +1255,18 @@ where T: Write + Seek
                 else_body,
             } => self.branch(s, d, this_id, cond, if_body, else_body),
             Stmt::Until { cond, body } => self.until(s, d, this_id, cond, body),
+            Stmt::For {
+                init,
+                cond,
+                inc,
+                body,
+            } => {
+                let init_id = self.id.new_id();
+                self.stmt(s, d, init, init_id, None, Some(this_id))?;
+                let mut body = body.clone();
+                body.push(*inc.clone());
+                self.until(s, d, this_id, cond, &body)
+            }
             Stmt::SetVar {
                 name,
                 value,

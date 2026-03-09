@@ -82,6 +82,8 @@ pub enum Token {
     Forever,
     #[token("repeat")]
     Repeat,
+    #[token("for")]
+    For,
     #[token(",")]
     Comma,
     #[token("(")]
@@ -276,6 +278,7 @@ impl Display for Token {
             Token::Until => write!(f, "until"),
             Token::Forever => write!(f, "forever"),
             Token::Repeat => write!(f, "repeat"),
+            Token::For => write!(f, "for"),
             Token::Comma => write!(f, ","),
             Token::LParen => write!(f, "("),
             Token::RParen => write!(f, ")"),
