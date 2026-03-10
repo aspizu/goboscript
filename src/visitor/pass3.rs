@@ -238,5 +238,6 @@ fn visit_expr(expr: &Expr, s: &mut S) {
         } => {
             visit_expr(object, s);
         }
+        Expr::Ternary { .. } => unreachable!(),
     }
 }

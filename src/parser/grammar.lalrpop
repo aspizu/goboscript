@@ -481,6 +481,8 @@ IfExpr: Expr = {
     <l:@L> <lhs:IfExpr> AND <rhs:IfExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
     #[precedence(level="9")] #[assoc(side="left")]
     <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
+    #[precedence(level="10")] #[assoc(side="left")]
+    IF "(" <condition:IfExpr> ")" <tvalue:IfExpr> ELSE <fvalue:IfExpr> => Expr::Ternary { condition: Box::new(condition), tvalue: Box::new(tvalue), fvalue: Box::new(fvalue) },
 }
 
 Term: Expr = {

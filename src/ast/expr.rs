@@ -65,6 +65,11 @@ pub enum Expr {
         property: SmolStr,
         span: Span,
     },
+    Ternary {
+        condition: Box<Expr>,
+        tvalue: Box<Expr>,
+        fvalue: Box<Expr>,
+    },
 }
 
 impl Expr {
@@ -80,6 +85,7 @@ impl Expr {
             Self::BinOp { span, .. } => span.clone(),
             Self::StructLiteral { span, .. } => span.clone(),
             Self::Property { span, .. } => span.clone(),
+            Self::Ternary { condition, .. } => condition.span(),
         }
     }
 }
