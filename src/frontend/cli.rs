@@ -1,14 +1,28 @@
 use std::path::PathBuf;
 
+use annotate_snippets::renderer::{
+    AnsiColor,
+    Effects,
+};
+use clap::builder::Styles;
 use clap_derive::{
     Parser,
     Subcommand,
 };
 
+const CLAP_STYLES: Styles = Styles::styled()
+    .header(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .usage(AnsiColor::Green.on_default().effects(Effects::BOLD))
+    .literal(AnsiColor::Cyan.on_default().effects(Effects::BOLD))
+    .placeholder(AnsiColor::Cyan.on_default());
+
 #[derive(Debug, Parser)]
 #[command(
-    version = env!("CARGO_PKG_VERSION"),
+    version = option_env!("GIT_HASH").unwrap_or(env!("CARGO_PKG_VERSION")),
+    about = "goboscript is the Scratch compiler.",
+    long_about = "goboscript is the Scratch compiler.",
 )]
+#[command(styles=CLAP_STYLES)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
@@ -17,9 +31,9 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Compile a goboscript project to `.sb3`
-    #[command()]
+    #[command(alias = "b")]
     Build {
-        #[arg(short, long)]
+        #[arg()]
         /// Project directory, if not given, the current directory is used.
         input: Option<PathBuf>,
         #[arg(short, long)]
@@ -29,11 +43,11 @@ pub enum Command {
 
     /// Create a new goboscript project with a blank backdrop, a main sprite with a
     /// blank costume.
-    #[command()]
+    #[command(alias = "n")]
     New {
         /// Name of directory to create new project, if not given, the current directory
         /// is used. If this is a path to an existing directory, it must be empty.
-        #[arg(short = 'n', long)]
+        #[arg()]
         name: Option<PathBuf>,
 
         /// Do not initialize a Git repository.
@@ -80,10 +94,14 @@ pub enum Command {
         /// (alias: --height) Custom stage height, used by TurboWarp.
         #[arg(short = 'H', long, alias = "height")]
         stage_height: Option<u64>,
+
+        /// Generate a Makefile for building the project.
+        #[arg(short = 'm', long)]
+        makefile: bool,
     },
 
     /// Format a goboscript project.
-    #[command()]
+    #[command(alias = "f")]
     Fmt {
         /// Project directory or file, if not given, the current directory is used.
         #[arg(short, long)]

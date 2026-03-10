@@ -11,17 +11,36 @@ import SectionItemText from "./SectionItemText.astro"
     <SectionHeader>Custom Blocks</SectionHeader>
     <SectionContent>
         <SectionItem>
-            <SectionItemCode>proc block_name arg {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemCode>proc block_name args {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Runs without screen refresh</SectionItemText>
         </SectionItem>
         <SectionItem>
-            <SectionItemCode
-                >nowarp proc block_name args {"{"} ... {"}"}</SectionItemCode
-            >
-            <SectionItemText>Run without screen refresh unchecked</SectionItemText>
+            <SectionItemCode>
+                nowarp proc block_name {"{"} ... {"}"}
+            </SectionItemCode>
+            <SectionItemText>Runs with screen refresh</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>
+                proc greet name="aspizu" {"{"} ... {"}"}
+            </SectionItemCode>
+            <SectionItemText>Default parameter values</SectionItemText>
         </SectionItem>
         <SectionItem>
             <SectionItemCode>$argument_name</SectionItemCode>
             <SectionItemText>Get custom block parameter value</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>local var_name = value;</SectionItemCode>
+            <SectionItemText>Define a static scoped variable</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>func block_name(args) {"{"} ... {"}"}</SectionItemCode>
+            <SectionItemText>Function that can return values</SectionItemText>
+        </SectionItem>
+        <SectionItem>
+            <SectionItemCode>return value;</SectionItemCode>
+            <SectionItemText>Return value from function</SectionItemText>
         </SectionItem>
     </SectionContent>
 </Section>

@@ -25,7 +25,7 @@ fn get_token(token: &SpannedToken) -> &Token {
 
 pub struct PreProcessor<'a, 'b> {
     tokens: &'a mut Vec<(usize, Token, usize)>,
-    function_defines: FxHashMap<SmolStr, (Vec<Token>, Vec<Token>)>,
+    function_defines: FxHashMap<(SmolStr, usize), (Vec<Token>, Vec<Token>)>,
     simple_defines: FxHashMap<SmolStr, Vec<Token>>,
     i: &'b mut usize,
 }
@@ -42,16 +42,6 @@ impl<'a> PreProcessor<'a, '_> {
         };
         pre_processor.process(&mut (0..length), &Default::default())?;
         pre_processor.remove_marker_tokens();
-        // std::fs::write(
-        //     "simple-defines.js",
-        //     format!("({:?})", pre_processor.simple_defines).as_bytes(),
-        // )
-        // .unwrap();
-        // std::fs::write(
-        //     "function-defines.js",
-        //     format!("({:?})", pre_processor.function_defines).as_bytes(),
-        // )
-        // .unwrap();
         Ok(())
     }
 
@@ -154,9 +144,10 @@ impl<'a> PreProcessor<'a, '_> {
             name = get_token(&self.tokens[*self.i]).clone();
         }
         self.remove_token(span);
+        let arity = args.len();
         let body = self.parse_define_body(span)?;
         self.function_defines
-            .insert(define_name.to_string().into(), (args, body));
+            .insert((define_name.to_string().into(), arity), (args, body));
         Ok(true)
     }
 
@@ -234,23 +225,29 @@ impl<'a> PreProcessor<'a, '_> {
         let macro_name_token = get_token(&self.tokens[*self.i]);
         let macro_name_span = get_span(&self.tokens[*self.i]);
         let macro_name: SmolStr = macro_name_token.to_string().into();
-        let Some((function_define_params, function_define_body)) =
-            self.function_defines.get(&*macro_name).cloned()
-        else {
+
+        // Quick pre-check: does any overload exist for this name at all?
+        if !self
+            .function_defines
+            .keys()
+            .any(|(name, _)| name == &macro_name)
+        {
             return Ok(false);
-        };
+        }
         if suppress.contains(&*macro_name) {
             return Ok(false);
         }
         if get_token(&self.tokens[*self.i + 1]) != &Token::LParen {
             return Ok(false);
         }
-        self.remove_token(span);
-        self.remove_token(span);
+
+        // Parse the call arguments first so we know the arity before looking up.
+        self.remove_token(span); // remove macro name
+        self.remove_token(span); // remove '('
         self.expect_no_eof()?;
         let mut token = get_token(&self.tokens[*self.i]).clone();
-        let mut args = vec![];
-        let mut arg = vec![];
+        let mut args: Vec<Vec<Token>> = vec![];
+        let mut arg: Vec<Token> = vec![];
         if token != Token::RParen {
             let mut parens = 0;
             while parens >= 0 {
@@ -282,15 +279,27 @@ impl<'a> PreProcessor<'a, '_> {
         } else {
             self.remove_token(span);
         }
-        if args.len() != function_define_params.len() {
+
+        let arity = args.len();
+        let Some((function_define_params, function_define_body)) = self
+            .function_defines
+            .get(&(macro_name.clone(), arity))
+            .cloned()
+        else {
             return Err(Diagnostic {
                 kind: DiagnosticKind::MacroArgsCountMismatch {
-                    expected: function_define_params.len(),
-                    given: args.len(),
+                    expected: self
+                        .function_defines
+                        .keys()
+                        .find(|(name, _)| name == &macro_name)
+                        .map(|(_, arity)| *arity)
+                        .unwrap_or(0),
+                    given: arity,
                 },
                 span: macro_name_span,
             });
-        }
+        };
+
         let mut i = *self.i;
         for token in function_define_body {
             if let Some(position) = function_define_params
@@ -326,9 +335,11 @@ impl<'a> PreProcessor<'a, '_> {
         }
         self.remove_token(span);
         self.expect_no_eof()?;
-        let name = get_token(&self.tokens[*self.i]).clone();
-        self.simple_defines.remove(name.to_string().as_str());
-        self.function_defines.remove(name.to_string().as_str());
+        let name: SmolStr = get_token(&self.tokens[*self.i]).to_string().into();
+        // Remove all overloads for this name.
+        self.function_defines
+            .retain(|(macro_name, _), _| macro_name != &name);
+        self.simple_defines.remove(&*name);
         self.remove_token(span);
         Ok(true)
     }

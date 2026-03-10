@@ -87,6 +87,7 @@ impl Value {
             Value::Number(number) if number.is_infinite() && number.is_sign_negative() => {
                 arcstr::literal!("-Infinity")
             }
+            Value::Number(number) if number.fract() == 0.0 => (*number as i64).to_string().into(),
             Value::Number(number) => serde_json::to_string(number).unwrap().into(),
             Value::String(string) => string.clone(),
         }

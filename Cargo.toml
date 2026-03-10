@@ -5,7 +5,9 @@ edition = "2021"
 description = "goboscript is the Scratch compiler."
 license = "MIT"
 authors = ["Priyanshu Dangare <aspizu@protonmail.com>"]
-homepage = "https://aspizu.github.io/goboscript"
+homepage = "https://aspiz.uk/goboscript"
+repository = "https://github.com/aspizu/goboscript"
+documentation = "https://aspiz.uk/goboscript/docs"
 categories = ["compilers"]
 
 [dependencies]
@@ -23,6 +25,7 @@ directories = "6.0.0"
 fast-float2 = "0.2.3"
 fxhash = "0.2.1"
 glob = "0.3.1"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
 lalrpop-util = "0.22.0"
 log = "0.4.22"
 logos = "0.15"

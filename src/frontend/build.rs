@@ -7,18 +7,11 @@ use std::{
         Seek,
         Write,
     },
-    path::{
-        Path,
-        PathBuf,
-    },
-    process::Command,
+    path::PathBuf,
     rc::Rc,
 };
 
-use anyhow::{
-    anyhow,
-    Context,
-};
+use anyhow::Context;
 use directories::ProjectDirs;
 use fxhash::FxHashMap;
 
@@ -35,7 +28,12 @@ use crate::{
     },
     misc::SmolStr,
     parser,
-    standard_library::StandardLibrary,
+    standard_library::{
+        fetch_standard_library,
+        new_standard_library,
+        standard_library_from_latest,
+        StandardLibrary,
+    },
     vfs::{
         RealFS,
         VFS,
@@ -55,53 +53,6 @@ fn assign_layer_orders(project: &mut Project, config: &Config) {
     }
 }
 
-fn create_hook<'a>(command: &str, cwd: &Path) -> Command {
-    #[cfg(target_os = "windows")]
-    {
-        let mut cmd = Command::new(r"C:\Program Files\PowerShell\7\pwsh.exe");
-        cmd.current_dir(cwd).arg("-c").arg(command);
-        cmd
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        let mut cmd = Command::new("/bin/sh");
-        cmd.current_dir(cwd).arg("-c").arg(command);
-        cmd
-    }
-}
-
-fn run_pre_build_hook(input: &Path, config: &Config) -> anyhow::Result<()> {
-    let Some(command) = config.pre_build.as_ref() else {
-        return Ok(());
-    };
-    let status = create_hook(command, input)
-        .status()
-        .context("pre-build hook failed")?;
-    if !status.success() {
-        return Err(anyhow!(
-            "pre-build hook exited with non-zero status: {}",
-            status
-        ));
-    }
-    Ok(())
-}
-
-fn run_post_build_hook(output: &Path, config: &Config) -> anyhow::Result<()> {
-    let Some(command) = config.post_build.as_ref() else {
-        return Ok(());
-    };
-    let status = create_hook(command, output.parent().unwrap())
-        .status()
-        .context("post-build hook failed")?;
-    if !status.success() {
-        return Err(anyhow!(
-            "post-build hook exited with non-zero status: {}",
-            status
-        ));
-    }
-    Ok(())
-}
-
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
@@ -109,13 +60,12 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
     let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
     let fs = Rc::new(RefCell::new(RealFS::new()));
-    build_impl(fs, canonical_input, output, sb3, None)
+    build_impl(fs, canonical_input, sb3, None)
 }
 
 pub fn build_impl<T: Write + Seek>(
     fs: Rc<RefCell<dyn VFS>>,
     input: PathBuf,
-    output: PathBuf,
     mut sb3: Sb3<T>,
     stdlib: Option<StandardLibrary>,
 ) -> anyhow::Result<Artifact> {
@@ -126,7 +76,6 @@ pub fn build_impl<T: Write + Seek>(
         .unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
-    run_pre_build_hook(&input, &config)?;
     let stdlib = if let Some(stdlib) = stdlib {
         stdlib
     } else if let Some(std) = &config.std {
@@ -136,20 +85,18 @@ pub fn build_impl<T: Write + Seek>(
             .unwrap_or(std)
             .parse()
             .with_context(|| format!("std version `{}` is not a valid semver version", std))?;
-        StandardLibrary::new(std, &dirs.config_dir().join("std"))
+        new_standard_library(std, &dirs.config_dir().join("std"))
     } else {
         let dirs = ProjectDirs::from("com", "aspizu", "goboscript").unwrap();
-        StandardLibrary::from_latest(&dirs.config_dir().join("std"))?
+        standard_library_from_latest(&dirs.config_dir().join("std"))?
     };
     // v0.0.0 means stdlib is from wasm
     if stdlib.version.major != 0 {
-        stdlib.fetch()?;
+        fetch_standard_library(&stdlib)?;
     }
     let stage_path = input.join("stage.gs");
-    if !fs.borrow_mut().is_file(&stage_path) {
-        return Err(anyhow!("{} not found", stage_path.display()));
-    }
-    let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib);
+    let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib)
+        .context("failed to read stage.gs")?;
     let (stage, parse_diagnostics) = parser::parse(&stage_diagnostics.translation_unit);
     stage_diagnostics.diagnostics.extend(parse_diagnostics);
     let mut sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics> = Default::default();
@@ -174,7 +121,8 @@ pub fn build_impl<T: Write + Seek>(
             .to_str()
             .unwrap()
             .into();
-        let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib);
+        let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib)
+            .with_context(|| format!("failed to read {}.gs", sprite_name))?;
         let (sprite, parse_diagnostics) = parser::parse(&sprite_diagnostics.translation_unit);
         sprite_diagnostics.diagnostics.extend(parse_diagnostics);
         sprites_diagnostics.insert(sprite_name.clone(), sprite_diagnostics);
@@ -190,6 +138,7 @@ pub fn build_impl<T: Write + Seek>(
             project,
             stage_diagnostics,
             sprites_diagnostics,
+            block_count: 0,
         });
     }
     visitor::pass0::visit_project(&input, &mut project);
@@ -211,11 +160,12 @@ pub fn build_impl<T: Write + Seek>(
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     )?;
+    let node_count = sb3.block_count;
     drop(sb3);
-    run_post_build_hook(&output, &config)?;
     Ok(Artifact {
         project,
         stage_diagnostics,
         sprites_diagnostics,
+        block_count: node_count,
     })
 }

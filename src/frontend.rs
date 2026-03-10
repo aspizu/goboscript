@@ -27,6 +27,14 @@ pub fn frontend() -> ExitCode {
             Ok(artifact) => {
                 artifact.eprint();
                 eprintln!();
+                if artifact.block_count > 0 {
+                    eprintln!(
+                        "{} {} {}",
+                        "Emitted".dimmed(),
+                        artifact.block_count.to_string().dimmed(),
+                        "blocks".dimmed()
+                    );
+                }
                 if artifact.failure() {
                     ExitCode::FAILURE
                 } else {
@@ -55,10 +63,12 @@ pub fn frontend() -> ExitCode {
             high_quality_pen,
             stage_width,
             stage_height,
+            makefile,
         } => {
             match new::new(
                 name,
                 no_git,
+                makefile,
                 Config {
                     pre_build: None,
                     post_build: None,
@@ -85,7 +95,10 @@ pub fn frontend() -> ExitCode {
                 }) => {
                     eprintln!("{}: {} is not empty", "error".red().bold(), name.display());
                     if !is_name_explicit {
-                        eprintln!("{}: use --name to specify a name", "hint".blue().bold());
+                        eprintln!(
+                            "{}: pass a name as a positional argument to create a new directory",
+                            "hint".blue().bold()
+                        );
                     }
                     ExitCode::FAILURE
                 }

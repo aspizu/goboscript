@@ -173,6 +173,9 @@ my_list[2] = "blueberry";     # Replace "banana" with "blueberry"
 # Insert at position
 insert "apricot" at my_list[1]; # Insert at the beginning
 
+# get char of string
+c = "string"[1];
+
 # Delete an item
 delete my_list[3];
 
@@ -358,6 +361,11 @@ stop_other_scripts                ...                            | ...=other scr
 delete_this_clone                 delete_this_clone              |                          |
 clone                             create_clone_of                |                          | CLONE_OPTION:control_create_clone_of_menu=_myself_
 clone                             ...               CLONE_OPTION |                          | ...=_myself_
+[debugger]=======================================================|
+log                               log               MESSAGE     |                          |
+warn                              warn              MESSAGE     |                          |
+error                             error             MESSAGE     |                          |
+breakpoint                        breakpoint        ...         |                          |
 [sensing]========================================================|==========================|
 ask                               askandwait        QUESTION     |                          |
 set_drag_mode_draggable           setdragmode                    | DRAG_MODE=draggable      |

@@ -3,6 +3,7 @@ import "@fontsource-variable/inter"
 import "@fontsource/cascadia-code"
 import GoboscriptLogo from "../../public/goboscript.svg"
 import Column from "../components/Column.astro"
+import ConfigSection from "../components/ConfigSection.astro"
 import ControlFlowSection from "../components/ControlFlowSection.astro"
 import CustomBlocksSection from "../components/CustomBlocksSection.astro"
 import EventsSection from "../components/EventsSection.astro"
@@ -11,7 +12,6 @@ import ListsSection from "../components/ListsSection.astro"
 import OperatorsSection from "../components/OperatorsSection.astro"
 import StageSpritesSection from "../components/StageSpritesSection.astro"
 import SyntaxSection from "../components/SyntaxSection.astro"
-import TurboWarpConfigSection from "../components/TurboWarpConfigSection.astro"
 import VariablesSection from "../components/VariablesSection.astro"
 import "../styles/main.css"
 ---
@@ -25,20 +25,22 @@ import "../styles/main.css"
         <title>goboscript cheatsheet</title>
     </head>
     <body class="bg-neutral-400">
-        <div class="aspect-[22/17] min-w-[1056px] w-[1056px] bg-white shadow-xs">
-            <div class="grid auto-cols-fr grid-flow-col p-4 gap-4 h-full w-full">
+        <div
+            class="w-[1056px] h-[816px] bg-white dark:bg-[#0d1117] shadow-xs dark:text-neutral-100"
+        >
+            <div class="grid auto-cols-fr grid-flow-col p-4 gap-4 w-full">
                 <Column>
                     <div class="flex items-center gap-4">
                         <GoboscriptLogo />
                         <div class="flex flex-col">
-                            <h2 class="text-neutral-600 text-sm">
+                            <h2 class="text-neutral-600 dark:text-white/75 text-sm">
                                 Overview & Reference
                             </h2>
                             <h1 class="text-2xl">goboscript cheatsheet</h1>
                         </div>
                     </div>
                     <InstallationUsageSection />
-                    <TurboWarpConfigSection />
+                    <ConfigSection />
                     <StageSpritesSection />
                 </Column>
                 <Column>
@@ -52,6 +54,15 @@ import "../styles/main.css"
                     <EventsSection />
                     <CustomBlocksSection />
                 </Column>
+            </div>
+            <div
+                class="text-lg text-neutral-500 dark:text-white/50 grow flex items-center justify-center gap-1"
+            >
+                More features are documented at
+                <span
+                    class="text-blue-600 dark:text-blue-400 underline font-medium decoration-1 underline-offset-3"
+                    >https://aspiz.uk/goboscript/docs</span
+                >
             </div>
         </div>
     </body>

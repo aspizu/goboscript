@@ -22,6 +22,9 @@ be added automatically.
 If the include path is a directory, the file inside the directory with the same name as
 the directory will be included.
 
+By default, the include path is relative to the project root directory. To include a
+file relative to the current file, use `./` or `../`
+
 ## Define
 
 Define a macro. That identifier will be substituted with the subsequent text.
@@ -39,13 +42,40 @@ the callsite.
 %define macro_name(arg1, arg2) replacement text
 ```
 
-You can use a backslash `\` at the end of a line to continue the replacement text onto the next line:
+Since `()` are interpreted as function parameter brackets, use double parentheses to include them in the expansion:
+
+```goboscript
+%define foo ((1 + 2))
+```
+
+This expands to `((1 + 2))`, allowing you to control operator precedence in macro substitutions.
+
+Use `\` at the end of a line to continue the replacement text across multiple lines:
 
 ```goboscript
 %define long_macro this is a very long \
                    replacement text that spans \
                    multiple lines
 ```
+
+## Define with overloaded arguments
+
+Macros with arguments can be overloaded by defining multiple versions with different
+numbers of arguments. The correct version will be selected based on the number of
+arguments passed at the callsite.
+```goboscript
+%define MACRO(A) "MACRO(A)"
+%define MACRO(A, B) "MACRO(A, B)"
+
+onflag {
+    say MACRO(1);      # expands to "MACRO(A)"
+    say MACRO(1, 1);   # expands to "MACRO(A, B)"
+}
+```
+
+Each overload is stored independently, so defining `MACRO` with one argument does not
+affect the definition of `MACRO` with two arguments. Using `%undef macro_name` removes
+all overloads for that name at once.
 
 ## Remove a macro definition
 

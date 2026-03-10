@@ -20,7 +20,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Stmt {
     Repeat {
         times: Box<Expr>,
@@ -196,7 +196,7 @@ impl Stmt {
         Stmt::SetListIndex {
             name: name.clone(),
             index: Box::new(index.clone()),
-            value: Box::new(BinOp::Add.to_expr(
+            value: Box::new(BinOp::Sub.to_expr(
                 span.clone(),
                 BinOp::Of.to_expr(span.clone(), Expr::Name(name), index),
                 Value::from(1.0).to_expr(span),

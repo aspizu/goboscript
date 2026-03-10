@@ -1,10 +1,23 @@
-# ![](./docs/assets/goboscript.svg) goboscript
+<h1 align="center">
+  <img src="docs/assets/goboscript.svg">
+  goboscript
+</h1>
 
-[![Discord](https://img.shields.io/discord/1383762986887282829?style=flat&logo=discord&label=Discord)](https://discord.gg/MMfMkRuhAf) ![image](https://shields.io/crates/l/goboscript) 
+<p align="center">
+  <strong><a href="https://aspiz.uk/goboscript/ide">Launch IDE</a></strong>&nbsp;&nbsp;•&nbsp;
+  <strong><a href="https://aspiz.uk/goboscript/docs">Documentation</a></strong>&nbsp;&nbsp;•&nbsp;
+  <strong><a href="https://github.com/goboscript/std">Standard Library</a></strong>&nbsp;&nbsp;•&nbsp;
+  <strong><a href="https://github.com/aspizu/backpack">Package Manager</a></strong>&nbsp;&nbsp;•&nbsp;
+  <strong><a href="https://github.com/aspizu/sb2gs">Decompiler</a></strong>&nbsp;&nbsp;•&nbsp;
+  <strong><a href="https://github.com/aspizu/goboscript-mcp">MCP Server</a></strong>
+</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og-image-dark.webp" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/og-image-light.webp" />
+  <img alt="goboscript screenshot" src="docs/assets/og-image-light.webp" />
+</picture>
 
-![](https://u.cubeupload.com/aspizu/Untitled202412111914.png)
-
-[**Installation and documentation**](https://aspizu.github.io/goboscript)
+![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1462182798210109505?style=flat&logo=discord&label=Discord)](https://discord.gg/mKQqsJ6UtK) ![image](https://shields.io/crates/l/goboscript)
 
 goboscript is a text-based programming language that compiles to Scratch. Write
 Scratch projects in text, and compile it into a `.sb3` file -- which can be opened
@@ -33,16 +46,21 @@ abstractions such as:
 
 All these abstractions are compiled down to regular Scratch code.
 
-![](./docs/assets/cheatsheet.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cheatsheet-dark.png" />
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/cheatsheet-light.png" />
+  <img alt="goboscript overview & reference" src="docs/assets/cheatsheet-light.png" />
+</picture>
 
-### [Scratch Forum topic](https://scratch.mit.edu/discuss/topic/747370/)
+[**Scratch Forum topic**](https://scratch.mit.edu/discuss/topic/747370/)&nbsp;&nbsp;•&nbsp;&nbsp;[**Made With goboscript Studio**](https://scratch.mit.edu/studios/51262907/)
 
 ## Sister Projects
 
  - [std](https://github.com/goboscript/std): The goboscript standard library.
  - [backpack](https://github.com/aspizu/backpack): Package manager for goboscript.
  - [sb2gs](https://github.com/aspizu/sb2gs): Decompile Scratch projects (.sb3) into goboscript projects (.gs)
- - [goboscript.ide](https://github.com/aspizu/goboscript.ide): Online IDE for goboscript, runs projects instantly in the browser.
+ - [IDE](https://github.com/aspizu/goboscript-ide): Online IDE for goboscript, runs projects instantly in the browser.
+ - [MCP Server](https://github.com/aspizu/goboscript-mcp): Connects AI coding agents to the compiler and Turbowarp Desktop.
 
 ### Other Text-Based Scratch projects
 
@@ -61,12 +79,13 @@ and `goboscript` was ported to Rust.
 # Contributing
 
 goboscript welcomes contributions in the form of Pull Requests.
+No LLM generated code will be accepted.
 
 goboscript is written in Rust. You'll need to install the [Rust toolchain](https://www.rust-lang.org/tools/install)
 for development.
 
 > [!NOTE]
-> To install goboscript, follow instructions at <https://aspizu.github.io/goboscript/install/>
+> To install goboscript, follow instructions at [aspiz.uk/goboscript/docs/install](https://aspiz.uk/goboscript/docs/install)
 > These instructions are for people who want to develop goboscript itself.
 
 ```sh
@@ -79,7 +98,7 @@ cd goboscript
 After cloning the repository, run goboscript locally from the repository root with:
 
 ```sh
-cargo run -- build -i your_project/
+cargo run -- build your_project/
 ```
 
 But, to make development easier, and to validate the generated Scratch project - use
@@ -118,7 +137,7 @@ tools/run check path/to/project.sb3
 
 ### FOSS HACK 25
 
-goboscript was one of the first-place winners of FOSS HACK 25, and was awarded a 50,000 Rs. prize.
+goboscript was one of the [first-place winners](https://forum.fossunited.org/t/foss-hack-2025-results/5541) of FOSS HACK 25, and was awarded a 50,000 Rs. prize.
 FOSS HACK 25 was a open-source hackathon conducted on 22nd - 23rd February 2025 by the FOSS United
 Foundation. During the 48-hour hackathon, I had worked on several goboscript issues and feature
 implementation. Thank you FOSS United for the platform and opportunity.

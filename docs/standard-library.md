@@ -3,6 +3,8 @@
 The standard library is a collection of useful procedures, functions and macros that
 can be used in any goboscript project.
 
+**Repository:** <https://github.com/goboscript/std>
+
 ## Standard library headers
 
 Include a header using the `%include` directive.

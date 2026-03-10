@@ -26,7 +26,6 @@ use zip::{
 };
 
 use super::{
-    cmd::cmd_to_list,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -35,7 +34,10 @@ use super::{
 use crate::{
     ast::*,
     blocks::Block,
-    codegen::mutation::Mutation,
+    codegen::{
+        datalists::read_list,
+        mutation::Mutation,
+    },
     config::Config,
     diagnostic::{
         DiagnosticKind,
@@ -316,6 +318,7 @@ where T: Write + Seek
     pub costumes: FxHashMap<SmolStr, SmolStr>,
     pub srcpkg_hash: Option<String>,
     pub srcpkg: Option<Vec<u8>>,
+    pub block_count: usize,
 }
 
 impl<T> Write for Sb3<T>
@@ -342,6 +345,7 @@ where T: Write + Seek
             costumes: FxHashMap::default(),
             srcpkg_hash: None,
             srcpkg: None,
+            block_count: 0,
         }
     }
 
@@ -370,6 +374,7 @@ where T: Write + Seek
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
+        self.block_count += 1;
         write_comma_io(&mut self.zip, &mut self.node_comma)?;
         write!(self, "{node}")
     }
@@ -543,6 +548,20 @@ where T: Write + Seek
                 }
             }
         }
+        let mut costumes = FxHashSet::default();
+        for costume in &sprite.costumes {
+            if costumes.contains(&costume.name) {
+                d.report(
+                    if stage.is_none() {
+                        DiagnosticKind::DuplicateBackdrop(costume.name.clone())
+                    } else {
+                        DiagnosticKind::DuplicateCostume(costume.name.clone())
+                    },
+                    &costume.span,
+                );
+            }
+            costumes.insert(&costume.name);
+        }
         self.id.reset();
         write!(self, "{{")?;
         write!(self, r#""isStage":{}"#, name == STAGE_NAME)?;
@@ -613,7 +632,7 @@ where T: Write + Seek
                 )?;
             }
         }
-        for var in sprite.vars.values().filter(|var| var.is_used) {
+        for var in sprite.vars.values() {
             self.var_declaration(
                 S {
                     sprite,
@@ -629,7 +648,7 @@ where T: Write + Seek
         write!(self, "}}")?; // variables
         write!(self, r#","lists":{{"#)?;
         let mut comma = false;
-        for list in sprite.lists.values().filter(|list| list.is_used) {
+        for list in sprite.lists.values() {
             self.list_declaration(
                 fs.clone(),
                 input,
@@ -803,7 +822,15 @@ where T: Write + Seek
                 };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
-                    self.json_var_declaration(&qualified_var_name, None, false, comma)?;
+                    self.json_var_declaration(
+                        &qualified_var_name,
+                        field
+                            .default
+                            .as_ref()
+                            .map(|default| s.evaluate_const_expr(d, default)),
+                        false,
+                        comma,
+                    )?;
                 }
             }
         }
@@ -855,39 +882,24 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = list
-            .cmd()
-            .and_then(|cmd| {
-                cmd_to_list(fs.clone(), cmd, input)
-                    .map_err(|(io_error, stderr)| {
-                        if let Some(io_error) = io_error {
-                            d.report(
-                                DiagnosticKind::IOError(io_error.to_string().into()),
-                                &list.span,
-                            );
-                        }
-                        if let Some(stderr) = stderr {
-                            d.report(DiagnosticKind::CommandFailed { stderr }, &list.span);
-                        }
-                    })
-                    .ok()
-            })
-            .or_else(|| {
-                list.array().map(|array| {
-                    array
-                        .iter()
-                        .map(|value| s.evaluate_const_expr(d, value).to_string().to_string())
-                        .collect::<Vec<_>>()
-                })
-            });
+        let data = match &list.default {
+            Some(ListDefault::Values(values)) => values
+                .into_iter()
+                .map(|v| s.evaluate_const_expr(d, v).to_string())
+                .collect(),
+            Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
+                Ok(data) => data,
+                Err(error) => {
+                    d.report(error, span);
+                    vec![]
+                }
+            },
+            None => vec![],
+        };
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;
-                if let Some(cmd) = data {
-                    write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(cmd))?;
-                } else {
-                    write!(self, r#""{}":["{}",[]]"#, list.name, list.name)?;
-                }
+                write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(data))?;
             }
             Type::Struct {
                 name: type_name,
@@ -903,24 +915,16 @@ where T: Write + Seek
                 for (i, field) in struct_.fields.iter().enumerate() {
                     let qualified_list_name = qualify_struct_var_name(&field.name, &list.name);
                     write_comma_io(&mut self.zip, comma)?;
-                    if let Some(cmd) = &data {
-                        let column = (0..(cmd.len() / struct_.fields.len()))
-                            .map(|j| &cmd[j * struct_.fields.len() + i])
-                            .collect::<Vec<_>>();
-                        write!(
-                            self,
-                            r#""{}":["{}",{}]"#,
-                            qualified_list_name,
-                            qualified_list_name,
-                            json!(column)
-                        )?;
-                    } else {
-                        write!(
-                            self,
-                            r#""{}":["{}",[]]"#,
-                            qualified_list_name, qualified_list_name
-                        )?;
-                    }
+                    let column = (0..(data.len() / struct_.fields.len()))
+                        .map(|j| &data[j * struct_.fields.len() + i])
+                        .collect::<Vec<_>>();
+                    write!(
+                        self,
+                        r#""{}":["{}",{}]"#,
+                        qualified_list_name,
+                        qualified_list_name,
+                        json!(column)
+                    )?;
                 }
             }
         }

@@ -1,14 +1,14 @@
 # Install
 
-## Install from binaries
+=== "unix"
+    ```shell
+    curl -fsSL https://aspiz.uk/goboscript.sh | sh
+    ```
 
-Pre-built binaries are available for Windows, macOS, and Linux.
-
-Download the latest release from <https://github.com/aspizu/goboscript/releases>, and
-extract the archive to a folder in your `PATH`.
-
-On Windows, you can copy the `goboscript.exe` file to `C:\Windows\System32` to make it
-available from the command line.
+=== "Windows"
+    ```shell
+    iwr https://aspiz.uk/goboscript.ps1 | iex
+    ```
 
 ## Install from source
 
@@ -42,18 +42,4 @@ To update the installation:
 
 ```shell
 cargo install --git https://github.com/aspizu/goboscript --force
-```
-
-## Install from crates.io
-
-This installs the latest stable version from crates.io with a single command.
-
-```shell
-cargo install goboscript
-```
-
-To update the installation:
-
-```shell
-cargo install goboscript --force
 ```

@@ -2,20 +2,14 @@ $schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlangua
 name: goboscript
 scopeName: source.goboscript
 patterns:
-  - name: comment.block
-    begin: "/\\*"
-    end: "\\*/"
-  - name: comment.block
-    begin: "```"
-    end: "```"
   - name: comment.line
     begin: "#"
     end: "$"
   - name: keyword.control.directive
-    begin: "%(include|define|undef|if|else|endif|if\\snot\\s)"
-    end: "\\b"
+    begin: "%"
+    end: "$"
   - name: string.quoted.double
-    match: "\"([^\"\\\\]|\\\\[\"\\\\bnfrt]|u[a-fA-F0-9]{4})*\""
+    match: "\"([^\"\\\\]|\\\\([\"\\\\bnfrt]|u[a-fA-F0-9]{4}))*\""
   - begin: "\\b(proc|func)[\\s\\n]+([a-zA-Z_][_a-zA-Z0-9]*)"
     end: "\\{"
     beginCaptures:
