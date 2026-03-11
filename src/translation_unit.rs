@@ -198,13 +198,22 @@ pub fn parse_translation_unit(
                 if i >= unit.text.len() {
                     continue;
                 }
+                let inverted = if unit.text[i..].starts_with(b"not ") {
+                    i += b"not ".len();
+                    while i < unit.text.len() && unit.text[i] == b' ' {
+                        i += 1;
+                    }
+                    true
+                } else {
+                    false
+                };
                 let j = unit.text[i..]
                     .iter()
                     .position(|c| *c == b'\n')
                     .map(|j| i + j + 1)
                     .unwrap_or(unit.text.len());
                 let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
-                if !unit.defines.contains(name) {
+                if inverted == unit.defines.contains(name) {
                     skip_depth = 1;
                 }
             } else if unit.text[i..].starts_with(b"%else") {
