@@ -210,6 +210,7 @@ pub fn parse_translation_unit(
             } else if unit.text[i..].starts_with(b"%else") {
                 unit.text[i] = b'#';
                 i += b"%else".len();
+                skip_depth = 1;
             } else if unit.text[i..].starts_with(b"%endif") {
                 unit.text[i] = b'#';
                 i += b"%endif".len();
@@ -230,6 +231,10 @@ fn add_include_to_translation_unit(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let mut fs = fs.borrow_mut();
+
+    while unit.includes[unit.current_include].unit_range.end < start {
+        unit.current_include += 1;
+    }
 
     let parent = unit.includes[unit.current_include].path.parent().unwrap();
     let (owner, path) = if let Some(path) = path.strip_prefix("std/") {
