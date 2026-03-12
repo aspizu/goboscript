@@ -86,6 +86,7 @@ pub enum DiagnosticKind {
         field_name: SmolStr,
     },
     EmptyStruct(SmolStr),
+    DuplicateSwitchCasePattern,
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
@@ -225,6 +226,9 @@ impl DiagnosticKind {
                 format!("struct {struct_name} is missing field {field_name}")
             }
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
+            DiagnosticKind::DuplicateSwitchCasePattern => {
+                "duplicate switch case pattern".to_string()
+            }
         }
     }
 
@@ -383,6 +387,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. }
             | DiagnosticKind::EmptyStruct(_)
+            | DiagnosticKind::DuplicateSwitchCasePattern
             | DiagnosticKind::InvalidCostumeName(_)
             | DiagnosticKind::DuplicateCostume(_)
             | DiagnosticKind::DuplicateBackdrop(_)

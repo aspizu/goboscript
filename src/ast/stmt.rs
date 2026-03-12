@@ -12,6 +12,7 @@ use super::{
     Value,
 };
 use crate::{
+    ast::Case,
     blocks::{
         BinOp,
         Block,
@@ -92,6 +93,11 @@ pub enum Stmt {
         value: Box<Expr>,
         visited: bool,
     },
+    Switch {
+        value: Box<Expr>,
+        cases: Vec<Case>,
+        span: Span,
+    },
 }
 
 impl Stmt {
@@ -114,6 +120,7 @@ impl Stmt {
             Stmt::ProcCall { span, .. } => span.clone(),
             Stmt::FuncCall { span, .. } => span.clone(),
             Stmt::Return { value, .. } => value.span(),
+            Stmt::Switch { span, .. } => span.clone(),
         }
     }
 
