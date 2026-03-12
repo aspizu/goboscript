@@ -266,7 +266,7 @@ fn add_include_to_translation_unit(
         path = path.with_added_extension("gs");
     }
 
-    let buffer = match fs.read_to_vec(&path) {
+    let mut buffer = match fs.read_to_vec(&path) {
         Ok(buffer) => buffer,
         Err(error) => {
             diagnostics.push(Diagnostic {
@@ -276,6 +276,10 @@ fn add_include_to_translation_unit(
             return;
         }
     };
+
+    if buffer.iter().last().is_none_or(|c| *c != b'\n') {
+        buffer.push(b'\n');
+    }
 
     unit.text.splice(start..start, buffer.iter().cloned());
 
