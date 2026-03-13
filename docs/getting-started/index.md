@@ -47,9 +47,13 @@ To compile the project, run the following command:
 
 ```shell
 goboscript build
+# or
+goboscript b
 ```
 
 This will compile the project into a `.sb3` file. The `.sb3` file will be placed in the
 project directory. It will have the same name as the project directory.
+
+
 
 Run `goboscript build --help` for more information.
