@@ -26,6 +26,7 @@ use crate::{
         Proc,
         Stmt,
         Type,
+        Value,
     },
     blocks::Block,
     codegen::mutation::Mutation,
@@ -527,7 +528,7 @@ where T: Write + Seek
             )
         }
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
-        let mut qualified_arg_values: Vec<&Expr> = Vec::new();
+        let mut qualified_arg_values: Vec<Expr> = Vec::new();
         self.begin_inputs()?;
         for (arg, arg_value) in signature.iter().zip(args) {
             match &arg.type_ {
@@ -535,7 +536,7 @@ where T: Write + Seek
                     let arg_id = self.id.new_id();
                     self.input(s, d, &arg.name, arg_value, arg_id, false)?;
                     qualified_args.push((arg.name.clone(), arg_id));
-                    qualified_arg_values.push(arg_value);
+                    qualified_arg_values.push(arg_value.clone());
                 }
                 Type::Struct {
                     name: type_name,
@@ -563,36 +564,34 @@ where T: Write + Seek
                                 );
                                 continue;
                             }
-                            let mut fields = vec![];
-                            for struct_field in &struct_.fields {
-                                fields.push(
-                                    struct_literal_fields
-                                        .iter()
-                                        .find(|f| f.name == struct_field.name)
-                                        .unwrap(),
-                                );
-                            }
-                            fields
+                            struct_literal_fields
                         }
                         _ => {
                             continue;
                         }
                     };
-                    for (field, struct_literal_field) in
-                        struct_.fields.iter().zip(struct_literal_fields)
-                    {
+                    for field in &struct_.fields {
                         let qualified_arg_name = qualify_struct_var_name(&field.name, &arg.name);
                         let arg_id = self.id.new_id();
-                        self.input(
-                            s,
-                            d,
-                            &qualified_arg_name,
-                            &struct_literal_field.value,
-                            arg_id,
-                            false,
-                        )?;
+                        let field_value = struct_literal_fields
+                            .iter()
+                            .find(|f| f.name == field.name)
+                            .map(|f| f.value.as_ref().clone());
+                        let (value, is_placeholder) = match field_value {
+                            Some(v) => (v, false),
+                            None => (
+                                Expr::Value {
+                                    value: Value::Number(0.0),
+                                    span: span.clone(),
+                                },
+                                true,
+                            ),
+                        };
+                        self.input(s, d, &qualified_arg_name, &value, arg_id, false)?;
                         qualified_args.push((qualified_arg_name, arg_id));
-                        qualified_arg_values.push(&struct_literal_field.value);
+                        if !is_placeholder {
+                            qualified_arg_values.push(value);
+                        }
                     }
                 }
             }

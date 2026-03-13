@@ -250,6 +250,19 @@ impl S<'_> {
                 };
                 variant.value.as_ref().unwrap().0.clone()
             }
+            ConstExpr::StructLiteral { name, span, .. } => {
+                d.report(
+                    DiagnosticKind::TypeMismatch {
+                        expected: Type::Value,
+                        given: Type::Struct {
+                            name: name.clone(),
+                            span: span.clone(),
+                        },
+                    },
+                    span,
+                );
+                return Value::from(0.0);
+            }
         }
     }
 }
@@ -819,14 +832,60 @@ where T: Write + Seek
                     );
                     return Ok(());
                 };
+                let default = match &var.default {
+                    Some(ConstExpr::EnumVariant { .. }) | Some(ConstExpr::Value { .. }) => {
+                        d.report(
+                            DiagnosticKind::TypeMismatch {
+                                expected: var.type_.clone(),
+                                given: Type::Value,
+                            },
+                            &var.default.as_ref().unwrap().span(),
+                        );
+                        None
+                    }
+                    Some(ConstExpr::StructLiteral { name, span, fields }) => {
+                        if name != type_name {
+                            d.report(
+                                DiagnosticKind::TypeMismatch {
+                                    expected: var.type_.clone(),
+                                    given: Type::Struct {
+                                        name: name.clone(),
+                                        span: span.clone(),
+                                    },
+                                },
+                                &var.default.as_ref().unwrap().span(),
+                            );
+                            None
+                        } else {
+                            Some(fields)
+                        }
+                    }
+                    None => None,
+                };
                 for field in &struct_.fields {
                     let qualified_var_name = qualify_struct_var_name(&field.name, &var.name);
                     self.json_var_declaration(
                         &qualified_var_name,
-                        field
-                            .default
-                            .as_ref()
-                            .map(|default| s.evaluate_const_expr(d, default)),
+                        match (&default, &field.default) {
+                            (Some(fields), fdef) => {
+                                let dvalue = fields
+                                    .iter()
+                                    .find(|dfield| dfield.name == field.name)
+                                    .map(|dfield| dfield.value.clone());
+                                if dvalue.is_none() && fdef.is_none() {
+                                    d.report(
+                                        DiagnosticKind::MissingField {
+                                            struct_name: type_name.clone(),
+                                            field_name: field.name.clone(),
+                                        },
+                                        &var.default.as_ref().unwrap().span(),
+                                    )
+                                }
+                                dvalue
+                            }
+                            (None, Some(default)) => Some(s.evaluate_const_expr(d, default)),
+                            (None, None) => None,
+                        },
                         false,
                         comma,
                     )?;
