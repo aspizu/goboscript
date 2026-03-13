@@ -115,6 +115,7 @@ markdown_extensions:
       alternate_style: true
 plugins:
   - search
+  - social
   - git-committers:
       repository: aspizu/goboscript
       branch: main
