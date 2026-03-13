@@ -86,6 +86,8 @@ pub enum DiagnosticKind {
         field_name: SmolStr,
     },
     EmptyStruct(SmolStr),
+    UnrecognizedLayerSprite(SmolStr),
+    MissingLayerSprite(SmolStr),
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
@@ -225,6 +227,12 @@ impl DiagnosticKind {
                 format!("struct {struct_name} is missing field {field_name}")
             }
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
+            DiagnosticKind::UnrecognizedLayerSprite(name) => {
+                format!("layers references sprite '{name}' which does not exist")
+            }
+            DiagnosticKind::MissingLayerSprite(name) => {
+                format!("sprite '{name}' is not listed in layers")
+            }
         }
     }
 
@@ -386,7 +394,9 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidCostumeName(_)
             | DiagnosticKind::DuplicateCostume(_)
             | DiagnosticKind::DuplicateBackdrop(_)
-            | DiagnosticKind::InvalidBackdropName(_) => Level::Error,
+            | DiagnosticKind::InvalidBackdropName(_)
+            | DiagnosticKind::UnrecognizedLayerSprite(_)
+            | DiagnosticKind::MissingLayerSprite(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)
