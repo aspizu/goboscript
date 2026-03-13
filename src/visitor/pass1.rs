@@ -310,6 +310,7 @@ fn visit_expr(expr: &mut Expr, before: &mut Vec<Stmt>, s: &mut S) {
             visit_expr(object, before, s);
             None
         }
+        Expr::Ternary { .. } => unreachable!(),
     };
     if let Some(replace) = replace {
         *expr = replace;

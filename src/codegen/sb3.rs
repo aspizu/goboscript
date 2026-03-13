@@ -1354,6 +1354,7 @@ where T: Write + Seek
                 property,
                 span,
             } => self.property(s, d, this_id, parent_id, object, property, span),
+            Expr::Ternary { .. } => unreachable!(),
         }
     }
 }

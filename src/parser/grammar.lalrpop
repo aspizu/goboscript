@@ -37,7 +37,7 @@ Declr: () = {
     SET_ROTATION_STYLE_ALL_AROUND ";" => {
         sprite.rotation_style = RotationStyle::AllAround;
     },
-    SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
+    SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {
         sprite.rotation_style = RotationStyle::DoNotRotate;
     },
     SET_LAYER_ORDER <layer_order:Value> => {
@@ -370,117 +370,128 @@ Kwarg: (Option<(SmolStr, Span)>, Expr) = {
     }
 }
 
+// Top-level expression: ternary lives here so that IF is in FIRST(Expr),
+// allowing nested ternaries like `if (if (c) t else f) v else w` without parens.
 Expr: Expr = {
+    IF "(" <condition:Expr> ")" <tvalue:Expr> ELSE <fvalue:Expr> => {
+        Expr::Ternary {
+            condition: Box::new(condition),
+            tvalue: Box::new(tvalue),
+            fvalue: Box::new(fvalue),
+        }
+    },
+    BinExpr,
+}
+
+// Precedence-climbing grammar for binary/unary operators, no ternary.
+BinExpr: Expr = {
     #[precedence(level="1")]
     Term,
     StructLiteral,
     #[precedence(level="2")] #[assoc(side="right")]
-    <l:@L> "-"     <e:Expr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
-    <l:@L> NOT     <e:Expr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
-    <l:@L> LENGTH  <e:Expr> <r:@R> => UnOp::Length .to_expr(l..r, e),
-    <l:@L> ROUND   <e:Expr> <r:@R> => UnOp::Round  .to_expr(l..r, e),
-    <l:@L> ABS     <e:Expr> <r:@R> => UnOp::Abs    .to_expr(l..r, e),
-    <l:@L> FLOOR   <e:Expr> <r:@R> => UnOp::Floor  .to_expr(l..r, e),
-    <l:@L> CEIL    <e:Expr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e),
-    <l:@L> SQRT    <e:Expr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e),
-    <l:@L> SIN     <e:Expr> <r:@R> => UnOp::Sin    .to_expr(l..r, e),
-    <l:@L> COS     <e:Expr> <r:@R> => UnOp::Cos    .to_expr(l..r, e),
-    <l:@L> TAN     <e:Expr> <r:@R> => UnOp::Tan    .to_expr(l..r, e),
-    <l:@L> ASIN    <e:Expr> <r:@R> => UnOp::Asin   .to_expr(l..r, e),
-    <l:@L> ACOS    <e:Expr> <r:@R> => UnOp::Acos   .to_expr(l..r, e),
-    <l:@L> ATAN    <e:Expr> <r:@R> => UnOp::Atan   .to_expr(l..r, e),
-    <l:@L> LN      <e:Expr> <r:@R> => UnOp::Ln     .to_expr(l..r, e),
-    <l:@L> LOG     <e:Expr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
-    <l:@L> ANTILN  <e:Expr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
-    <l:@L> ANTILOG <e:Expr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
+    <l:@L> "-"     <e:BinExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
+    <l:@L> NOT     <e:BinExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
+    <l:@L> LENGTH  <e:BinExpr> <r:@R> => UnOp::Length .to_expr(l..r, e),
+    <l:@L> ROUND   <e:BinExpr> <r:@R> => UnOp::Round  .to_expr(l..r, e),
+    <l:@L> ABS     <e:BinExpr> <r:@R> => UnOp::Abs    .to_expr(l..r, e),
+    <l:@L> FLOOR   <e:BinExpr> <r:@R> => UnOp::Floor  .to_expr(l..r, e),
+    <l:@L> CEIL    <e:BinExpr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e),
+    <l:@L> SQRT    <e:BinExpr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e),
+    <l:@L> SIN     <e:BinExpr> <r:@R> => UnOp::Sin    .to_expr(l..r, e),
+    <l:@L> COS     <e:BinExpr> <r:@R> => UnOp::Cos    .to_expr(l..r, e),
+    <l:@L> TAN     <e:BinExpr> <r:@R> => UnOp::Tan    .to_expr(l..r, e),
+    <l:@L> ASIN    <e:BinExpr> <r:@R> => UnOp::Asin   .to_expr(l..r, e),
+    <l:@L> ACOS    <e:BinExpr> <r:@R> => UnOp::Acos   .to_expr(l..r, e),
+    <l:@L> ATAN    <e:BinExpr> <r:@R> => UnOp::Atan   .to_expr(l..r, e),
+    <l:@L> LN      <e:BinExpr> <r:@R> => UnOp::Ln     .to_expr(l..r, e),
+    <l:@L> LOG     <e:BinExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
+    <l:@L> ANTILN  <e:BinExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
+    <l:@L> ANTILOG <e:BinExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
     #[precedence(level="3")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr> "*" <rhs:Expr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> "/" <rhs:Expr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> "//"<rhs:Expr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> "%" <rhs:Expr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "*"  <rhs:BinExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "/"  <rhs:BinExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "//" <rhs:BinExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "%"  <rhs:BinExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
     #[precedence(level="4")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr> "+" <rhs:Expr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> "-" <rhs:Expr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "+"  <rhs:BinExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "-"  <rhs:BinExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
     #[precedence(level="5")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr> "<" <rhs:Expr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> "<="<rhs:Expr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> ">" <rhs:Expr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> ">="<rhs:Expr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "<"  <rhs:BinExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "<=" <rhs:BinExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> ">"  <rhs:BinExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> ">=" <rhs:BinExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
     #[precedence(level="6")] #[assoc(side="right")]
-    <l:@L> <lhs:Expr> "&" <rhs:Expr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
-    // <lhs:Expr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
-    //     args.insert(0, lhs);
-    //     if let Some(repr) = Repr::from_shape(&name, args.len()) {
-    //         Expr::Repr { repr, span: l..r, args }
-    //     } else {
-    //         Expr::FuncCall { name: name, span: l..r, args: args }
-    //     }
-    // },
+    <l:@L> <lhs:BinExpr> "&"  <rhs:BinExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
     #[precedence(level="7")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr>  IN <rhs:Expr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> NOT IN <rhs:Expr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
-    <l:@L> <lhs:Expr> "=="<rhs:Expr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:Expr> "!="<rhs:Expr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr>  IN          <rhs:BinExpr> <r:@R> => BinOp::In.to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> NOT IN       <rhs:BinExpr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
+    <l:@L> <lhs:BinExpr> "==" <rhs:BinExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> "!=" <rhs:BinExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
     #[precedence(level="8")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr> AND <rhs:Expr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> AND  <rhs:BinExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
     #[precedence(level="9")] #[assoc(side="left")]
-    <l:@L> <lhs:Expr> OR  <rhs:Expr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:BinExpr> OR   <rhs:BinExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
 }
 
+// Same split for IfExpr (used in statement conditions, where `>` can't be a
+// comparison operator since it is consumed by ONLOUDNESS/ONTIMER productions).
 IfExpr: Expr = {
+    IF "(" <condition:IfExpr> ")" <tvalue:IfExpr> ELSE <fvalue:IfExpr> => {
+        Expr::Ternary {
+            condition: Box::new(condition),
+            tvalue: Box::new(tvalue),
+            fvalue: Box::new(fvalue),
+        }
+    },
+    IfBinExpr,
+}
+
+IfBinExpr: Expr = {
     #[precedence(level="1")]
     Term,
     #[precedence(level="2")] #[assoc(side="right")]
-    <l:@L> "-"     <e:IfExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
-    <l:@L> NOT     <e:IfExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
-    <l:@L> LENGTH  <e:IfExpr> <r:@R> => UnOp::Length .to_expr(l..r, e),
-    <l:@L> ROUND   <e:IfExpr> <r:@R> => UnOp::Round  .to_expr(l..r, e),
-    <l:@L> ABS     <e:IfExpr> <r:@R> => UnOp::Abs    .to_expr(l..r, e),
-    <l:@L> FLOOR   <e:IfExpr> <r:@R> => UnOp::Floor  .to_expr(l..r, e),
-    <l:@L> CEIL    <e:IfExpr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e),
-    <l:@L> SQRT    <e:IfExpr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e),
-    <l:@L> SIN     <e:IfExpr> <r:@R> => UnOp::Sin    .to_expr(l..r, e),
-    <l:@L> COS     <e:IfExpr> <r:@R> => UnOp::Cos    .to_expr(l..r, e),
-    <l:@L> TAN     <e:IfExpr> <r:@R> => UnOp::Tan    .to_expr(l..r, e),
-    <l:@L> ASIN    <e:IfExpr> <r:@R> => UnOp::Asin   .to_expr(l..r, e),
-    <l:@L> ACOS    <e:IfExpr> <r:@R> => UnOp::Acos   .to_expr(l..r, e),
-    <l:@L> ATAN    <e:IfExpr> <r:@R> => UnOp::Atan   .to_expr(l..r, e),
-    <l:@L> LN      <e:IfExpr> <r:@R> => UnOp::Ln     .to_expr(l..r, e),
-    <l:@L> LOG     <e:IfExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
-    <l:@L> ANTILN  <e:IfExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
-    <l:@L> ANTILOG <e:IfExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
+    <l:@L> "-"     <e:IfBinExpr> <r:@R> => UnOp::Minus  .to_expr(l..r, e),
+    <l:@L> NOT     <e:IfBinExpr> <r:@R> => UnOp::Not    .to_expr(l..r, e),
+    <l:@L> LENGTH  <e:IfBinExpr> <r:@R> => UnOp::Length .to_expr(l..r, e),
+    <l:@L> ROUND   <e:IfBinExpr> <r:@R> => UnOp::Round  .to_expr(l..r, e),
+    <l:@L> ABS     <e:IfBinExpr> <r:@R> => UnOp::Abs    .to_expr(l..r, e),
+    <l:@L> FLOOR   <e:IfBinExpr> <r:@R> => UnOp::Floor  .to_expr(l..r, e),
+    <l:@L> CEIL    <e:IfBinExpr> <r:@R> => UnOp::Ceil   .to_expr(l..r, e),
+    <l:@L> SQRT    <e:IfBinExpr> <r:@R> => UnOp::Sqrt   .to_expr(l..r, e),
+    <l:@L> SIN     <e:IfBinExpr> <r:@R> => UnOp::Sin    .to_expr(l..r, e),
+    <l:@L> COS     <e:IfBinExpr> <r:@R> => UnOp::Cos    .to_expr(l..r, e),
+    <l:@L> TAN     <e:IfBinExpr> <r:@R> => UnOp::Tan    .to_expr(l..r, e),
+    <l:@L> ASIN    <e:IfBinExpr> <r:@R> => UnOp::Asin   .to_expr(l..r, e),
+    <l:@L> ACOS    <e:IfBinExpr> <r:@R> => UnOp::Acos   .to_expr(l..r, e),
+    <l:@L> ATAN    <e:IfBinExpr> <r:@R> => UnOp::Atan   .to_expr(l..r, e),
+    <l:@L> LN      <e:IfBinExpr> <r:@R> => UnOp::Ln     .to_expr(l..r, e),
+    <l:@L> LOG     <e:IfBinExpr> <r:@R> => UnOp::Log    .to_expr(l..r, e),
+    <l:@L> ANTILN  <e:IfBinExpr> <r:@R> => UnOp::AntiLn .to_expr(l..r, e),
+    <l:@L> ANTILOG <e:IfBinExpr> <r:@R> => UnOp::AntiLog.to_expr(l..r, e),
     #[precedence(level="3")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr> "*" <rhs:IfExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> "/" <rhs:IfExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> "//"<rhs:IfExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> "%" <rhs:IfExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "*"  <rhs:IfBinExpr> <r:@R> => BinOp::Mul     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "/"  <rhs:IfBinExpr> <r:@R> => BinOp::Div     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "//" <rhs:IfBinExpr> <r:@R> => BinOp::FloorDiv.to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "%"  <rhs:IfBinExpr> <r:@R> => BinOp::Mod     .to_expr(l..r, lhs, rhs),
     #[precedence(level="4")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr> "+" <rhs:IfExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> "-" <rhs:IfExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "+"  <rhs:IfBinExpr> <r:@R> => BinOp::Add     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "-"  <rhs:IfBinExpr> <r:@R> => BinOp::Sub     .to_expr(l..r, lhs, rhs),
     #[precedence(level="5")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr> "<" <rhs:IfExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> "<="<rhs:IfExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> ">" <rhs:IfExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> ">="<rhs:IfExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "<"  <rhs:IfBinExpr> <r:@R> => BinOp::Lt      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "<=" <rhs:IfBinExpr> <r:@R> => BinOp::Le      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> ">"  <rhs:IfBinExpr> <r:@R> => BinOp::Gt      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> ">=" <rhs:IfBinExpr> <r:@R> => BinOp::Ge      .to_expr(l..r, lhs, rhs),
     #[precedence(level="6")] #[assoc(side="right")]
-    <l:@L> <lhs:IfExpr> "&" <rhs:IfExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
-    // <lhs:IfExpr> "|>" <l:@L> <name:NAME> <r:@R> "(" <mut args:Exprs> ")" => {
-    //     args.insert(0, lhs);
-    //     if let Some(repr) = Repr::from_shape(&name, args.len()) {
-    //         Expr::Repr { repr, span: l..r, args }
-    //     } else {
-    //         Expr::FuncCall { name: name, span: l..r, args: args }
-    //     }
-    // },
+    <l:@L> <lhs:IfBinExpr> "&"  <rhs:IfBinExpr> <r:@R> => BinOp::Join    .to_expr(l..r, lhs, rhs),
     #[precedence(level="7")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr>  IN <rhs:IfExpr> <r:@R> => BinOp::In      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> NOT IN <rhs:IfExpr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
-    <l:@L> <lhs:IfExpr> "=="<rhs:IfExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
-    <l:@L> <lhs:IfExpr> "!="<rhs:IfExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr>  IN          <rhs:IfBinExpr> <r:@R> => BinOp::In.to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> NOT IN       <rhs:IfBinExpr> <r:@R> => UnOp::Not.to_expr(l..r, BinOp::In.to_expr(l..r, lhs, rhs)),
+    <l:@L> <lhs:IfBinExpr> "==" <rhs:IfBinExpr> <r:@R> => BinOp::Eq      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> "!=" <rhs:IfBinExpr> <r:@R> => BinOp::Ne      .to_expr(l..r, lhs, rhs),
     #[precedence(level="8")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr> AND <rhs:IfExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> AND  <rhs:IfBinExpr> <r:@R> => BinOp::And     .to_expr(l..r, lhs, rhs),
     #[precedence(level="9")] #[assoc(side="left")]
-    <l:@L> <lhs:IfExpr> OR  <rhs:IfExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
+    <l:@L> <lhs:IfBinExpr> OR   <rhs:IfBinExpr> <r:@R> => BinOp::Or      .to_expr(l..r, lhs, rhs),
 }
 
 Term: Expr = {
@@ -493,8 +504,8 @@ Term: Expr = {
     <l:@L> <v:BIN>   <r:@R> => Value::from(v).to_expr(l..r),
     <l:@L> <v:FLOAT> <r:@R> => Value::from(v).to_expr(l..r),
     <l:@L> <v:STR>   <r:@R> => Value::from(v).to_expr(l..r),
-    <l:@L> <n:NAME> <r:@R> => Expr::Name(Name::Name { name: n, span: l..r }),
-    <l:@L> <n:ARG> <r:@R> => Expr::Arg(Name::Name { name: n, span: l..r }),
+    <l:@L> <n:NAME>  <r:@R> => Expr::Name(Name::Name { name: n, span: l..r }),
+    <l:@L> <n:ARG>   <r:@R> => Expr::Arg(Name::Name { name: n, span: l..r }),
     <l:@L> <name:NAME> <r:@R> "(" <args:Kwargs> ")" => {
         let (args, kwargs) = split_args(args);
         if let Some(repr) = Repr::from_shape(&name, args.len()) {
@@ -524,7 +535,7 @@ StructLiteralField: StructLiteralField = {
     }
 };
 
-Value: (Value, Span) = { 
+Value: (Value, Span) = {
     <l:@L> TRUE      <r:@R> => (Value::from(1.0), l..r),
     <l:@L> FALSE     <r:@R> => (Value::from(0.0), l..r),
     <l:@L> <v:INT>   <r:@R> => (Value::from(v), l..r),
@@ -536,7 +547,7 @@ Value: (Value, Span) = {
     "-" <v:Value> => (Value::un_op(UnOp::Minus, &v.0), v.1),
 }
 
-ConstExpr: ConstExpr = { 
+ConstExpr: ConstExpr = {
     <v:Value> => ConstExpr::Value { value: v.0, span: v.1 },
     <el:@L> <enum_name:NAME> <er:@R> "." <vl:@L> <variant_name:NAME> <vr:@R> => ConstExpr::EnumVariant {
         enum_name, variant_name, enum_name_span: el..er, variant_name_span: vl..vr,
@@ -691,8 +702,8 @@ extern {
         SET_SIZE       => Token::SetSize,
         POINT_IN_DIRECTION => Token::PointInDirection,
         SET_VOLUME     => Token::SetVolume,
-        SET_ROTATION_STYLE_LEFT_RIGHT => Token::SetRotationStyleLeftRight,
-        SET_ROTATION_STYLE_ALL_AROUND => Token::SetRotationStyleAllAround,
+        SET_ROTATION_STYLE_LEFT_RIGHT    => Token::SetRotationStyleLeftRight,
+        SET_ROTATION_STYLE_ALL_AROUND    => Token::SetRotationStyleAllAround,
         SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
         SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
