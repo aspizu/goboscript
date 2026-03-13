@@ -541,7 +541,20 @@ ConstExpr: ConstExpr = {
     <el:@L> <enum_name:NAME> <er:@R> "." <vl:@L> <variant_name:NAME> <vr:@R> => ConstExpr::EnumVariant {
         enum_name, variant_name, enum_name_span: el..er, variant_name_span: vl..vr,
     },
+    <ConstStructLiteral>,
 }
+
+ConstStructLiteral: ConstExpr = {
+    <l:@L> <name:NAME> <r:@R> "{" <fields:Comma<ConstStructLiteralField>> "}" => {
+        ConstExpr::StructLiteral { name, span: l..r, fields }
+    }
+}
+
+ConstStructLiteralField: ConstStructLiteralField = {
+    <l:@L> <name:NAME> <r:@R> ":" <value:Value> => {
+        ConstStructLiteralField { name, name_span: l..r, value: value.0, value_span: value.1 }
+    }
+};
 
 #[inline]
 NameName: Name = <l:@L> <n:NAME> <r:@R> => Name::Name { name: n, span: l..r };

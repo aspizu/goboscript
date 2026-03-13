@@ -4,7 +4,10 @@ use serde::{
     Serialize,
 };
 
-use super::Value;
+use super::{
+    StructLiteralField,
+    Value,
+};
 use crate::{
     ast::{
         Expr,
@@ -25,6 +28,19 @@ pub enum ConstExpr {
         variant_name: SmolStr,
         variant_name_span: Span,
     },
+    StructLiteral {
+        name: SmolStr,
+        span: Span,
+        fields: Vec<ConstStructLiteralField>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConstStructLiteralField {
+    pub name: SmolStr,
+    pub name_span: Span,
+    pub value: Value,
+    pub value_span: Span,
 }
 
 impl ConstExpr {
@@ -36,6 +52,7 @@ impl ConstExpr {
                 variant_name_span,
                 ..
             } => enum_name_span.start..variant_name_span.end,
+            ConstExpr::StructLiteral { span, .. } => span.clone(),
         }
     }
 }
@@ -56,6 +73,18 @@ impl From<ConstExpr> for Expr {
                 rhs_span: variant_name_span,
                 is_generated: false,
             }),
+            ConstExpr::StructLiteral { name, span, fields } => Expr::StructLiteral {
+                name,
+                span,
+                fields: fields
+                    .into_iter()
+                    .map(|f| StructLiteralField {
+                        name: f.name,
+                        span: f.name_span,
+                        value: Box::new(f.value.to_expr(f.value_span)),
+                    })
+                    .collect(),
+            },
         }
     }
 }

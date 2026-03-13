@@ -414,37 +414,34 @@ where T: Write + Seek
                                 );
                                 continue;
                             }
-                            if struct_literal_fields.len() != struct_.fields.len() {
-                                panic!()
-                            }
-                            for (struct_field, struct_literal_field) in
-                                struct_.fields.iter().zip(struct_literal_fields)
-                            {
-                                if struct_field.name != struct_literal_field.name {
-                                    panic!()
-                                }
-                            }
                             struct_literal_fields
                         }
                         _ => {
                             continue;
                         }
                     };
-                    for (field, struct_literal_field) in
-                        struct_.fields.iter().zip(struct_literal_fields)
-                    {
+                    for field in &struct_.fields {
                         let qualified_arg_name = qualify_struct_var_name(&field.name, &arg.name);
                         let arg_id = self.id.new_id();
-                        self.input(
-                            s,
-                            d,
-                            &qualified_arg_name,
-                            &struct_literal_field.value,
-                            arg_id,
-                            false,
-                        )?;
+                        let field_value = struct_literal_fields
+                            .iter()
+                            .find(|f| f.name == field.name)
+                            .map(|f| f.value.as_ref().clone());
+                        let (value, is_placeholder) = match field_value {
+                            Some(v) => (v, false),
+                            None => (
+                                Expr::Value {
+                                    value: Value::Number(0.0),
+                                    span: span.clone(),
+                                },
+                                true,
+                            ),
+                        };
+                        self.input(s, d, &qualified_arg_name, &value, arg_id, false)?;
                         qualified_args.push((qualified_arg_name, arg_id));
-                        qualified_arg_values.push(struct_literal_field.value.as_ref().clone());
+                        if !is_placeholder {
+                            qualified_arg_values.push(value);
+                        }
                     }
                 }
             }
