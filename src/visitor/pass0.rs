@@ -5,6 +5,11 @@ use glob::glob;
 
 use crate::{
     ast::*,
+    codegen::sb3::D,
+    diagnostic::{
+        DiagnosticKind,
+        SpriteDiagnostics,
+    },
     misc::SmolStr,
 };
 
@@ -14,14 +19,24 @@ struct V<'a> {
     global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
 }
 
-pub fn visit_project(input: &Path, project: &mut Project) {
-    visit_sprite(input, &mut project.stage, None);
-    for sprite in project.sprites.values_mut() {
-        visit_sprite(input, sprite, Some(&mut project.stage));
+pub fn visit_project(
+    input: &Path,
+    project: &mut Project,
+    stage_diagnostics: &mut SpriteDiagnostics,
+    sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
+) {
+    visit_sprite(input, &mut project.stage, None, stage_diagnostics);
+    for (sprite_name, sprite) in &mut project.sprites {
+        visit_sprite(
+            input,
+            sprite,
+            Some(&mut project.stage),
+            sprites_diagnostics.get_mut(sprite_name).unwrap(),
+        );
     }
 }
 
-fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
+fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>, d: D) {
     visit_costumes(input, &mut sprite.costumes);
     visit_sounds(input, &mut sprite.sounds);
     for enum_ in sprite.enums.values_mut() {
@@ -39,6 +54,7 @@ fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
+            d,
         );
     }
     for func in sprite.funcs.values_mut() {
@@ -67,6 +83,7 @@ fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
+            d,
         );
     }
     for event in &mut sprite.events {
@@ -77,6 +94,7 @@ fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite
                 vars: &mut sprite.vars,
                 global_vars: stage.as_mut().map(|stage| &mut stage.vars),
             },
+            d,
         );
     }
 }
@@ -149,23 +167,23 @@ fn visit_sounds(input: &Path, new: &mut Vec<Sound>) {
     }
 }
 
-fn visit_stmts(stmts: &mut Vec<Stmt>, v: &mut V) {
+fn visit_stmts(stmts: &mut Vec<Stmt>, v: &mut V, d: D) {
     for stmt in stmts {
-        visit_stmt(stmt, v);
+        visit_stmt(stmt, v, d);
     }
 }
 
-fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
+fn visit_stmt(stmt: &mut Stmt, v: &mut V, d: D) {
     match stmt {
-        Stmt::Repeat { body, .. } => visit_stmts(body, v),
-        Stmt::Forever { body, .. } => visit_stmts(body, v),
+        Stmt::Repeat { body, .. } => visit_stmts(body, v, d),
+        Stmt::Forever { body, .. } => visit_stmts(body, v, d),
         Stmt::Branch {
             if_body, else_body, ..
         } => {
-            visit_stmts(if_body, v);
-            visit_stmts(else_body, v)
+            visit_stmts(if_body, v, d);
+            visit_stmts(else_body, v, d)
         }
-        Stmt::Until { body, .. } => visit_stmts(body, v),
+        Stmt::Until { body, .. } => visit_stmts(body, v, d),
         Stmt::SetVar {
             name,
             type_,
@@ -191,7 +209,9 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
                     } else {
                         locals.insert(basename.clone(), var);
                     }
+                    return;
                 }
+                d.report(DiagnosticKind::LocalNotSupported, &name.span());
                 return;
             }
             if v.locals

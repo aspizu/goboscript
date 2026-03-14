@@ -86,6 +86,7 @@ pub enum DiagnosticKind {
         field_name: SmolStr,
     },
     EmptyStruct(SmolStr),
+    LocalNotSupported,
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
@@ -198,6 +199,9 @@ impl DiagnosticKind {
             }
             DiagnosticKind::TypeMismatch { expected, given } => {
                 format!("type mismatch: expected {}, but got {}", expected, given)
+            }
+            DiagnosticKind::LocalNotSupported => {
+                "local variables are not supported here".to_string()
             }
             DiagnosticKind::FollowedByUnreachableCode => "followed by unreachable code".to_string(),
             DiagnosticKind::UnusedVariable(name) => format!("unused variable {name}"),
@@ -386,7 +390,8 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidCostumeName(_)
             | DiagnosticKind::DuplicateCostume(_)
             | DiagnosticKind::DuplicateBackdrop(_)
-            | DiagnosticKind::InvalidBackdropName(_) => Level::Error,
+            | DiagnosticKind::InvalidBackdropName(_)
+            | DiagnosticKind::LocalNotSupported => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)
