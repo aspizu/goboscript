@@ -523,14 +523,7 @@ where T: Write + Seek
         {
             (object_value, true)
         } else {
-            (
-                if property == "Stage" {
-                    &arcstr::literal!("backdrop #")
-                } else {
-                    &arcstr::literal!("x position")
-                },
-                false,
-            )
+            (&arcstr::literal!("_stage_"), false)
         };
         self.begin_node(
             Node::new("sensing_of_object_menu", menu_id)
@@ -539,7 +532,13 @@ where T: Write + Seek
         )?;
         self.begin_inputs()?;
         self.end_obj()?; // inputs
-        self.single_field("OBJECT", object_value)?;
+        self.single_field(
+            "OBJECT",
+            match &**object_value {
+                "Stage" | "_stage_" | "stage" => "_stage_",
+                _ => object_value,
+            },
+        )?;
         self.end_obj()?; // node (sensing_of_object_menu)
         let object_id = self.id.new_id();
         self.begin_node(Node::new("sensing_of", this_id).parent_id(parent_id))?;
