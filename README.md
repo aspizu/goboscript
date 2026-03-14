@@ -101,38 +101,35 @@ After cloning the repository, run goboscript locally from the repository root wi
 cargo run -- build your_project/
 ```
 
-But, to make development easier, and to validate the generated Scratch project - use
-the `tools/run` script:
+But, to make development easier, and to validate the generated Scratch project -- use
+the `tools/run.py` script:
 
 ```sh
-tools/run compile
+tools/run --validate # or `-v`
 ```
 
 This assumes that you have set-up a testing project at `playground/`.
 It will compile the project, validate it using the schemas from `scratch-parser`.
 If the validation fails, Scratch will refuse to load the project. To further debug
-the project, the generated `project.json` file is extracted from the `.sb3` file in the
-`playground/` directory.
-
-Lets say that you modified the generated project in the Scratch editor or Turbowarp,
-and you want to look at the `project.json`. You can extract it with:
+the project, the generated `project.json` file can be extracted from the `.sb3` file in the
+`playground/` directory, by running the following command:
 
 ```sh
-tools/run uncompile
+tools/sb3.py playground/playground.sb3
 ```
 
-Lets say that goboscript produced a broken project, and you are able to fix it by hand -
+Lets say that goboscript produced a broken project, and you are able to fix it by hand --
 by modifying the `project.json`. You can add back the `project.json` to the `.sb3` file
 with:
 
 ```sh
-tools/run patch
+tools/sb3.py playground/playground.sb3 --patch # or `-p`, assuming that project.json is present at `playground/playground.json`
 ```
 
 If you want to validate some `.sb3` file, use:
 
 ```sh
-tools/run check path/to/project.sb3
+tools/sb3.py path/to/project.sb3 --validate # or `-v`
 ```
 
 ### FOSS HACK 25

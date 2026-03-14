@@ -4,7 +4,7 @@ onflag {
     foo = 1;
     wait 1;
     repeat foo {
-        wait_until 1 < 2;
+        until 1 < 2 {}
     }
     if 1 < 2 {
         clone foo;
