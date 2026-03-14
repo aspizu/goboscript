@@ -596,10 +596,12 @@ where T: Write + Seek
             write!(self, "}}")?; // comments
         }
         write!(self, r#","broadcasts":{{"#)?;
-        let mut comma = false;
-        for broadcast in broadcasts {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+        if stage.is_none() {
+            let mut comma = false;
+            for broadcast in broadcasts {
+                write_comma_io(&mut self.zip, &mut comma)?;
+                write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+            }
         }
         write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;
