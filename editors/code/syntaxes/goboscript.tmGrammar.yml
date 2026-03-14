@@ -6,7 +6,7 @@ patterns:
     begin: "#"
     end: "$"
   - name: keyword.control.directive
-    begin: "%"
+    begin: "^%"
     end: "$"
   - name: string.quoted.double
     match: "\"([^\"\\\\]|\\\\([\"\\\\bnfrt]|u[a-fA-F0-9]{4}))*\""
