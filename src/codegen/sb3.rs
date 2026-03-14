@@ -483,8 +483,10 @@ where T: Write + Seek
         write!(self, r#","vm":"0.2.0""#)?;
         write!(
             self,
-            r#","agent":"goboscript v{}""#,
-            env!("CARGO_PKG_VERSION")
+            r#","agent":"goboscript ({})""#,
+            option_env!("GIT_HASH")
+                .map(|hash| format!("commit {hash}"))
+                .unwrap_or_else(|| format!("v{}", env!("CARGO_PKG_VERSION")))
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
