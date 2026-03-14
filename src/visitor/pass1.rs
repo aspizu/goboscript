@@ -99,6 +99,18 @@ fn visit_stmt(stmt: &mut Stmt, s: &mut S) -> Vec<Stmt> {
             before.extend(cond_callsites.iter().cloned());
             body.extend(cond_callsites);
         }
+        Stmt::For {
+            init,
+            cond,
+            inc: _,
+            body,
+        } => {
+            visit_stmt(init, s);
+            let mut cond_callsites = vec![];
+            visit_expr(cond, &mut cond_callsites, s);
+            visit_stmts(body, s);
+            before.extend(cond_callsites.iter().cloned());
+        }
         Stmt::SetVar {
             name: _,
             value,

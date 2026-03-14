@@ -166,6 +166,13 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
             visit_stmts(else_body, v)
         }
         Stmt::Until { body, .. } => visit_stmts(body, v),
+        Stmt::For {
+            init, inc, body, ..
+        } => {
+            visit_stmt(init, v);
+            visit_stmts(body, v);
+            visit_stmt(inc, v);
+        }
         Stmt::SetVar {
             name,
             type_,
