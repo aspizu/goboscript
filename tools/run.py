@@ -41,10 +41,14 @@ for project in args.projects:
     ).returncode:
         sys.exit(returncode)
 
-if args.validate:
-    sb3py = Path(__file__).parent.joinpath("sb3.py")
-    for project in args.projects:
-        if returncode := subprocess.run(
-            ["python3", sb3py, project.joinpath(project.stem + ".sb3"), "-v"]
-        ).returncode:
-            sys.exit(returncode)
+sb3py = Path(__file__).parent.joinpath("sb3.py")
+for project in args.projects:
+    if returncode := subprocess.run(
+        [
+            "python3",
+            sb3py,
+            project.joinpath(project.stem + ".sb3"),
+            *(["-v"] if args.validate else []),
+        ]
+    ).returncode:
+        sys.exit(returncode)
