@@ -461,8 +461,10 @@ where T: Write + Seek
         // TODO: switch to deflate compression
         // this should be configurable, use store in debug (because it would be
         // faster?), use deflate in release (because it would be smaller?)
-        self.zip
-            .start_file("project.json", SimpleFileOptions::default())?;
+        self.zip.start_file(
+            "project.json",
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
+        )?;
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
