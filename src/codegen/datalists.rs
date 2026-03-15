@@ -23,13 +23,16 @@ pub fn read_list(
 ) -> Result<Vec<Value>, DiagnosticKind> {
     let (_, ext) = path.rsplit_once('.').unwrap_or_default();
     let mut fs = fs.borrow_mut();
-    let mut file = fs
-        .read_file(&input.join(&**path))
-        .map_err(|err| DiagnosticKind::IOError(err.to_string().into()))?;
+    let mut file = fs.read_file(&input.join(&**path)).map_err(|err| {
+        DiagnosticKind::io_error(
+            err,
+            Some("list files are always relative to the project directory"),
+        )
+    })?;
     match ext {
         _ => read_list_text(&mut file),
     }
-    .map_err(|err| DiagnosticKind::IOError(err.to_string().into()))
+    .map_err(|err| DiagnosticKind::io_error(err, None))
 }
 
 fn read_list_text(file: &mut Box<dyn io::Read + '_>) -> Result<Vec<Value>, io::Error> {

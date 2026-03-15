@@ -19,6 +19,7 @@ use crate::{
         Diagnostic,
         DiagnosticKind,
     },
+    misc::SmolStr,
     standard_library::StandardLibrary,
     vfs::VFS,
 };
@@ -143,6 +144,14 @@ pub fn parse_translation_unit(
                     .unwrap()
                     .trim()
                     .to_owned();
+                let help = if path.ends_with(';') {
+                    Some(
+                        "pre-processor directives do not require a semicolon, try removing the `;`"
+                            .into(),
+                    )
+                } else {
+                    None
+                };
                 i = j;
                 add_include_to_translation_unit(
                     unit,
@@ -152,6 +161,7 @@ pub fn parse_translation_unit(
                     fs.clone(),
                     stdlib,
                     &mut diagnostics,
+                    help,
                 );
             } else if unit.text[i..].starts_with(b"%define") {
                 i += b"%define".len();
@@ -242,6 +252,7 @@ fn add_include_to_translation_unit(
     fs: Rc<RefCell<dyn VFS>>,
     stdlib: &StandardLibrary,
     diagnostics: &mut Vec<Diagnostic>,
+    help: Option<String>,
 ) {
     let mut fs = fs.borrow_mut();
 
@@ -274,7 +285,10 @@ fn add_include_to_translation_unit(
         Ok(buffer) => buffer,
         Err(error) => {
             diagnostics.push(Diagnostic {
-                kind: DiagnosticKind::IOError(error.to_string().into()),
+                kind: DiagnosticKind::IOError {
+                    error: error.to_string().into(),
+                    help,
+                },
                 span,
             });
             return;

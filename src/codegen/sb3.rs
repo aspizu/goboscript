@@ -1013,8 +1013,9 @@ where T: Write + Seek
                 let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(
-                            DiagnosticKind::IOError(error.to_string().into()),
+                        d.report_io_error(
+                            error,
+                            Some("costume files are always relative to the project directory"),
                             &costume.span,
                         );
                         return Ok(Default::default());
@@ -1070,8 +1071,9 @@ where T: Write + Seek
                 let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(
-                            DiagnosticKind::IOError(error.to_string().into()),
+                        d.report_io_error(
+                            error,
+                            Some("sound files are always relative to the project directory"),
                             &sound.span,
                         );
                         return Ok(Default::default());

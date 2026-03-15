@@ -27,7 +27,10 @@ pub enum DiagnosticKind {
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
     ExtraToken(Token),
-    IOError(SmolStr),
+    IOError {
+        error: String,
+        help: Option<String>,
+    },
     UnrecognizedReporter(SmolStr),
     UnrecognizedBlock(SmolStr),
     UnrecognizedVariable(SmolStr),
@@ -101,6 +104,13 @@ pub enum DiagnosticKind {
 }
 
 impl DiagnosticKind {
+    pub fn io_error(error: impl ToString, help: Option<&str>) -> Self {
+        DiagnosticKind::IOError {
+            error: error.to_string().into(),
+            help: help.map(|h| h.into()),
+        }
+    }
+
     pub fn to_string(&self, sprite: &Sprite) -> String {
         match self {
             DiagnosticKind::InvalidToken => "invalid token".to_string(),
@@ -125,7 +135,7 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::ExtraToken(_) => "extra token".to_string(),
-            DiagnosticKind::IOError(error) => format!("{error}"),
+            DiagnosticKind::IOError { error, .. } => format!("{error}"),
             DiagnosticKind::UnrecognizedReporter(_) => "unrecognized reporter".to_string(),
             DiagnosticKind::UnrecognizedBlock(_) => "unrecognized block".to_string(),
             DiagnosticKind::UnrecognizedVariable(_) => "unrecognized variable".to_string(),
@@ -310,6 +320,7 @@ impl DiagnosticKind {
                 Token::Var => Some("var should only be used at top-level.".to_owned()),
                 _ => None,
             },
+            DiagnosticKind::IOError { help, .. } => help.clone(),
             _ => None,
         }
     }
@@ -357,7 +368,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedEof(_)
             | DiagnosticKind::UnrecognizedToken(_, _)
             | DiagnosticKind::ExtraToken(_)
-            | DiagnosticKind::IOError(_)
+            | DiagnosticKind::IOError { .. }
             | DiagnosticKind::UnrecognizedReporter(_)
             | DiagnosticKind::UnrecognizedBlock(_)
             | DiagnosticKind::UnrecognizedVariable(_)
