@@ -56,7 +56,7 @@ pub fn new(
     let mut file = File::create(config_path)?;
     let toml_data = toml::to_string(&config).unwrap();
     file.write_all(
-        "# Configuration Reference: <https://aspizu.github.io/goboscript/configuration>\n"
+        "# Configuration Reference: <https://aspiz.uk/goboscript/docs/configuration.html>\n"
             .as_bytes(),
     )?;
     file.write_all(toml_data.as_bytes())?;
