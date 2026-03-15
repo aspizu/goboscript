@@ -4,6 +4,8 @@ use std::io::{
     Write,
 };
 
+use serde_json::json;
+
 use logos::Span;
 
 use super::{
@@ -23,7 +25,8 @@ impl<T> Sb3<T>
 where T: Write + Seek
 {
     pub fn on(&mut self, event: &SmolStr) -> io::Result<()> {
-        self.single_field_id("BROADCAST_OPTION", event)?;
+        let bid = format!("broadcastMsgId-{}", event);
+        write!(self, r#","fields":{{"BROADCAST_OPTION":[{},{}]}}"#, json!(**event), json!(bid))?;
         self.end_obj() // node
     }
 

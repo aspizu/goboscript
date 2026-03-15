@@ -115,11 +115,14 @@ pub fn build_impl<T: Write + Seek>(
         if fs.borrow_mut().is_dir(&sprite_path) {
             continue;
         }
+        // U+2215 DIVISION SLASH is used by websb2gs as a safe stand-in for '/' in filenames.
+        // Reverse the encoding to restore the original Scratch sprite name.
         let sprite_name: SmolStr = sprite_path
             .file_stem()
             .unwrap_or_default()
             .to_str()
             .unwrap()
+            .replace('\u{2215}', "/")
             .into();
         let mut sprite_diagnostics = SpriteDiagnostics::new(fs.clone(), sprite_path, &stdlib)
             .with_context(|| format!("failed to read {}.gs", sprite_name))?;

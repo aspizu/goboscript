@@ -487,6 +487,11 @@ where T: Write + Seek
                 );
             }
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
+            // Close the block that begin_node already opened, to keep JSON valid.
+            let dummy_args: Vec<(SmolStr, NodeID)> = Vec::new();
+            self.write_all(b",\"inputs\":{}")?;
+            write!(self, "{}", Mutation::call(name.clone(), &dummy_args, false, true))?;
+            self.end_obj()?; // node
             return Ok(());
         };
         self.proc_call_impl(

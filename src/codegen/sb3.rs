@@ -477,7 +477,17 @@ where T: Write + Seek
         }
         write!(self, "]")?; // targets
         write!(self, r#","monitors":[]"#)?;
-        write!(self, r#","extensions":[]"#)?;
+        write!(self, r#","extensions":"#)?;
+        if let Some(exts) = &config.extensions {
+            write!(self, "[")?;
+            for (i, ext) in exts.iter().enumerate() {
+                if i > 0 { write!(self, ",")?; }
+                write!(self, "{}", json!(ext))?;
+            }
+            write!(self, "]")?;
+        } else {
+            write!(self, "[]")?;
+        }
         write!(self, r#","meta":{{"#)?;
         write!(self, r#""semver":"3.0.0""#)?;
         write!(self, r#","vm":"0.2.0""#)?;
@@ -599,7 +609,8 @@ where T: Write + Seek
         let mut comma = false;
         for broadcast in broadcasts {
             write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+            let bid = format!("broadcastMsgId-{}", broadcast);
+            write!(self, r#"{}:{}"#, json!(bid), json!(**broadcast))?;
         }
         write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;

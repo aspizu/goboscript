@@ -31,4 +31,6 @@ pub struct Config {
     pub stage_width: Option<u64>,
     #[serde(default)]
     pub stage_height: Option<u64>,
+    #[serde(default)]
+    pub extensions: Option<Vec<String>>,
 }

@@ -156,7 +156,8 @@ where T: Write + Seek
                     })
                     .flatten();
                 if name == "BROADCAST_INPUT" {
-                    write!(self, "[1,[11,{},{}]]", json!(**string), json!(**string))
+                    let bid = format!("broadcastMsgId-{}", &**string);
+                    write!(self, "[1,[11,{},{}]]", json!(**string), json!(bid))
                 } else if let Some(color) = color {
                     write!(self, "[1,[9,{}]]", json!(color.to_css_hex()))
                 } else {
@@ -229,8 +230,7 @@ where T: Write + Seek
         if let Some(shadow_id) = shadow_id {
             write!(self, "{shadow_id}]")
         } else if input_name == "BROADCAST_INPUT" {
-            let broadcast_name = json!("message1");
-            write!(self, "[11,{},{}]]", broadcast_name, broadcast_name)
+            write!(self, r#"[11,"message1","broadcastMsgId-message1"]]"#)
         } else {
             write!(self, r#"[10, ""]]"#)
         }
