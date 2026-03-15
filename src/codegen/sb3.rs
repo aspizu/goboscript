@@ -807,17 +807,14 @@ where T: Write + Seek
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        let default = match default {
-            Some(value) => value.to_string(),
-            None => arcstr::literal!("0"),
-        };
+        let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
                 self,
                 "\"{}\":[\"\u{2601} {}\",{},true]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         } else {
             write!(
@@ -825,7 +822,7 @@ where T: Write + Seek
                 "\"{}\":[\"{}\",{}]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         }
     }
@@ -961,10 +958,10 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = match &list.default {
+        let data: Vec<Value> = match &list.default {
             Some(ListDefault::Values(values)) => values
                 .into_iter()
-                .map(|v| s.evaluate_const_expr(d, v).to_string())
+                .map(|v| s.evaluate_const_expr(d, v))
                 .collect(),
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,
