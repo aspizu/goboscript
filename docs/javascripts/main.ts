@@ -16,7 +16,7 @@ async function getHighlighter() {
     if (highlighter) return highlighter
     highlighter = await createHighlighter({
         themes: [cssVars],
-        langs: ["bash", "javascript", "json", goboscriptGrammar as any],
+        langs: ["bash", "javascript", "json", "toml", goboscriptGrammar as any],
     })
     return highlighter
 }
