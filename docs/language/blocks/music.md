@@ -6,7 +6,7 @@
 rest beats;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 rest for (beats) beats
 ```
 
@@ -16,7 +16,7 @@ rest for (beats) beats
 set_tempo tempo_;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set tempo to (tempo_)
 ```
 
@@ -26,6 +26,6 @@ set tempo to (tempo_)
 change_tempo tempo_;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change tempo by (tempo_)
 ```

@@ -102,7 +102,7 @@ markdown_extensions:
     - attr_list
     - md_in_html
     - pymdownx.highlight:
-          anchor_linenums: true
+          use_pygments: false
     - pymdownx.inlinehilite
     - pymdownx.superfences
     - markdown.extensions.attr_list
@@ -119,8 +119,7 @@ plugins:
 extra_css:
     - stylesheets/extra.css
 extra_javascript:
-    - javascripts/extra.js
-    - javascripts/scratchblocks.min.js
+    - javascripts/main.js
 extra:
     homepage: https://github.com/aspizu/goboscript
     social:

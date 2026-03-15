@@ -6,6 +6,6 @@
 current_volume = volume();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (volume)
 ```

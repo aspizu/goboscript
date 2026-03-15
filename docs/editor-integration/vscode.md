@@ -10,7 +10,7 @@ Search goboscript in the Extensions tab, or go to the [VSCode Marketplace](https
 
 You will need `npm` installed.
 
-```shell
+```bash
 # Inside the root of the goboscript git repository:
 cd editors/code
 npm install

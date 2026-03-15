@@ -6,7 +6,7 @@
 dist = distance_to_mouse_pointer();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (distance to [mouse-pointer v])
 ```
 
@@ -16,7 +16,7 @@ dist = distance_to_mouse_pointer();
 dist = distance_to("sprite_name");
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (distance to (sprite_name v))
 ```
 
@@ -26,7 +26,7 @@ dist = distance_to("sprite_name");
 is_touching = touching_mouse_pointer();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <touching [mouse-pointer v]?>
 ```
 
@@ -36,7 +36,7 @@ is_touching = touching_mouse_pointer();
 is_touching = touching_edge();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <touching [edge v]?>
 ```
 
@@ -46,7 +46,7 @@ is_touching = touching_edge();
 is_touching = touching("sprite_name");
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <touching (sprite_name v)?>
 ```
 
@@ -56,7 +56,7 @@ is_touching = touching("sprite_name");
 is_pressed = key_pressed("up arrow");
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <key (up arrow v) pressed?>
 ```
 
@@ -66,7 +66,7 @@ is_pressed = key_pressed("up arrow");
 is_mouse_down = mouse_down();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <mouse down?>
 ```
 
@@ -76,7 +76,7 @@ is_mouse_down = mouse_down();
 mx = mouse_x();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (mouse x)
 ```
 
@@ -86,7 +86,7 @@ mx = mouse_x();
 my = mouse_y();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (mouse y)
 ```
 
@@ -96,7 +96,7 @@ my = mouse_y();
 sound_level = loudness();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (loudness)
 ```
 
@@ -106,7 +106,7 @@ sound_level = loudness();
 time_elapsed = timer();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (timer)
 ```
 
@@ -116,7 +116,7 @@ time_elapsed = timer();
 year = current_year();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [year v])
 ```
 
@@ -126,7 +126,7 @@ year = current_year();
 month = current_month();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [month v])
 ```
 
@@ -136,7 +136,7 @@ month = current_month();
 date = current_date();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [date v])
 ```
 
@@ -146,7 +146,7 @@ date = current_date();
 day = current_day_of_week();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [day of week v])
 ```
 
@@ -156,7 +156,7 @@ day = current_day_of_week();
 hour = current_hour();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [hour v])
 ```
 
@@ -166,7 +166,7 @@ hour = current_hour();
 minute = current_minute();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [minute v])
 ```
 
@@ -176,7 +176,7 @@ minute = current_minute();
 second = current_second();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (current [second v])
 ```
 
@@ -186,7 +186,7 @@ second = current_second();
 days = days_since_2000();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (days since 2000)
 ```
 
@@ -196,7 +196,7 @@ days = days_since_2000();
 user = username();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (username)
 ```
 
@@ -206,7 +206,7 @@ user = username();
 is_touching_color = touching_color(0xff0000);
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <touching color (#ff0000)?>
 ```
 
@@ -216,7 +216,7 @@ is_touching_color = touching_color(0xff0000);
 is_color_touching = color_is_touching_color(0xff0000, 0x00ff00);
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <color (#ff0000) is touching (#00ff00)?>
 ```
 
@@ -226,7 +226,7 @@ is_color_touching = color_is_touching_color(0xff0000, 0x00ff00);
 user_answer = answer();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (answer)
 ```
 
@@ -236,6 +236,6 @@ user_answer = answer();
 backdrop_number = "Stage"."backdrop #";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 ([backdrop #] of (Stage v))
 ```
