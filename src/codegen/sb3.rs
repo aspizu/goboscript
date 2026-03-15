@@ -10,6 +10,7 @@ use std::{
     rc::Rc,
 };
 
+use anyhow::bail;
 use fxhash::{
     FxHashMap,
     FxHashSet,
@@ -429,22 +430,8 @@ where T: Write + Seek
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-    ) -> io::Result<()> {
-        let mut layers: FxHashMap<SmolStr, usize> = Default::default();
-        let mut keys: Vec<_> = project.sprites.keys().collect();
-        keys.sort();
-        let mut i = 1;
-        for key in keys {
-            layers.insert(key.clone(), i);
-            i += 1;
-        }
-        if let Some(configured) = &config.layers {
-            let mut i = 1;
-            for layer in configured {
-                layers.insert(layer.into(), i);
-                i += 1;
-            }
-        }
+    ) -> anyhow::Result<()> {
+        let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
             .events
@@ -1433,4 +1420,51 @@ where T: Write + Seek
             } => self.property(s, d, this_id, parent_id, object, property, span),
         }
     }
+}
+
+fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMap<SmolStr, usize>> {
+    let mut layers: FxHashMap<SmolStr, usize> = Default::default();
+    let mut keys: Vec<_> = project.sprites.keys().collect();
+    keys.sort();
+    let mut i = 1;
+    for key in keys {
+        layers.insert(key.clone(), i);
+        i += 1;
+    }
+    if let Some(configured) = &config.layers {
+        let mut extra = vec![];
+        for layer in configured {
+            if !project.sprites.contains_key(&**layer) {
+                extra.push(layer.clone());
+            }
+        }
+        let mut missing = vec![];
+        for layer in project.sprites.keys() {
+            if configured
+                .iter()
+                .find(|configured| &**configured == &*layer)
+                .is_none()
+            {
+                missing.push(layer.clone());
+            }
+        }
+        if !extra.is_empty() {
+            bail!(
+                "layers references sprites that do not exist: {}",
+                extra.join(", ")
+            );
+        }
+        if !missing.is_empty() {
+            bail!(
+                "layers does not reference sprites that exist: {}",
+                missing.join(", ")
+            );
+        }
+        let mut i = 1;
+        for layer in configured {
+            layers.insert(layer.into(), i);
+            i += 1;
+        }
+    }
+    Ok(layers)
 }
