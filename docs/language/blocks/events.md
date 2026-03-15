@@ -6,7 +6,7 @@
 broadcast "message 1";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 broadcast (message 1 v)
 ```
 
@@ -16,6 +16,6 @@ broadcast (message 1 v)
 broadcast_and_wait "message 1";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 broadcast (message 1 v) and wait
 ```

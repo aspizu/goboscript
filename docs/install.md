@@ -1,12 +1,12 @@
 # Install
 
 === "unix"
-    ```shell
+    ```bash
     curl -fsSL https://aspiz.uk/goboscript.sh | sh
     ```
 
 === "Windows"
-    ```shell
+    ```bash
     iwr https://aspiz.uk/goboscript.ps1 | iex
     ```
 
@@ -15,7 +15,7 @@
 This installs the latest bleeding-edge version from the git repository. You will need
 `git`, and the [rust toolchain](https://rustup.rs/) installed.
 
-```shell
+```bash
 git clone https://github.com/aspizu/goboscript
 cd goboscript
 cargo install --path .
@@ -23,7 +23,7 @@ cargo install --path .
 
 To update the installation:
 
-```shell
+```bash
 cd goboscript
 git pull
 cargo install --path .
@@ -34,12 +34,12 @@ cargo install --path .
 This installs the latest bleeding-edge version from the git repository with a single
 command.
 
-```shell
+```bash
 cargo install --git https://github.com/aspizu/goboscript
 ```
 
 To update the installation:
 
-```shell
+```bash
 cargo install --git https://github.com/aspizu/goboscript --force
 ```

@@ -21,7 +21,7 @@ const CHARSET: &[u8] =
 impl Display for NodeID {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let mut n = self.value;
-        write!(f, "\"")?;
+        write!(f, "\"$")?;
         if n == 0 {
             f.write_char(CHARSET[0] as char)?;
         } else {

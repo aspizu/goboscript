@@ -56,8 +56,12 @@ pub struct TranslationUnit {
 
 impl TranslationUnit {
     pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> io::Result<Self> {
+        let mut text = fs.borrow_mut().read_to_vec(&path)?;
+        if text.iter().last().is_none_or(|c| *c != b'\n') {
+            text.push(b'\n');
+        }
         let mut unit = Self {
-            text: fs.borrow_mut().read_to_vec(&path)?,
+            text,
             path,
             defines: Default::default(),
             includes: Default::default(),

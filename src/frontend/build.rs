@@ -41,35 +41,6 @@ use crate::{
     visitor,
 };
 
-fn assign_layer_orders(
-    project: &mut Project,
-    config: &Config,
-    stage_diagnostics: &mut SpriteDiagnostics,
-) {
-    let mut layer_order: usize = 1;
-    if let Some(layers) = &config.layers {
-        for layer in layers {
-            if let Some(sprite) = project.sprites.get_mut(&**layer) {
-                sprite.layer_order = Some((layer_order.into(), 0..0));
-                layer_order += 1;
-            } else {
-                stage_diagnostics.report(
-                    crate::diagnostic::DiagnosticKind::UnrecognizedLayerSprite(layer.as_str().into()),
-                    &(0..0),
-                );
-            }
-        }
-        for sprite_name in project.sprites.keys() {
-            if !layers.iter().any(|l| l.as_str() == sprite_name.as_str()) {
-                stage_diagnostics.report(
-                    crate::diagnostic::DiagnosticKind::MissingLayerSprite(sprite_name.clone()),
-                    &(0..0),
-                );
-            }
-        }
-    }
-}
-
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
@@ -168,7 +139,6 @@ pub fn build_impl<T: Write + Seek>(
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
-    assign_layer_orders(&mut project, &config, &mut stage_diagnostics);
     sb3.project(
         fs.clone(),
         &input,

@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         // Enable latest features
-        "lib": ["ESNext"],
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "target": "ESNext",
         "module": "ESNext",
         "moduleDetection": "force",
@@ -22,5 +22,6 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noPropertyAccessFromIndexSignature": false
-    }
+    },
+    "files": ["main.ts"]
 }

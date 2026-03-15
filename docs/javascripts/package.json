@@ -1,0 +1,7 @@
+{
+    "type": "module",
+    "dependencies": {
+        "scratchblocks": "^3.6.4",
+        "shiki": "^4.0.2"
+    }
+}

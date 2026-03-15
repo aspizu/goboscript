@@ -430,6 +430,21 @@ where T: Write + Seek
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
     ) -> io::Result<()> {
+        let mut layers: FxHashMap<SmolStr, usize> = Default::default();
+        let mut keys: Vec<_> = project.sprites.keys().collect();
+        keys.sort();
+        let mut i = 1;
+        for key in keys {
+            layers.insert(key.clone(), i);
+            i += 1;
+        }
+        if let Some(configured) = &config.layers {
+            let mut i = 1;
+            for layer in configured {
+                layers.insert(layer.into(), i);
+                i += 1;
+            }
+        }
         let broadcasts: FxHashSet<_> = project
             .stage
             .events
@@ -446,8 +461,10 @@ where T: Write + Seek
         // TODO: switch to deflate compression
         // this should be configurable, use store in debug (because it would be
         // faster?), use deflate in release (because it would be smaller?)
-        self.zip
-            .start_file("project.json", SimpleFileOptions::default())?;
+        self.zip.start_file(
+            "project.json",
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
+        )?;
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
@@ -459,6 +476,7 @@ where T: Write + Seek
             config,
             stage_diagnostics,
             &broadcasts,
+            0,
         )?;
         let mut sprite_names: Vec<_> = project.sprites.keys().collect();
         sprite_names.sort();
@@ -473,6 +491,7 @@ where T: Write + Seek
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
                 &broadcasts,
+                layers[sprite_name],
             )?;
         }
         write!(self, "]")?; // targets
@@ -483,8 +502,10 @@ where T: Write + Seek
         write!(self, r#","vm":"0.2.0""#)?;
         write!(
             self,
-            r#","agent":"goboscript v{}""#,
-            env!("CARGO_PKG_VERSION")
+            r#","agent":"goboscript ({})""#,
+            option_env!("GIT_HASH")
+                .map(|hash| format!("commit {hash}"))
+                .unwrap_or_else(|| format!("v{}", env!("CARGO_PKG_VERSION")))
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
@@ -502,6 +523,7 @@ where T: Write + Seek
         config: &Config,
         d: D,
         broadcasts: &FxHashSet<SmolStr>,
+        layer_order: usize,
     ) -> io::Result<()> {
         for proc in sprite.procs.values() {
             if !sprite.used_procs.contains(&proc.name) {
@@ -596,10 +618,12 @@ where T: Write + Seek
             write!(self, "}}")?; // comments
         }
         write!(self, r#","broadcasts":{{"#)?;
-        let mut comma = false;
-        for broadcast in broadcasts {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+        if stage.is_none() {
+            let mut comma = false;
+            for broadcast in broadcasts {
+                write_comma_io(&mut self.zip, &mut comma)?;
+                write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+            }
         }
         write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;
@@ -764,10 +788,7 @@ where T: Write + Seek
             let volume = volume.to_js_number();
             write!(self, r#","volume":{}"#, json!(volume))?;
         }
-        if let Some((layer_order, _)) = &sprite.layer_order {
-            let layer_order = (layer_order.to_js_number() as i64).max(1);
-            write!(self, r#","layerOrder":{}"#, json!(layer_order))?;
-        }
+        write!(self, r#","layerOrder":{}"#, layer_order)?;
         if !sprite.hidden {
             write!(self, r#","visible":true"#)?;
         } else {
@@ -786,17 +807,14 @@ where T: Write + Seek
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        let default = match default {
-            Some(value) => value.to_string(),
-            None => arcstr::literal!("0"),
-        };
+        let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
                 self,
                 "\"{}\":[\"\u{2601} {}\",{},true]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         } else {
             write!(
@@ -804,7 +822,7 @@ where T: Write + Seek
                 "\"{}\":[\"{}\",{}]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         }
     }
@@ -940,10 +958,10 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = match &list.default {
+        let data: Vec<Value> = match &list.default {
             Some(ListDefault::Values(values)) => values
                 .into_iter()
-                .map(|v| s.evaluate_const_expr(d, v).to_string())
+                .map(|v| s.evaluate_const_expr(d, v))
                 .collect(),
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,

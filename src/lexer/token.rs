@@ -234,8 +234,6 @@ pub enum Token {
     SetRotationStyleAllAround,
     #[token("set_rotation_style_do_not_rotate")]
     SetRotationStyleDoNotRotate,
-    #[token("set_layer_order")]
-    SetLayerOrder,
     #[token("var")]
     Var,
 }
@@ -352,7 +350,6 @@ impl Display for Token {
             Token::SetRotationStyleLeftRight => write!(f, "set_rotation_style_left_right"),
             Token::SetRotationStyleAllAround => write!(f, "set_rotation_style_all_around"),
             Token::SetRotationStyleDoNotRotate => write!(f, "set_rotation_style_do_not_rotate"),
-            Token::SetLayerOrder => write!(f, "set_layer_order"),
             Token::Var => write!(f, "var"),
         }
     }
