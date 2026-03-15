@@ -14,7 +14,6 @@ pub struct Mutation<'a> {
     args: &'a Vec<(SmolStr, NodeID)>,
     warp: bool,
     is_call: bool,
-    compact: bool,
 }
 
 impl<'a> Mutation<'a> {
@@ -22,14 +21,12 @@ impl<'a> Mutation<'a> {
         name: SmolStr,
         args: &'a Vec<(SmolStr, NodeID)>,
         warp: bool,
-        compact: bool,
     ) -> Self {
         Self {
             name,
             args,
             warp,
             is_call: false,
-            compact,
         }
     }
 
@@ -37,14 +34,12 @@ impl<'a> Mutation<'a> {
         name: SmolStr,
         args: &'a Vec<(SmolStr, NodeID)>,
         warp: bool,
-        compact: bool,
     ) -> Self {
         Self {
             name,
             args,
             warp,
             is_call: true,
-            compact,
         }
     }
 }
@@ -53,12 +48,16 @@ impl Display for Mutation<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, r#","mutation":{{"tagName":"mutation","children":[]"#)?;
         write!(f, r#","warp":"{}""#, self.warp)?;
+        // For selector-style procs, proc.name is already the full proccode
+        // (e.g. "foo %s bar %n").  For old-style procs (plain names), append
+        // " %s" per arg to reconstruct the Scratch proccode.
+        let is_selector = self.name.contains("%s")
+            || self.name.contains("%n")
+            || self.name.contains("%b");
         write!(f, r#","proccode":"{}"#, self.name)?;
-        for (arg_name, _) in self.args {
-            if self.compact {
+        if !is_selector {
+            for _ in self.args {
                 write!(f, " %s")?;
-            } else {
-                write!(f, " {arg_name}: %s")?;
             }
         }
         write!(f, "\"")?;

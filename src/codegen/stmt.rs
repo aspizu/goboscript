@@ -431,7 +431,6 @@ where T: Write + Seek
                 name,
                 span,
                 args,
-                true,
             );
         }
         let Some(proc) = s.sprite.procs.get(name) else {
@@ -449,7 +448,6 @@ where T: Write + Seek
                     name,
                     span,
                     args,
-                    true,
                 );
             }
             if name == "error" {
@@ -466,7 +464,6 @@ where T: Write + Seek
                     name,
                     span,
                     args,
-                    true,
                 );
             }
             if name == "warn" {
@@ -483,14 +480,13 @@ where T: Write + Seek
                     name,
                     span,
                     args,
-                    true,
                 );
             }
             d.report(DiagnosticKind::UnrecognizedProcedure(name.clone()), span);
             // Close the block that begin_node already opened, to keep JSON valid.
             let dummy_args: Vec<(SmolStr, NodeID)> = Vec::new();
             self.write_all(b",\"inputs\":{}")?;
-            write!(self, "{}", Mutation::call(name.clone(), &dummy_args, false, true))?;
+            write!(self, "{}", Mutation::call(name.clone(), &dummy_args, false))?;
             self.end_obj()?; // node
             return Ok(());
         };
@@ -507,7 +503,6 @@ where T: Write + Seek
             name,
             span,
             args,
-            false,
         )
     }
 
@@ -521,7 +516,6 @@ where T: Write + Seek
         name: &SmolStr,
         span: &Span,
         args: &[Expr],
-        compact: bool,
     ) -> io::Result<()> {
         if signature.len() != args.len() {
             d.report(
@@ -605,7 +599,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::call(proc.name.clone(), &qualified_args, proc.warp, compact)
+            Mutation::call(proc.name.clone(), &qualified_args, proc.warp)
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {

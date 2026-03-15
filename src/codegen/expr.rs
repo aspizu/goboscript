@@ -450,7 +450,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::call(func.name.clone(), &qualified_args, true, false)
+            Mutation::call(func.name.clone(), &qualified_args, true)
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {

@@ -154,6 +154,12 @@ pub enum Token {
     FloorDiv,
     #[token("%")]
     Percent,
+    #[token("%s")]
+    ArgTypeS,
+    #[token("%n")]
+    ArgTypeN,
+    #[token("%b")]
+    ArgTypeB,
     #[token(";")]
     Semicolon,
     #[token(":")]
@@ -315,6 +321,9 @@ impl Display for Token {
             Token::Slash => write!(f, "/"),
             Token::FloorDiv => write!(f, "//"),
             Token::Percent => write!(f, "%"),
+            Token::ArgTypeS => write!(f, "%s"),
+            Token::ArgTypeN => write!(f, "%n"),
+            Token::ArgTypeB => write!(f, "%b"),
             Token::Semicolon => write!(f, ";"),
             Token::Colon => write!(f, ":"),
             Token::Length => write!(f, "length"),

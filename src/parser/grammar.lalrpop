@@ -49,6 +49,69 @@ Declr: () = {
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b, diagnostics);
     },
+    // Selector-style proc: proc name %type arg1 text %type arg2 ... { body }
+    // The first token after the proc name must be a %type token to avoid
+    // ambiguity with the old-style (which starts with a NAME arg or "{").
+    <w:NOWARP?> PROC <l:@L> <head:NAME> <r:@R>
+        <ft:ArgType> <fl:@L> <fa:NAME> <fr:@R>
+        <rest:SelectorDefSeg*>
+        <b:Stmts> => {
+        let mut proccode = head.to_string();
+        proccode.push(' ');
+        proccode.push_str(&ft);
+        let mut args = vec![Arg::new(fa, fl..fr, Type::Value, None)];
+        for (seg, arg_opt) in rest {
+            proccode.push(' ');
+            proccode.push_str(&seg);
+            if let Some(arg) = arg_opt {
+                args.push(arg);
+            }
+        }
+        sprite.add_proc(Proc::new(proccode.into(), l..r, w.is_none()), args, b, diagnostics);
+    },
+    // Selector-style proc with no leading text (proccode starts with %type).
+    // E.g.:  proc %s arg1 text %n arg2 { body }
+    <w:NOWARP?> PROC <l:@L> <r:@R>
+        <ft:ArgType> <fl:@L> <fa:NAME> <fr:@R>
+        <rest:SelectorDefSeg*>
+        <b:Stmts> => {
+        let mut proccode = ft.to_string();
+        let mut args = vec![Arg::new(fa, fl..fr, Type::Value, None)];
+        for (seg, arg_opt) in rest {
+            proccode.push(' ');
+            proccode.push_str(&seg);
+            if let Some(arg) = arg_opt {
+                args.push(arg);
+            }
+        }
+        sprite.add_proc(Proc::new(proccode.into(), l..r, w.is_none()), args, b, diagnostics);
+    },
+    // String-label proc with args: proc "special name" %type arg [segs...] { body }
+    // Handles proccodes containing special characters (|, (, ), =, etc.)
+    <w:NOWARP?> PROC <l:@L> <r:@R>
+        <head:STR>
+        <ft:ArgType> <fl:@L> <fa:NAME> <fr:@R>
+        <rest:SelectorDefSeg*>
+        <b:Stmts> => {
+        let mut proccode = head.to_string();
+        proccode.push(' ');
+        proccode.push_str(&ft);
+        let mut args = vec![Arg::new(fa, fl..fr, Type::Value, None)];
+        for (seg, arg_opt) in rest {
+            proccode.push(' ');
+            proccode.push_str(&seg);
+            if let Some(arg) = arg_opt {
+                args.push(arg);
+            }
+        }
+        sprite.add_proc(Proc::new(proccode.into(), l..r, w.is_none()), args, b, diagnostics);
+    },
+    // 0-arg string-label proc: proc "special name" { body }
+    <w:NOWARP?> PROC <l:@L> <r:@R>
+        <head:STR>
+        <b:Stmts> => {
+        sprite.add_proc(Proc::new(head, l..r, w.is_none()), vec![], b, diagnostics);
+    },
     FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
         sprite.add_func(Func::new(n.clone(), l..r, t), a, b, diagnostics);
     },
@@ -332,6 +395,43 @@ Stmt: Stmt = {
             None => Stmt::ProcCall { name, span: l..r, args, kwargs },
         }
     },
+    // Selector-style call: name %type val1 text %type val2 ... ;
+    // Unambiguous because the token immediately after `name` is %type,
+    // which cannot start a Kwarg expression in the old-style call.
+    <l:@L> <head:NAME> <r:@R>
+        <ft:ArgType> <fv:Expr>
+        <rest:SelectorCallSeg*>
+        ";" => {
+        let mut proccode = head.to_string();
+        proccode.push(' ');
+        proccode.push_str(&ft);
+        let mut args = vec![fv];
+        for (seg, val_opt) in rest {
+            proccode.push(' ');
+            proccode.push_str(&seg);
+            if let Some(val) = val_opt {
+                args.push(val);
+            }
+        }
+        Stmt::ProcCall { name: proccode.into(), span: l..r, args, kwargs: Default::default() }
+    },
+    // Selector-style call where proccode starts with %type (no leading text label).
+    // E.g. `%s "hello" at %n 10;` for proccode "%s at %n".
+    <l:@L> <r:@R>
+        <ft:ArgType> <fv:Expr>
+        <rest:SelectorCallSeg*>
+        ";" => {
+        let mut proccode = ft.to_string();
+        let mut args = vec![fv];
+        for (seg, val_opt) in rest {
+            proccode.push(' ');
+            proccode.push_str(&seg);
+            if let Some(val) = val_opt {
+                args.push(val);
+            }
+        }
+        Stmt::ProcCall { name: proccode.into(), span: l..r, args, kwargs: Default::default() }
+    },
     <l:@L> SET_X <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetX, span: l..r, args: vec![arg], kwargs: Default::default() },
     <l:@L> SET_Y <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetY, span: l..r, args: vec![arg], kwargs: Default::default() },
     <l:@L> SET_SIZE <r:@R> <arg:Expr> ";" => Stmt::Block { block: Block::SetSize, span: l..r, args: vec![arg], kwargs: Default::default() },
@@ -341,6 +441,28 @@ Stmt: Stmt = {
     <l:@L> SET_ROTATION_STYLE_LEFT_RIGHT <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleLeftRight, span: l..r, args: vec![], kwargs: Default::default() },
     <l:@L> SET_ROTATION_STYLE_ALL_AROUND <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleAllAround, span: l..r, args: vec![], kwargs: Default::default() },
     <l:@L> SET_ROTATION_STYLE_DO_NOT_ROTATE <r:@R> ";" => Stmt::Block { block: Block::SetRotationStyleDoNotRotate, span: l..r, args: vec![], kwargs: Default::default() },
+    // String-label call with args: "special name" %type val [segs...] ;
+    <l:@L> <head:STR> <r:@R>
+        <ft:ArgType> <fv:Expr>
+        <rest:SelectorCallSeg*>
+        ";" => {
+        let mut proccode = head.to_string();
+        proccode.push(' ');
+        proccode.push_str(&ft);
+        let mut args = vec![fv];
+        for (seg, val_opt) in rest {
+            proccode.push(' ');
+            proccode.push_str(&seg);
+            if let Some(val) = val_opt {
+                args.push(val);
+            }
+        }
+        Stmt::ProcCall { name: proccode.into(), span: l..r, args, kwargs: Default::default() }
+    },
+    // 0-arg string-label call: "special name" ;
+    <l:@L> <head:STR> <r:@R> ";" => {
+        Stmt::ProcCall { name: head, span: l..r, args: vec![], kwargs: Default::default() }
+    },
 }
 
 Elif: Stmt = {
@@ -602,6 +724,33 @@ Comma<T>: Vec<T> = {
     }
 }
 
+// Returns the Scratch arg-type placeholder string ("%s", "%n", or "%b").
+ArgType: SmolStr = {
+    ARG_TYPE_S => "%s".into(),
+    ARG_TYPE_N => "%n".into(),
+    ARG_TYPE_B => "%b".into(),
+}
+
+// One segment of a selector-style proc definition.
+// Text label:  (text,  None)
+// Arg slot:    (atype, Some(arg))
+SelectorDefSeg: (SmolStr, Option<Arg>) = {
+    <n:NAME>                                  => (n, None),
+    <n:NAME> ":"                              => (format!("{}:", n).into(), None),
+    <s:STR>                                   => (s, None),
+    <t:ArgType> <l:@L> <n:NAME> <r:@R>       => (t, Some(Arg::new(n, l..r, Type::Value, None))),
+}
+
+// One segment of a selector-style proc call.
+// Text label:  (text,  None)
+// Arg value:   (atype, Some(expr))
+SelectorCallSeg: (SmolStr, Option<Expr>) = {
+    <n:NAME>                => (n, None),
+    <n:NAME> ":"            => (format!("{}:", n).into(), None),
+    <s:STR>                 => (s, None),
+    <t:ArgType> <val:Expr>  => (t, Some(val)),
+}
+
 extern {
     type Location = usize;
     type Error = Diagnostic;
@@ -714,5 +863,8 @@ extern {
         SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
         SET_DRAGGABLE => Token::SetDraggable,
+        ARG_TYPE_S     => Token::ArgTypeS,
+        ARG_TYPE_N     => Token::ArgTypeN,
+        ARG_TYPE_B     => Token::ArgTypeB,
     }
 }

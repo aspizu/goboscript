@@ -1179,7 +1179,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp, false)
+            Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp)
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, definition, next_id, Some(this_id))
@@ -1253,7 +1253,7 @@ where T: Write + Seek
         write!(
             self,
             "{}",
-            Mutation::prototype(func.name.clone(), &qualified_args, true, false)
+            Mutation::prototype(func.name.clone(), &qualified_args, true)
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, definition, next_id, Some(this_id))
