@@ -28,6 +28,7 @@ pub enum Token {
     #[regex(r#"@"([^"\\]|\\["\\/bfnrt]|\\u[0-9a-zA-Z]{4})*""#, raw_name)]
     Name(SmolStr),
     #[regex(r"\$[_a-zA-Z0-9]+", arg)]
+    #[regex(r#"\$@"([^"\\]|\\["\\/bfnrt]|\\u[0-9a-zA-Z]{4})*""#, raw_arg)]
     Arg(SmolStr),
     #[regex(r"0b[0-1][_0-1]*", bin)]
     Bin(i64),

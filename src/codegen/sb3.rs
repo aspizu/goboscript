@@ -794,19 +794,20 @@ where T: Write + Seek
             None => arcstr::literal!("0"),
         };
         if is_cloud {
+            let cloud_name = format!("\u{2601} {}", var_name);
             write!(
                 self,
-                "\"{}\":[\"\u{2601} {}\",{},true]",
-                var_name,
-                var_name,
+                "{}:[{},{},true]",
+                json!(var_name),
+                json!(cloud_name),
                 json!(*default)
             )
         } else {
             write!(
                 self,
-                "\"{}\":[\"{}\",{}]",
-                var_name,
-                var_name,
+                "{}:[{},{}]",
+                json!(var_name),
+                json!(var_name),
                 json!(*default)
             )
         }
@@ -960,7 +961,7 @@ where T: Write + Seek
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.zip, comma)?;
-                write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(data))?;
+                write!(self, r#"{}:[{},{}]"#, json!(&*list.name), json!(&*list.name), json!(data))?;
             }
             Type::Struct {
                 name: type_name,
@@ -981,9 +982,9 @@ where T: Write + Seek
                         .collect::<Vec<_>>();
                     write!(
                         self,
-                        r#""{}":["{}",{}]"#,
-                        qualified_list_name,
-                        qualified_list_name,
+                        r#"{}:[{},{}]"#,
+                        json!(&*qualified_list_name),
+                        json!(&*qualified_list_name),
                         json!(column)
                     )?;
                 }

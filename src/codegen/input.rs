@@ -202,7 +202,11 @@ where T: Write + Seek
                 self.block_count += 1;
                 write!(self, "[3,[13,{},{}],", json!(*name), json!(*name))?;
             }
-            None => {}
+            None => {
+                // Variable not found — emit a literal empty string as fallback
+                // (the outer [3,...] wrapper was never written, so don't call shadow_input)
+                return write!(self, r#"[10,""]"#);
+            }
         }
         self.shadow_input(input_name, shadow_id)
     }

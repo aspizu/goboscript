@@ -20,6 +20,11 @@ pub fn arg(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(&lex.slice()[1..])
 }
 
+pub fn raw_arg(lex: &mut Lexer<Token>) -> SmolStr {
+    // slice is $@"...", skip the leading $@ then parse as JSON string
+    SmolStr::from(serde_json::from_str::<String>(&lex.slice()[2..]).unwrap())
+}
+
 pub fn bin(lex: &mut Lexer<Token>) -> i64 {
     let mut neg = false;
     let mut value = 0;
