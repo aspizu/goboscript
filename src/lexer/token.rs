@@ -25,6 +25,7 @@ pub enum Token {
     #[token("\\")]
     Backslash,
     #[regex(r"[_a-zA-Z][_a-zA-Z0-9]*", name)]
+    #[regex(r#"@"([^"\\]|\\["\\/bfnrt]|\\u[0-9a-zA-Z]{4})*""#, raw_name)]
     Name(SmolStr),
     #[regex(r"\$[_a-zA-Z0-9]+", arg)]
     Arg(SmolStr),
@@ -238,6 +239,8 @@ pub enum Token {
     SetLayerOrder,
     #[token("var")]
     Var,
+    #[token("set_draggable")]
+    SetDraggable,
 }
 
 impl Display for Token {
@@ -354,6 +357,7 @@ impl Display for Token {
             Token::SetRotationStyleDoNotRotate => write!(f, "set_rotation_style_do_not_rotate"),
             Token::SetLayerOrder => write!(f, "set_layer_order"),
             Token::Var => write!(f, "var"),
+            Token::SetDraggable => write!(f, "set_draggable"),
         }
     }
 }

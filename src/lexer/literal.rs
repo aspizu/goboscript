@@ -7,6 +7,11 @@ pub fn name(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(lex.slice())
 }
 
+pub fn raw_name(lex: &mut Lexer<Token>) -> SmolStr {
+    // slice is @"...", skip the leading @ then parse as JSON string
+    SmolStr::from(serde_json::from_str::<String>(&lex.slice()[1..]).unwrap())
+}
+
 pub fn string(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(serde_json::from_str::<'_, String>(lex.slice()).unwrap())
 }

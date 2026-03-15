@@ -16,6 +16,9 @@ Declr: () = {
     HIDE ";" => {
         sprite.hidden = true;
     },
+    SET_DRAGGABLE ";" => {
+        sprite.draggable = true;
+    },
     SET_X <x:Value> => {
         sprite.x_position = Some(x);
     },
@@ -100,8 +103,9 @@ EnumVariant: EnumVariant = {
 }
 
 Costume: () = {
-    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
-        sprite.costumes.push(Costume::new(path, alias, l..r));
+    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> <rc:("(" <Value> "," <Value> ")")?> => {
+        let rotation_center = rc.map(|(x, y)| (x.0.to_js_number(), y.0.to_js_number()));
+        sprite.costumes.push(Costume::new(path, alias, rotation_center, l..r));
     }
 }
 
@@ -709,5 +713,6 @@ extern {
         SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
         SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
+        SET_DRAGGABLE => Token::SetDraggable,
     }
 }

@@ -103,6 +103,7 @@ fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
                 name: format!("{suffix}{ch}").into(),
                 path: costume.path.clone(),
                 span: costume.span.clone(),
+                rotation_center: None,
             }));
         } else if costume.path.contains('*') {
             let mut costumes: Vec<Costume> = glob(input.join(&*costume.path).to_str().unwrap())
@@ -112,6 +113,7 @@ fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
                     name: path.file_stem().unwrap().to_string_lossy().into(),
                     path: path.to_string_lossy().into(),
                     span: costume.span.clone(),
+                    rotation_center: None,
                 })
                 .collect();
             costumes.sort_by(|a, b| a.name.cmp(&b.name));

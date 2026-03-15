@@ -773,6 +773,9 @@ where T: Write + Seek
         } else {
             write!(self, r#","visible":false"#)?;
         }
+        if sprite.draggable {
+            write!(self, r#","draggable":true"#)?;
+        }
         write!(self, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
         write!(self, "}}")?; // sprite
         Ok(())
@@ -1022,7 +1025,7 @@ where T: Write + Seek
                 Ok(hash)
             })?;
         let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
-        self.costume_entry(config, &costume.name, &hash, extension)
+        self.costume_entry(config, &costume.name, &hash, extension, costume.rotation_center)
     }
 
     pub fn costume_entry(
@@ -1031,6 +1034,7 @@ where T: Write + Seek
         name: &str,
         hash: &str,
         extension: &str,
+        rotation_center: Option<(f64, f64)>,
     ) -> io::Result<()> {
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(name))?;
@@ -1044,6 +1048,10 @@ where T: Write + Seek
         }
         write!(self, r#","dataFormat":"{extension}""#)?;
         write!(self, r#","md5ext":"{hash}.{extension}""#)?;
+        if let Some((x, y)) = rotation_center {
+            write!(self, r#","rotationCenterX":{}"#, json!(x))?;
+            write!(self, r#","rotationCenterY":{}"#, json!(y))?;
+        }
         write!(self, "}}") // costume
     }
 

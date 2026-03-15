@@ -13,10 +13,11 @@ pub struct Costume {
     pub name: SmolStr,
     pub path: SmolStr,
     pub span: Span,
+    pub rotation_center: Option<(f64, f64)>,
 }
 
 impl Costume {
-    pub fn new(path: SmolStr, alias: Option<SmolStr>, span: Span) -> Self {
+    pub fn new(path: SmolStr, alias: Option<SmolStr>, rotation_center: Option<(f64, f64)>, span: Span) -> Self {
         let name = alias.unwrap_or_else(|| {
             Path::new(&*path)
                 .file_stem()
@@ -25,6 +26,6 @@ impl Costume {
                 .unwrap()
                 .into()
         });
-        Self { name, path, span }
+        Self { name, path, span, rotation_center }
     }
 }
