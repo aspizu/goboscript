@@ -8,6 +8,10 @@ use std::{
     rc::Rc,
 };
 
+use base64::{
+    prelude::BASE64_URL_SAFE,
+    Engine,
+};
 use fxhash::{
     FxHashMap,
     FxHashSet,
@@ -53,7 +57,7 @@ impl AssetObjectStore {
     pub fn load(&mut self, asset: &Asset, d: D) -> &AssetObject {
         self.store.entry(asset.path.clone()).or_insert_with(|| {
             let mut fs = self.fs.borrow_mut();
-            let content = match fs.read_to_vec(&self.input.join(&*asset.path)) {
+            let mut content = match fs.read_to_vec(&self.input.join(&*asset.path)) {
                 Ok(content) => content,
                 Err(error) => {
                     d.report_io_error(
@@ -64,10 +68,16 @@ impl AssetObjectStore {
                     return Default::default();
                 }
             };
+            let mut extension = asset.path.rsplit_once('.').unwrap_or_default().1.to_owned();
+            if let Some(feat) = &asset.feature {
+                if feat == "hq" {
+                    feature_hq(&mut extension, &mut content).unwrap();
+                }
+            }
+
             let mut hasher = Md5::new();
             hasher.update(&content);
             let hash = format!("{:x}", hasher.finalize()).to_string();
-            let extension = asset.path.rsplit_once('.').unwrap_or_default().1.to_owned();
             AssetObject {
                 hash,
                 content,
@@ -99,4 +109,20 @@ where T: io::Write + io::Seek
         }
         Ok(())
     }
+}
+
+fn feature_hq(extension: &mut String, file: &mut Vec<u8>) -> io::Result<()> {
+    let b64 = BASE64_URL_SAFE.encode(file.as_slice());
+    file.clear();
+    file.extend(
+        br#"<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480" height="360" viewBox="0 0 480 360">"#,
+    );
+    write!(
+        file,
+        r#"<image width="480" height="360" xlink:href="data:image/{};base64,{}"/>"#,
+        extension, b64
+    )?;
+    file.extend(br#"</svg>"#);
+    *extension = "svg".to_owned();
+    Ok(())
 }
