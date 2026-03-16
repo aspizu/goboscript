@@ -56,6 +56,10 @@ pub enum Token {
     Return,
     #[token("nowarp")]
     NoWarp,
+    #[token("proc!")]
+    ProcBang,
+    #[token("call!")]
+    CallBang,
     #[token("on")]
     On,
     #[token("onflag")]
@@ -274,6 +278,8 @@ impl Display for Token {
             Token::Func => write!(f, "func"),
             Token::Return => write!(f, "return"),
             Token::NoWarp => write!(f, "nowarp"),
+            Token::ProcBang => write!(f, "proc!"),
+            Token::CallBang => write!(f, "call!"),
             Token::On => write!(f, "on"),
             Token::OnFlag => write!(f, "onflag"),
             Token::OnKey => write!(f, "onkey"),

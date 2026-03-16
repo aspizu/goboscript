@@ -49,68 +49,20 @@ Declr: () = {
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b, diagnostics);
     },
-    // Selector-style proc: proc name %type arg1 text %type arg2 ... { body }
-    // The first token after the proc name must be a %type token to avoid
-    // ambiguity with the old-style (which starts with a NAME arg or "{").
-    <w:NOWARP?> PROC <l:@L> <head:NAME> <r:@R>
-        <ft:ArgType> <fl:@L> <fa:NAME> <fr:@R>
-        <rest:SelectorDefSeg*>
-        <b:Stmts> => {
-        let mut proccode = head.to_string();
-        proccode.push(' ');
-        proccode.push_str(&ft);
-        let mut args = vec![Arg::new(fa, fl..fr, Type::Value, None)];
-        for (seg, arg_opt) in rest {
-            proccode.push(' ');
+    // Free-form proc definition: proc! word1 word2 %n argname word3 %s argname2 ... { body }
+    // All tokens (including keywords) before '{' are either text labels or '%type name' arg slots.
+    // Terminated unambiguously by '{', so any keyword token is safe as a text label here.
+    <w:NOWARP?> PROC_BANG <l:@L> <segs:FreeFormDefSeg*> <r:@R> <b:Stmts> => {
+        let mut proccode = String::new();
+        let mut args = vec![];
+        for (i, (seg, arg_opt)) in segs.into_iter().enumerate() {
+            if i > 0 { proccode.push(' '); }
             proccode.push_str(&seg);
             if let Some(arg) = arg_opt {
                 args.push(arg);
             }
         }
         sprite.add_proc(Proc::new(proccode.into(), l..r, w.is_none()), args, b, diagnostics);
-    },
-    // Selector-style proc with no leading text (proccode starts with %type).
-    // E.g.:  proc %s arg1 text %n arg2 { body }
-    <w:NOWARP?> PROC <l:@L> <r:@R>
-        <ft:ArgType> <fl:@L> <fa:NAME> <fr:@R>
-        <rest:SelectorDefSeg*>
-        <b:Stmts> => {
-        let mut proccode = ft.to_string();
-        let mut args = vec![Arg::new(fa, fl..fr, Type::Value, None)];
-        for (seg, arg_opt) in rest {
-            proccode.push(' ');
-            proccode.push_str(&seg);
-            if let Some(arg) = arg_opt {
-                args.push(arg);
-            }
-        }
-        sprite.add_proc(Proc::new(proccode.into(), l..r, w.is_none()), args, b, diagnostics);
-    },
-    // String-label proc with args: proc "special name" %type arg [segs...] { body }
-    // Handles proccodes containing special characters (|, (, ), =, etc.)
-    <w:NOWARP?> PROC <l:@L> <r:@R>
-        <head:STR>
-        <ft:ArgType> <fl:@L> <fa:NAME> <fr:@R>
-        <rest:SelectorDefSeg*>
-        <b:Stmts> => {
-        let mut proccode = head.to_string();
-        proccode.push(' ');
-        proccode.push_str(&ft);
-        let mut args = vec![Arg::new(fa, fl..fr, Type::Value, None)];
-        for (seg, arg_opt) in rest {
-            proccode.push(' ');
-            proccode.push_str(&seg);
-            if let Some(arg) = arg_opt {
-                args.push(arg);
-            }
-        }
-        sprite.add_proc(Proc::new(proccode.into(), l..r, w.is_none()), args, b, diagnostics);
-    },
-    // 0-arg string-label proc: proc "special name" { body }
-    <w:NOWARP?> PROC <l:@L> <r:@R>
-        <head:STR>
-        <b:Stmts> => {
-        sprite.add_proc(Proc::new(head, l..r, w.is_none()), vec![], b, diagnostics);
     },
     FUNC <l:@L> <n:NAME> <r:@R> "(" <a:Comma<Arg>> ")" <t:Type> <b:Stmts> => {
         sprite.add_func(Func::new(n.clone(), l..r, t), a, b, diagnostics);
@@ -474,6 +426,21 @@ Stmt: Stmt = {
     <l:@L> <head:STR> <r:@R> ";" => {
         Stmt::ProcCall { name: head, span: l..r, args: vec![], kwargs: Default::default() }
     },
+    // Free-form call: call! word1 word2 %n val word3 %s val2 ... ;
+    // All non-operator keyword tokens can appear as text labels without quoting.
+    // Operator keywords (and/or/not/length/etc.) between arg slots still need "..." quoting.
+    <l:@L> CALL_BANG <r:@R> <segs:SelectorCallSeg*> ";" => {
+        let mut proccode = String::new();
+        let mut args = vec![];
+        for (i, (seg, val_opt)) in segs.into_iter().enumerate() {
+            if i > 0 { proccode.push(' '); }
+            proccode.push_str(&seg);
+            if let Some(val) = val_opt {
+                args.push(val);
+            }
+        }
+        Stmt::ProcCall { name: proccode.into(), span: l..r, args, kwargs: Default::default() }
+    },
 }
 
 Elif: Stmt = {
@@ -742,24 +709,107 @@ ArgType: SmolStr = {
     ARG_TYPE_B => "%b".into(),
 }
 
-// One segment of a selector-style proc definition.
-// Text label:  (text,  None)
-// Arg slot:    (atype, Some(arg))
-SelectorDefSeg: (SmolStr, Option<Arg>) = {
-    <n:NAME>                                  => (n, None),
-    <n:NAME> ":"                              => (format!("{}:", n).into(), None),
-    <s:STR>                                   => (s, None),
-    <t:ArgType> <l:@L> <n:NAME> <r:@R>       => (t, Some(Arg::new(n, l..r, Type::Value, None))),
+// Non-operator keyword tokens that are safe as text labels in call contexts.
+// Operator keywords (and/or/not/in/length/round/abs/floor/ceil/sqrt/sin/cos/tan/
+// asin/acos/atan/ln/log/antiln/antilog) are excluded because they extend Expr greedily,
+// causing shift-reduce conflicts when they appear between two arg slots.
+SelectorWord: SmolStr = {
+    <n:NAME>             => n,
+    TO                   => "to".into(),
+    AT                   => "at".into(),
+    ADD                  => "add".into(),
+    DELETE               => "delete".into(),
+    INSERT               => "insert".into(),
+    SHOW                 => "show".into(),
+    HIDE                 => "hide".into(),
+    AS                   => "as".into(),
+    LOCAL                => "local".into(),
+    RETURN               => "return".into(),
+    NOWARP               => "nowarp".into(),
+    ON                   => "on".into(),
+    ONFLAG               => "onflag".into(),
+    ONKEY                => "onkey".into(),
+    ONCLICK              => "onclick".into(),
+    ONSTAGECLICK         => "onstageclick".into(),
+    ONBACKDROP           => "onbackdrop".into(),
+    ONLOUDNESS           => "onloudness".into(),
+    ONTIMER              => "ontimer".into(),
+    ONCLONE              => "onclone".into(),
+    IF                   => "if".into(),
+    ELSE                 => "else".into(),
+    ELIF                 => "elif".into(),
+    UNTIL                => "until".into(),
+    FOREVER              => "forever".into(),
+    REPEAT               => "repeat".into(),
+    ENUM                 => "enum".into(),
+    STRUCT               => "struct".into(),
+    TRUE                 => "true".into(),
+    FALSE                => "false".into(),
+    LIST                 => "list".into(),
+    CLOUD                => "cloud".into(),
+    VAR                  => "var".into(),
+    COSTUMES             => "costumes".into(),
+    SOUNDS               => "sounds".into(),
+    PROC                 => "proc".into(),
+    FUNC                 => "func".into(),
+    SET_X                => "set_x".into(),
+    SET_Y                => "set_y".into(),
+    SET_SIZE             => "set_size".into(),
+    POINT_IN_DIRECTION   => "point_in_direction".into(),
+    SET_VOLUME           => "set_volume".into(),
+    SET_ROTATION_STYLE_LEFT_RIGHT    => "set_rotation_style_left_right".into(),
+    SET_ROTATION_STYLE_ALL_AROUND    => "set_rotation_style_all_around".into(),
+    SET_ROTATION_STYLE_DO_NOT_ROTATE => "set_rotation_style_do_not_rotate".into(),
+    SET_LAYER_ORDER      => "set_layer_order".into(),
+    SET_DRAGGABLE        => "set_draggable".into(),
 }
 
-// One segment of a selector-style proc call.
+// All keyword tokens including operators — safe in proc! definition context because
+// the body '{' unambiguously terminates the head (no Expr parsing conflict possible).
+FreeFormDefWord: SmolStr = {
+    SelectorWord,
+    AND      => "and".into(),
+    OR       => "or".into(),
+    NOT      => "not".into(),
+    IN       => "in".into(),
+    LENGTH   => "length".into(),
+    ROUND    => "round".into(),
+    ABS      => "abs".into(),
+    FLOOR    => "floor".into(),
+    CEIL     => "ceil".into(),
+    SQRT     => "sqrt".into(),
+    SIN      => "sin".into(),
+    COS      => "cos".into(),
+    TAN      => "tan".into(),
+    ASIN     => "asin".into(),
+    ACOS     => "acos".into(),
+    ATAN     => "atan".into(),
+    LN       => "ln".into(),
+    LOG      => "log".into(),
+    ANTILN   => "antiln".into(),
+    ANTILOG  => "antilog".into(),
+}
+
+// One segment of a proc! free-form definition.
+// Text label:  (text, None)
+// Arg slot:    (atype, Some(arg))
+FreeFormDefSeg: (SmolStr, Option<Arg>) = {
+    <w:FreeFormDefWord>             => (w, None),
+    <w:FreeFormDefWord> ":"         => (format!("{}:", w).into(), None),
+    <s:STR>                         => (s, None),
+    <t:ArgType> <l:@L> <n:NAME> <r:@R> => (t, Some(Arg::new(n, l..r, Type::Value, None))),
+}
+
+// One segment of a selector-style or call! proc call.
 // Text label:  (text,  None)
 // Arg value:   (atype, Some(expr))
+// Uses SelectorWord so non-operator keywords (to/at/add/show/hide/if/etc.)
+// can appear as text labels without quoting.
 SelectorCallSeg: (SmolStr, Option<Expr>) = {
-    <n:NAME>                => (n, None),
-    <n:NAME> ":"            => (format!("{}:", n).into(), None),
-    <s:STR>                 => (s, None),
-    <t:ArgType> <val:Expr>  => (t, Some(val)),
+    <n:SelectorWord>                => (n, None),
+    <n:SelectorWord> ":"            => (format!("{}:", n).into(), None),
+    <s:STR>                         => (s, None),
+    <t:ArgType> <val:Expr>          => (t, Some(val)),
 }
 
 extern {
@@ -781,6 +831,8 @@ extern {
         FUNC           => Token::Func,
         RETURN         => Token::Return,
         NOWARP         => Token::NoWarp,
+        PROC_BANG      => Token::ProcBang,
+        CALL_BANG      => Token::CallBang,
         ON             => Token::On,
         ONFLAG         => Token::OnFlag,
         ONKEY          => Token::OnKey,
