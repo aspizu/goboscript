@@ -58,3 +58,7 @@ If you want to validate some `.sb3` file, use:
 ```bash
 tools/sb3.py path/to/project.sb3 --validate # or `-v`
 ```
+
+## Conventions
+
+We use conventional commits. (See `git log --oneline` to understand this)
