@@ -5,10 +5,12 @@ use glob::glob;
 
 use crate::{
     ast::*,
-    codegen::sb3::{
-        BITMAP_FORMATS,
-        SOUND_FORMATS,
-        VECTOR_FORMATS,
+    codegen::{
+        costumes::{
+            BITMAP_FORMATS,
+            VECTOR_FORMATS,
+        },
+        sounds::SOUND_FORMATS,
     },
     misc::SmolStr,
 };

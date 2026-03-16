@@ -6,7 +6,10 @@ use std::{
         Seek,
         Write,
     },
-    path::Path,
+    path::{
+        Path,
+        PathBuf,
+    },
     rc::Rc,
 };
 
@@ -32,6 +35,7 @@ use crate::{
     ast::*,
     blocks::Block,
     codegen::{
+        assets::AssetObjectStore,
         datalists::read_list,
         mutation::Mutation,
     },
@@ -316,7 +320,6 @@ impl Stmt {
     }
 }
 
-#[derive(Debug)]
 pub struct Sb3<T>
 where T: Write + Seek
 {
@@ -324,10 +327,8 @@ where T: Write + Seek
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
-    pub costumes: FxHashMap<SmolStr, SmolStr>,
-    pub srcpkg_hash: Option<String>,
-    pub srcpkg: Option<Vec<u8>>,
     pub block_count: usize,
+    pub asset_object_store: AssetObjectStore,
 }
 
 impl<T> Write for Sb3<T>
@@ -345,41 +346,15 @@ where T: Write + Seek
 impl<T> Sb3<T>
 where T: Write + Seek
 {
-    pub fn new(file: T) -> Self {
+    pub fn new(file: T, fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
         Self {
             zip: ZipWriter::new(file),
             id: NodeIDFactory::new(),
             node_comma: false,
             inputs_comma: false,
-            costumes: FxHashMap::default(),
-            srcpkg_hash: None,
-            srcpkg: None,
             block_count: 0,
+            asset_object_store: AssetObjectStore::new(input, fs),
         }
-    }
-
-    fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
-        let mut fs = fs.borrow_mut();
-        let mut added = FxHashSet::default();
-        for (path, hash) in &self.costumes {
-            if added.contains(hash) {
-                continue;
-            }
-            added.insert(hash);
-            let (_, extension) = path.rsplit_once('.').unwrap();
-            self.zip
-                .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = fs.read_file(&input.join(&**path));
-            io::copy(&mut file?, &mut self.zip)?;
-        }
-        if self.srcpkg_hash.is_some() {
-            let hash = self.srcpkg_hash.take().unwrap();
-            let data = self.srcpkg.take().unwrap();
-            self.zip
-                .start_file(format!("{hash}.svg"), SimpleFileOptions::default())?;
-            self.zip.write_all(&data)?;
-        }
-        Ok(())
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
@@ -492,7 +467,7 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets(fs.clone(), input)?;
+        self.assets()?;
         Ok(())
     }
 
@@ -728,14 +703,14 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(config, fs.clone(), input, costume, d)?;
+            self.costume(config, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.sound(fs.clone(), input, sound, d)?;
+            self.sound(sound, d)?;
         }
         write!(self, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {

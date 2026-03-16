@@ -1,3 +1,4 @@
+pub mod assets;
 pub mod costumes;
 pub mod datalists;
 pub mod debug_info;
