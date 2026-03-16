@@ -64,6 +64,8 @@ pub enum Token {
     OnKey,
     #[token("onclick")]
     OnClick,
+    #[token("onstageclick")]
+    OnStageClick,
     #[token("onbackdrop")]
     OnBackdrop,
     #[token("onloudness")]
@@ -276,6 +278,7 @@ impl Display for Token {
             Token::OnFlag => write!(f, "onflag"),
             Token::OnKey => write!(f, "onkey"),
             Token::OnClick => write!(f, "onclick"),
+            Token::OnStageClick => write!(f, "onstageclick"),
             Token::OnBackdrop => write!(f, "onbackdrop"),
             Token::OnLoudness => write!(f, "onloudness"),
             Token::OnTimer => write!(f, "ontimer"),

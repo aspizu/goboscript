@@ -119,6 +119,7 @@ Declr: () = {
     <l:@L> ONFLAG <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnFlag.to_event(l..r, b)),
     <l:@L> ONKEY <r:@R> <kl:@L> <key:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnKey { key, span: kl..kr }.to_event(l..r, b)),
     <l:@L> ONCLICK <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClick.to_event(l..r, b)),
+    <l:@L> ONSTAGECLICK <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnStageClick.to_event(l..r, b)),
     <l:@L> ONBACKDROP <r:@R> <kl:@L> <backdrop:STR> <kr:@R> <b:Stmts> => sprite.events.push(EventKind::OnBackdrop { backdrop, span: kl..kr }.to_event(l..r, b)),
     <l:@L> ONLOUDNESS <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnLoudnessGt { value }.to_event(l..r, b)),
     <l:@L> ONTIMER <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
@@ -145,6 +146,16 @@ Declr: () = {
             span: l..r,
             type_: Type::Value,
             default: None,
+            is_cloud: true,
+            is_used: false,
+        });
+    },
+    CLOUD <l:@L> <name:NAME> <r:@R> "=" <default:ConstExpr> ";" => {
+        sprite.vars.insert(name.clone(), Var {
+            name,
+            span: l..r,
+            type_: Type::Value,
+            default: Some(default),
             is_cloud: true,
             is_used: false,
         });
@@ -774,6 +785,7 @@ extern {
         ONFLAG         => Token::OnFlag,
         ONKEY          => Token::OnKey,
         ONCLICK        => Token::OnClick,
+        ONSTAGECLICK   => Token::OnStageClick,
         ONBACKDROP     => Token::OnBackdrop,
         ONLOUDNESS     => Token::OnLoudness,
         ONTIMER        => Token::OnTimer,

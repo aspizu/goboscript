@@ -50,6 +50,10 @@ where T: Write + Seek
         self.end_obj() // node
     }
 
+    pub fn on_stage_click(&mut self, _s: S, _d: D, _this_id: NodeID) -> io::Result<()> {
+        self.end_obj() // node
+    }
+
     pub fn on_backdrop(
         &mut self,
         _s: S,

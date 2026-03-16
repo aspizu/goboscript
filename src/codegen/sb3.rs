@@ -1272,6 +1272,7 @@ where T: Write + Seek
             EventKind::OnFlag => self.on_flag(),
             EventKind::OnKey { key, span } => self.on_key(s, d, this_id, key, span),
             EventKind::OnClick => self.on_click(s, d, this_id),
+            EventKind::OnStageClick => self.on_stage_click(s, d, this_id),
             EventKind::OnBackdrop { backdrop, span } => {
                 self.on_backdrop(s, d, this_id, backdrop, span)
             }
