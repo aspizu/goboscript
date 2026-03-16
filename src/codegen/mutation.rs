@@ -54,13 +54,14 @@ impl Display for Mutation<'_> {
         let is_selector = self.name.contains("%s")
             || self.name.contains("%n")
             || self.name.contains("%b");
-        write!(f, r#","proccode":"{}"#, self.name)?;
+        let mut proccode = self.name.to_string();
         if !is_selector {
             for _ in self.args {
-                write!(f, " %s")?;
+                proccode.push_str(" %s");
             }
         }
-        write!(f, "\"")?;
+        // Use serde_json to correctly escape any special characters in the proccode.
+        write!(f, r#","proccode":{}"#, serde_json::to_string(&proccode).unwrap())?;
         write!(f, r#","argumentids":"["#)?;
         let mut comma = false;
         for (arg_name, _) in self.args {
