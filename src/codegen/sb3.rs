@@ -27,7 +27,6 @@ use zip::{
 };
 
 use super::{
-    costumes::CostumeWriter,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -333,7 +332,7 @@ where T: Write + Seek
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
-    pub costume_writer: CostumeWriter,
+    pub costumes: FxHashMap<SmolStr, SmolStr>,
     pub srcpkg_hash: Option<String>,
     pub srcpkg: Option<Vec<u8>>,
     pub block_count: usize,
@@ -360,7 +359,7 @@ where T: Write + Seek
             id: NodeIDFactory::new(),
             node_comma: false,
             inputs_comma: false,
-            costume_writer: CostumeWriter::new(),
+            costumes: FxHashMap::default(),
             srcpkg_hash: None,
             srcpkg: None,
             block_count: 0,
@@ -370,7 +369,7 @@ where T: Write + Seek
     fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
         let mut fs = fs.borrow_mut();
         let mut added = FxHashSet::default();
-        for (path, hash) in &self.costume_writer.costumes {
+        for (path, hash) in &self.costumes {
             if added.contains(hash) {
                 continue;
             }
@@ -384,14 +383,6 @@ where T: Write + Seek
         if self.srcpkg_hash.is_some() {
             let hash = self.srcpkg_hash.take().unwrap();
             let data = self.srcpkg.take().unwrap();
-            self.zip
-                .start_file(format!("{hash}.svg"), SimpleFileOptions::default())?;
-            self.zip.write_all(&data)?;
-        }
-        // Write HQ SVG wrappers for bitmap costumes.
-        let hq_keys: Vec<SmolStr> = self.costume_writer.hq_assets.keys().cloned().collect();
-        for hash in hq_keys {
-            let data = self.costume_writer.hq_assets.remove(&hash).unwrap();
             self.zip
                 .start_file(format!("{hash}.svg"), SimpleFileOptions::default())?;
             self.zip.write_all(&data)?;
@@ -1002,9 +993,43 @@ where T: Write + Seek
         costume: &Asset,
         d: D,
     ) -> io::Result<()> {
-        let json = self.costume_writer.costume(config, fs, input, costume, d)?;
-        self.write_all(json.as_bytes())?;
-        Ok(())
+        let path = input.join(&*costume.path);
+        let hash = self
+            .costumes
+            .get(&costume.path)
+            .cloned()
+            .map(Ok::<_, io::Error>)
+            .unwrap_or_else(|| {
+                let mut fs = fs.borrow_mut();
+                let mut file = match fs.read_file(&path) {
+                    Ok(file) => file,
+                    Err(error) => {
+                        d.report_io_error(
+                            error,
+                            Some("costume files are always relative to the project directory"),
+                            &costume.span,
+                        );
+                        return Ok(Default::default());
+                    }
+                };
+                let mut hasher = Md5::new();
+                io::copy(&mut file, &mut hasher)?;
+                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
+                self.costumes.insert(costume.path.clone(), hash.clone());
+                Ok(hash)
+            })?;
+        let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
+        let extension = extension.to_lowercase();
+        let extension = extension.as_str();
+        if !(BITMAP_FORMATS.contains(&extension) || VECTOR_FORMATS.contains(&extension)) {
+            d.report(
+                DiagnosticKind::InvalidCostumeFormat {
+                    extension: extension.into(),
+                },
+                &costume.span,
+            );
+        }
+        self.costume_entry(config, &costume.name, &hash, extension)
     }
 
     pub fn costume_entry(
@@ -1014,11 +1039,19 @@ where T: Write + Seek
         hash: &str,
         extension: &str,
     ) -> io::Result<()> {
-        let json = self
-            .costume_writer
-            .costume_entry(config, name, hash, extension)?;
-        self.write_all(json.as_bytes())?;
-        Ok(())
+        write!(self, "{{")?;
+        write!(self, r#""name":{}"#, json!(name))?;
+        write!(self, r#","assetId":"{hash}""#)?;
+        if BITMAP_FORMATS.contains(&extension) {
+            write!(
+                self,
+                r#","bitmapResolution":{}"#,
+                json!(config.bitmap_resolution.unwrap_or(1))
+            )?;
+        }
+        write!(self, r#","dataFormat":"{extension}""#)?;
+        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
+        write!(self, "}}") // costume
     }
 
     pub fn sound(
@@ -1030,7 +1063,6 @@ where T: Write + Seek
     ) -> io::Result<()> {
         let path = input.join(&*sound.path);
         let hash = self
-            .costume_writer
             .costumes
             .get(&sound.path)
             .cloned()
@@ -1051,9 +1083,7 @@ where T: Write + Seek
                 let mut hasher = Md5::new();
                 io::copy(&mut file, &mut hasher)?;
                 let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
-                self.costume_writer
-                    .costumes
-                    .insert(sound.path.clone(), hash.clone());
+                self.costumes.insert(sound.path.clone(), hash.clone());
                 Ok(hash)
             })?;
         let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
