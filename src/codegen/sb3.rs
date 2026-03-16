@@ -556,19 +556,6 @@ where T: Write + Seek
                 }
             }
         }
-        for enum_ in sprite.enums.values() {
-            if !enum_.is_used {
-                d.report(DiagnosticKind::UnusedEnum(enum_.name.clone()), &enum_.span);
-            }
-            for variant in &enum_.variants {
-                if !variant.is_used {
-                    d.report(
-                        DiagnosticKind::UnusedEnumVariant(variant.name.clone()),
-                        &variant.span,
-                    );
-                }
-            }
-        }
         let mut costumes = FxHashSet::default();
         for costume in &sprite.costumes {
             if costumes.contains(&costume.name) {

@@ -19,7 +19,6 @@ use crate::{
         Diagnostic,
         DiagnosticKind,
     },
-    misc::SmolStr,
     standard_library::StandardLibrary,
     vfs::VFS,
 };

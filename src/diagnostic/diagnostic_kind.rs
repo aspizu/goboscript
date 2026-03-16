@@ -94,13 +94,11 @@ pub enum DiagnosticKind {
     UnrecognizedKey(SmolStr),
     UnusedVariable(SmolStr),
     UnusedList(SmolStr),
-    UnusedEnum(SmolStr),
     UnusedStruct(SmolStr),
     UnusedProc(SmolStr),
     UnusedFunc(SmolStr),
     UnusedArg(SmolStr),
     UnusedStructField(SmolStr),
-    UnusedEnumVariant(SmolStr),
 }
 
 impl DiagnosticKind {
@@ -212,7 +210,6 @@ impl DiagnosticKind {
             DiagnosticKind::FollowedByUnreachableCode => "followed by unreachable code".to_string(),
             DiagnosticKind::UnusedVariable(name) => format!("unused variable {name}"),
             DiagnosticKind::UnusedList(name) => format!("unused list {name}"),
-            DiagnosticKind::UnusedEnum(name) => format!("unused enum {name}"),
             DiagnosticKind::UnusedStruct(name) => format!("unused struct {name}"),
             DiagnosticKind::UnusedProc(name) => format!("unused procedure {name}"),
             DiagnosticKind::UnusedFunc(name) => format!("unused function {name}"),
@@ -220,7 +217,6 @@ impl DiagnosticKind {
             DiagnosticKind::UnusedStructField(name) => {
                 format!("unused struct field {name} (never read)")
             }
-            DiagnosticKind::UnusedEnumVariant(name) => format!("unused enum variant {name}"),
             DiagnosticKind::NotStruct => "not a struct".to_string(),
             DiagnosticKind::StructDoesNotHaveField {
                 type_name,
@@ -345,8 +341,6 @@ impl DiagnosticKind {
         match self {
             DiagnosticKind::UnrecognizedArgument(name) => name.starts_with('_'),
             DiagnosticKind::UnusedArg(name) => name.starts_with('_'),
-            DiagnosticKind::UnusedEnum(name) => name.starts_with('_'),
-            DiagnosticKind::UnusedEnumVariant(name) => name.starts_with('_'),
             DiagnosticKind::UnusedList(name) => name.starts_with('_'),
             DiagnosticKind::UnusedProc(name) => name.starts_with('_'),
             DiagnosticKind::UnusedFunc(name) => name.starts_with('_'),
@@ -403,13 +397,11 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedKey(_)
             | DiagnosticKind::UnusedVariable(_)
             | DiagnosticKind::UnusedList(_)
-            | DiagnosticKind::UnusedEnum(_)
             | DiagnosticKind::UnusedStruct(_)
             | DiagnosticKind::UnusedProc(_)
             | DiagnosticKind::UnusedFunc(_)
             | DiagnosticKind::UnusedArg(_)
-            | DiagnosticKind::UnusedStructField(_)
-            | DiagnosticKind::UnusedEnumVariant(_) => Level::Warning,
+            | DiagnosticKind::UnusedStructField(_) => Level::Warning,
         }
     }
 }

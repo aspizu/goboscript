@@ -378,6 +378,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
             visit_expr(object, s, d);
         }
     }
+    transformations::apply(expr, |expr| transformations::enum_field_access(expr, s, d));
     transformations::apply(expr, transformations::minus);
     transformations::apply(expr, transformations::less_than_equal);
     transformations::apply(expr, transformations::greater_than_equal);
@@ -396,7 +397,6 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, transformations::bin_op);
     transformations::apply(expr, transformations::un_op);
     transformations::apply(expr, |expr| transformations::variable_field_access(expr, s));
-    transformations::apply(expr, |expr| transformations::enum_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::arg_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::list_field_access(expr, s));
     transformations::apply(expr, |expr| {
