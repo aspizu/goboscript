@@ -17,7 +17,7 @@
   <img alt="goboscript screenshot" src="docs/assets/og-image-light.webp" />
 </picture>
 
-![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1462182798210109505?style=flat&logo=discord&label=Discord)](https://discord.gg/mKQqsJ6UtK) ![image](https://shields.io/crates/l/goboscript)
+![Matrix](https://img.shields.io/matrix/goboscript%3Amatrix.org?logo=matrix&label=goboscript%3Amatrix.org) [![Discord](https://img.shields.io/discord/1462182798210109505?style=flat&logo=discord&label=Discord)](https://discord.gg/mKQqsJ6UtK) ![GitHub License](https://img.shields.io/github/license/aspizu/goboscript)
 
 goboscript is a text-based programming language that compiles to Scratch. Write
 Scratch projects in text, and compile it into a `.sb3` file -- which can be opened
