@@ -53,6 +53,10 @@ use crate::{
 
 const STAGE_NAME: &str = "Stage";
 
+pub const BITMAP_FORMATS: &[&str] = &["png", "bmp", "jpeg", "jpg", "gif"];
+pub const VECTOR_FORMATS: &[&str] = &["svg"];
+pub const SOUND_FORMATS: &[&str] = &["wav", "wave", "mp3"];
+
 #[derive(Debug, Copy, Clone)]
 pub struct S<'a> {
     pub stage: Option<&'a Sprite>,
@@ -1015,6 +1019,16 @@ where T: Write + Seek
                 Ok(hash)
             })?;
         let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
+        let extension = extension.to_lowercase();
+        let extension = extension.as_str();
+        if !(BITMAP_FORMATS.contains(&extension) || VECTOR_FORMATS.contains(&extension)) {
+            d.report(
+                DiagnosticKind::InvalidCostumeFormat {
+                    extension: extension.into(),
+                },
+                &costume.span,
+            );
+        }
         self.costume_entry(config, &costume.name, &hash, extension)
     }
 
@@ -1028,7 +1042,7 @@ where T: Write + Seek
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(name))?;
         write!(self, r#","assetId":"{hash}""#)?;
-        if extension == "png" || extension == "bmp" {
+        if BITMAP_FORMATS.contains(&extension) {
             write!(
                 self,
                 r#","bitmapResolution":{}"#,
@@ -1073,6 +1087,16 @@ where T: Write + Seek
                 Ok(hash)
             })?;
         let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
+        let extension = extension.to_lowercase();
+        let extension = extension.as_str();
+        if !SOUND_FORMATS.contains(&extension) {
+            d.report(
+                DiagnosticKind::InvalidSoundFormat {
+                    extension: extension.into(),
+                },
+                &sound.span,
+            );
+        }
         self.sound_entry(&sound.name, &hash, extension)
     }
 
@@ -1082,7 +1106,7 @@ where T: Write + Seek
         write!(self, r#","assetId":"{hash}""#)?;
         write!(self, r#","dataFormat":"{extension}""#)?;
         write!(self, r#","md5ext":"{hash}.{extension}""#)?;
-        write!(self, "}}") // costume
+        write!(self, "}}") // sound
     }
 
     pub fn proc(&mut self, s: S, d: D, proc: &Proc, definition: &[Stmt]) -> io::Result<()> {

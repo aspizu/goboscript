@@ -15,6 +15,11 @@ use crate::{
         Block,
         Repr,
     },
+    codegen::sb3::{
+        BITMAP_FORMATS,
+        SOUND_FORMATS,
+        VECTOR_FORMATS,
+    },
     lexer::token::Token,
     misc::SmolStr,
 };
@@ -50,6 +55,12 @@ pub enum DiagnosticKind {
     DuplicateBackdrop(SmolStr),
     InvalidCostumeName(SmolStr),
     InvalidBackdropName(SmolStr),
+    InvalidCostumeFormat {
+        extension: SmolStr,
+    },
+    InvalidSoundFormat {
+        extension: SmolStr,
+    },
     BlockArgsCountMismatch {
         block: Block,
         given: usize,
@@ -161,6 +172,12 @@ impl DiagnosticKind {
             DiagnosticKind::InvalidBackdropName(name) => {
                 format!("backdrop '{}' does not exist", name)
             }
+            DiagnosticKind::InvalidCostumeFormat { extension } => {
+                format!("invalid costume file format '{}'", extension)
+            }
+            DiagnosticKind::InvalidSoundFormat { extension } => {
+                format!("invalid sound file format '{}'", extension)
+            }
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(
                     "block {:?} expects {} arguments, but {} were given",
@@ -257,6 +274,14 @@ impl DiagnosticKind {
                 } else {
                     None
                 }
+            }
+            DiagnosticKind::InvalidCostumeFormat { .. } => Some(format!(
+                "allowed formats are: {}, {}",
+                BITMAP_FORMATS.join(", "),
+                VECTOR_FORMATS.join(", ")
+            )),
+            DiagnosticKind::InvalidSoundFormat { .. } => {
+                Some(format!("allowed formats are: {}", SOUND_FORMATS.join(", ")))
             }
             DiagnosticKind::UnrecognizedVariable(name) => {
                 let var_names: Vec<&str> = sprite.vars.keys().map(|s| s.as_str()).collect();
@@ -391,7 +416,9 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidCostumeName(_)
             | DiagnosticKind::DuplicateCostume(_)
             | DiagnosticKind::DuplicateBackdrop(_)
-            | DiagnosticKind::InvalidBackdropName(_) => Level::Error,
+            | DiagnosticKind::InvalidBackdropName(_)
+            | DiagnosticKind::InvalidCostumeFormat { .. }
+            | DiagnosticKind::InvalidSoundFormat { .. } => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)
