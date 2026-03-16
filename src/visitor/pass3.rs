@@ -76,6 +76,16 @@ fn visit_stmt(stmt: &Stmt, s: &mut S) {
             visit_expr(cond, s);
             visit_stmts(body, s);
         }
+        Stmt::For {
+            init,
+            cond,
+            inc: _,
+            body,
+        } => {
+            visit_stmt(init, s);
+            visit_expr(cond, s);
+            visit_stmts(body, s);
+        }
         Stmt::SetVar {
             name: _,
             value,

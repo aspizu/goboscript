@@ -110,6 +110,29 @@ Sound: () = {
 
 Stmts: Vec<Stmt> = "{" <(<Stmt> ";"*)*> "}";
 
+ForInit: Stmt = {
+    <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> => {
+        Stmt::SetVar {
+            name: Name::Name { name, span: l..r },
+            value,
+            type_,
+            is_local: false,
+            is_cloud: false,
+        }
+    },
+    <l:@L> <name:NAME> <r:@R> "++" => Stmt::increment(Name::Name { name, span: l..r }),
+    <l:@L> <name:NAME> <r:@R> "--" => Stmt::decrement(Name::Name { name, span: l..r }),
+    <l:@L> <name:NAME> <r:@R> "+=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::Add, name, l..r, *value),
+    <l:@L> <name:NAME> <r:@R> "-=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::Sub, name, l..r, *value),
+    <l:@L> <name:NAME> <r:@R> "*=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::Mul, name, l..r, *value),
+    <l:@L> <name:NAME> <r:@R> "/=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::Div, name, l..r, *value),
+    <l:@L> <name:NAME> <r:@R> "//=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::FloorDiv, name, l..r, *value),
+    <l:@L> <name:NAME> <r:@R> "%=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::Mod, name, l..r, *value),
+    <l:@L> <name:NAME> <r:@R> "&=" <value:BoxedExpr> => Stmt::augmented_assign(BinOp::Join, name, l..r, *value),
+};
+
+ForInc: Stmt = ForInit;
+
 Stmt: Stmt = {
     RETURN <value:BoxedExpr> ";" => Stmt::Return { value, visited: false },
     IF <cond:BoxedIfExpr> <if_body:Stmts> => {
@@ -124,6 +147,14 @@ Stmt: Stmt = {
     REPEAT <times:BoxedIfExpr> <body:Stmts> => Stmt::Repeat { times, body },
     <l:@L> FOREVER <r:@R> <body:Stmts> => Stmt::Forever { body, span: l..r },
     UNTIL <cond:BoxedIfExpr> <body:Stmts> => Stmt::Until { cond, body },
+    <l:@L> FOR "(" <init:ForInit> ";" <cond:BoxedIfExpr> ";" <inc:ForInc> ")" <body:Stmts> => {
+        Stmt::For {
+            init: Box::new(init),
+            cond,
+            inc: Box::new(inc),
+            body,
+        }
+    },
     <type_:Type> <l:@L> <name:NAME> <r:@R> "=" <value:BoxedExpr> ";" => {
         Stmt::SetVar {
             name: Name::Name { name, span: l..r },
@@ -628,6 +659,7 @@ extern {
         UNTIL          => Token::Until,
         FOREVER        => Token::Forever,
         REPEAT         => Token::Repeat,
+        FOR            => Token::For,
         ","            => Token::Comma,
         "("            => Token::LParen,
         ")"            => Token::RParen,
