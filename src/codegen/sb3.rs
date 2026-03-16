@@ -204,10 +204,22 @@ impl S<'_> {
             );
         }
         if let Some(var) = self.get_var(basename) {
+            // Cloud variables use "☁ name" as their JSON key/ID (see json_var_declaration).
+            // When var.name already starts with ☁ (raw-name declaration like `cloud @"☁ x"`),
+            // use it as-is; otherwise prepend the ☁ prefix.
+            let qname: SmolStr = if var.is_cloud {
+                if var.name.starts_with('\u{2601}') {
+                    var.name.clone()
+                } else {
+                    format!("\u{2601} {}", var.name).into()
+                }
+            } else {
+                var.name.clone()
+            };
             return self.qualify_field(
                 d,
                 &name.span(),
-                var.name.clone(),
+                qname,
                 fieldname,
                 &var.type_,
                 QualifiedName::Var,
@@ -805,12 +817,21 @@ where T: Write + Seek
             None => arcstr::literal!("0"),
         };
         if is_cloud {
-            let cloud_name = format!("\u{2601} {}", var_name);
+            // var_name may or may not already carry the ☁ prefix (when declared via
+            // `cloud @"☁ name"` raw-name syntax to avoid collision with a same-name
+            // regular variable).  Always use the ☁-prefixed form as both the JSON key
+            // and the display name so that cloud and regular variables with the same
+            // base name can coexist as distinct entries in the variables dict.
+            let cloud_name: String = if var_name.starts_with('\u{2601}') {
+                var_name.to_owned()
+            } else {
+                format!("\u{2601} {}", var_name)
+            };
             write!(
                 self,
                 "{}:[{},{},true]",
-                json!(var_name),
-                json!(cloud_name),
+                json!(&*cloud_name),
+                json!(&*cloud_name),
                 json!(*default)
             )
         } else {
