@@ -56,7 +56,7 @@ Declr: () = {
         let mut proccode = String::new();
         let mut args = vec![];
         for (i, (seg, arg_opt)) in segs.into_iter().enumerate() {
-            if i > 0 { proccode.push(' '); }
+            if i > 0 && seg != ":" { proccode.push(' '); }
             proccode.push_str(&seg);
             if let Some(arg) = arg_opt {
                 args.push(arg);
@@ -370,7 +370,7 @@ Stmt: Stmt = {
         proccode.push_str(&ft);
         let mut args = vec![fv];
         for (seg, val_opt) in rest {
-            proccode.push(' ');
+            if seg != ":" { proccode.push(' '); }
             proccode.push_str(&seg);
             if let Some(val) = val_opt {
                 args.push(val);
@@ -387,7 +387,7 @@ Stmt: Stmt = {
         let mut proccode = ft.to_string();
         let mut args = vec![fv];
         for (seg, val_opt) in rest {
-            proccode.push(' ');
+            if seg != ":" { proccode.push(' '); }
             proccode.push_str(&seg);
             if let Some(val) = val_opt {
                 args.push(val);
@@ -414,7 +414,7 @@ Stmt: Stmt = {
         proccode.push_str(&ft);
         let mut args = vec![fv];
         for (seg, val_opt) in rest {
-            proccode.push(' ');
+            if seg != ":" { proccode.push(' '); }
             proccode.push_str(&seg);
             if let Some(val) = val_opt {
                 args.push(val);
@@ -433,7 +433,7 @@ Stmt: Stmt = {
         let mut proccode = String::new();
         let mut args = vec![];
         for (i, (seg, val_opt)) in segs.into_iter().enumerate() {
-            if i > 0 { proccode.push(' '); }
+            if i > 0 && seg != ":" { proccode.push(' '); }
             proccode.push_str(&seg);
             if let Some(val) = val_opt {
                 args.push(val);
@@ -793,11 +793,12 @@ FreeFormDefWord: SmolStr = {
 // One segment of a proc! free-form definition.
 // Text label:  (text, None)
 // Arg slot:    (atype, Some(arg))
+// ":" is a standalone segment; the proccode builder omits the space before it
+// so that "draw :" and "draw:" both produce proccode "draw:".
 FreeFormDefSeg: (SmolStr, Option<Arg>) = {
     <w:FreeFormDefWord>             => (w, None),
-    <w:FreeFormDefWord> ":"         => (format!("{}:", w).into(), None),
     <s:STR>                         => (s, None),
-    <s:STR>            ":"          => (format!("{}:", s).into(), None),
+    ":"                             => (":".into(), None),
     <t:ArgType> <l:@L> <n:NAME> <r:@R> => (t, Some(Arg::new(n, l..r, Type::Value, None))),
 }
 
@@ -806,11 +807,11 @@ FreeFormDefSeg: (SmolStr, Option<Arg>) = {
 // Arg value:   (atype, Some(expr))
 // Uses SelectorWord so non-operator keywords (to/at/add/show/hide/if/etc.)
 // can appear as text labels without quoting.
+// ":" is a standalone segment; proccode builder omits the space before it.
 SelectorCallSeg: (SmolStr, Option<Expr>) = {
     <n:SelectorWord>                => (n, None),
-    <n:SelectorWord> ":"            => (format!("{}:", n).into(), None),
     <s:STR>                         => (s, None),
-    <s:STR>            ":"          => (format!("{}:", s).into(), None),
+    ":"                             => (":".into(), None),
     <t:ArgType> <val:Expr>          => (t, Some(val)),
 }
 

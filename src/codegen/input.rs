@@ -115,7 +115,7 @@ where T: Write + Seek
         no_empty_shadow: bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
-        write!(self, r#""{input_name}":"#)?;
+        write!(self, r#"{}:"#, json!(input_name))?;
         match expr {
             Expr::Value { value, span: _ } => return self.value_input(input_name, value),
             Expr::Name(name) => return self.name_input(s, d, input_name, name, shadow_id),

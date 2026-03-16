@@ -62,21 +62,13 @@ impl Display for Mutation<'_> {
         }
         // Use serde_json to correctly escape any special characters in the proccode.
         write!(f, r#","proccode":{}"#, serde_json::to_string(&proccode).unwrap())?;
-        write!(f, r#","argumentids":"["#)?;
-        let mut comma = false;
-        for (arg_name, _) in self.args {
-            write_comma_fmt(&mut *f, &mut comma)?;
-            write!(f, r#"\"{}\""#, arg_name)?;
-        }
-        write!(f, "]\"")?;
+        // argumentids and argumentnames are stored as JSON-encoded arrays within a JSON string.
+        // Use serde_json to properly escape arg names that may contain quotes or backslashes.
+        let arg_names: Vec<&str> = self.args.iter().map(|(n, _)| n.as_str()).collect();
+        let ids_str = serde_json::to_string(&arg_names).unwrap();
+        write!(f, r#","argumentids":{}"#, serde_json::to_string(&ids_str).unwrap())?;
         if !self.is_call {
-            write!(f, r#","argumentnames":"["#)?;
-            let mut comma = false;
-            for (arg_name, _) in self.args {
-                write_comma_fmt(&mut *f, &mut comma)?;
-                write!(f, r#"\"{}\""#, arg_name)?;
-            }
-            write!(f, "]\"")?;
+            write!(f, r#","argumentnames":{}"#, serde_json::to_string(&ids_str).unwrap())?;
             write!(f, r#","argumentdefaults":"["#)?;
             let mut comma = false;
             for _ in self.args {
