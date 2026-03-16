@@ -797,6 +797,7 @@ FreeFormDefSeg: (SmolStr, Option<Arg>) = {
     <w:FreeFormDefWord>             => (w, None),
     <w:FreeFormDefWord> ":"         => (format!("{}:", w).into(), None),
     <s:STR>                         => (s, None),
+    <s:STR>            ":"          => (format!("{}:", s).into(), None),
     <t:ArgType> <l:@L> <n:NAME> <r:@R> => (t, Some(Arg::new(n, l..r, Type::Value, None))),
 }
 
@@ -809,6 +810,7 @@ SelectorCallSeg: (SmolStr, Option<Expr>) = {
     <n:SelectorWord>                => (n, None),
     <n:SelectorWord> ":"            => (format!("{}:", n).into(), None),
     <s:STR>                         => (s, None),
+    <s:STR>            ":"          => (format!("{}:", s).into(), None),
     <t:ArgType> <val:Expr>          => (t, Some(val)),
 }
 
