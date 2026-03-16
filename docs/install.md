@@ -1,15 +1,5 @@
 # Install
 
-=== "unix"
-    ```bash
-    curl -fsSL https://aspiz.uk/goboscript.sh | sh
-    ```
-
-=== "Windows"
-    ```bash
-    iwr https://aspiz.uk/goboscript.ps1 | iex
-    ```
-
 ## Install from source
 
 This installs the latest bleeding-edge version from the git repository. You will need
