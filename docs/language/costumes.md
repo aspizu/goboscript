@@ -31,7 +31,15 @@ costumes "path/to/costumes/*.svg";
 
 Costumes added this way are sorted alphabetically.
 
-## Generating costumes for text engines and case detection
+### Features
+
+Optional features can be enabled per-costume by writing `on "feature";` after the costume declaration.
+
+```goboscript
+costumes "path/to/costume.svg" on "feature";
+```
+
+#### Feature `ascii` -- Generate one costume for each printable ASCII character.
 
 Scratch compares strings case-insensitively. Switching costumes is, however,
 case-sensitive. This can be utilized to detect the case of a character by first switching
@@ -58,14 +66,26 @@ character is a pain.
 goboscript provides a special declaration for generating such costumes automatically.
 
 ```goboscript
-costumes "blank.svg" as "@ascii/PREFIX";
+costumes "blank.svg" on "ascii";
 ```
 
-This will generate costumes for all printable characters in the ASCII set, with the
-prefix "PREFIX". For example, if the prefix is "A", the costumes will be named "A0",
-"A1", etc.
-
-If you do not wish to have a prefix, leave it blank. (i.e. `@ascii/`)
+This will generate costumes for all printable characters in the ASCII set.
 
 Given that these are placed at the beginning of the costumes list, you can get the
 ASCII value of a character by adding `31` to the costume number.
+
+```goboscript
+func ord(c) {
+    switch_costume $c;
+    return 31+costume_number();
+}
+```
+
+You can convert a byte to a character by subtracting 31, then switching costumes.
+
+```goboscript
+func chr(c) {
+    switch_costume $c-31;
+    return costume_name();
+}
+```

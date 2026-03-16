@@ -5,6 +5,11 @@ use glob::glob;
 
 use crate::{
     ast::*,
+    codegen::sb3::{
+        BITMAP_FORMATS,
+        SOUND_FORMATS,
+        VECTOR_FORMATS,
+    },
     misc::SmolStr,
 };
 
@@ -22,8 +27,8 @@ pub fn visit_project(input: &Path, project: &mut Project) {
 }
 
 fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
-    visit_costumes(input, &mut sprite.costumes);
-    visit_sounds(input, &mut sprite.sounds);
+    visit_assets(input, &mut sprite.costumes);
+    visit_assets(input, &mut sprite.sounds);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -95,56 +100,52 @@ fn visit_enum(enum_: &mut Enum) {
     }
 }
 
-fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
-    let old: Vec<Costume> = std::mem::take(new);
-    for costume in old {
-        if let Some(suffix) = costume.name.strip_prefix("@ascii/") {
-            new.extend((' '..='~').map(|ch| Costume {
-                name: format!("{suffix}{ch}").into(),
-                path: costume.path.clone(),
-                span: costume.span.clone(),
-            }));
-        } else if costume.path.contains('*') {
-            let mut costumes: Vec<Costume> = glob(input.join(&*costume.path).to_str().unwrap())
+fn visit_assets(input: &Path, assets: &mut Vec<Asset>) {
+    let mut i = 0;
+    while i < assets.len() {
+        if assets[i]
+            .feature
+            .as_ref()
+            .is_some_and(|feat| feat == "ascii")
+        {
+            let asset = assets.remove(i);
+            for ch in ' '..'~' {
+                let mut new_asset = asset.clone();
+                new_asset.feature = None;
+                new_asset.name = ch.to_string().into();
+                assets.insert(i, new_asset);
+                i += 1;
+            }
+        } else if assets[i].path.contains('*') {
+            let asset = assets.remove(i);
+            let mut files: Vec<_> = glob(input.join(asset.path.as_str()).to_str().unwrap())
                 .unwrap()
-                .map(Result::unwrap)
-                .map(|path| Costume {
-                    name: path.file_stem().unwrap().to_string_lossy().into(),
-                    path: path.to_string_lossy().into(),
-                    span: costume.span.clone(),
-                })
+                .flatten()
                 .collect();
-            costumes.sort_by(|a, b| a.name.cmp(&b.name));
-            new.extend(costumes);
+            files.sort();
+            for file in files {
+                let Some(ext) = file.extension() else {
+                    continue;
+                };
+                let ext = ext.to_str().unwrap().to_lowercase();
+                let ext = ext.as_str();
+                if !(BITMAP_FORMATS.contains(&ext)
+                    || VECTOR_FORMATS.contains(&ext)
+                    || SOUND_FORMATS.contains(&ext))
+                {
+                    continue;
+                }
+                let new_asset = Asset::new(
+                    file.to_str().unwrap().into(),
+                    None,
+                    asset.span.clone(),
+                    asset.feature.clone(),
+                );
+                assets.insert(i, new_asset);
+                i += 1;
+            }
         } else {
-            new.push(costume);
-        }
-    }
-}
-
-fn visit_sounds(input: &Path, new: &mut Vec<Sound>) {
-    let old: Vec<Sound> = std::mem::take(new);
-    for sound in old {
-        if let Some(suffix) = sound.name.strip_prefix("@ascii/") {
-            new.extend((' '..='~').map(|ch| Sound {
-                name: format!("{suffix}{ch}").into(),
-                path: sound.path.clone(),
-                span: sound.span.clone(),
-            }));
-        } else if sound.path.contains('*') {
-            let mut sounds: Vec<Sound> = glob(input.join(&*sound.path).to_str().unwrap())
-                .unwrap()
-                .map(Result::unwrap)
-                .map(|path| Sound {
-                    name: path.file_stem().unwrap().to_string_lossy().into(),
-                    path: path.to_string_lossy().into(),
-                    span: sound.span.clone(),
-                })
-                .collect();
-            sounds.sort_by(|a, b| a.name.cmp(&b.name));
-            new.extend(sounds);
-        } else {
-            new.push(sound);
+            i += 1;
         }
     }
 }

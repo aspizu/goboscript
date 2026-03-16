@@ -990,7 +990,7 @@ where T: Write + Seek
         config: &Config,
         fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
-        costume: &Costume,
+        costume: &Asset,
         d: D,
     ) -> io::Result<()> {
         let path = input.join(&*costume.path);
@@ -1058,7 +1058,7 @@ where T: Write + Seek
         &mut self,
         fs: Rc<RefCell<dyn VFS>>,
         input: &Path,
-        sound: &Sound,
+        sound: &Asset,
         d: D,
     ) -> io::Result<()> {
         let path = input.join(&*sound.path);
