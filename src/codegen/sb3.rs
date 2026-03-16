@@ -598,8 +598,12 @@ where T: Write + Seek
         }
         self.id.reset();
         write!(self, "{{")?;
+        // Strip leading U+2024 ONE DOT LEADER characters used by websb2gs to resolve
+        // filename collisions (e.g. "›stage" → "stage"). Real sprite names never start
+        // with U+2024 so this is safe.
+        let display_name = name.trim_start_matches('\u{2024}');
         write!(self, r#""isStage":{}"#, name == STAGE_NAME)?;
-        write!(self, r#","name":{}"#, json!(name))?;
+        write!(self, r#","name":{}"#, json!(display_name))?;
         if name == STAGE_NAME {
             write!(self, r#","comments":{{"#)?;
             write!(self, r#""twconfig":{{"#)?;
