@@ -43,3 +43,30 @@ To update the installation:
 ```bash
 cargo install --git https://github.com/aspizu/goboscript --force
 ```
+
+## Troubleshooting
+
+### Rust Toolchain: Nightly Required
+
+goboscript uses unstable Rust features (specifically `normalize_lexically`) that are only available on the **nightly** release channel. Attempting to install with the default stable toolchain will fail with:
+
+```
+error[E0554]: `#![feature]` may not be used on the stable release channel
+```
+
+Before installing, make sure you have the nightly toolchain available:
+
+```sh
+rustup toolchain install nightly
+```
+
+Then install goboscript by passing the `+nightly` flag to Cargo:
+
+```sh
+cargo +nightly install --git https://github.com/aspizu/goboscript
+```
+
+!!! note
+    You do not need to switch your default toolchain to nightly globally.
+    The `+nightly` flag tells Cargo to use the nightly toolchain for this command only,
+    leaving your system default unchanged.
