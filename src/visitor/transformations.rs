@@ -564,10 +564,6 @@ pub fn enum_field_access(expr: &Expr, s: S, d: D) -> Option<Expr> {
         return None;
     };
     let Some(enum_) = s.get_enum(name.basename()) else {
-        d.report(
-            DiagnosticKind::UnrecognizedEnum(name.basename().clone()),
-            &name.span(),
-        );
         return None;
     };
     let Some(field) = enum_.variants.iter().find(|variant| &variant.name == rhs) else {

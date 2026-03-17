@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use fxhash::FxHashMap;
-use glob::glob;
 
 use crate::{
     ast::*,
@@ -13,6 +12,7 @@ use crate::{
         sounds::SOUND_FORMATS,
     },
     misc::SmolStr,
+    vfs::VFS,
 };
 
 struct V<'a> {
@@ -21,16 +21,21 @@ struct V<'a> {
     global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
 }
 
-pub fn visit_project(input: &Path, project: &mut Project) {
-    visit_sprite(input, &mut project.stage, None);
+pub fn visit_project(fs: &mut dyn VFS, input: &Path, project: &mut Project) {
+    visit_sprite(fs, input, &mut project.stage, None);
     for sprite in project.sprites.values_mut() {
-        visit_sprite(input, sprite, Some(&mut project.stage));
+        visit_sprite(fs, input, sprite, Some(&mut project.stage));
     }
 }
 
-fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
-    visit_assets(input, &mut sprite.costumes, true);
-    visit_assets(input, &mut sprite.sounds, false);
+fn visit_sprite(
+    fs: &mut dyn VFS,
+    input: &Path,
+    sprite: &mut Sprite,
+    mut stage: Option<&mut Sprite>,
+) {
+    visit_assets(fs, input, &mut sprite.costumes, true, is_costume_ext);
+    visit_assets(fs, input, &mut sprite.sounds, false, is_sound_ext);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -102,13 +107,27 @@ fn visit_enum(enum_: &mut Enum) {
     }
 }
 
-fn visit_assets(input: &Path, assets: &mut Vec<Asset>, allow_ascii: bool) {
+fn is_costume_ext(ext: &str) -> bool {
+    BITMAP_FORMATS.contains(&ext) || VECTOR_FORMATS.contains(&ext)
+}
+
+fn is_sound_ext(ext: &str) -> bool {
+    SOUND_FORMATS.contains(&ext)
+}
+
+fn visit_assets(
+    fs: &mut dyn VFS,
+    input: &Path,
+    assets: &mut Vec<Asset>,
+    allow_ascii: bool,
+    is_valid_ext: fn(&str) -> bool,
+) {
     let mut i = 0;
     while i < assets.len() {
         if allow_ascii {
             if let Some(suffix) = assets[i].name.strip_prefix("@ascii/") {
                 let asset = assets.remove(i);
-                for ch in ' '..'~' {
+                for ch in ' '..='~' {
                     let mut new_asset = asset.clone();
                     new_asset.name = format!("{suffix}{ch}").into();
                     assets.insert(i, new_asset);
@@ -119,10 +138,9 @@ fn visit_assets(input: &Path, assets: &mut Vec<Asset>, allow_ascii: bool) {
         }
         if assets[i].path.contains('*') {
             let asset = assets.remove(i);
-            let mut files: Vec<_> = glob(input.join(asset.path.as_str()).to_str().unwrap())
-                .unwrap()
-                .flatten()
-                .collect();
+            let mut files: Vec<_> = fs
+                .glob(input.join(asset.path.as_str()).to_str().unwrap())
+                .unwrap();
             files.sort();
             for file in files {
                 let Some(ext) = file.extension() else {
@@ -130,10 +148,7 @@ fn visit_assets(input: &Path, assets: &mut Vec<Asset>, allow_ascii: bool) {
                 };
                 let ext = ext.to_str().unwrap().to_lowercase();
                 let ext = ext.as_str();
-                if !(BITMAP_FORMATS.contains(&ext)
-                    || VECTOR_FORMATS.contains(&ext)
-                    || SOUND_FORMATS.contains(&ext))
-                {
+                if !is_valid_ext(ext) {
                     continue;
                 }
                 let new_asset =

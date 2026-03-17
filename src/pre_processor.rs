@@ -25,7 +25,7 @@ fn get_token(token: &SpannedToken) -> &Token {
 
 pub struct PreProcessor<'a, 'b> {
     tokens: &'a mut Vec<(usize, Token, usize)>,
-    function_defines: FxHashMap<(SmolStr, usize), (Vec<Token>, Vec<Token>)>,
+    function_defines: FxHashMap<SmolStr, FxHashMap<usize, (Vec<Token>, Vec<Token>)>>,
     simple_defines: FxHashMap<SmolStr, Vec<Token>>,
     i: &'b mut usize,
 }
@@ -146,8 +146,11 @@ impl<'a> PreProcessor<'a, '_> {
         self.remove_token(span);
         let arity = args.len();
         let body = self.parse_define_body(span)?;
+        let define_name: SmolStr = define_name.to_string().into();
         self.function_defines
-            .insert((define_name.to_string().into(), arity), (args, body));
+            .entry(define_name)
+            .or_default()
+            .insert(arity, (args, body));
         Ok(true)
     }
 
@@ -226,14 +229,9 @@ impl<'a> PreProcessor<'a, '_> {
         let macro_name_span = get_span(&self.tokens[*self.i]);
         let macro_name: SmolStr = macro_name_token.to_string().into();
 
-        // Quick pre-check: does any overload exist for this name at all?
-        if !self
-            .function_defines
-            .keys()
-            .any(|(name, _)| name == &macro_name)
-        {
+        let Some(overloads) = self.function_defines.get(&macro_name).cloned() else {
             return Ok(false);
-        }
+        };
         if suppress.contains(&*macro_name) {
             return Ok(false);
         }
@@ -281,19 +279,11 @@ impl<'a> PreProcessor<'a, '_> {
         }
 
         let arity = args.len();
-        let Some((function_define_params, function_define_body)) = self
-            .function_defines
-            .get(&(macro_name.clone(), arity))
-            .cloned()
+        let Some((function_define_params, function_define_body)) = overloads.get(&arity).cloned()
         else {
             return Err(Diagnostic {
                 kind: DiagnosticKind::MacroArgsCountMismatch {
-                    expected: self
-                        .function_defines
-                        .keys()
-                        .find(|(name, _)| name == &macro_name)
-                        .map(|(_, arity)| *arity)
-                        .unwrap_or(0),
+                    expected: overloads.keys().next().copied().unwrap_or(0),
                     given: arity,
                 },
                 span: macro_name_span,
@@ -337,8 +327,7 @@ impl<'a> PreProcessor<'a, '_> {
         self.expect_no_eof()?;
         let name: SmolStr = get_token(&self.tokens[*self.i]).to_string().into();
         // Remove all overloads for this name.
-        self.function_defines
-            .retain(|(macro_name, _), _| macro_name != &name);
+        self.function_defines.remove(&name);
         self.simple_defines.remove(&*name);
         self.remove_token(span);
         Ok(true)

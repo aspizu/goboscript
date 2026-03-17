@@ -580,27 +580,28 @@ where
     let type_ = get_type(basename)?;
     let (type_name, type_span) = type_.struct_()?;
     let struct_ = s.get_struct(type_name)?;
-    let Expr::StructLiteral {
-        name: struct_literal_name,
-        span: struct_literal_span,
-        fields: struct_literal_fields,
-    } = expr
-    else {
-        d.report(
-            DiagnosticKind::TypeMismatch {
-                expected: type_.clone(),
-                given: Type::Value,
-            },
-            &basespan,
-        );
-        return None;
+    let (struct_literal_name, struct_literal_span, struct_literal_fields) = match expr {
+        Expr::StructLiteral { name, span, fields } => (name, span, fields),
+        _ => {
+            d.report(
+                DiagnosticKind::TypeMismatch {
+                    expected: type_.clone(),
+                    given: Type::Value,
+                },
+                &basespan,
+            );
+            return None;
+        }
     };
-    let Some(value_struct) = s.get_struct(struct_literal_name) else {
-        d.report(
-            DiagnosticKind::UnrecognizedStruct(struct_literal_name.clone()),
-            struct_literal_span,
-        );
-        return None;
+    let value_struct = match s.get_struct(struct_literal_name) {
+        Some(value_struct) => value_struct,
+        None => {
+            d.report(
+                DiagnosticKind::UnrecognizedStruct(struct_literal_name.clone()),
+                struct_literal_span,
+            );
+            return Some(&struct_literal_fields[..0]);
+        }
     };
     if struct_.name != value_struct.name {
         d.report(
@@ -614,9 +615,9 @@ where
                     span: struct_literal_span.clone(),
                 },
             },
-            &basespan,
+            struct_literal_span,
         );
-        return None;
+        return Some(&struct_literal_fields[..0]);
     }
     Some(struct_literal_fields)
 }

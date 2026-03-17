@@ -36,6 +36,7 @@ nav:
           - Structs: language/structs.md
           - Macros: language/macros.md
     - Standard Library: standard-library.md
+    - Contributing: contributing.md
     - Editor Integration:
           - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
           - Visual Studio Code: editor-integration/vscode.md
