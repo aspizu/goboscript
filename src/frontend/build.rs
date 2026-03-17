@@ -139,8 +139,6 @@ pub fn build_impl<T: Write + Seek>(
             &mut *fs,
             &input,
             &mut project,
-            &mut stage_diagnostics,
-            &mut sprites_diagnostics,
         );
     }
     visitor::pass1::visit_project(&mut project);

@@ -125,7 +125,7 @@ fn visit_assets(
     let mut i = 0;
     while i < assets.len() {
         if allow_ascii {
-            if let Some(suffix) = assets[i].name.strip_prefix("@ascii/") {
+            if let Some(suffix) = assets[i].name.strip_prefix("@ascii/").map(|s| s.to_owned()) {
                 let asset = assets.remove(i);
                 for ch in ' '..='~' {
                     let mut new_asset = asset.clone();
