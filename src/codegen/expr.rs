@@ -526,7 +526,8 @@ where T: Write + Seek
             );
             return Ok(());
         }
-        eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
+        let span = lhs.span().start..rhs_span.end;
+        d.report(DiagnosticKind::InvalidDotLhs, &span);
         Ok(())
     }
 

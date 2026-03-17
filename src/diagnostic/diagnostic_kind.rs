@@ -93,6 +93,7 @@ pub enum DiagnosticKind {
         given: Type,
     },
     NotStruct,
+    InvalidDotLhs,
     StructDoesNotHaveField {
         type_name: SmolStr,
         field_name: SmolStr,
@@ -245,6 +246,9 @@ impl DiagnosticKind {
                 format!("unused struct field {name} (never read)")
             }
             DiagnosticKind::NotStruct => "not a struct".to_string(),
+            DiagnosticKind::InvalidDotLhs => {
+                "cannot use the `.` operator on this expression".to_string()
+            }
             DiagnosticKind::StructDoesNotHaveField {
                 type_name,
                 field_name,
@@ -426,6 +430,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::FunctionRedefinition(_)
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
+            | DiagnosticKind::InvalidDotLhs
             | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::DuplicateField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. }
