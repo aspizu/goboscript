@@ -19,8 +19,8 @@ use crate::{
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Sprite {
-    pub costumes: Vec<Costume>,
-    pub sounds: Vec<Sound>,
+    pub costumes: Vec<Asset>,
+    pub sounds: Vec<Asset>,
     pub procs: FxHashMap<SmolStr, Proc>,
     pub proc_definitions: FxHashMap<SmolStr, Vec<Stmt>>,
     pub proc_references: FxHashMap<SmolStr, References>,

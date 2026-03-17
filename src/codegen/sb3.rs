@@ -6,7 +6,10 @@ use std::{
         Seek,
         Write,
     },
-    path::Path,
+    path::{
+        Path,
+        PathBuf,
+    },
     rc::Rc,
 };
 
@@ -16,10 +19,6 @@ use fxhash::{
     FxHashSet,
 };
 use logos::Span;
-use md5::{
-    Digest,
-    Md5,
-};
 use serde_json::json;
 use zip::{
     write::SimpleFileOptions,
@@ -36,6 +35,7 @@ use crate::{
     ast::*,
     blocks::Block,
     codegen::{
+        assets::AssetObjectStore,
         datalists::read_list,
         mutation::Mutation,
     },
@@ -52,10 +52,6 @@ use crate::{
 };
 
 const STAGE_NAME: &str = "Stage";
-
-pub const BITMAP_FORMATS: &[&str] = &["png", "bmp", "jpeg", "jpg", "gif"];
-pub const VECTOR_FORMATS: &[&str] = &["svg"];
-pub const SOUND_FORMATS: &[&str] = &["wav", "wave", "mp3"];
 
 #[derive(Debug, Copy, Clone)]
 pub struct S<'a> {
@@ -324,7 +320,6 @@ impl Stmt {
     }
 }
 
-#[derive(Debug)]
 pub struct Sb3<T>
 where T: Write + Seek
 {
@@ -332,10 +327,8 @@ where T: Write + Seek
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
-    pub costumes: FxHashMap<SmolStr, SmolStr>,
-    pub srcpkg_hash: Option<String>,
-    pub srcpkg: Option<Vec<u8>>,
     pub block_count: usize,
+    pub asset_object_store: AssetObjectStore,
 }
 
 impl<T> Write for Sb3<T>
@@ -353,41 +346,15 @@ where T: Write + Seek
 impl<T> Sb3<T>
 where T: Write + Seek
 {
-    pub fn new(file: T) -> Self {
+    pub fn new(file: T, fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
         Self {
             zip: ZipWriter::new(file),
             id: NodeIDFactory::new(),
             node_comma: false,
             inputs_comma: false,
-            costumes: FxHashMap::default(),
-            srcpkg_hash: None,
-            srcpkg: None,
             block_count: 0,
+            asset_object_store: AssetObjectStore::new(input, fs),
         }
-    }
-
-    fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
-        let mut fs = fs.borrow_mut();
-        let mut added = FxHashSet::default();
-        for (path, hash) in &self.costumes {
-            if added.contains(hash) {
-                continue;
-            }
-            added.insert(hash);
-            let (_, extension) = path.rsplit_once('.').unwrap();
-            self.zip
-                .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = fs.read_file(&input.join(&**path));
-            io::copy(&mut file?, &mut self.zip)?;
-        }
-        if self.srcpkg_hash.is_some() {
-            let hash = self.srcpkg_hash.take().unwrap();
-            let data = self.srcpkg.take().unwrap();
-            self.zip
-                .start_file(format!("{hash}.svg"), SimpleFileOptions::default())?;
-            self.zip.write_all(&data)?;
-        }
-        Ok(())
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
@@ -500,7 +467,7 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets(fs.clone(), input)?;
+        self.assets()?;
         Ok(())
     }
 
@@ -736,14 +703,14 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(config, fs.clone(), input, costume, d)?;
+            self.costume(config, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.sound(fs.clone(), input, sound, d)?;
+            self.sound(sound, d)?;
         }
         write!(self, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
@@ -983,130 +950,6 @@ where T: Write + Seek
             }
         }
         Ok(())
-    }
-
-    pub fn costume(
-        &mut self,
-        config: &Config,
-        fs: Rc<RefCell<dyn VFS>>,
-        input: &Path,
-        costume: &Costume,
-        d: D,
-    ) -> io::Result<()> {
-        let path = input.join(&*costume.path);
-        let hash = self
-            .costumes
-            .get(&costume.path)
-            .cloned()
-            .map(Ok::<_, io::Error>)
-            .unwrap_or_else(|| {
-                let mut fs = fs.borrow_mut();
-                let mut file = match fs.read_file(&path) {
-                    Ok(file) => file,
-                    Err(error) => {
-                        d.report_io_error(
-                            error,
-                            Some("costume files are always relative to the project directory"),
-                            &costume.span,
-                        );
-                        return Ok(Default::default());
-                    }
-                };
-                let mut hasher = Md5::new();
-                io::copy(&mut file, &mut hasher)?;
-                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
-                self.costumes.insert(costume.path.clone(), hash.clone());
-                Ok(hash)
-            })?;
-        let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
-        let extension = extension.to_lowercase();
-        let extension = extension.as_str();
-        if !(BITMAP_FORMATS.contains(&extension) || VECTOR_FORMATS.contains(&extension)) {
-            d.report(
-                DiagnosticKind::InvalidCostumeFormat {
-                    extension: extension.into(),
-                },
-                &costume.span,
-            );
-        }
-        self.costume_entry(config, &costume.name, &hash, extension)
-    }
-
-    pub fn costume_entry(
-        &mut self,
-        config: &Config,
-        name: &str,
-        hash: &str,
-        extension: &str,
-    ) -> io::Result<()> {
-        write!(self, "{{")?;
-        write!(self, r#""name":{}"#, json!(name))?;
-        write!(self, r#","assetId":"{hash}""#)?;
-        if BITMAP_FORMATS.contains(&extension) {
-            write!(
-                self,
-                r#","bitmapResolution":{}"#,
-                json!(config.bitmap_resolution.unwrap_or(1))
-            )?;
-        }
-        write!(self, r#","dataFormat":"{extension}""#)?;
-        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
-        write!(self, "}}") // costume
-    }
-
-    pub fn sound(
-        &mut self,
-        fs: Rc<RefCell<dyn VFS>>,
-        input: &Path,
-        sound: &Sound,
-        d: D,
-    ) -> io::Result<()> {
-        let path = input.join(&*sound.path);
-        let hash = self
-            .costumes
-            .get(&sound.path)
-            .cloned()
-            .map(Ok::<_, io::Error>)
-            .unwrap_or_else(|| {
-                let mut fs = fs.borrow_mut();
-                let mut file = match fs.read_file(&path) {
-                    Ok(file) => file,
-                    Err(error) => {
-                        d.report_io_error(
-                            error,
-                            Some("sound files are always relative to the project directory"),
-                            &sound.span,
-                        );
-                        return Ok(Default::default());
-                    }
-                };
-                let mut hasher = Md5::new();
-                io::copy(&mut file, &mut hasher)?;
-                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
-                self.costumes.insert(sound.path.clone(), hash.clone());
-                Ok(hash)
-            })?;
-        let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
-        let extension = extension.to_lowercase();
-        let extension = extension.as_str();
-        if !SOUND_FORMATS.contains(&extension) {
-            d.report(
-                DiagnosticKind::InvalidSoundFormat {
-                    extension: extension.into(),
-                },
-                &sound.span,
-            );
-        }
-        self.sound_entry(&sound.name, &hash, extension)
-    }
-
-    pub fn sound_entry(&mut self, name: &str, hash: &str, extension: &str) -> io::Result<()> {
-        write!(self, "{{")?;
-        write!(self, r#""name":{}"#, json!(name))?;
-        write!(self, r#","assetId":"{hash}""#)?;
-        write!(self, r#","dataFormat":"{extension}""#)?;
-        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
-        write!(self, "}}") // sound
     }
 
     pub fn proc(&mut self, s: S, d: D, proc: &Proc, definition: &[Stmt]) -> io::Result<()> {

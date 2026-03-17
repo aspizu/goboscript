@@ -15,10 +15,12 @@ use crate::{
         Block,
         Repr,
     },
-    codegen::sb3::{
-        BITMAP_FORMATS,
-        SOUND_FORMATS,
-        VECTOR_FORMATS,
+    codegen::{
+        costumes::{
+            BITMAP_FORMATS,
+            VECTOR_FORMATS,
+        },
+        sounds::SOUND_FORMATS,
     },
     lexer::token::Token,
     misc::SmolStr,
@@ -56,7 +58,7 @@ pub enum DiagnosticKind {
     InvalidCostumeName(SmolStr),
     InvalidBackdropName(SmolStr),
     InvalidCostumeFormat {
-        extension: SmolStr,
+        extension: String,
     },
     InvalidSoundFormat {
         extension: SmolStr,
