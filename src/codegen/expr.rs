@@ -462,12 +462,12 @@ where T: Write + Seek
     pub fn expr_dot(
         &mut self,
         s: S,
-        _d: D,
+        d: D,
         _this_id: NodeID,
         _parent_id: NodeID,
         lhs: &Expr,
         rhs: &SmolStr,
-        _rhs_span: Span,
+        rhs_span: Span,
     ) -> io::Result<()> {
         if let Expr::Name(name) = lhs {
             if let Some(_enum_) = s.get_enum(name.basename()) {
@@ -498,8 +498,26 @@ where T: Write + Seek
                         }
                         return write!(self, "[10, \"\"]]");
                     }
+
+                    d.report(
+                        DiagnosticKind::StructDoesNotHaveField {
+                            type_name: type_name.clone(),
+                            field_name: rhs.clone(),
+                        },
+                        &rhs_span,
+                    );
+                    return Ok(());
                 }
+
+                d.report(DiagnosticKind::NotStruct, &name.span());
+                return Ok(());
             }
+
+            d.report(
+                DiagnosticKind::UnrecognizedEnum(name.basename().clone()),
+                &name.span(),
+            );
+            return Ok(());
         }
         eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
         Ok(())
