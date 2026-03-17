@@ -1,3 +1,5 @@
+pub mod assets;
+pub mod costumes;
 pub mod datalists;
 pub mod debug_info;
 pub mod event;
@@ -8,5 +10,6 @@ pub mod node;
 pub mod node_id;
 pub mod node_id_factory;
 pub mod sb3;
+pub mod sounds;
 pub mod stmt;
 pub mod turbowarp_config;

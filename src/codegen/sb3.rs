@@ -6,19 +6,19 @@ use std::{
         Seek,
         Write,
     },
-    path::Path,
+    path::{
+        Path,
+        PathBuf,
+    },
     rc::Rc,
 };
 
+use anyhow::bail;
 use fxhash::{
     FxHashMap,
     FxHashSet,
 };
 use logos::Span;
-use md5::{
-    Digest,
-    Md5,
-};
 use serde_json::json;
 use zip::{
     write::SimpleFileOptions,
@@ -35,6 +35,7 @@ use crate::{
     ast::*,
     blocks::Block,
     codegen::{
+        assets::AssetObjectStore,
         datalists::read_list,
         mutation::Mutation,
     },
@@ -214,6 +215,11 @@ impl S<'_> {
             );
         }
         if let Some(d) = d {
+            if d.find_diagnostic_for_span(&name.span())
+                .is_some_and(|it| matches!(it.kind, DiagnosticKind::LocalNotSupported))
+            {
+                return None;
+            }
             d.report(
                 DiagnosticKind::UnrecognizedVariable(basename.clone()),
                 &name.span(),
@@ -319,7 +325,6 @@ impl Stmt {
     }
 }
 
-#[derive(Debug)]
 pub struct Sb3<T>
 where T: Write + Seek
 {
@@ -327,10 +332,8 @@ where T: Write + Seek
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
-    pub costumes: FxHashMap<SmolStr, SmolStr>,
-    pub srcpkg_hash: Option<String>,
-    pub srcpkg: Option<Vec<u8>>,
     pub block_count: usize,
+    pub asset_object_store: AssetObjectStore,
 }
 
 impl<T> Write for Sb3<T>
@@ -348,41 +351,15 @@ where T: Write + Seek
 impl<T> Sb3<T>
 where T: Write + Seek
 {
-    pub fn new(file: T) -> Self {
+    pub fn new(file: T, fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
         Self {
             zip: ZipWriter::new(file),
             id: NodeIDFactory::new(),
             node_comma: false,
             inputs_comma: false,
-            costumes: FxHashMap::default(),
-            srcpkg_hash: None,
-            srcpkg: None,
             block_count: 0,
+            asset_object_store: AssetObjectStore::new(input, fs),
         }
-    }
-
-    fn assets(&mut self, fs: Rc<RefCell<dyn VFS>>, input: &Path) -> io::Result<()> {
-        let mut fs = fs.borrow_mut();
-        let mut added = FxHashSet::default();
-        for (path, hash) in &self.costumes {
-            if added.contains(hash) {
-                continue;
-            }
-            added.insert(hash);
-            let (_, extension) = path.rsplit_once('.').unwrap();
-            self.zip
-                .start_file(format!("{hash}.{extension}"), SimpleFileOptions::default())?;
-            let file = fs.read_file(&input.join(&**path));
-            io::copy(&mut file?, &mut self.zip)?;
-        }
-        if self.srcpkg_hash.is_some() {
-            let hash = self.srcpkg_hash.take().unwrap();
-            let data = self.srcpkg.take().unwrap();
-            self.zip
-                .start_file(format!("{hash}.svg"), SimpleFileOptions::default())?;
-            self.zip.write_all(&data)?;
-        }
-        Ok(())
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
@@ -429,7 +406,8 @@ where T: Write + Seek
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-    ) -> io::Result<()> {
+    ) -> anyhow::Result<()> {
+        let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
             .events
@@ -446,8 +424,10 @@ where T: Write + Seek
         // TODO: switch to deflate compression
         // this should be configurable, use store in debug (because it would be
         // faster?), use deflate in release (because it would be smaller?)
-        self.zip
-            .start_file("project.json", SimpleFileOptions::default())?;
+        self.zip.start_file(
+            "project.json",
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
+        )?;
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
@@ -459,6 +439,7 @@ where T: Write + Seek
             config,
             stage_diagnostics,
             &broadcasts,
+            0,
         )?;
         let mut sprite_names: Vec<_> = project.sprites.keys().collect();
         sprite_names.sort();
@@ -473,6 +454,7 @@ where T: Write + Seek
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
                 &broadcasts,
+                layers[sprite_name],
             )?;
         }
         write!(self, "]")?; // targets
@@ -483,12 +465,14 @@ where T: Write + Seek
         write!(self, r#","vm":"0.2.0""#)?;
         write!(
             self,
-            r#","agent":"goboscript v{}""#,
-            env!("CARGO_PKG_VERSION")
+            r#","agent":"goboscript ({})""#,
+            option_env!("GIT_HASH")
+                .map(|hash| format!("commit {hash}"))
+                .unwrap_or_else(|| format!("v{}", env!("CARGO_PKG_VERSION")))
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets(fs.clone(), input)?;
+        self.assets()?;
         Ok(())
     }
 
@@ -502,6 +486,7 @@ where T: Write + Seek
         config: &Config,
         d: D,
         broadcasts: &FxHashSet<SmolStr>,
+        layer_order: usize,
     ) -> io::Result<()> {
         for proc in sprite.procs.values() {
             if !sprite.used_procs.contains(&proc.name) {
@@ -547,19 +532,6 @@ where T: Write + Seek
                 }
             }
         }
-        for enum_ in sprite.enums.values() {
-            if !enum_.is_used {
-                d.report(DiagnosticKind::UnusedEnum(enum_.name.clone()), &enum_.span);
-            }
-            for variant in &enum_.variants {
-                if !variant.is_used {
-                    d.report(
-                        DiagnosticKind::UnusedEnumVariant(variant.name.clone()),
-                        &variant.span,
-                    );
-                }
-            }
-        }
         let mut costumes = FxHashSet::default();
         for costume in &sprite.costumes {
             if costumes.contains(&costume.name) {
@@ -596,10 +568,12 @@ where T: Write + Seek
             write!(self, "}}")?; // comments
         }
         write!(self, r#","broadcasts":{{"#)?;
-        let mut comma = false;
-        for broadcast in broadcasts {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+        if stage.is_none() {
+            let mut comma = false;
+            for broadcast in broadcasts {
+                write_comma_io(&mut self.zip, &mut comma)?;
+                write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+            }
         }
         write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;
@@ -734,14 +708,14 @@ where T: Write + Seek
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.costume(config, fs.clone(), input, costume, d)?;
+            self.costume(config, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
             write_comma_io(&mut self.zip, &mut comma)?;
-            self.sound(fs.clone(), input, sound, d)?;
+            self.sound(sound, d)?;
         }
         write!(self, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
@@ -764,10 +738,7 @@ where T: Write + Seek
             let volume = volume.to_js_number();
             write!(self, r#","volume":{}"#, json!(volume))?;
         }
-        if let Some((layer_order, _)) = &sprite.layer_order {
-            let layer_order = (layer_order.to_js_number() as i64).max(1);
-            write!(self, r#","layerOrder":{}"#, json!(layer_order))?;
-        }
+        write!(self, r#","layerOrder":{}"#, layer_order)?;
         if !sprite.hidden {
             write!(self, r#","visible":true"#)?;
         } else {
@@ -786,17 +757,14 @@ where T: Write + Seek
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        let default = match default {
-            Some(value) => value.to_string(),
-            None => arcstr::literal!("0"),
-        };
+        let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
                 self,
                 "\"{}\":[\"\u{2601} {}\",{},true]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         } else {
             write!(
@@ -804,7 +772,7 @@ where T: Write + Seek
                 "\"{}\":[\"{}\",{}]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         }
     }
@@ -940,10 +908,10 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = match &list.default {
+        let data: Vec<Value> = match &list.default {
             Some(ListDefault::Values(values)) => values
                 .into_iter()
-                .map(|v| s.evaluate_const_expr(d, v).to_string())
+                .map(|v| s.evaluate_const_expr(d, v))
                 .collect(),
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,
@@ -987,108 +955,6 @@ where T: Write + Seek
             }
         }
         Ok(())
-    }
-
-    pub fn costume(
-        &mut self,
-        config: &Config,
-        fs: Rc<RefCell<dyn VFS>>,
-        input: &Path,
-        costume: &Costume,
-        d: D,
-    ) -> io::Result<()> {
-        let path = input.join(&*costume.path);
-        let hash = self
-            .costumes
-            .get(&costume.path)
-            .cloned()
-            .map(Ok::<_, io::Error>)
-            .unwrap_or_else(|| {
-                let mut fs = fs.borrow_mut();
-                let mut file = match fs.read_file(&path) {
-                    Ok(file) => file,
-                    Err(error) => {
-                        d.report(
-                            DiagnosticKind::IOError(error.to_string().into()),
-                            &costume.span,
-                        );
-                        return Ok(Default::default());
-                    }
-                };
-                let mut hasher = Md5::new();
-                io::copy(&mut file, &mut hasher)?;
-                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
-                self.costumes.insert(costume.path.clone(), hash.clone());
-                Ok(hash)
-            })?;
-        let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
-        self.costume_entry(config, &costume.name, &hash, extension)
-    }
-
-    pub fn costume_entry(
-        &mut self,
-        config: &Config,
-        name: &str,
-        hash: &str,
-        extension: &str,
-    ) -> io::Result<()> {
-        write!(self, "{{")?;
-        write!(self, r#""name":{}"#, json!(name))?;
-        write!(self, r#","assetId":"{hash}""#)?;
-        if extension == "png" || extension == "bmp" {
-            write!(
-                self,
-                r#","bitmapResolution":{}"#,
-                json!(config.bitmap_resolution.unwrap_or(1))
-            )?;
-        }
-        write!(self, r#","dataFormat":"{extension}""#)?;
-        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
-        write!(self, "}}") // costume
-    }
-
-    pub fn sound(
-        &mut self,
-        fs: Rc<RefCell<dyn VFS>>,
-        input: &Path,
-        sound: &Sound,
-        d: D,
-    ) -> io::Result<()> {
-        let path = input.join(&*sound.path);
-        let hash = self
-            .costumes
-            .get(&sound.path)
-            .cloned()
-            .map(Ok::<_, io::Error>)
-            .unwrap_or_else(|| {
-                let mut fs = fs.borrow_mut();
-                let mut file = match fs.read_file(&path) {
-                    Ok(file) => file,
-                    Err(error) => {
-                        d.report(
-                            DiagnosticKind::IOError(error.to_string().into()),
-                            &sound.span,
-                        );
-                        return Ok(Default::default());
-                    }
-                };
-                let mut hasher = Md5::new();
-                io::copy(&mut file, &mut hasher)?;
-                let hash: SmolStr = format!("{:x}", hasher.finalize()).into();
-                self.costumes.insert(sound.path.clone(), hash.clone());
-                Ok(hash)
-            })?;
-        let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
-        self.sound_entry(&sound.name, &hash, extension)
-    }
-
-    pub fn sound_entry(&mut self, name: &str, hash: &str, extension: &str) -> io::Result<()> {
-        write!(self, "{{")?;
-        write!(self, r#""name":{}"#, json!(name))?;
-        write!(self, r#","assetId":"{hash}""#)?;
-        write!(self, r#","dataFormat":"{extension}""#)?;
-        write!(self, r#","md5ext":"{hash}.{extension}""#)?;
-        write!(self, "}}") // costume
     }
 
     pub fn proc(&mut self, s: S, d: D, proc: &Proc, definition: &[Stmt]) -> io::Result<()> {
@@ -1415,4 +1281,51 @@ where T: Write + Seek
             } => self.property(s, d, this_id, parent_id, object, property, span),
         }
     }
+}
+
+fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMap<SmolStr, usize>> {
+    let mut layers: FxHashMap<SmolStr, usize> = Default::default();
+    let mut keys: Vec<_> = project.sprites.keys().collect();
+    keys.sort();
+    let mut i = 1;
+    for key in keys {
+        layers.insert(key.clone(), i);
+        i += 1;
+    }
+    if let Some(configured) = &config.layers {
+        let mut extra = vec![];
+        for layer in configured {
+            if !project.sprites.contains_key(&**layer) {
+                extra.push(layer.clone());
+            }
+        }
+        let mut missing = vec![];
+        for layer in project.sprites.keys() {
+            if configured
+                .iter()
+                .find(|configured| &**configured == &*layer)
+                .is_none()
+            {
+                missing.push(layer.clone());
+            }
+        }
+        if !extra.is_empty() {
+            bail!(
+                "layers references sprites that do not exist: {}",
+                extra.join(", ")
+            );
+        }
+        if !missing.is_empty() {
+            bail!(
+                "layers does not reference sprites that exist: {}",
+                missing.join(", ")
+            );
+        }
+        let mut i = 1;
+        for layer in configured {
+            layers.insert(layer.into(), i);
+            i += 1;
+        }
+    }
+    Ok(layers)
 }

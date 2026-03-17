@@ -6,7 +6,7 @@
 erase_all;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 erase all
 ```
 
@@ -16,7 +16,7 @@ erase all
 stamp;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 stamp
 ```
 
@@ -26,7 +26,7 @@ stamp
 pen_down;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 pen down
 ```
 
@@ -36,7 +36,7 @@ pen down
 pen_up;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 pen up
 ```
 
@@ -46,7 +46,7 @@ pen up
 set_pen_color color;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set pen color to (color)
 ```
 
@@ -56,7 +56,7 @@ set pen color to (color)
 change_pen_size size_;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change pen size by (size_)
 ```
 
@@ -66,7 +66,7 @@ change pen size by (size_)
 set_pen_size size_;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set pen size to (size_)
 ```
 
@@ -76,7 +76,7 @@ set pen size to (size_)
 set_pen_hue value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set pen [color v] to (value)
 ```
 
@@ -86,7 +86,7 @@ set pen [color v] to (value)
 set_pen_saturation value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set pen [saturation v] to (value)
 ```
 
@@ -96,7 +96,7 @@ set pen [saturation v] to (value)
 set_pen_brightness value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set pen [brightness v] to (value)
 ```
 
@@ -106,7 +106,7 @@ set pen [brightness v] to (value)
 set_pen_transparency value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set pen [transparency v] to (value)
 ```
 
@@ -116,7 +116,7 @@ set pen [transparency v] to (value)
 change_pen_hue value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change pen [color v] by (value)
 ```
 
@@ -126,7 +126,7 @@ change pen [color v] by (value)
 change_pen_saturation value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change pen [saturation v] by (value)
 ```
 
@@ -136,7 +136,7 @@ change pen [saturation v] by (value)
 change_pen_brightness value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change pen [brightness v] by (value)
 ```
 
@@ -146,6 +146,6 @@ change pen [brightness v] by (value)
 change_pen_transparency value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change pen [transparency v] by (value)
 ```

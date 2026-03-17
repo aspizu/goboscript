@@ -99,14 +99,14 @@ repeat 5 {
 }
 
 # Repeat with counter
-var i = 1;
+i = 1;
 repeat 10 {
     say "Iteration " & i;
     i++;
 }
 
 # Until loop (continues until condition is true)
-var counter = 0;
+counter = 0;
 until counter > 5 {
     say "Counter: " & counter;
     counter++;

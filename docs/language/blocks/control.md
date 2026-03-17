@@ -6,7 +6,7 @@
 wait duration;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 wait (duration) seconds
 ```
 
@@ -16,7 +16,7 @@ wait (duration) seconds
 stop_all;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 stop [all v]
 ```
 
@@ -26,7 +26,7 @@ stop [all v]
 stop_this_script;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 stop [this script v]
 ```
 
@@ -36,7 +36,7 @@ stop [this script v]
 stop_other_scripts;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 stop [other scripts in sprite v]
 ```
 
@@ -46,7 +46,7 @@ stop [other scripts in sprite v]
 delete_this_clone;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 delete this clone
 ```
 
@@ -56,7 +56,7 @@ delete this clone
 clone;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 create clone of [myself v]
 ```
 
@@ -66,6 +66,6 @@ create clone of [myself v]
 clone "sprite name";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 create clone of (sprite name v)
 ```

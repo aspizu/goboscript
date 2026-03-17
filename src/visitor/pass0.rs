@@ -1,11 +1,18 @@
 use std::path::Path;
 
 use fxhash::FxHashMap;
-use glob::glob;
 
 use crate::{
     ast::*,
+    codegen::{
+        costumes::{
+            BITMAP_FORMATS,
+            VECTOR_FORMATS,
+        },
+        sounds::SOUND_FORMATS,
+    },
     misc::SmolStr,
+    vfs::VFS,
 };
 
 struct V<'a> {
@@ -14,16 +21,21 @@ struct V<'a> {
     global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
 }
 
-pub fn visit_project(input: &Path, project: &mut Project) {
-    visit_sprite(input, &mut project.stage, None);
+pub fn visit_project(fs: &mut dyn VFS, input: &Path, project: &mut Project) {
+    visit_sprite(fs, input, &mut project.stage, None);
     for sprite in project.sprites.values_mut() {
-        visit_sprite(input, sprite, Some(&mut project.stage));
+        visit_sprite(fs, input, sprite, Some(&mut project.stage));
     }
 }
 
-fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
-    visit_costumes(input, &mut sprite.costumes);
-    visit_sounds(input, &mut sprite.sounds);
+fn visit_sprite(
+    fs: &mut dyn VFS,
+    input: &Path,
+    sprite: &mut Sprite,
+    mut stage: Option<&mut Sprite>,
+) {
+    visit_assets(fs, input, &mut sprite.costumes, true, is_costume_ext);
+    visit_assets(fs, input, &mut sprite.sounds, false, is_sound_ext);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -95,56 +107,57 @@ fn visit_enum(enum_: &mut Enum) {
     }
 }
 
-fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
-    let old: Vec<Costume> = std::mem::take(new);
-    for costume in old {
-        if let Some(suffix) = costume.name.strip_prefix("@ascii/") {
-            new.extend((' '..='~').map(|ch| Costume {
-                name: format!("{suffix}{ch}").into(),
-                path: costume.path.clone(),
-                span: costume.span.clone(),
-            }));
-        } else if costume.path.contains('*') {
-            let mut costumes: Vec<Costume> = glob(input.join(&*costume.path).to_str().unwrap())
-                .unwrap()
-                .map(Result::unwrap)
-                .map(|path| Costume {
-                    name: path.file_stem().unwrap().to_string_lossy().into(),
-                    path: path.to_string_lossy().into(),
-                    span: costume.span.clone(),
-                })
-                .collect();
-            costumes.sort_by(|a, b| a.name.cmp(&b.name));
-            new.extend(costumes);
-        } else {
-            new.push(costume);
-        }
-    }
+fn is_costume_ext(ext: &str) -> bool {
+    BITMAP_FORMATS.contains(&ext) || VECTOR_FORMATS.contains(&ext)
 }
 
-fn visit_sounds(input: &Path, new: &mut Vec<Sound>) {
-    let old: Vec<Sound> = std::mem::take(new);
-    for sound in old {
-        if let Some(suffix) = sound.name.strip_prefix("@ascii/") {
-            new.extend((' '..='~').map(|ch| Sound {
-                name: format!("{suffix}{ch}").into(),
-                path: sound.path.clone(),
-                span: sound.span.clone(),
-            }));
-        } else if sound.path.contains('*') {
-            let mut sounds: Vec<Sound> = glob(input.join(&*sound.path).to_str().unwrap())
-                .unwrap()
-                .map(Result::unwrap)
-                .map(|path| Sound {
-                    name: path.file_stem().unwrap().to_string_lossy().into(),
-                    path: path.to_string_lossy().into(),
-                    span: sound.span.clone(),
-                })
-                .collect();
-            sounds.sort_by(|a, b| a.name.cmp(&b.name));
-            new.extend(sounds);
+fn is_sound_ext(ext: &str) -> bool {
+    SOUND_FORMATS.contains(&ext)
+}
+
+fn visit_assets(
+    fs: &mut dyn VFS,
+    input: &Path,
+    assets: &mut Vec<Asset>,
+    allow_ascii: bool,
+    is_valid_ext: fn(&str) -> bool,
+) {
+    let mut i = 0;
+    while i < assets.len() {
+        if allow_ascii {
+            if let Some(suffix) = assets[i].name.strip_prefix("@ascii/").map(|s| s.to_owned()) {
+                let asset = assets.remove(i);
+                for ch in ' '..='~' {
+                    let mut new_asset = asset.clone();
+                    new_asset.name = format!("{suffix}{ch}").into();
+                    assets.insert(i, new_asset);
+                    i += 1;
+                }
+                continue;
+            }
+        }
+        if assets[i].path.contains('*') {
+            let asset = assets.remove(i);
+            let mut files: Vec<_> = fs
+                .glob(input.join(asset.path.as_str()).to_str().unwrap())
+                .unwrap();
+            files.sort();
+            for file in files {
+                let Some(ext) = file.extension() else {
+                    continue;
+                };
+                let ext = ext.to_str().unwrap().to_lowercase();
+                let ext = ext.as_str();
+                if !is_valid_ext(ext) {
+                    continue;
+                }
+                let new_asset =
+                    Asset::new(file.to_str().unwrap().into(), None, asset.span.clone());
+                assets.insert(i, new_asset);
+                i += 1;
+            }
         } else {
-            new.push(sound);
+            i += 1;
         }
     }
 }

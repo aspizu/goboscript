@@ -6,7 +6,7 @@
 move steps;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 move (steps) steps
 ```
 
@@ -16,7 +16,7 @@ move (steps) steps
 turn_left degrees;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 turn left (degrees) degrees
 ```
 
@@ -26,7 +26,7 @@ turn left (degrees) degrees
 turn_right degrees;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 turn right (degrees) degrees
 ```
 
@@ -36,7 +36,7 @@ turn right (degrees) degrees
 goto "sprite";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go to (sprite v)
 ```
 
@@ -46,7 +46,7 @@ go to (sprite v)
 goto_random_position;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go to (random position v)
 ```
 
@@ -56,7 +56,7 @@ go to (random position v)
 goto_mouse_pointer;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go to (mouse-pointer v)
 ```
 
@@ -66,7 +66,7 @@ go to (mouse-pointer v)
 goto x, y;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go to x: (x) y: (y)
 ```
 
@@ -76,7 +76,7 @@ go to x: (x) y: (y)
 glide x, y, secs;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 glide (secs) secs to x: (x) y: (y)
 ```
 
@@ -86,7 +86,7 @@ glide (secs) secs to x: (x) y: (y)
 glide_to "sprite", secs;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 glide (secs) secs to (sprite v)
 ```
 
@@ -96,7 +96,7 @@ glide (secs) secs to (sprite v)
 glide_to_random_position secs;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 glide (secs) secs to (random position v)
 ```
 
@@ -106,7 +106,7 @@ glide (secs) secs to (random position v)
 glide_to_mouse_pointer secs;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 glide (secs) secs to (mouse-pointer v)
 ```
 
@@ -116,7 +116,7 @@ glide (secs) secs to (mouse-pointer v)
 point_in_direction direction;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 point in direction (direction)
 ```
 
@@ -126,7 +126,7 @@ point in direction (direction)
 point_towards_mouse_pointer;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 point towards (mouse-pointer v)
 ```
 
@@ -136,7 +136,7 @@ point towards (mouse-pointer v)
 point_towards_random_direction;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 point towards (random direction v)
 ```
 
@@ -146,7 +146,7 @@ point towards (random direction v)
 point_towards "sprite";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 point towards (sprite v)
 ```
 
@@ -156,7 +156,7 @@ point towards (sprite v)
 change_x dx;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change x by (dx)
 ```
 
@@ -166,7 +166,7 @@ change x by (dx)
 set_x x;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set x to (x)
 ```
 
@@ -176,7 +176,7 @@ set x to (x)
 change_y dy;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change y by (dy)
 ```
 
@@ -186,7 +186,7 @@ change y by (dy)
 set_y y;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set y to (y)
 ```
 
@@ -196,7 +196,7 @@ set y to (y)
 if_on_edge_bounce;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 if on edge, bounce
 ```
 
@@ -206,7 +206,7 @@ if on edge, bounce
 set_rotation_style_left_right;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set rotation style [left-right v]
 ```
 
@@ -216,7 +216,7 @@ set rotation style [left-right v]
 set_rotation_style_do_not_rotate;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set rotation style [don't rotate v]
 ```
 
@@ -226,6 +226,6 @@ set rotation style [don't rotate v]
 set_rotation_style_all_around;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set rotation style [all around v]
 ```

@@ -40,9 +40,6 @@ Declr: () = {
     SET_ROTATION_STYLE_DO_NOT_ROTATE ";" => {  
         sprite.rotation_style = RotationStyle::DoNotRotate;
     },
-    SET_LAYER_ORDER <layer_order:Value> => {
-        sprite.layer_order = Some(layer_order);
-    },
     <w:NOWARP?> PROC <l:@L> <n:NAME> <r:@R> <a:Comma<Arg>> <b:Stmts> => {
         sprite.add_proc(Proc::new(n.clone(), l..r, w.is_none()), a, b, diagnostics);
     },
@@ -99,15 +96,21 @@ EnumVariant: EnumVariant = {
     <l:@L> <name:NAME> <r:@R> "=" <v:Value> => EnumVariant::new(name, l..r, Some(v)),
 }
 
-Costume: () = {
+Asset: Asset = {
     <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
-        sprite.costumes.push(Costume::new(path, alias, l..r));
+        Asset::new(path, alias, l..r)
+    }
+}
+
+Costume: () = {
+    <a:Asset> => {
+        sprite.costumes.push(a);
     }
 }
 
 Sound: () = {
-    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
-        sprite.sounds.push(Sound::new(path, alias, l..r));
+    <a:Asset> => {
+        sprite.sounds.push(a);
     }
 }
 
@@ -707,7 +710,6 @@ extern {
         SET_ROTATION_STYLE_LEFT_RIGHT => Token::SetRotationStyleLeftRight,
         SET_ROTATION_STYLE_ALL_AROUND => Token::SetRotationStyleAllAround,
         SET_ROTATION_STYLE_DO_NOT_ROTATE => Token::SetRotationStyleDoNotRotate,
-        SET_LAYER_ORDER => Token::SetLayerOrder,
         VAR => Token::Var,
     }
 }

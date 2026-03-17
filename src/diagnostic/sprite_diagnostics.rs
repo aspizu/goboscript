@@ -74,6 +74,10 @@ impl SpriteDiagnostics {
         });
     }
 
+    pub fn report_io_error(&mut self, error: impl ToString, help: Option<&str>, span: &Span) {
+        self.report(DiagnosticKind::io_error(error, help), span);
+    }
+
     pub fn eprint(&self, cwd: &Path, renderer: &Renderer, project: &Project) {
         let sprite = match self.sprite_name.as_str() {
             "stage" => &project.stage,
@@ -132,5 +136,11 @@ impl SpriteDiagnostics {
                 }
             }
         }
+    }
+
+    pub fn find_diagnostic_for_span(&self, span: &Span) -> Option<&Diagnostic> {
+        self.diagnostics.iter().find(|diagnostic| {
+            diagnostic.span.start <= span.start && diagnostic.span.end >= span.end
+        })
     }
 }

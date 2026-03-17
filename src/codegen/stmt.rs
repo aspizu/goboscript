@@ -567,6 +567,13 @@ where T: Write + Seek
                             struct_literal_fields
                         }
                         _ => {
+                            d.report(
+                                DiagnosticKind::TypeMismatch {
+                                    expected: arg.type_.clone(),
+                                    given: Type::Value,
+                                },
+                                &arg_value.span(),
+                            );
                             continue;
                         }
                     };

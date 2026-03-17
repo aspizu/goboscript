@@ -7,7 +7,7 @@ the `new` command. (run `goboscript new --help` for more information)
 
 Create a new folder, and make sure that your working-directory is set to that folder.
 
-```shell
+```bash
 goboscript new
 ```
 
@@ -15,14 +15,15 @@ This will create a new project with the following structure:
 
 ```
 .
-├── blank.svg
+├── assets
+│   └── blank.svg
+├── .git
+├── .gitignore
+├── goboscript.toml
 ├── main.gs
-├── stage.gs
-└── goboscript.toml
+├── playground.sb3
+└── stage.gs
 ```
-
-Depending on what options you chose, it might create a `goboscript.toml` configuration
-file.
 
 Each `.gs` file holds the code for a sprite, the name of the sprite is the name of
 the file without the `.gs` extension.
@@ -35,21 +36,30 @@ uses `stage.gs` for the Stage, you also cannot name a sprite `stage` (in lowerca
 the line:
 
 ```goboscript
-costumes "blank.svg";
+costumes "assets/blank.svg";
 ```
 
 This is used to add a costume to a sprite (or the Stage), see
 [language/costumes](../language/costumes.md) for more information.
 
+By default, a new git repository is created. (unless the `-G` option is used)
+
+Use the option `-m` to create a Makefile.
+
 ## Compile the project
 
 To compile the project, run the following command:
 
-```shell
+```bash
 goboscript build
+# or
+goboscript b
 ```
 
 This will compile the project into a `.sb3` file. The `.sb3` file will be placed in the
 project directory. It will have the same name as the project directory.
+
+If the compilation fails, and you have got errors, the generated `.sb3` file will be
+invalid and should not be opened in Scratch.
 
 Run `goboscript build --help` for more information.

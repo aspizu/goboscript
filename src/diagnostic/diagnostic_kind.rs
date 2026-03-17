@@ -15,6 +15,13 @@ use crate::{
         Block,
         Repr,
     },
+    codegen::{
+        costumes::{
+            BITMAP_FORMATS,
+            VECTOR_FORMATS,
+        },
+        sounds::SOUND_FORMATS,
+    },
     lexer::token::Token,
     misc::SmolStr,
 };
@@ -27,7 +34,10 @@ pub enum DiagnosticKind {
     UnrecognizedEof(Vec<String>),
     UnrecognizedToken(Token, Vec<String>),
     ExtraToken(Token),
-    IOError(SmolStr),
+    IOError {
+        error: String,
+        help: Option<String>,
+    },
     UnrecognizedReporter(SmolStr),
     UnrecognizedBlock(SmolStr),
     UnrecognizedVariable(SmolStr),
@@ -47,6 +57,12 @@ pub enum DiagnosticKind {
     DuplicateBackdrop(SmolStr),
     InvalidCostumeName(SmolStr),
     InvalidBackdropName(SmolStr),
+    InvalidCostumeFormat {
+        extension: String,
+    },
+    InvalidSoundFormat {
+        extension: SmolStr,
+    },
     BlockArgsCountMismatch {
         block: Block,
         given: usize,
@@ -90,21 +106,27 @@ pub enum DiagnosticKind {
         field_name: SmolStr,
     },
     EmptyStruct(SmolStr),
+    LocalNotSupported,
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
     UnusedVariable(SmolStr),
     UnusedList(SmolStr),
-    UnusedEnum(SmolStr),
     UnusedStruct(SmolStr),
     UnusedProc(SmolStr),
     UnusedFunc(SmolStr),
     UnusedArg(SmolStr),
     UnusedStructField(SmolStr),
-    UnusedEnumVariant(SmolStr),
 }
 
 impl DiagnosticKind {
+    pub fn io_error(error: impl ToString, help: Option<&str>) -> Self {
+        DiagnosticKind::IOError {
+            error: error.to_string().into(),
+            help: help.map(|h| h.into()),
+        }
+    }
+
     pub fn to_string(&self, sprite: &Sprite) -> String {
         match self {
             DiagnosticKind::InvalidToken => "invalid token".to_string(),
@@ -129,7 +151,7 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::ExtraToken(_) => "extra token".to_string(),
-            DiagnosticKind::IOError(error) => format!("{error}"),
+            DiagnosticKind::IOError { error, .. } => format!("{error}"),
             DiagnosticKind::UnrecognizedReporter(_) => "unrecognized reporter".to_string(),
             DiagnosticKind::UnrecognizedBlock(_) => "unrecognized block".to_string(),
             DiagnosticKind::UnrecognizedVariable(_) => "unrecognized variable".to_string(),
@@ -156,6 +178,12 @@ impl DiagnosticKind {
             }
             DiagnosticKind::InvalidBackdropName(name) => {
                 format!("backdrop '{}' does not exist", name)
+            }
+            DiagnosticKind::InvalidCostumeFormat { extension } => {
+                format!("invalid costume file format '{}'", extension)
+            }
+            DiagnosticKind::InvalidSoundFormat { extension } => {
+                format!("invalid sound file format '{}'", extension)
             }
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(
@@ -203,10 +231,12 @@ impl DiagnosticKind {
             DiagnosticKind::TypeMismatch { expected, given } => {
                 format!("type mismatch: expected {}, but got {}", expected, given)
             }
+            DiagnosticKind::LocalNotSupported => {
+                "local variables are not supported here".to_string()
+            }
             DiagnosticKind::FollowedByUnreachableCode => "followed by unreachable code".to_string(),
             DiagnosticKind::UnusedVariable(name) => format!("unused variable {name}"),
             DiagnosticKind::UnusedList(name) => format!("unused list {name}"),
-            DiagnosticKind::UnusedEnum(name) => format!("unused enum {name}"),
             DiagnosticKind::UnusedStruct(name) => format!("unused struct {name}"),
             DiagnosticKind::UnusedProc(name) => format!("unused procedure {name}"),
             DiagnosticKind::UnusedFunc(name) => format!("unused function {name}"),
@@ -214,7 +244,6 @@ impl DiagnosticKind {
             DiagnosticKind::UnusedStructField(name) => {
                 format!("unused struct field {name} (never read)")
             }
-            DiagnosticKind::UnusedEnumVariant(name) => format!("unused enum variant {name}"),
             DiagnosticKind::NotStruct => "not a struct".to_string(),
             DiagnosticKind::StructDoesNotHaveField {
                 type_name,
@@ -261,6 +290,14 @@ impl DiagnosticKind {
                 } else {
                     None
                 }
+            }
+            DiagnosticKind::InvalidCostumeFormat { .. } => Some(format!(
+                "allowed formats are: {}, {}",
+                BITMAP_FORMATS.join(", "),
+                VECTOR_FORMATS.join(", ")
+            )),
+            DiagnosticKind::InvalidSoundFormat { .. } => {
+                Some(format!("allowed formats are: {}", SOUND_FORMATS.join(", ")))
             }
             DiagnosticKind::UnrecognizedVariable(name) => {
                 let var_names: Vec<&str> = sprite.vars.keys().map(|s| s.as_str()).collect();
@@ -320,6 +357,7 @@ impl DiagnosticKind {
                 Token::Var => Some("var should only be used at top-level.".to_owned()),
                 _ => None,
             },
+            DiagnosticKind::IOError { help, .. } => help.clone(),
             _ => None,
         }
     }
@@ -344,8 +382,6 @@ impl DiagnosticKind {
         match self {
             DiagnosticKind::UnrecognizedArgument(name) => name.starts_with('_'),
             DiagnosticKind::UnusedArg(name) => name.starts_with('_'),
-            DiagnosticKind::UnusedEnum(name) => name.starts_with('_'),
-            DiagnosticKind::UnusedEnumVariant(name) => name.starts_with('_'),
             DiagnosticKind::UnusedList(name) => name.starts_with('_'),
             DiagnosticKind::UnusedProc(name) => name.starts_with('_'),
             DiagnosticKind::UnusedFunc(name) => name.starts_with('_'),
@@ -367,7 +403,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::UnrecognizedEof(_)
             | DiagnosticKind::UnrecognizedToken(_, _)
             | DiagnosticKind::ExtraToken(_)
-            | DiagnosticKind::IOError(_)
+            | DiagnosticKind::IOError { .. }
             | DiagnosticKind::UnrecognizedReporter(_)
             | DiagnosticKind::UnrecognizedBlock(_)
             | DiagnosticKind::UnrecognizedVariable(_)
@@ -397,19 +433,20 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidCostumeName(_)
             | DiagnosticKind::DuplicateCostume(_)
             | DiagnosticKind::DuplicateBackdrop(_)
-            | DiagnosticKind::InvalidBackdropName(_) => Level::Error,
+            | DiagnosticKind::InvalidBackdropName(_)
+            | DiagnosticKind::InvalidCostumeFormat { .. }
+            | DiagnosticKind::InvalidSoundFormat { .. }
+            | DiagnosticKind::LocalNotSupported => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)
             | DiagnosticKind::UnusedVariable(_)
             | DiagnosticKind::UnusedList(_)
-            | DiagnosticKind::UnusedEnum(_)
             | DiagnosticKind::UnusedStruct(_)
             | DiagnosticKind::UnusedProc(_)
             | DiagnosticKind::UnusedFunc(_)
             | DiagnosticKind::UnusedArg(_)
-            | DiagnosticKind::UnusedStructField(_)
-            | DiagnosticKind::UnusedEnumVariant(_) => Level::Warning,
+            | DiagnosticKind::UnusedStructField(_) => Level::Warning,
         }
     }
 }

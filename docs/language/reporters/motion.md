@@ -6,7 +6,7 @@
 x = x_position();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (x position)
 ```
 
@@ -16,7 +16,7 @@ x = x_position();
 y = y_position();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (y position)
 ```
 
@@ -26,6 +26,6 @@ y = y_position();
 dir = direction();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (direction)
 ```
