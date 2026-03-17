@@ -96,15 +96,21 @@ EnumVariant: EnumVariant = {
     <l:@L> <name:NAME> <r:@R> "=" <v:Value> => EnumVariant::new(name, l..r, Some(v)),
 }
 
-Costume: () = {
+Asset: Asset = {
     <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
-        sprite.costumes.push(Costume::new(path, alias, l..r));
+        Asset::new(path, alias, l..r)
+    }
+}
+
+Costume: () = {
+    <a:Asset> => {
+        sprite.costumes.push(a);
     }
 }
 
 Sound: () = {
-    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
-        sprite.sounds.push(Sound::new(path, alias, l..r));
+    <a:Asset> => {
+        sprite.sounds.push(a);
     }
 }
 
