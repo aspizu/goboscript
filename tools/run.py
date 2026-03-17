@@ -45,7 +45,7 @@ sb3py = Path(__file__).parent.joinpath("sb3.py")
 for project in args.projects:
     if returncode := subprocess.run(
         [
-            "python3",
+            sys.executable,
             sb3py,
             project.joinpath(project.stem + ".sb3"),
             *(["-v"] if args.validate else []),
