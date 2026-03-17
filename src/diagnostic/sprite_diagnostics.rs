@@ -137,4 +137,10 @@ impl SpriteDiagnostics {
             }
         }
     }
+
+    pub fn find_diagnostic_for_span(&self, span: &Span) -> Option<&Diagnostic> {
+        self.diagnostics.iter().find(|diagnostic| {
+            diagnostic.span.start <= span.start && diagnostic.span.end >= span.end
+        })
+    }
 }

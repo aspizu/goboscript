@@ -215,6 +215,11 @@ impl S<'_> {
             );
         }
         if let Some(d) = d {
+            if d.find_diagnostic_for_span(&name.span())
+                .is_some_and(|it| matches!(it.kind, DiagnosticKind::LocalNotSupported))
+            {
+                return None;
+            }
             d.report(
                 DiagnosticKind::UnrecognizedVariable(basename.clone()),
                 &name.span(),

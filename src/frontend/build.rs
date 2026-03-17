@@ -135,7 +135,13 @@ pub fn build_impl<T: Write + Seek>(
     }
     {
         let mut fs = fs.borrow_mut();
-        visitor::pass0::visit_project(&mut *fs, &input, &mut project);
+        visitor::pass0::visit_project(
+            &mut *fs,
+            &input,
+            &mut project,
+            &mut stage_diagnostics,
+            &mut sprites_diagnostics,
+        );
     }
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(
