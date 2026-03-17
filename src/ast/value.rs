@@ -87,7 +87,16 @@ impl Value {
             Value::Number(number) if number.is_infinite() && number.is_sign_negative() => {
                 arcstr::literal!("-Infinity")
             }
-            Value::Number(number) if number.fract() == 0.0 => (*number as i64).to_string().into(),
+            Value::Number(number) if number.fract() == 0.0 => {
+                // In Rust release mode, `f64 as i64` saturates when out of i64 range.
+                // Verify the round-trip to detect saturation; fall back to float formatting.
+                let int_val = *number as i64;
+                if int_val as f64 == *number {
+                    int_val.to_string().into()
+                } else {
+                    serde_json::to_string(number).unwrap().into()
+                }
+            }
             Value::Number(number) => serde_json::to_string(number).unwrap().into(),
             Value::String(string) => string.clone(),
         }
