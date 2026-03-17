@@ -13,7 +13,7 @@ std = "2.1.0" # default is unset
 
 ## Sprites layer order
 
-Specify the order in which sprites are layered, by default the order is undefined.
+Specify the order in which sprites are layered, by default the order is alphabetical by name.
 
 ```toml
 layers = ["sprite_name_1", "sprite_name_2"]

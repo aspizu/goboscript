@@ -1,8 +1,14 @@
 {
   "name": "goboscript",
   "displayName": "goboscript",
-  "version": "0.1.0",
+  "version": "1.0.2",
   "description": "goboscript language support for Visual Studio Code.",
+  "publisher": "aspizu",
+  "author": {
+    "name": "Priyanshu Dangare",
+    "email": "hello@aspiz.uk",
+    "url": "https://aspiz.uk"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/aspizu/goboscript.git"
@@ -12,6 +18,7 @@
   "keywords": [
     "goboscript"
   ],
+  "icon": "icon.png",
   "categories": [
     "Formatters",
     "Programming Languages"

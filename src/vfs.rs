@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     io::{
         self,
         Cursor,
@@ -11,6 +12,11 @@ use std::{
 };
 
 use fxhash::FxHashMap;
+use glob::{
+    glob,
+    MatchOptions,
+    Pattern,
+};
 use serde::{
     Deserialize,
     Serialize,
@@ -24,6 +30,7 @@ pub trait VFS {
     fn read_file<'a>(&'a mut self, path: &Path) -> io::Result<Box<dyn io::Read + 'a>>;
     fn is_dir(&self, path: &Path) -> bool;
     fn is_file(&self, path: &Path) -> bool;
+    fn glob(&mut self, pattern: &str) -> io::Result<Vec<PathBuf>>;
 
     fn read_to_string(&mut self, path: &Path) -> io::Result<String> {
         let mut file = self.read_file(path)?;
@@ -40,19 +47,8 @@ pub trait VFS {
     }
 }
 
+#[derive(Default)]
 pub struct RealFS;
-
-impl Default for RealFS {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RealFS {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
 
 impl VFS for RealFS {
     fn read_dir(&mut self, path: &Path) -> io::Result<Vec<PathBuf>> {
@@ -75,6 +71,18 @@ impl VFS for RealFS {
 
     fn is_file(&self, path: &Path) -> bool {
         path.is_file()
+    }
+
+    fn glob(&mut self, pattern: &str) -> io::Result<Vec<PathBuf>> {
+        let mut entries = Vec::new();
+        let paths = glob(pattern)
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err.msg))?;
+        for entry in paths {
+            let path =
+                entry.map_err(|err| io::Error::new(err.error().kind(), err.to_string()))?;
+            entries.push(path);
+        }
+        Ok(entries)
     }
 }
 
@@ -139,35 +147,55 @@ impl VFS for MemFS {
     }
 
     fn is_dir(&self, path: &Path) -> bool {
-        let path_str = match path.to_str() {
-            Some(s) => s,
-            None => return false,
-        };
-
-        let normalized_path = if path_str.ends_with('/') {
-            path_str.to_string()
-        } else {
-            format!("{}/", path_str)
-        };
-
-        self.files
-            .keys()
-            .any(|key| key.starts_with(&normalized_path))
+        path.to_str().map_or(false, |path_str| {
+            let normalized_path = if path_str.ends_with('/') {
+                path_str.to_string()
+            } else {
+                format!("{}/", path_str)
+            };
+            self.files
+                .keys()
+                .any(|key| key.starts_with(&normalized_path))
+        })
     }
 
     fn is_file(&self, path: &Path) -> bool {
-        let path_str = match path.to_str() {
-            Some(s) => s,
-            None => return false,
-        };
+        path.to_str()
+            .map_or(false, |path_str| self.files.contains_key(path_str))
+    }
 
-        self.files.contains_key(path_str)
+    fn glob(&mut self, pattern: &str) -> io::Result<Vec<PathBuf>> {
+        let pattern = Pattern::new(&normalize_glob_path(pattern))
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err.msg))?;
+        let options = MatchOptions {
+            case_sensitive: true,
+            require_literal_separator: true,
+            require_literal_leading_dot: false,
+        };
+        let mut entries = Vec::new();
+        for key in self.files.keys() {
+            if pattern.matches_with(&normalize_glob_path(key), options) {
+                entries.push(PathBuf::from(key));
+            }
+        }
+        Ok(entries)
+    }
+}
+
+fn normalize_glob_path(path: &str) -> Cow<'_, str> {
+    if path.contains('\\') {
+        Cow::Owned(path.replace('\\', "/"))
+    } else {
+        Cow::Borrowed(path)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
+    use std::path::{
+        Path,
+        PathBuf,
+    };
 
     use super::*;
 
@@ -252,5 +280,40 @@ mod tests {
         assert!(entry_names.contains(&"file1.txt".to_string()));
         assert!(entry_names.contains(&"file2.txt".to_string()));
         assert!(entry_names.contains(&"subdir".to_string()));
+    }
+
+    #[test]
+    fn test_memfs_glob() {
+        let mut memfs = MemFS {
+            files: FxHashMap::default(),
+        };
+        memfs
+            .files
+            .insert("assets/a.png".to_string(), Data { inner: vec![] });
+        memfs
+            .files
+            .insert("assets/b.jpg".to_string(), Data { inner: vec![] });
+        memfs
+            .files
+            .insert("assets/sub/c.png".to_string(), Data { inner: vec![] });
+        memfs
+            .files
+            .insert("root.txt".to_string(), Data { inner: vec![] });
+
+        let mut pngs = memfs.glob("assets/*.png").expect("glob should succeed");
+        pngs.sort();
+        assert_eq!(pngs, vec![PathBuf::from("assets/a.png")]);
+
+        let mut deep_pngs = memfs
+            .glob("assets/**/*.png")
+            .expect("glob should succeed");
+        deep_pngs.sort();
+        assert_eq!(
+            deep_pngs,
+            vec![
+                PathBuf::from("assets/a.png"),
+                PathBuf::from("assets/sub/c.png")
+            ]
+        );
     }
 }

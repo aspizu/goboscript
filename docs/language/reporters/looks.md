@@ -6,7 +6,7 @@
 sprite_size = size();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (size)
 ```
 
@@ -16,7 +16,7 @@ sprite_size = size();
 costume_num = costume_number();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (costume [number v])
 ```
 
@@ -26,7 +26,7 @@ costume_num = costume_number();
 costume_name_str = costume_name();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (costume [name v])
 ```
 
@@ -36,7 +36,7 @@ costume_name_str = costume_name();
 backdrop_num = backdrop_number();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (backdrop [number v])
 ```
 
@@ -46,6 +46,6 @@ backdrop_num = backdrop_number();
 backdrop_name_str = backdrop_name();
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (backdrop [name v])
 ```

@@ -39,7 +39,6 @@ pub struct Sprite {
     pub used_procs: FxHashSet<SmolStr>,
     pub used_funcs: FxHashSet<SmolStr>,
     pub volume: Option<(Value, Span)>,
-    pub layer_order: Option<(Value, Span)>,
     pub x_position: Option<(Value, Span)>,
     pub y_position: Option<(Value, Span)>,
     pub size: Option<(Value, Span)>,

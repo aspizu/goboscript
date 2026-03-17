@@ -10,6 +10,7 @@ use std::{
     rc::Rc,
 };
 
+use anyhow::bail;
 use fxhash::{
     FxHashMap,
     FxHashSet,
@@ -51,6 +52,10 @@ use crate::{
 };
 
 const STAGE_NAME: &str = "Stage";
+
+pub const BITMAP_FORMATS: &[&str] = &["png", "bmp", "jpeg", "jpg", "gif"];
+pub const VECTOR_FORMATS: &[&str] = &["svg"];
+pub const SOUND_FORMATS: &[&str] = &["wav", "wave", "mp3"];
 
 #[derive(Debug, Copy, Clone)]
 pub struct S<'a> {
@@ -434,7 +439,8 @@ where T: Write + Seek
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-    ) -> io::Result<()> {
+    ) -> anyhow::Result<()> {
+        let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
             .events
@@ -451,8 +457,10 @@ where T: Write + Seek
         // TODO: switch to deflate compression
         // this should be configurable, use store in debug (because it would be
         // faster?), use deflate in release (because it would be smaller?)
-        self.zip
-            .start_file("project.json", SimpleFileOptions::default())?;
+        self.zip.start_file(
+            "project.json",
+            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
+        )?;
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
@@ -464,6 +472,7 @@ where T: Write + Seek
             config,
             stage_diagnostics,
             &broadcasts,
+            0,
         )?;
         let mut sprite_names: Vec<_> = project.sprites.keys().collect();
         sprite_names.sort();
@@ -478,6 +487,7 @@ where T: Write + Seek
                 config,
                 sprites_diagnostics.get_mut(sprite_name).unwrap(),
                 &broadcasts,
+                layers[sprite_name],
             )?;
         }
         write!(self, "]")?; // targets
@@ -488,8 +498,10 @@ where T: Write + Seek
         write!(self, r#","vm":"0.2.0""#)?;
         write!(
             self,
-            r#","agent":"goboscript v{}""#,
-            env!("CARGO_PKG_VERSION")
+            r#","agent":"goboscript ({})""#,
+            option_env!("GIT_HASH")
+                .map(|hash| format!("commit {hash}"))
+                .unwrap_or_else(|| format!("v{}", env!("CARGO_PKG_VERSION")))
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
@@ -507,6 +519,7 @@ where T: Write + Seek
         config: &Config,
         d: D,
         broadcasts: &FxHashSet<SmolStr>,
+        layer_order: usize,
     ) -> io::Result<()> {
         for proc in sprite.procs.values() {
             if !sprite.used_procs.contains(&proc.name) {
@@ -552,19 +565,6 @@ where T: Write + Seek
                 }
             }
         }
-        for enum_ in sprite.enums.values() {
-            if !enum_.is_used {
-                d.report(DiagnosticKind::UnusedEnum(enum_.name.clone()), &enum_.span);
-            }
-            for variant in &enum_.variants {
-                if !variant.is_used {
-                    d.report(
-                        DiagnosticKind::UnusedEnumVariant(variant.name.clone()),
-                        &variant.span,
-                    );
-                }
-            }
-        }
         let mut costumes = FxHashSet::default();
         for costume in &sprite.costumes {
             if costumes.contains(&costume.name) {
@@ -601,10 +601,12 @@ where T: Write + Seek
             write!(self, "}}")?; // comments
         }
         write!(self, r#","broadcasts":{{"#)?;
-        let mut comma = false;
-        for broadcast in broadcasts {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+        if stage.is_none() {
+            let mut comma = false;
+            for broadcast in broadcasts {
+                write_comma_io(&mut self.zip, &mut comma)?;
+                write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+            }
         }
         write!(self, "}}")?; // broadcasts
         write!(self, r#","variables":{{"#)?;
@@ -769,10 +771,7 @@ where T: Write + Seek
             let volume = volume.to_js_number();
             write!(self, r#","volume":{}"#, json!(volume))?;
         }
-        if let Some((layer_order, _)) = &sprite.layer_order {
-            let layer_order = (layer_order.to_js_number() as i64).max(1);
-            write!(self, r#","layerOrder":{}"#, json!(layer_order))?;
-        }
+        write!(self, r#","layerOrder":{}"#, layer_order)?;
         if !sprite.hidden {
             write!(self, r#","visible":true"#)?;
         } else {
@@ -791,17 +790,14 @@ where T: Write + Seek
         comma: &mut bool,
     ) -> io::Result<()> {
         write_comma_io(&mut self.zip, comma)?;
-        let default = match default {
-            Some(value) => value.to_string(),
-            None => arcstr::literal!("0"),
-        };
+        let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
                 self,
                 "\"{}\":[\"\u{2601} {}\",{},true]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         } else {
             write!(
@@ -809,7 +805,7 @@ where T: Write + Seek
                 "\"{}\":[\"{}\",{}]",
                 var_name,
                 var_name,
-                json!(*default)
+                json!(default)
             )
         }
     }
@@ -945,10 +941,10 @@ where T: Write + Seek
         comma: &mut bool,
         d: D,
     ) -> io::Result<()> {
-        let data = match &list.default {
+        let data: Vec<Value> = match &list.default {
             Some(ListDefault::Values(values)) => values
                 .into_iter()
-                .map(|v| s.evaluate_const_expr(d, v).to_string())
+                .map(|v| s.evaluate_const_expr(d, v))
                 .collect(),
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,
@@ -1013,8 +1009,9 @@ where T: Write + Seek
                 let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(
-                            DiagnosticKind::IOError(error.to_string().into()),
+                        d.report_io_error(
+                            error,
+                            Some("costume files are always relative to the project directory"),
                             &costume.span,
                         );
                         return Ok(Default::default());
@@ -1027,6 +1024,16 @@ where T: Write + Seek
                 Ok(hash)
             })?;
         let (_, extension) = costume.path.rsplit_once('.').unwrap_or_default();
+        let extension = extension.to_lowercase();
+        let extension = extension.as_str();
+        if !(BITMAP_FORMATS.contains(&extension) || VECTOR_FORMATS.contains(&extension)) {
+            d.report(
+                DiagnosticKind::InvalidCostumeFormat {
+                    extension: extension.into(),
+                },
+                &costume.span,
+            );
+        }
         self.costume_entry(config, &costume.name, &hash, extension)
     }
 
@@ -1040,7 +1047,7 @@ where T: Write + Seek
         write!(self, "{{")?;
         write!(self, r#""name":{}"#, json!(name))?;
         write!(self, r#","assetId":"{hash}""#)?;
-        if extension == "png" || extension == "bmp" {
+        if BITMAP_FORMATS.contains(&extension) {
             write!(
                 self,
                 r#","bitmapResolution":{}"#,
@@ -1070,8 +1077,9 @@ where T: Write + Seek
                 let mut file = match fs.read_file(&path) {
                     Ok(file) => file,
                     Err(error) => {
-                        d.report(
-                            DiagnosticKind::IOError(error.to_string().into()),
+                        d.report_io_error(
+                            error,
+                            Some("sound files are always relative to the project directory"),
                             &sound.span,
                         );
                         return Ok(Default::default());
@@ -1084,6 +1092,16 @@ where T: Write + Seek
                 Ok(hash)
             })?;
         let (_, extension) = sound.path.rsplit_once('.').unwrap_or_default();
+        let extension = extension.to_lowercase();
+        let extension = extension.as_str();
+        if !SOUND_FORMATS.contains(&extension) {
+            d.report(
+                DiagnosticKind::InvalidSoundFormat {
+                    extension: extension.into(),
+                },
+                &sound.span,
+            );
+        }
         self.sound_entry(&sound.name, &hash, extension)
     }
 
@@ -1093,7 +1111,7 @@ where T: Write + Seek
         write!(self, r#","assetId":"{hash}""#)?;
         write!(self, r#","dataFormat":"{extension}""#)?;
         write!(self, r#","md5ext":"{hash}.{extension}""#)?;
-        write!(self, "}}") // costume
+        write!(self, "}}") // sound
     }
 
     pub fn proc(&mut self, s: S, d: D, proc: &Proc, definition: &[Stmt]) -> io::Result<()> {
@@ -1420,4 +1438,51 @@ where T: Write + Seek
             } => self.property(s, d, this_id, parent_id, object, property, span),
         }
     }
+}
+
+fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMap<SmolStr, usize>> {
+    let mut layers: FxHashMap<SmolStr, usize> = Default::default();
+    let mut keys: Vec<_> = project.sprites.keys().collect();
+    keys.sort();
+    let mut i = 1;
+    for key in keys {
+        layers.insert(key.clone(), i);
+        i += 1;
+    }
+    if let Some(configured) = &config.layers {
+        let mut extra = vec![];
+        for layer in configured {
+            if !project.sprites.contains_key(&**layer) {
+                extra.push(layer.clone());
+            }
+        }
+        let mut missing = vec![];
+        for layer in project.sprites.keys() {
+            if configured
+                .iter()
+                .find(|configured| &**configured == &*layer)
+                .is_none()
+            {
+                missing.push(layer.clone());
+            }
+        }
+        if !extra.is_empty() {
+            bail!(
+                "layers references sprites that do not exist: {}",
+                extra.join(", ")
+            );
+        }
+        if !missing.is_empty() {
+            bail!(
+                "layers does not reference sprites that exist: {}",
+                missing.join(", ")
+            );
+        }
+        let mut i = 1;
+        for layer in configured {
+            layers.insert(layer.into(), i);
+            i += 1;
+        }
+    }
+    Ok(layers)
 }

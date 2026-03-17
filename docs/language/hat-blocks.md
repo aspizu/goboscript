@@ -8,7 +8,7 @@ onflag {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when green flag clicked
 ```
 
@@ -20,7 +20,7 @@ onkey "up arrow" {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when [up arrow v] key pressed
 ```
 
@@ -32,7 +32,7 @@ onclick {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when this sprite clicked
 ```
 
@@ -44,7 +44,7 @@ onbackdrop "backdrop" {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when backdrop switches to [backdrop v]
 ```
 
@@ -56,7 +56,7 @@ onloudness > 100 {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when [loudness v] > (100)
 ```
 
@@ -68,7 +68,7 @@ ontimer > 100 {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when [timer v] > (100)
 ```
 
@@ -80,7 +80,7 @@ onclone {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when I start as a clone
 ```
 
@@ -92,6 +92,6 @@ on "message name" {
 }
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 when I receive [message name v]
 ```

@@ -41,25 +41,13 @@ use crate::{
     visitor,
 };
 
-fn assign_layer_orders(project: &mut Project, config: &Config) {
-    let mut layer_order: usize = 1;
-    if let Some(layers) = &config.layers {
-        for layer in layers {
-            if let Some(sprite) = project.sprites.get_mut(&**layer) {
-                sprite.layer_order = Some((layer_order.into(), 0..0));
-                layer_order += 1;
-            }
-        }
-    }
-}
-
 pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<Artifact> {
     let input = input.unwrap_or_else(|| env::current_dir().unwrap());
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
     let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
-    let fs = Rc::new(RefCell::new(RealFS::new()));
+    let fs = Rc::new(RefCell::new(RealFS::default()));
     build_impl(fs, canonical_input, sb3, None)
 }
 
@@ -141,12 +129,16 @@ pub fn build_impl<T: Write + Seek>(
             block_count: 0,
         });
     }
-    visitor::pass0::visit_project(
-        &input,
-        &mut project,
-        &mut stage_diagnostics,
-        &mut sprites_diagnostics,
-    );
+    {
+        let mut fs = fs.borrow_mut();
+        visitor::pass0::visit_project(
+            &mut *fs,
+            &input,
+            &mut project,
+            &mut stage_diagnostics,
+            &mut sprites_diagnostics,
+        );
+    }
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(
         &mut project,
@@ -156,7 +148,6 @@ pub fn build_impl<T: Write + Seek>(
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
-    assign_layer_orders(&mut project, &config);
     sb3.project(
         fs.clone(),
         &input,
