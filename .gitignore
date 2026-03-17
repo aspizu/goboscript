@@ -10,3 +10,4 @@ dist/
 .intentionally-empty-file.o
 target/
 .cache/
+AGENTS.md
