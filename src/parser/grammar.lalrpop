@@ -97,8 +97,8 @@ EnumVariant: EnumVariant = {
 }
 
 Asset: Asset = {
-    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> <feature:(ON <STR>)?> => {
-        Asset::new(path, alias, l..r, feature)
+    <l:@L> <path:STR> <r:@R> <alias:(AS <STR>)?> => {
+        Asset::new(path, alias, l..r)
     }
 }
 

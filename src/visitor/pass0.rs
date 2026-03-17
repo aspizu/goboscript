@@ -29,8 +29,8 @@ pub fn visit_project(input: &Path, project: &mut Project) {
 }
 
 fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
-    visit_assets(input, &mut sprite.costumes);
-    visit_assets(input, &mut sprite.sounds);
+    visit_assets(input, &mut sprite.costumes, true);
+    visit_assets(input, &mut sprite.sounds, false);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -102,23 +102,22 @@ fn visit_enum(enum_: &mut Enum) {
     }
 }
 
-fn visit_assets(input: &Path, assets: &mut Vec<Asset>) {
+fn visit_assets(input: &Path, assets: &mut Vec<Asset>, allow_ascii: bool) {
     let mut i = 0;
     while i < assets.len() {
-        if assets[i]
-            .feature
-            .as_ref()
-            .is_some_and(|feat| feat == "ascii")
-        {
-            let asset = assets.remove(i);
-            for ch in ' '..'~' {
-                let mut new_asset = asset.clone();
-                new_asset.feature = None;
-                new_asset.name = ch.to_string().into();
-                assets.insert(i, new_asset);
-                i += 1;
+        if allow_ascii {
+            if let Some(suffix) = assets[i].name.strip_prefix("@ascii/") {
+                let asset = assets.remove(i);
+                for ch in ' '..'~' {
+                    let mut new_asset = asset.clone();
+                    new_asset.name = format!("{suffix}{ch}").into();
+                    assets.insert(i, new_asset);
+                    i += 1;
+                }
+                continue;
             }
-        } else if assets[i].path.contains('*') {
+        }
+        if assets[i].path.contains('*') {
             let asset = assets.remove(i);
             let mut files: Vec<_> = glob(input.join(asset.path.as_str()).to_str().unwrap())
                 .unwrap()
@@ -137,12 +136,8 @@ fn visit_assets(input: &Path, assets: &mut Vec<Asset>) {
                 {
                     continue;
                 }
-                let new_asset = Asset::new(
-                    file.to_str().unwrap().into(),
-                    None,
-                    asset.span.clone(),
-                    asset.feature.clone(),
-                );
+                let new_asset =
+                    Asset::new(file.to_str().unwrap().into(), None, asset.span.clone());
                 assets.insert(i, new_asset);
                 i += 1;
             }

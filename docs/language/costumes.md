@@ -31,15 +31,14 @@ costumes "path/to/costumes/*.svg";
 
 Costumes added this way are sorted alphabetically.
 
-### Features
+### `@ascii/` Prefix
 
-Optional features can be enabled per-costume by writing `on "feature";` after the costume declaration.
+If a costume name starts with `@ascii/`, goboscript will generate one costume per printable
+ASCII character. Any text after the prefix is prepended to each generated name.
 
 ```goboscript
-costumes "path/to/costume.svg" on "feature";
+costumes "blank.svg" as "@ascii/";
 ```
-
-#### Feature `ascii` -- Generate one costume for each printable ASCII character.
 
 Scratch compares strings case-insensitively. Switching costumes is, however,
 case-sensitive. This can be utilized to detect the case of a character by first switching
@@ -56,20 +55,6 @@ if costume_number() == 1 {
     say "lower case a";
 }
 ```
-
-Its useful to have one costume for each printable character in the ASCII set. This will
-allow you to get the ASCII value of any printable character.
-
-Writing `costumes "blank.svg" as "A", "blank.svg" as "B" ...` for each printable
-character is a pain.
-
-goboscript provides a special declaration for generating such costumes automatically.
-
-```goboscript
-costumes "blank.svg" on "ascii";
-```
-
-This will generate costumes for all printable characters in the ASCII set.
 
 Given that these are placed at the beginning of the costumes list, you can get the
 ASCII value of a character by adding `31` to the costume number.

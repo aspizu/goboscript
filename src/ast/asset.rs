@@ -13,16 +13,10 @@ pub struct Asset {
     pub name: SmolStr,
     pub path: SmolStr,
     pub span: Span,
-    pub feature: Option<SmolStr>,
 }
 
 impl Asset {
-    pub fn new(
-        path: SmolStr,
-        alias: Option<SmolStr>,
-        span: Span,
-        feature: Option<SmolStr>,
-    ) -> Self {
+    pub fn new(path: SmolStr, alias: Option<SmolStr>, span: Span) -> Self {
         let name = alias.unwrap_or_else(|| {
             Path::new(&*path)
                 .file_stem()
@@ -31,11 +25,6 @@ impl Asset {
                 .map(SmolStr::from)
                 .unwrap_or(path.clone())
         });
-        Self {
-            name,
-            path,
-            span,
-            feature,
-        }
+        Self { name, path, span }
     }
 }
