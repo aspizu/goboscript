@@ -208,9 +208,6 @@ impl Serialize for Value {
     where S: serde::Serializer {
         match self {
             Value::Boolean(boolean) => serializer.serialize_bool(*boolean),
-            Value::Number(number) if number.fract() == 0.0 => {
-                serializer.serialize_i64(*number as i64)
-            }
             Value::Number(number) => serializer.serialize_f64(*number),
             Value::String(string) => serializer.serialize_str(string),
         }
