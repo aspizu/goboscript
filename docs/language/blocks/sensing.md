@@ -6,7 +6,7 @@
 ask question;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 ask (question) and wait
 ```
 
@@ -16,7 +16,7 @@ ask (question) and wait
 set_drag_mode_draggable;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set drag mode [draggable v]
 ```
 
@@ -26,7 +26,7 @@ set drag mode [draggable v]
 set_drag_mode_not_draggable;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set drag mode [not draggable v]
 ```
 
@@ -36,6 +36,6 @@ set drag mode [not draggable v]
 reset_timer;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 reset timer
 ```

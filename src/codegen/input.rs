@@ -26,7 +26,6 @@ use crate::{
         Repr,
         UnOp,
     },
-    diagnostic::DiagnosticKind,
     misc::write_comma_io,
 };
 
@@ -175,25 +174,6 @@ where T: Write + Seek
         name: &Name,
         shadow_id: Option<NodeID>,
     ) -> io::Result<()> {
-        if let Some(enum_) = s.get_enum(name.basename()) {
-            if let Some(variant_name) = name.fieldname() {
-                if let Some(variant) = enum_
-                    .variants
-                    .iter()
-                    .find(|variant| variant_name == &variant.name)
-                {
-                    return self.value_input(input_name, &variant.value.as_ref().unwrap().0);
-                } else {
-                    d.report(
-                        DiagnosticKind::UnrecognizedEnumVariant {
-                            enum_name: name.basename().clone(),
-                            variant_name: variant_name.clone(),
-                        },
-                        &name.fieldspan(),
-                    );
-                }
-            }
-        }
         match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(name, _)) => {
                 self.block_count += 1;

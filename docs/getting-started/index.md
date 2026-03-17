@@ -7,7 +7,7 @@ the `new` command. (run `goboscript new --help` for more information)
 
 Create a new folder, and make sure that your working-directory is set to that folder.
 
-```shell
+```bash
 goboscript new
 ```
 
@@ -50,7 +50,7 @@ Use the option `-m` to create a Makefile.
 
 To compile the project, run the following command:
 
-```shell
+```bash
 goboscript build
 # or
 goboscript b

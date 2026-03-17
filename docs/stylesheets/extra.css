@@ -1,6 +1,31 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Outfit:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 
 :root {
-    --md-text-font: "Outfit", sans-serif;
-    --md-code-font: "IBM Plex Mono", monospace;
+    --md-text-font: "Roboto", sans-serif;
+    --md-code-font: "JetBrains Mono", monospace;
+    --shiki-background: #fafafa;
+    --shiki-foreground: #37474f;
+    --shiki-token-constant: #6d1a9c;
+    --shiki-token-string: #c62828;
+    --shiki-token-comment: #90a4ae;
+    --shiki-token-keyword: #7c4dff;
+    --shiki-token-parameter: #ef6c00;
+    --shiki-token-function: #1565c0;
+    --shiki-token-string-expression: #c62828;
+    --shiki-token-punctuation: #546e7a;
+    --shiki-token-link: #00838f;
+}
+
+[data-md-color-scheme="slate"] {
+    --shiki-background: #263238;
+    --shiki-foreground: #eeffff;
+    --shiki-token-constant: #ff5370;
+    --shiki-token-string: #c3e88d;
+    --shiki-token-comment: #546e7a;
+    --shiki-token-keyword: #c792ea;
+    --shiki-token-parameter: #f07178;
+    --shiki-token-function: #82aaff;
+    --shiki-token-string-expression: #c3e88d;
+    --shiki-token-punctuation: #89ddff;
+    --shiki-token-link: #89ddff;
 }

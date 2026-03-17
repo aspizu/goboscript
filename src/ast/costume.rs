@@ -23,8 +23,8 @@ impl Costume {
                 .file_stem()
                 .unwrap()
                 .to_str()
-                .unwrap()
-                .into()
+                .map(SmolStr::from)
+                .unwrap_or(path.clone())
         });
         Self { name, path, span, rotation_center }
     }

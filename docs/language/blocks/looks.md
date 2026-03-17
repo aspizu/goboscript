@@ -6,7 +6,7 @@
 say message, secs;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 say (message) for (secs) seconds
 ```
 
@@ -16,7 +16,7 @@ say (message) for (secs) seconds
 think message, secs;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 think (message) for (secs) seconds
 ```
 
@@ -26,7 +26,7 @@ think (message) for (secs) seconds
 say message;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 say (message)
 ```
 
@@ -36,7 +36,7 @@ say (message)
 think message;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 think (message)
 ```
 
@@ -46,7 +46,7 @@ think (message)
 switch_costume "costume";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 switch costume to (costume v)
 ```
 
@@ -56,7 +56,7 @@ switch costume to (costume v)
 next_costume;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 next costume
 ```
 
@@ -66,7 +66,7 @@ next costume
 switch_backdrop "backdrop";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 switch backdrop to (backdrop v)
 ```
 
@@ -76,7 +76,7 @@ switch backdrop to (backdrop v)
 previous_backdrop;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 switch backdrop to (previous backdrop v)
 ```
 
@@ -86,7 +86,7 @@ switch backdrop to (previous backdrop v)
 random_backdrop;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 switch backdrop to (random backdrop v)
 ```
 
@@ -96,7 +96,7 @@ switch backdrop to (random backdrop v)
 next_backdrop;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 next backdrop
 ```
 
@@ -106,7 +106,7 @@ next backdrop
 set_size size;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set size to (size) %
 ```
 
@@ -116,7 +116,7 @@ set size to (size) %
 change_size change;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change size by (change)
 ```
 
@@ -126,7 +126,7 @@ change size by (change)
 change_color_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [color v] effect by (value)
 ```
 
@@ -136,7 +136,7 @@ change [color v] effect by (value)
 change_fisheye_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [fisheye v] effect by (value)
 ```
 
@@ -146,7 +146,7 @@ change [fisheye v] effect by (value)
 change_whirl_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [whirl v] effect by (value)
 ```
 
@@ -156,7 +156,7 @@ change [whirl v] effect by (value)
 change_pixelate_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [pixelate v] effect by (value)
 ```
 
@@ -166,7 +166,7 @@ change [pixelate v] effect by (value)
 change_mosaic_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [mosaic v] effect by (value)
 ```
 
@@ -176,7 +176,7 @@ change [mosaic v] effect by (value)
 change_brightness_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [brightness v] effect by (value)
 ```
 
@@ -186,7 +186,7 @@ change [brightness v] effect by (value)
 change_ghost_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [ghost v] effect by (value)
 ```
 
@@ -196,7 +196,7 @@ change [ghost v] effect by (value)
 set_color_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [color v] effect to (value)
 ```
 
@@ -206,7 +206,7 @@ set [color v] effect to (value)
 set_fisheye_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [fisheye v] effect to (value)
 ```
 
@@ -216,7 +216,7 @@ set [fisheye v] effect to (value)
 set_whirl_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [whirl v] effect to (value)
 ```
 
@@ -226,7 +226,7 @@ set [whirl v] effect to (value)
 set_pixelate_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [pixelate v] effect to (value)
 ```
 
@@ -236,7 +236,7 @@ set [pixelate v] effect to (value)
 set_mosaic_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [mosaic v] effect to (value)
 ```
 
@@ -246,7 +246,7 @@ set [mosaic v] effect to (value)
 set_brightness_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [brightness v] effect to (value)
 ```
 
@@ -256,7 +256,7 @@ set [brightness v] effect to (value)
 set_ghost_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [ghost v] effect to (value)
 ```
 
@@ -266,7 +266,7 @@ set [ghost v] effect to (value)
 clear_graphic_effects;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 clear graphic effects
 ```
 
@@ -276,7 +276,7 @@ clear graphic effects
 show;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 show
 ```
 
@@ -286,7 +286,7 @@ show
 hide;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 hide
 ```
 
@@ -296,7 +296,7 @@ hide
 goto_front;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go to [front v] layer
 ```
 
@@ -306,7 +306,7 @@ go to [front v] layer
 goto_back;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go to [back v] layer
 ```
 
@@ -316,7 +316,7 @@ go to [back v] layer
 go_forward num;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go [forward v] (num) layers
 ```
 
@@ -326,6 +326,6 @@ go [forward v] (num) layers
 go_backward num;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 go [backward v] (num) layers
 ```

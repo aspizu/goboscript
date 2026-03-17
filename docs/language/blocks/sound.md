@@ -6,7 +6,7 @@
 play_sound_until_done "sound";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 play sound (sound v) until done
 ```
 
@@ -16,7 +16,7 @@ play sound (sound v) until done
 start_sound "sound";
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 start sound (sound v)
 ```
 
@@ -26,7 +26,7 @@ start sound (sound v)
 stop_all_sounds;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 stop all sounds
 ```
 
@@ -36,7 +36,7 @@ stop all sounds
 change_pitch_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [pitch v] effect by (value)
 ```
 
@@ -46,7 +46,7 @@ change [pitch v] effect by (value)
 change_pan_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change [pan v] effect by (value)
 ```
 
@@ -56,7 +56,7 @@ change [pan v] effect by (value)
 set_pitch_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [pitch v] effect to (value)
 ```
 
@@ -66,7 +66,7 @@ set [pitch v] effect to (value)
 set_pan_effect value;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set [pan v] effect to (value)
 ```
 
@@ -76,7 +76,7 @@ set [pan v] effect to (value)
 change_volume volume;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 change volume by (volume)
 ```
 
@@ -86,7 +86,7 @@ change volume by (volume)
 set_volume volume;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 set volume to (volume) %
 ```
 
@@ -96,6 +96,6 @@ set volume to (volume) %
 clear_sound_effects;
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 clear sound effects
 ```

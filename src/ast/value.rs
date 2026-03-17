@@ -9,7 +9,7 @@ use serde::{
 
 use crate::misc::SmolStr;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Boolean(bool),
     Number(f64),
@@ -201,4 +201,50 @@ impl From<usize> for Value {
 pub enum ListIndex {
     Index(usize),
     All,
+}
+
+impl Serialize for Value {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        match self {
+            Value::Boolean(boolean) => serializer.serialize_bool(*boolean),
+            Value::Number(number) if number.fract() == 0.0 => {
+                serializer.serialize_i64(*number as i64)
+            }
+            Value::Number(number) => serializer.serialize_f64(*number),
+            Value::String(string) => serializer.serialize_str(string),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Value {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'de> {
+        struct ValueVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ValueVisitor {
+            type Value = Value;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a number, string, or boolean")
+            }
+
+            fn visit_bool<E>(self, value: bool) -> Result<Self::Value, E>
+            where E: serde::de::Error {
+                Ok(Value::Boolean(value))
+            }
+
+            fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
+            where E: serde::de::Error {
+                Ok(Value::Number(value))
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where E: serde::de::Error {
+                Ok(Value::String(value.into()))
+            }
+        }
+
+        deserializer.deserialize_any(ValueVisitor)
+    }
 }

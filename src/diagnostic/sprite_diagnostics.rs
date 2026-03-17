@@ -74,6 +74,10 @@ impl SpriteDiagnostics {
         });
     }
 
+    pub fn report_io_error(&mut self, error: impl ToString, help: Option<&str>, span: &Span) {
+        self.report(DiagnosticKind::io_error(error, help), span);
+    }
+
     pub fn eprint(&self, cwd: &Path, renderer: &Renderer, project: &Project) {
         let sprite = match self.sprite_name.as_str() {
             "stage" => &project.stage,
