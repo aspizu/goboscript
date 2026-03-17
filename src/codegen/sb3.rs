@@ -830,7 +830,7 @@ where T: Write + Seek
                 "{}:[{},{},true]",
                 json!(&*cloud_name),
                 json!(&*cloud_name),
-                json!(*default)
+                json!(default)
             )
         } else {
             write!(
@@ -838,7 +838,7 @@ where T: Write + Seek
                 "{}:[{},{}]",
                 json!(var_name),
                 json!(var_name),
-                json!(*default)
+                json!(default)
             )
         }
     }
@@ -1481,6 +1481,19 @@ where T: Write + Seek
 
 fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMap<SmolStr, usize>> {
     let mut layers: FxHashMap<SmolStr, usize> = Default::default();
+    // If every sprite has an explicit set_layer_order value, use those directly.
+    let all_have_layer_order = project
+        .sprites
+        .values()
+        .all(|s| s.layer_order.is_some());
+    if all_have_layer_order && config.layers.is_none() {
+        for (key, sprite) in &project.sprites {
+            if let Some((order, _)) = &sprite.layer_order {
+                layers.insert(key.clone(), (order.to_js_number() as i64).max(1) as usize);
+            }
+        }
+        return Ok(layers);
+    }
     let mut keys: Vec<_> = project.sprites.keys().collect();
     keys.sort();
     let mut i = 1;

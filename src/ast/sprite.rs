@@ -46,6 +46,7 @@ pub struct Sprite {
     pub rotation_style: RotationStyle,
     pub hidden: bool,
     pub draggable: bool,
+    pub layer_order: Option<(Value, Span)>,
 }
 
 impl Sprite {
