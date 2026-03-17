@@ -53,7 +53,7 @@ impl AssetObjectStore {
     pub fn load(&mut self, asset: &Asset, d: D) -> &AssetObject {
         self.store.entry(asset.path.clone()).or_insert_with(|| {
             let mut fs = self.fs.borrow_mut();
-            let mut content = match fs.read_to_vec(&self.input.join(&*asset.path)) {
+            let content = match fs.read_to_vec(&self.input.join(&*asset.path)) {
                 Ok(content) => content,
                 Err(error) => {
                     d.report_io_error(
