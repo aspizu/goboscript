@@ -101,6 +101,10 @@ pub enum DiagnosticKind {
         struct_name: SmolStr,
         field_name: SmolStr,
     },
+    DuplicateField {
+        struct_name: SmolStr,
+        field_name: SmolStr,
+    },
     EmptyStruct(SmolStr),
     LocalNotSupported,
     // Warnings
@@ -252,6 +256,12 @@ impl DiagnosticKind {
                 field_name,
             } => {
                 format!("struct {struct_name} is missing field {field_name}")
+            }
+            DiagnosticKind::DuplicateField {
+                struct_name,
+                field_name,
+            } => {
+                format!("duplicate field {field_name} in struct {struct_name}")
             }
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
         }
@@ -417,6 +427,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::TypeMismatch { .. }
             | DiagnosticKind::NotStruct
             | DiagnosticKind::MissingField { .. }
+            | DiagnosticKind::DuplicateField { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. }
             | DiagnosticKind::EmptyStruct(_)
             | DiagnosticKind::InvalidCostumeName(_)
