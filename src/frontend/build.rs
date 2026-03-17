@@ -47,7 +47,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
     let sb3 = Sb3::new(BufWriter::new(File::create(&output)?));
-    let fs = Rc::new(RefCell::new(RealFS::new()));
+    let fs = Rc::new(RefCell::new(RealFS::default()));
     build_impl(fs, canonical_input, sb3, None)
 }
 
@@ -129,7 +129,10 @@ pub fn build_impl<T: Write + Seek>(
             block_count: 0,
         });
     }
-    visitor::pass0::visit_project(&input, &mut project);
+    {
+        let mut fs = fs.borrow_mut();
+        visitor::pass0::visit_project(&mut *fs, &input, &mut project);
+    }
     visitor::pass1::visit_project(&mut project);
     visitor::pass2::visit_project(
         &mut project,

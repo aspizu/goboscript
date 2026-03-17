@@ -1,11 +1,11 @@
 use std::path::Path;
 
 use fxhash::FxHashMap;
-use glob::glob;
 
 use crate::{
     ast::*,
     misc::SmolStr,
+    vfs::VFS,
 };
 
 struct V<'a> {
@@ -14,16 +14,21 @@ struct V<'a> {
     global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
 }
 
-pub fn visit_project(input: &Path, project: &mut Project) {
-    visit_sprite(input, &mut project.stage, None);
+pub fn visit_project(fs: &mut dyn VFS, input: &Path, project: &mut Project) {
+    visit_sprite(fs, input, &mut project.stage, None);
     for sprite in project.sprites.values_mut() {
-        visit_sprite(input, sprite, Some(&mut project.stage));
+        visit_sprite(fs, input, sprite, Some(&mut project.stage));
     }
 }
 
-fn visit_sprite(input: &Path, sprite: &mut Sprite, mut stage: Option<&mut Sprite>) {
-    visit_costumes(input, &mut sprite.costumes);
-    visit_sounds(input, &mut sprite.sounds);
+fn visit_sprite(
+    fs: &mut dyn VFS,
+    input: &Path,
+    sprite: &mut Sprite,
+    mut stage: Option<&mut Sprite>,
+) {
+    visit_costumes(fs, input, &mut sprite.costumes);
+    visit_sounds(fs, input, &mut sprite.sounds);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -95,7 +100,7 @@ fn visit_enum(enum_: &mut Enum) {
     }
 }
 
-fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
+fn visit_costumes(fs: &mut dyn VFS, input: &Path, new: &mut Vec<Costume>) {
     let old: Vec<Costume> = std::mem::take(new);
     for costume in old {
         if let Some(suffix) = costume.name.strip_prefix("@ascii/") {
@@ -105,9 +110,10 @@ fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
                 span: costume.span.clone(),
             }));
         } else if costume.path.contains('*') {
-            let mut costumes: Vec<Costume> = glob(input.join(&*costume.path).to_str().unwrap())
+            let mut costumes: Vec<Costume> = fs
+                .glob(input.join(&*costume.path).to_str().unwrap())
                 .unwrap()
-                .map(Result::unwrap)
+                .into_iter()
                 .map(|path| Costume {
                     name: path.file_stem().unwrap().to_string_lossy().into(),
                     path: path.to_string_lossy().into(),
@@ -122,7 +128,7 @@ fn visit_costumes(input: &Path, new: &mut Vec<Costume>) {
     }
 }
 
-fn visit_sounds(input: &Path, new: &mut Vec<Sound>) {
+fn visit_sounds(fs: &mut dyn VFS, input: &Path, new: &mut Vec<Sound>) {
     let old: Vec<Sound> = std::mem::take(new);
     for sound in old {
         if let Some(suffix) = sound.name.strip_prefix("@ascii/") {
@@ -132,9 +138,10 @@ fn visit_sounds(input: &Path, new: &mut Vec<Sound>) {
                 span: sound.span.clone(),
             }));
         } else if sound.path.contains('*') {
-            let mut sounds: Vec<Sound> = glob(input.join(&*sound.path).to_str().unwrap())
+            let mut sounds: Vec<Sound> = fs
+                .glob(input.join(&*sound.path).to_str().unwrap())
                 .unwrap()
-                .map(Result::unwrap)
+                .into_iter()
                 .map(|path| Sound {
                     name: path.file_stem().unwrap().to_string_lossy().into(),
                     path: path.to_string_lossy().into(),
