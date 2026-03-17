@@ -702,11 +702,12 @@ Comma<T>: Vec<T> = {
     }
 }
 
-// Returns the Scratch arg-type placeholder string ("%s", "%n", or "%b").
+// Returns the Scratch arg-type placeholder string ("%s", "%n", "%b", or "%m.xxx").
 ArgType: SmolStr = {
     ARG_TYPE_S => "%s".into(),
     ARG_TYPE_N => "%n".into(),
     ARG_TYPE_B => "%b".into(),
+    <s:ARG_TYPE_MENU> => s,
 }
 
 // Non-operator keyword tokens that are safe as text labels in call contexts.
@@ -933,5 +934,6 @@ extern {
         ARG_TYPE_S     => Token::ArgTypeS,
         ARG_TYPE_N     => Token::ArgTypeN,
         ARG_TYPE_B     => Token::ArgTypeB,
+        ARG_TYPE_MENU  => Token::ArgTypeMenu(<SmolStr>),
     }
 }

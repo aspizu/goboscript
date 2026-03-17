@@ -166,6 +166,8 @@ pub enum Token {
     ArgTypeN,
     #[token("%b")]
     ArgTypeB,
+    #[regex(r"%m\.[a-z_]+", name)]
+    ArgTypeMenu(SmolStr),
     #[token(";")]
     Semicolon,
     #[token(":")]
@@ -333,6 +335,7 @@ impl Display for Token {
             Token::ArgTypeS => write!(f, "%s"),
             Token::ArgTypeN => write!(f, "%n"),
             Token::ArgTypeB => write!(f, "%b"),
+            Token::ArgTypeMenu(s) => write!(f, "{}", s),
             Token::Semicolon => write!(f, ";"),
             Token::Colon => write!(f, ":"),
             Token::Length => write!(f, "length"),

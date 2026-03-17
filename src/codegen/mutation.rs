@@ -53,7 +53,8 @@ impl Display for Mutation<'_> {
         // " %s" per arg to reconstruct the Scratch proccode.
         let is_selector = self.name.contains("%s")
             || self.name.contains("%n")
-            || self.name.contains("%b");
+            || self.name.contains("%b")
+            || self.name.contains("%m.");
         let mut proccode = self.name.to_string();
         if !is_selector {
             for _ in self.args {
