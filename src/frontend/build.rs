@@ -135,7 +135,8 @@ pub fn build_impl<T: Write + Seek>(
     }
     {
         let mut fs = fs.borrow_mut();
-        visitor::pass0::visit_project(
+        visitor::ternary::visit_project(&mut project);
+    visitor::pass0::visit_project(
             &mut *fs,
             &input,
             &mut project,
