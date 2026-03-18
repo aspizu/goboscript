@@ -130,6 +130,7 @@ pub fn build_impl<T: Write + Seek>(
             block_count: 0,
         });
     }
+    visitor::ternary::visit_project(&mut project);
     {
         let mut fs = fs.borrow_mut();
         visitor::pass0::visit_project(

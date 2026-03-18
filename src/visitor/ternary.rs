@@ -1,7 +1,27 @@
 use crate::ast::{
     Expr,
+    Project,
     Stmt,
 };
+
+pub fn visit_project(project: &mut Project) {
+    visit_sprite(&mut project.stage);
+    for sprite in project.sprites.values_mut() {
+        visit_sprite(sprite);
+    }
+}
+
+fn visit_sprite(sprite: &mut crate::ast::Sprite) {
+    for body in sprite.proc_definitions.values_mut() {
+        extract_ternary_from_stmts(body);
+    }
+    for body in sprite.func_definitions.values_mut() {
+        extract_ternary_from_stmts(body);
+    }
+    for event in &mut sprite.events {
+        extract_ternary_from_stmts(&mut event.body);
+    }
+}
 
 pub fn extract_ternary_from_stmts(stmts: &mut [Stmt]) {
     for stmt in stmts {
