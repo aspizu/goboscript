@@ -407,6 +407,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
         Expr::Property { object, .. } => {
             visit_expr(object, s, d);
         }
+        Expr::Ternary { .. } => unreachable!(),
     }
     transformations::apply(expr, |expr| transformations::enum_field_access(expr, s, d));
     transformations::apply(expr, transformations::minus);
