@@ -158,6 +158,36 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
             true,
         );
     }
+    let s = S {
+        proc_args: &sprite.proc_args,
+        func_args: &sprite.func_args,
+        args: None,
+        local_vars: None,
+        vars: &sprite.vars,
+        lists: &sprite.lists,
+        enums: &sprite.enums,
+        structs: &sprite.structs,
+        procs: &sprite.procs,
+        funcs: &sprite.funcs,
+        global_vars: stage.map(|stage| &stage.vars),
+        global_lists: stage.map(|stage| &stage.lists),
+        global_enums: stage.map(|stage| &stage.enums),
+        global_structs: stage.map(|stage| &stage.structs),
+    };
+    let struct_literals: Vec<_> = sprite
+        .vars
+        .iter()
+        .filter_map(|(_name, var)| {
+            if let Some(ConstExpr::StructLiteral { name, span, fields }) = &var.default {
+                Some((name.clone(), span.clone(), fields.clone()))
+            } else {
+                None
+            }
+        })
+        .collect();
+    for (name, span, mut fields) in struct_literals {
+        const_struct_literal(s, d, &name, &span, &mut fields);
+    }
 }
 
 fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
@@ -379,6 +409,7 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
         }
         Expr::Ternary { .. } => unreachable!(),
     }
+    transformations::apply(expr, |expr| transformations::enum_field_access(expr, s, d));
     transformations::apply(expr, transformations::minus);
     transformations::apply(expr, transformations::less_than_equal);
     transformations::apply(expr, transformations::greater_than_equal);
@@ -397,7 +428,6 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, transformations::bin_op);
     transformations::apply(expr, transformations::un_op);
     transformations::apply(expr, |expr| transformations::variable_field_access(expr, s));
-    transformations::apply(expr, |expr| transformations::enum_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::arg_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::list_field_access(expr, s));
     transformations::apply(expr, |expr| {
@@ -581,27 +611,28 @@ where
     let type_ = get_type(basename)?;
     let (type_name, type_span) = type_.struct_()?;
     let struct_ = s.get_struct(type_name)?;
-    let Expr::StructLiteral {
-        name: struct_literal_name,
-        span: struct_literal_span,
-        fields: struct_literal_fields,
-    } = expr
-    else {
-        d.report(
-            DiagnosticKind::TypeMismatch {
-                expected: type_.clone(),
-                given: Type::Value,
-            },
-            &basespan,
-        );
-        return None;
+    let (struct_literal_name, struct_literal_span, struct_literal_fields) = match expr {
+        Expr::StructLiteral { name, span, fields } => (name, span, fields),
+        _ => {
+            d.report(
+                DiagnosticKind::TypeMismatch {
+                    expected: type_.clone(),
+                    given: Type::Value,
+                },
+                &basespan,
+            );
+            return None;
+        }
     };
-    let Some(value_struct) = s.get_struct(struct_literal_name) else {
-        d.report(
-            DiagnosticKind::UnrecognizedStruct(struct_literal_name.clone()),
-            struct_literal_span,
-        );
-        return None;
+    let value_struct = match s.get_struct(struct_literal_name) {
+        Some(value_struct) => value_struct,
+        None => {
+            d.report(
+                DiagnosticKind::UnrecognizedStruct(struct_literal_name.clone()),
+                struct_literal_span,
+            );
+            return Some(&struct_literal_fields[..0]);
+        }
     };
     if struct_.name != value_struct.name {
         d.report(
@@ -615,9 +646,9 @@ where
                     span: struct_literal_span.clone(),
                 },
             },
-            &basespan,
+            struct_literal_span,
         );
-        return None;
+        return Some(&struct_literal_fields[..0]);
     }
     Some(struct_literal_fields)
 }
@@ -640,7 +671,15 @@ fn struct_literal(s: S, d: D, name: &SmolStr, span: &Span, fields: &mut Vec<Stru
     // First, add any provided fields in their original order
     let mut provided_field_names = std::collections::HashSet::new();
     for field in fields.iter() {
-        provided_field_names.insert(&field.name);
+        if !provided_field_names.insert(&field.name) {
+            d.report(
+                DiagnosticKind::DuplicateField {
+                    struct_name: struct_.name.clone(),
+                    field_name: field.name.clone(),
+                },
+                &field.span,
+            );
+        }
         new_fields.push(field.clone());
     }
 
@@ -666,4 +705,28 @@ fn struct_literal(s: S, d: D, name: &SmolStr, span: &Span, fields: &mut Vec<Stru
     }
 
     *fields = new_fields;
+}
+
+fn const_struct_literal(
+    s: S,
+    d: D,
+    name: &SmolStr,
+    _span: &Span,
+    fields: &mut Vec<ConstStructLiteralField>,
+) {
+    let Some(struct_) = s.get_struct(name) else {
+        return;
+    };
+    let mut provided_field_names = std::collections::HashSet::new();
+    for field in fields.iter() {
+        if !provided_field_names.insert(&field.name) {
+            d.report(
+                DiagnosticKind::DuplicateField {
+                    struct_name: struct_.name.clone(),
+                    field_name: field.name.clone(),
+                },
+                &field.name_span,
+            );
+        }
+    }
 }

@@ -10,6 +10,7 @@ use std::{
 };
 
 use crate::{
+    ast::Value,
     diagnostic::DiagnosticKind,
     misc::SmolStr,
     vfs::VFS,
@@ -19,19 +20,22 @@ pub fn read_list(
     fs: Rc<RefCell<dyn VFS>>,
     input: &Path,
     path: &SmolStr,
-) -> Result<Vec<SmolStr>, DiagnosticKind> {
+) -> Result<Vec<Value>, DiagnosticKind> {
     let (_, ext) = path.rsplit_once('.').unwrap_or_default();
     let mut fs = fs.borrow_mut();
-    let mut file = fs
-        .read_file(&input.join(&**path))
-        .map_err(|err| DiagnosticKind::IOError(err.to_string().into()))?;
+    let mut file = fs.read_file(&input.join(&**path)).map_err(|err| {
+        DiagnosticKind::io_error(
+            err,
+            Some("list files are always relative to the project directory"),
+        )
+    })?;
     match ext {
         _ => read_list_text(&mut file),
     }
-    .map_err(|err| DiagnosticKind::IOError(err.to_string().into()))
+    .map_err(|err| DiagnosticKind::io_error(err, None))
 }
 
-fn read_list_text(file: &mut Box<dyn io::Read + '_>) -> Result<Vec<SmolStr>, io::Error> {
+fn read_list_text(file: &mut Box<dyn io::Read + '_>) -> Result<Vec<Value>, io::Error> {
     let file = BufReader::new(file);
     Ok(file.lines().into_iter().flatten().map(Into::into).collect())
 }

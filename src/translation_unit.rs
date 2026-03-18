@@ -56,8 +56,12 @@ pub struct TranslationUnit {
 
 impl TranslationUnit {
     pub fn new(fs: Rc<RefCell<dyn VFS>>, path: PathBuf) -> io::Result<Self> {
+        let mut text = fs.borrow_mut().read_to_vec(&path)?;
+        if text.iter().last().is_none_or(|c| *c != b'\n') {
+            text.push(b'\n');
+        }
         let mut unit = Self {
-            text: fs.borrow_mut().read_to_vec(&path)?,
+            text,
             path,
             defines: Default::default(),
             includes: Default::default(),
@@ -139,6 +143,14 @@ pub fn parse_translation_unit(
                     .unwrap()
                     .trim()
                     .to_owned();
+                let help = if path.ends_with(';') {
+                    Some(
+                        "pre-processor directives do not require a semicolon, try removing the `;`"
+                            .into(),
+                    )
+                } else {
+                    None
+                };
                 i = j;
                 add_include_to_translation_unit(
                     unit,
@@ -148,6 +160,7 @@ pub fn parse_translation_unit(
                     fs.clone(),
                     stdlib,
                     &mut diagnostics,
+                    help,
                 );
             } else if unit.text[i..].starts_with(b"%define") {
                 i += b"%define".len();
@@ -198,18 +211,28 @@ pub fn parse_translation_unit(
                 if i >= unit.text.len() {
                     continue;
                 }
+                let inverted = if unit.text[i..].starts_with(b"not ") {
+                    i += b"not ".len();
+                    while i < unit.text.len() && unit.text[i] == b' ' {
+                        i += 1;
+                    }
+                    true
+                } else {
+                    false
+                };
                 let j = unit.text[i..]
                     .iter()
                     .position(|c| *c == b'\n')
                     .map(|j| i + j + 1)
                     .unwrap_or(unit.text.len());
                 let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
-                if !unit.defines.contains(name) {
+                if inverted == unit.defines.contains(name) {
                     skip_depth = 1;
                 }
             } else if unit.text[i..].starts_with(b"%else") {
                 unit.text[i] = b'#';
                 i += b"%else".len();
+                skip_depth = 1;
             } else if unit.text[i..].starts_with(b"%endif") {
                 unit.text[i] = b'#';
                 i += b"%endif".len();
@@ -228,8 +251,13 @@ fn add_include_to_translation_unit(
     fs: Rc<RefCell<dyn VFS>>,
     stdlib: &StandardLibrary,
     diagnostics: &mut Vec<Diagnostic>,
+    help: Option<String>,
 ) {
     let mut fs = fs.borrow_mut();
+
+    while unit.includes[unit.current_include].unit_range.end < start {
+        unit.current_include += 1;
+    }
 
     let parent = unit.includes[unit.current_include].path.parent().unwrap();
     let (owner, path) = if let Some(path) = path.strip_prefix("std/") {
@@ -252,16 +280,23 @@ fn add_include_to_translation_unit(
         path = path.with_added_extension("gs");
     }
 
-    let buffer = match fs.read_to_vec(&path) {
+    let mut buffer = match fs.read_to_vec(&path) {
         Ok(buffer) => buffer,
         Err(error) => {
             diagnostics.push(Diagnostic {
-                kind: DiagnosticKind::IOError(error.to_string().into()),
+                kind: DiagnosticKind::IOError {
+                    error: error.to_string().into(),
+                    help,
+                },
                 span,
             });
             return;
         }
     };
+
+    if buffer.iter().last().is_none_or(|c| *c != b'\n') {
+        buffer.push(b'\n');
+    }
 
     unit.text.splice(start..start, buffer.iter().cloned());
 

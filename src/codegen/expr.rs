@@ -414,37 +414,41 @@ where T: Write + Seek
                                 );
                                 continue;
                             }
-                            if struct_literal_fields.len() != struct_.fields.len() {
-                                panic!()
-                            }
-                            for (struct_field, struct_literal_field) in
-                                struct_.fields.iter().zip(struct_literal_fields)
-                            {
-                                if struct_field.name != struct_literal_field.name {
-                                    panic!()
-                                }
-                            }
                             struct_literal_fields
                         }
                         _ => {
+                            d.report(
+                                DiagnosticKind::TypeMismatch {
+                                    expected: arg.type_.clone(),
+                                    given: Type::Value,
+                                },
+                                &arg_value.span(),
+                            );
                             continue;
                         }
                     };
-                    for (field, struct_literal_field) in
-                        struct_.fields.iter().zip(struct_literal_fields)
-                    {
+                    for field in &struct_.fields {
                         let qualified_arg_name = qualify_struct_var_name(&field.name, &arg.name);
                         let arg_id = self.id.new_id();
-                        self.input(
-                            s,
-                            d,
-                            &qualified_arg_name,
-                            &struct_literal_field.value,
-                            arg_id,
-                            false,
-                        )?;
+                        let field_value = struct_literal_fields
+                            .iter()
+                            .find(|f| f.name == field.name)
+                            .map(|f| f.value.as_ref().clone());
+                        let (value, is_placeholder) = match field_value {
+                            Some(v) => (v, false),
+                            None => (
+                                Expr::Value {
+                                    value: Value::Number(0.0),
+                                    span: span.clone(),
+                                },
+                                true,
+                            ),
+                        };
+                        self.input(s, d, &qualified_arg_name, &value, arg_id, false)?;
                         qualified_args.push((qualified_arg_name, arg_id));
-                        qualified_arg_values.push(struct_literal_field.value.as_ref().clone());
+                        if !is_placeholder {
+                            qualified_arg_values.push(value);
+                        }
                     }
                 }
             }
@@ -465,12 +469,12 @@ where T: Write + Seek
     pub fn expr_dot(
         &mut self,
         s: S,
-        _d: D,
+        d: D,
         _this_id: NodeID,
         _parent_id: NodeID,
         lhs: &Expr,
         rhs: &SmolStr,
-        _rhs_span: Span,
+        rhs_span: Span,
     ) -> io::Result<()> {
         if let Expr::Name(name) = lhs {
             if let Some(_enum_) = s.get_enum(name.basename()) {
@@ -501,10 +505,29 @@ where T: Write + Seek
                         }
                         return write!(self, "[10, \"\"]]");
                     }
+
+                    d.report(
+                        DiagnosticKind::StructDoesNotHaveField {
+                            type_name: type_name.clone(),
+                            field_name: rhs.clone(),
+                        },
+                        &rhs_span,
+                    );
+                    return Ok(());
                 }
+
+                d.report(DiagnosticKind::NotStruct, &name.span());
+                return Ok(());
             }
+
+            d.report(
+                DiagnosticKind::UnrecognizedEnum(name.basename().clone()),
+                &name.span(),
+            );
+            return Ok(());
         }
-        eprintln!("attempted to codegen Expr::Dot lhs = {lhs:#?}, rhs = {rhs:#?}");
+        let span = lhs.span().start..rhs_span.end;
+        d.report(DiagnosticKind::InvalidDotLhs, &span);
         Ok(())
     }
 
@@ -526,14 +549,7 @@ where T: Write + Seek
         {
             (object_value, true)
         } else {
-            (
-                if property == "Stage" {
-                    &arcstr::literal!("backdrop #")
-                } else {
-                    &arcstr::literal!("x position")
-                },
-                false,
-            )
+            (&arcstr::literal!("_stage_"), false)
         };
         self.begin_node(
             Node::new("sensing_of_object_menu", menu_id)
@@ -542,7 +558,13 @@ where T: Write + Seek
         )?;
         self.begin_inputs()?;
         self.end_obj()?; // inputs
-        self.single_field("OBJECT", object_value)?;
+        self.single_field(
+            "OBJECT",
+            match &**object_value {
+                "Stage" | "_stage_" | "stage" => "_stage_",
+                _ => object_value,
+            },
+        )?;
         self.end_obj()?; // node (sensing_of_object_menu)
         let object_id = self.id.new_id();
         self.begin_node(Node::new("sensing_of", this_id).parent_id(parent_id))?;

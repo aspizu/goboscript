@@ -25,6 +25,15 @@ the directory will be included.
 By default, the include path is relative to the project root directory. To include a
 file relative to the current file, use `./` or `../`
 
+!!! tip
+    [`bkpk.py`](https://gist.github.com/aspizu/c81452bfb7a333d0819f0279e51e078a) is a small
+    Python script that lets you include files from the internet using `%include` directives.
+
+    ```goboscript
+    # run `./bkpk.py` to compile your project, instead of `goboscript build`
+    %include https://github.com/username/repo/branchname/filename.gs
+    ```
+
 ## Define
 
 Define a macro. That identifier will be substituted with the subsequent text.

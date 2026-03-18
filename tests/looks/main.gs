@@ -5,10 +5,10 @@ onflag {
     say "without duration";
     think "with duration", 2;
     think "without duration";
-    switch_costume "dango";
+    switch_costume "blank";
     switch_costume costume_number();
     next_costume;
-    switch_backdrop "dango";
+    switch_backdrop "blank";
     switch_backdrop backdrop_number();
     next_backdrop;
     change_size 10;

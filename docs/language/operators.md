@@ -53,7 +53,7 @@
 random(x, y)
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 (pick random (x) to (y))
 ```
 
@@ -63,6 +63,6 @@ random(x, y)
 contains(string, substring)
 ```
 
-```_ {.scratchblocks}
+```scratchblocks
 <(string) contains (substring)?>
 ```

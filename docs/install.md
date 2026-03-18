@@ -1,45 +1,42 @@
+```markdown
 # Install
 
-=== "unix"
-    ```shell
-    curl -fsSL https://aspiz.uk/goboscript.sh | sh
-    ```
-
-=== "Windows"
-    ```shell
-    iwr https://aspiz.uk/goboscript.ps1 | iex
+!!! tip
+    goboscript requires the **nightly** Rust toolchain. Install it once with:
+    ```bash
+    rustup toolchain install nightly
     ```
 
 ## Install from source
 
-This installs the latest bleeding-edge version from the git repository. You will need
-`git`, and the [rust toolchain](https://rustup.rs/) installed.
+Clones and installs the latest version from the git repository. Requires `git` and the
+[Rust toolchain](https://rustup.rs/).
 
-```shell
+```bash
 git clone https://github.com/aspizu/goboscript
 cd goboscript
-cargo install --path .
+cargo +nightly install --path .
 ```
 
-To update the installation:
+To update:
 
-```shell
+```bash
 cd goboscript
 git pull
-cargo install --path .
+cargo +nightly install --path .
 ```
 
 ## Install from source (using cargo)
 
-This installs the latest bleeding-edge version from the git repository with a single
-command.
+Installs the latest version from the git repository in a single command.
 
-```shell
-cargo install --git https://github.com/aspizu/goboscript
+```bash
+cargo +nightly install --git https://github.com/aspizu/goboscript
 ```
 
-To update the installation:
+To update:
 
-```shell
-cargo install --git https://github.com/aspizu/goboscript --force
+```bash
+cargo +nightly install --git https://github.com/aspizu/goboscript --force
+```
 ```
