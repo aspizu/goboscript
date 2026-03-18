@@ -38,7 +38,7 @@ pub struct AssetObject {
 pub struct AssetObjectStore {
     store: FxHashMap<SmolStr, AssetObject>,
     fs: Rc<RefCell<dyn VFS>>,
-    input: PathBuf,
+    pub input: PathBuf,
 }
 
 impl AssetObjectStore {
@@ -47,6 +47,43 @@ impl AssetObjectStore {
             store: FxHashMap::default(),
             fs,
             input,
+        }
+    }
+
+    /// Preload a batch of asset paths in parallel (native only).
+    /// Must be called before `load()` for best effect.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn preload(&mut self, paths: &[SmolStr]) {
+        use rayon::prelude::*;
+
+        let input = &self.input;
+        let results: Vec<(SmolStr, AssetObject)> = paths
+            .par_iter()
+            .filter(|path| !self.store.contains_key(*path))
+            .filter_map(|path| {
+                let full_path = input.join(&**path);
+                let content = match std::fs::read(&full_path) {
+                    Ok(c) => c,
+                    Err(_) => return None,
+                };
+                let extension = path
+                    .rsplit_once('.')
+                    .unwrap_or_default()
+                    .1
+                    .to_lowercase();
+                let mut hasher = Md5::new();
+                hasher.update(&content);
+                let hash = format!("{:x}", hasher.finalize());
+                Some((path.clone(), AssetObject {
+                    hash,
+                    content,
+                    extension,
+                }))
+            })
+            .collect();
+
+        for (path, obj) in results {
+            self.store.entry(path).or_insert(obj);
         }
     }
 

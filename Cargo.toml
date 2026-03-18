@@ -47,6 +47,7 @@ tsify = { version = "0.5.5", default-features = false, features = ["js"] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 inquire = "0.7.5"
 rand = "0.9.1"
+rayon = "1.10"
 
 [build-dependencies]
 lalrpop = "0.22.0"
