@@ -1,6 +1,6 @@
-{ lib, rustPlatform, pkg-config, openssl }:
+{ lib, rustPlatform, pkg-config, openssl, rust-bin, rust }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage rec {
   pname = "goboscript";
   version = "3.0.0";
 
@@ -10,7 +10,7 @@ rustPlatform.buildRustPackage {
     lockFile = ./Cargo.lock;
   };
 
-  nativeBuildInputs = [ pkg-config ];
+  nativeBuildInputs = [ pkg-config rust ];
   buildInputs = [ openssl ];
 
   meta = {
