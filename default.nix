@@ -1,4 +1,4 @@
-{ lib, rustPlatform, pkg-config, openssl, rust-bin, rust }:
+{ lib, rustPlatform, pkg-config, openssl, rust }:
 
 rustPlatform.buildRustPackage rec {
   pname = "goboscript";

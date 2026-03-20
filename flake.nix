@@ -13,10 +13,11 @@
     pkgs = import nixpkgs {
       inherit system overlays;
     };
+    rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
   in rec {
     packages.goboscript = pkgs.callPackage ./default.nix {
-      inherit (pkgs) pkg-config openssl rust-bin;
-      rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
+      inherit (pkgs) pkg-config openssl;
+      inherit rust;
     };
 
     legacyPackages = packages;
@@ -25,7 +26,7 @@
 
     devShell = pkgs.mkShell {
       buildInputs = with pkgs; [ git openssl pkg-config ];
-      nativeBuildInputs = with pkgs; [ rust-bin.selectLatestNightlyWith (toolchain: toolchain.default) ];
+      nativeBuildInputs = [ rust ];
     };
   });
 }
