@@ -10,7 +10,9 @@
   flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-darwin" ] (system: let
     pkgs = nixpkgs.legacyPackages.${system};
   in rec {
-    packages.goboscript = pkgs.callPackage ./default.nix { };
+    packages.goboscript = pkgs.callPackage ./default.nix {
+      inherit (pkgs) pkg-config openssl;
+    };
 
     legacyPackages = packages;
 

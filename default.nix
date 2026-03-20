@@ -1,4 +1,4 @@
-{ lib, rustPlatform }:
+{ lib, rustPlatform, pkg-config, openssl }:
 
 rustPlatform.buildRustPackage {
   pname = "goboscript";
@@ -9,6 +9,9 @@ rustPlatform.buildRustPackage {
   cargoLock = {
     lockFile = ./Cargo.lock;
   };
+
+  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [ openssl ];
 
   meta = {
     description = "Scratch compiler";
