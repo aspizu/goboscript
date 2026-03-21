@@ -202,6 +202,25 @@ pub fn parse_translation_unit(
                 let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
                 unit.defines.remove(name);
                 i = j;
+            } else if unit.text[i..].starts_with(b"%ifdef")
+                || unit.text[i..].starts_with(b"%ifndef")
+            {
+                let start = i;
+                unit.text[i] = b'#';
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map(|j| i + j)
+                    .unwrap_or(unit.text.len());
+                let name = std::str::from_utf8(&unit.text[i + 1..j])
+                    .unwrap_or("")
+                    .trim()
+                    .to_owned();
+                diagnostics.push(Diagnostic {
+                    kind: DiagnosticKind::UnknownDirective(name.into()),
+                    span: start..j,
+                });
+                i = j;
             } else if unit.text[i..].starts_with(b"%if") {
                 unit.text[i] = b'#';
                 i += b"%if".len();
@@ -236,6 +255,24 @@ pub fn parse_translation_unit(
             } else if unit.text[i..].starts_with(b"%endif") {
                 unit.text[i] = b'#';
                 i += b"%endif".len();
+            } else {
+                let start = i;
+                unit.text[i] = b'#'; // replace % with # so parser treats it as a comment
+                i += 1; // skip '%'
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map(|j| i + j)
+                    .unwrap_or(unit.text.len());
+                let name = std::str::from_utf8(&unit.text[i..j])
+                    .unwrap_or("")
+                    .trim()
+                    .to_owned();
+                diagnostics.push(Diagnostic {
+                    kind: DiagnosticKind::UnknownDirective(name.into()),
+                    span: start..j,
+                });
+                i = j;
             }
         } else {
             i += 1;
