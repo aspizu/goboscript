@@ -60,6 +60,9 @@ impl<'a> PreProcessor<'a, '_> {
                 self.parse_simple_define(span, define_name)?;
                 continue;
             }
+            if self.parse_template(span)? {
+                continue;
+            }
             if self.parse_undef(span)? {
                 continue;
             }
@@ -85,7 +88,12 @@ impl<'a> PreProcessor<'a, '_> {
         self.tokens.retain(|token| {
             !matches!(
                 get_token(token),
-                Token::Newline | Token::Define | Token::Undef | Token::Backslash
+                Token::Newline
+                    | Token::Define
+                    | Token::Template
+                    | Token::EndTemplate
+                    | Token::Undef
+                    | Token::Backslash
             )
         });
     }
@@ -316,6 +324,53 @@ impl<'a> PreProcessor<'a, '_> {
         let mut subspan = *self.i..i;
         self.process(&mut subspan, &suppress)?;
         span.end = ((span.end as isize) + ((subspan.end as isize) - (i as isize))) as usize;
+        Ok(true)
+    }
+
+    fn parse_template(&mut self, span: &mut Span) -> Result<bool, Diagnostic> {
+        if get_token(&self.tokens[*self.i]) != &Token::Template {
+            return Ok(false);
+        }
+        // Remove %template token
+        self.remove_token(span);
+        self.expect_no_eof()?;
+        // Next token is the template name
+        let define_name: SmolStr = get_token(&self.tokens[*self.i]).to_string().into();
+        self.remove_token(span);
+        // Expect a newline after the name
+        if *self.i < span.end
+            && get_token(&self.tokens[*self.i]) == &Token::Newline
+        {
+            self.remove_token(span);
+        }
+        // Collect body tokens until %endtemplate, removing newlines between them
+        let mut body: Vec<Token> = vec![];
+        loop {
+            if *self.i >= span.end {
+                break;
+            }
+            let tok = get_token(&self.tokens[*self.i]).clone();
+            if tok == Token::EndTemplate {
+                self.remove_token(span);
+                // consume trailing newline if present
+                if *self.i < span.end
+                    && get_token(&self.tokens[*self.i]) == &Token::Newline
+                {
+                    self.remove_token(span);
+                }
+                break;
+            }
+            if tok == Token::Newline {
+                // Replace newlines with a space-like separator by keeping them in the body
+                // so multi-line content is preserved as a token sequence.
+                body.push(tok);
+                self.remove_token(span);
+                continue;
+            }
+            body.push(tok);
+            self.remove_token(span);
+        }
+        self.simple_defines.insert(define_name, body);
         Ok(true)
     }
 
