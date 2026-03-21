@@ -151,8 +151,7 @@ fn visit_assets(
                 if !is_valid_ext(ext) {
                     continue;
                 }
-                let new_asset =
-                    Asset::new(file.to_str().unwrap().into(), None, asset.span.clone());
+                let new_asset = Asset::new(file.to_str().unwrap().into(), None, asset.span.clone());
                 assets.insert(i, new_asset);
                 i += 1;
             }

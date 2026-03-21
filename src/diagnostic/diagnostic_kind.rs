@@ -367,9 +367,7 @@ impl DiagnosticKind {
             },
             DiagnosticKind::UnknownDirective(name) => {
                 let keyword = name.split_ascii_whitespace().next().unwrap_or("");
-                if keyword.eq_ignore_ascii_case("ifdef")
-                    || keyword.eq_ignore_ascii_case("ifndef")
-                {
+                if keyword.eq_ignore_ascii_case("ifdef") || keyword.eq_ignore_ascii_case("ifndef") {
                     Some("goboscript uses `%if` and `%if not` instead of `%ifdef`/`%ifndef`".into())
                 } else {
                     None
