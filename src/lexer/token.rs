@@ -14,7 +14,7 @@ use crate::misc::SmolStr;
 
 #[derive(Debug, Logos, Clone, PartialEq, Serialize, Deserialize)]
 #[logos(skip r"[ \r\t\f]+")]
-#[logos(skip r"#[^\n]*")]
+#[logos(skip r"#[^\n]*\n")]
 pub enum Token {
     #[token("%define")]
     Define,
