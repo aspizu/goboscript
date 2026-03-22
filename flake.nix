@@ -25,7 +25,7 @@
     defaultPackage = packages.goboscript;
 
     devShell = pkgs.mkShell {
-      buildInputs = with pkgs; [ git openssl pkg-config ];
+      buildInputs = with pkgs; [ git openssl pkg-config ] ++ [ packages.goboscript ];
       nativeBuildInputs = [ rust ];
     };
   });
