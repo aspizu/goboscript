@@ -1,6 +1,6 @@
 { lib, rustPlatform, pkg-config, openssl, rust }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage {
   pname = "goboscript";
   version = "3.0.0";
 
