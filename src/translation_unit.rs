@@ -30,6 +30,27 @@ pub enum Owner {
     StandardLibrary,
 }
 
+fn replace_comments_with_whitespace(input: &mut [u8]) {
+    let mut in_comment = false;
+
+    for byte in input.iter_mut() {
+        match byte {
+            b'#' if !in_comment => {
+                in_comment = true;
+                *byte = b' ';
+            }
+            b'\n' => {
+                in_comment = false;
+                *byte = b' ';
+            }
+            _ if in_comment => {
+                *byte = b' ';
+            }
+            _ => {}
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Tsify)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 /// A section of a source file that is included in the translation unit.
@@ -162,6 +183,18 @@ pub fn parse_translation_unit(
                     &mut diagnostics,
                     help,
                 );
+            } else if unit.text[i..].starts_with(b"%template") {
+                unit.text[i..i + b"%template".len()].copy_from_slice(b"%define  ");
+                i += b"%template".len();
+                let begin = i;
+                while i < unit.text.len() && !unit.text[i..].starts_with(b"%endtemplate") {
+                    i += 1;
+                }
+                if unit.text[i..].starts_with(b"%endtemplate") {
+                    replace_comments_with_whitespace(&mut unit.text[begin..i]);
+                    unit.text[i] = b'#';
+                    i += b"%endtemplate".len();
+                }
             } else if unit.text[i..].starts_with(b"%define") {
                 i += b"%define".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {

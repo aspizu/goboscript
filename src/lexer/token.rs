@@ -18,10 +18,6 @@ use crate::misc::SmolStr;
 pub enum Token {
     #[token("%define")]
     Define,
-    #[token("%template")]
-    Template,
-    #[token("%endtemplate")]
-    EndTemplate,
     #[token("%undef")]
     Undef,
     #[token("\n")]
@@ -247,8 +243,6 @@ impl Display for Token {
         match self {
             Token::Name(name) => write!(f, "name{}", name),
             Token::Define => write!(f, "%define"),
-            Token::Template => write!(f, "%template"),
-            Token::EndTemplate => write!(f, "%endtemplate"),
             Token::Undef => write!(f, "%undef"),
             Token::Newline => writeln!(f),
             Token::Backslash => write!(f, "\\"),
