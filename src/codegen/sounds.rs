@@ -22,7 +22,10 @@ where T: io::Write + io::Seek
     pub fn sound(&mut self, sound: &Asset, d: D) -> io::Result<()> {
         let object = self.asset_object_store.load(sound, d);
         let extension = &*object.extension;
-        if !SOUND_FORMATS.contains(&extension) {
+        if !extension.is_empty()
+            && !SOUND_FORMATS.contains(&extension)
+            && d.find_diagnostic_for_span(&sound.span).is_none()
+        {
             d.report(
                 DiagnosticKind::InvalidSoundFormat {
                     extension: extension.into(),

@@ -75,11 +75,10 @@ impl VFS for RealFS {
 
     fn glob(&mut self, pattern: &str) -> io::Result<Vec<PathBuf>> {
         let mut entries = Vec::new();
-        let paths = glob(pattern)
-            .map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err.msg))?;
+        let paths =
+            glob(pattern).map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err.msg))?;
         for entry in paths {
-            let path =
-                entry.map_err(|err| io::Error::new(err.error().kind(), err.to_string()))?;
+            let path = entry.map_err(|err| io::Error::new(err.error().kind(), err.to_string()))?;
             entries.push(path);
         }
         Ok(entries)
@@ -304,9 +303,7 @@ mod tests {
         pngs.sort();
         assert_eq!(pngs, vec![PathBuf::from("assets/a.png")]);
 
-        let mut deep_pngs = memfs
-            .glob("assets/**/*.png")
-            .expect("glob should succeed");
+        let mut deep_pngs = memfs.glob("assets/**/*.png").expect("glob should succeed");
         deep_pngs.sort();
         assert_eq!(
             deep_pngs,

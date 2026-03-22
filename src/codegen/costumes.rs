@@ -24,7 +24,9 @@ where T: io::Write + io::Seek
     pub fn costume(&mut self, config: &Config, costume: &Asset, d: D) -> io::Result<()> {
         let object = self.asset_object_store.load(costume, d);
         let extension = &*object.extension;
-        if !(BITMAP_FORMATS.contains(&extension) || VECTOR_FORMATS.contains(&extension)) {
+        if !(BITMAP_FORMATS.contains(&extension) || VECTOR_FORMATS.contains(&extension))
+            && d.find_diagnostic_for_span(&costume.span).is_none()
+        {
             d.report(
                 DiagnosticKind::InvalidCostumeFormat {
                     extension: extension.into(),

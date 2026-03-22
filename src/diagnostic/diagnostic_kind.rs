@@ -108,6 +108,7 @@ pub enum DiagnosticKind {
     },
     EmptyStruct(SmolStr),
     LocalNotSupported,
+    UnknownDirective(SmolStr),
     // Warnings
     FollowedByUnreachableCode,
     UnrecognizedKey(SmolStr),
@@ -231,6 +232,9 @@ impl DiagnosticKind {
             }
             DiagnosticKind::TypeMismatch { expected, given } => {
                 format!("type mismatch: expected {}, but got {}", expected, given)
+            }
+            DiagnosticKind::UnknownDirective(name) => {
+                format!("unknown pre-processor directive `%{}`", name)
             }
             DiagnosticKind::LocalNotSupported => {
                 "local variables are not supported here".to_string()
@@ -361,6 +365,14 @@ impl DiagnosticKind {
                 Token::Var => Some("var should only be used at top-level.".to_owned()),
                 _ => None,
             },
+            DiagnosticKind::UnknownDirective(name) => {
+                let keyword = name.split_ascii_whitespace().next().unwrap_or("");
+                if keyword.eq_ignore_ascii_case("ifdef") || keyword.eq_ignore_ascii_case("ifndef") {
+                    Some("goboscript uses `%if` and `%if not` instead of `%ifdef`/`%ifndef`".into())
+                } else {
+                    None
+                }
+            }
             DiagnosticKind::IOError { help, .. } => help.clone(),
             _ => None,
         }
@@ -441,7 +453,8 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidBackdropName(_)
             | DiagnosticKind::InvalidCostumeFormat { .. }
             | DiagnosticKind::InvalidSoundFormat { .. }
-            | DiagnosticKind::LocalNotSupported => Level::Error,
+            | DiagnosticKind::LocalNotSupported
+            | DiagnosticKind::UnknownDirective(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
             | DiagnosticKind::UnrecognizedKey(_)

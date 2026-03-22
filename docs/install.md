@@ -1,4 +1,3 @@
-```markdown
 # Install
 
 !!! tip
@@ -38,5 +37,4 @@ To update:
 
 ```bash
 cargo +nightly install --git https://github.com/aspizu/goboscript --force
-```
 ```
