@@ -66,13 +66,14 @@ impl From<ConstExpr> for Expr {
                 enum_name_span,
                 variant_name,
                 variant_name_span,
-            } => Expr::Name(Name::DotName {
-                lhs: enum_name,
-                lhs_span: enum_name_span,
+            } => Expr::Dot {
+                lhs: Box::new(Expr::Name(Name::Name {
+                    name: enum_name,
+                    span: enum_name_span,
+                })),
                 rhs: variant_name,
                 rhs_span: variant_name_span,
-                is_generated: false,
-            }),
+            },
             ConstExpr::StructLiteral { name, span, fields } => Expr::StructLiteral {
                 name,
                 span,
