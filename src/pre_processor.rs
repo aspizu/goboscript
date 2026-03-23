@@ -361,26 +361,17 @@ impl<'a> PreProcessor<'a, '_> {
         let mut parens: i32 = 0;
         loop {
             let token = get_token(&self.tokens[*self.i]).clone();
-            match &token {
-                Token::LParen => {
-                    parens += 1;
-                    parts.push(token.to_string());
-                    self.remove_token(span);
-                }
-                Token::RParen => {
-                    if parens == 0 {
-                        self.remove_token(span);
-                        break;
-                    }
-                    parens -= 1;
-                    parts.push(token.to_string());
-                    self.remove_token(span);
-                }
-                _ => {
-                    parts.push(token.to_string());
-                    self.remove_token(span);
-                }
+            if token == Token::RParen && parens == 0 {
+                self.remove_token(span);
+                break;
             }
+            match token {
+                Token::LParen => parens += 1,
+                Token::RParen => parens -= 1,
+                _ => {}
+            }
+            parts.push(token.to_string());
+            self.remove_token(span);
             self.expect_no_eof()?;
         }
         let stringified: SmolStr = parts.join(" ").into();
