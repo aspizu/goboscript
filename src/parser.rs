@@ -72,8 +72,8 @@ pub fn parse(translation_unit: &TranslationUnit) -> (Sprite, Vec<Diagnostic>) {
 
     let all_diagnostics = tokenize_diagnostics
         .into_iter()
-        .chain(preprocess_diagnostic.into_iter())
-        .chain(parse_diagnostics.into_iter())
+        .chain(preprocess_diagnostic)
+        .chain(parse_diagnostics)
         .collect();
 
     (sprite, all_diagnostics)
