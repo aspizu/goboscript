@@ -906,10 +906,9 @@ where T: Write + Seek
         d: D,
     ) -> io::Result<()> {
         let data: Vec<Value> = match &list.default {
-            Some(ListDefault::Values(values)) => values
-                .iter()
-                .map(|v| s.evaluate_const_expr(d, v))
-                .collect(),
+            Some(ListDefault::Values(values)) => {
+                values.iter().map(|v| s.evaluate_const_expr(d, v)).collect()
+            }
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,
                 Err(error) => {

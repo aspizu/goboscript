@@ -29,8 +29,7 @@ pub fn read_list(
             Some("list files are always relative to the project directory"),
         )
     })?;
-    read_list_text(&mut file)
-    .map_err(|err| DiagnosticKind::io_error(err, None))
+    read_list_text(&mut file).map_err(|err| DiagnosticKind::io_error(err, None))
 }
 
 fn read_list_text(file: &mut Box<dyn io::Read + '_>) -> Result<Vec<Value>, io::Error> {
