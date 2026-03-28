@@ -134,6 +134,12 @@ If no placeholders are present (only one argument), `FMT` simply expands to that
 FMT("no placeholders")   # expands to "no placeholders"
 ```
 
+Use `%%` to include a literal `%` character in the output:
+
+```goboscript
+FMT("%s%%", ratio)   # expands to ratio & "%"
+```
+
 ## Concatenate Tokens
 
 ```goboscript

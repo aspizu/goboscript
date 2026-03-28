@@ -429,9 +429,11 @@ impl<'a> PreProcessor<'a, '_> {
             });
         };
         let fmt_str = fmt.clone();
-        let parts: Vec<SmolStr> = fmt_str
+        let sentinel = "\x00";
+        let escaped = fmt_str.replace("%%", sentinel);
+        let parts: Vec<SmolStr> = escaped
             .split("%s")
-            .map(|s| SmolStr::from(s))
+            .map(|s| SmolStr::from(s.replace(sentinel, "%")))
             .collect();
         let placeholders = parts.len() - 1;
         let given = args.len() - 1;
