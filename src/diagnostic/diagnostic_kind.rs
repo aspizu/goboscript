@@ -83,6 +83,10 @@ pub enum DiagnosticKind {
         expected: usize,
         given: usize,
     },
+    MacroTypeError {
+        macro_name: SmolStr,
+        message: SmolStr,
+    },
     CommandFailed {
         stderr: Vec<u8>,
     },
@@ -222,6 +226,9 @@ impl DiagnosticKind {
                     "macro expects {} arguments, but {} were given",
                     expected, given
                 )
+            }
+            DiagnosticKind::MacroTypeError { macro_name, message } => {
+                format!("macro '{}': {}", macro_name, message)
             }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
             DiagnosticKind::ProcedureRedefinition(name) => {
@@ -437,6 +444,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::ProcArgsCountMismatch { .. }
             | DiagnosticKind::FuncArgsCountMismatch { .. }
             | DiagnosticKind::MacroArgsCountMismatch { .. }
+            | DiagnosticKind::MacroTypeError { .. }
             | DiagnosticKind::CommandFailed { .. }
             | DiagnosticKind::ProcedureRedefinition(_)
             | DiagnosticKind::FunctionRedefinition(_)
