@@ -149,6 +149,9 @@ change_pen_saturation             changePenColorParamBy VALUE    |              
 change_pen_brightness             changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=brightness
 change_pen_transparency           changePenColorParamBy VALUE    |                          | COLOR_PARAM@colorParam:pen_menu_colorParam=transparency
 [music]==========================================================|==========================|
+play_drum                         playDrumForBeats  DRUM,BEATS   |                          | DRUM:music_menu_DRUM=1
+play_note                         playNoteForBeats  NOTE,BEATS   |                          |
+set_instrument                    setInstrument     INSTRUMENT   |                          | INSTRUMENT:music_menu_INSTRUMENT=1
 rest                              restForBeats      BEATS        |                          |
 set_tempo                         setTempo          TEMPO        |                          |
 change_tempo                      changeTempo       ...          |                          |
