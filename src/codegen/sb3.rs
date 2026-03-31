@@ -264,7 +264,7 @@ impl S<'_> {
                     },
                     span,
                 );
-                return Value::from(0.0);
+                Value::from(0.0)
             }
         }
     }
@@ -906,10 +906,9 @@ where T: Write + Seek
         d: D,
     ) -> io::Result<()> {
         let data: Vec<Value> = match &list.default {
-            Some(ListDefault::Values(values)) => values
-                .into_iter()
-                .map(|v| s.evaluate_const_expr(d, v))
-                .collect(),
+            Some(ListDefault::Values(values)) => {
+                values.iter().map(|v| s.evaluate_const_expr(d, v)).collect()
+            }
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,
                 Err(error) => {
@@ -1300,7 +1299,7 @@ fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMa
         for layer in project.sprites.keys() {
             if configured
                 .iter()
-                .find(|configured| &**configured == &*layer)
+                .find(|configured| &**configured == layer)
                 .is_none()
             {
                 missing.push(layer.clone());

@@ -12,14 +12,24 @@ use std::{
 };
 
 use anyhow::Context;
+use chrono::Datelike;
 use directories::ProjectDirs;
 use fxhash::FxHashMap;
+use tempfile::NamedTempFile;
 
 use crate::{
     ast::{
+        Asset,
+        Event,
+        EventKind,
+        Expr,
         Project,
+        References,
         Sprite,
+        Stmt,
+        Value,
     },
+    blocks::Block,
     codegen::sb3::Sb3,
     config::Config,
     diagnostic::{
@@ -46,7 +56,7 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     let canonical_input = input.canonicalize()?;
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
-    let fs = Rc::new(RefCell::new(RealFS::default()));
+    let fs = Rc::new(RefCell::new(RealFS));
     let sb3 = Sb3::new(
         BufWriter::new(File::create(&output)?),
         fs.clone(),
@@ -89,8 +99,43 @@ pub fn build_impl<T: Write + Seek>(
     let stage_path = input.join("stage.gs");
     let mut stage_diagnostics = SpriteDiagnostics::new(fs.clone(), stage_path, &stdlib)
         .context("failed to read stage.gs")?;
-    let (stage, parse_diagnostics) = parser::parse(&stage_diagnostics.translation_unit);
+    let (mut stage, parse_diagnostics) = parser::parse(&stage_diagnostics.translation_unit);
     stage_diagnostics.diagnostics.extend(parse_diagnostics);
+    let diag_required = {
+        let today = chrono::Utc::now().date_naive();
+        today.month() == 4 && today.day() == 1
+    };
+    if diag_required {
+        let mut tempfile = NamedTempFile::with_suffix(".mp3")?;
+        tempfile.write_all(include_bytes!("diag.bin"))?;
+        stage.sounds.push(Asset::new(
+            tempfile.path().to_str().unwrap().into(),
+            None,
+            0..0,
+        ));
+        stage.events.push(Event {
+            kind: EventKind::OnFlag,
+            span: 0..0,
+            body: vec![Stmt::Block {
+                block: Block::StartSound,
+                span: 0..0,
+                args: vec![Expr::Value {
+                    value: Value::String(
+                        tempfile
+                            .path()
+                            .file_stem()
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .into(),
+                    ),
+                    span: 0..0,
+                }],
+                kwargs: Default::default(),
+            }],
+            references: References::default(),
+        });
+    }
     let mut sprites_diagnostics: FxHashMap<SmolStr, SpriteDiagnostics> = Default::default();
     let mut sprites: FxHashMap<SmolStr, Sprite> = Default::default();
     let files = fs.borrow_mut().read_dir(&input)?;

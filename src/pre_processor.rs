@@ -14,6 +14,7 @@ use crate::{
 };
 
 type SpannedToken = (usize, Token, usize);
+type FunctionDefines = FxHashMap<SmolStr, FxHashMap<usize, (Vec<Token>, Vec<Token>)>>;
 
 fn get_span(token: &SpannedToken) -> Span {
     token.0..token.2
@@ -25,7 +26,7 @@ fn get_token(token: &SpannedToken) -> &Token {
 
 pub struct PreProcessor<'a, 'b> {
     tokens: &'a mut Vec<(usize, Token, usize)>,
-    function_defines: FxHashMap<SmolStr, FxHashMap<usize, (Vec<Token>, Vec<Token>)>>,
+    function_defines: FunctionDefines,
     simple_defines: FxHashMap<SmolStr, Vec<Token>>,
     i: &'b mut usize,
 }

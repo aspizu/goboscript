@@ -95,7 +95,7 @@ pub fn parse_translation_unit(
     unit: &mut TranslationUnit,
     fs: Rc<RefCell<dyn VFS>>,
     stdlib: &StandardLibrary,
-    mut diagnostics: &mut Vec<Diagnostic>,
+    diagnostics: &mut Vec<Diagnostic>,
 ) {
     let mut i = 0;
     let mut skip_depth = 0;
@@ -159,7 +159,7 @@ pub fn parse_translation_unit(
                     i,
                     fs.clone(),
                     stdlib,
-                    &mut diagnostics,
+                    diagnostics,
                     help,
                 );
             } else if unit.text[i..].starts_with(b"%define") {
@@ -322,7 +322,7 @@ fn add_include_to_translation_unit(
         Err(error) => {
             diagnostics.push(Diagnostic {
                 kind: DiagnosticKind::IOError {
-                    error: error.to_string().into(),
+                    error: error.to_string(),
                     help,
                 },
                 span,

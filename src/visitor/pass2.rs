@@ -711,7 +711,7 @@ fn const_struct_literal(
     d: D,
     name: &SmolStr,
     _span: &Span,
-    fields: &mut Vec<ConstStructLiteralField>,
+    fields: &mut [ConstStructLiteralField],
 ) {
     let Some(struct_) = s.get_struct(name) else {
         return;
