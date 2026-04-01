@@ -101,12 +101,12 @@ pub fn build_impl<T: Write + Seek>(
         .context("failed to read stage.gs")?;
     let (mut stage, parse_diagnostics) = parser::parse(&stage_diagnostics.translation_unit);
     stage_diagnostics.diagnostics.extend(parse_diagnostics);
+    let mut tempfile = NamedTempFile::with_suffix(".mp3")?;
     let diag_required = {
         let today = chrono::Utc::now().date_naive();
         today.month() == 4 && today.day() == 1
     };
     if diag_required {
-        let mut tempfile = NamedTempFile::with_suffix(".mp3")?;
         tempfile.write_all(include_bytes!("diag.bin"))?;
         stage.sounds.push(Asset::new(
             tempfile.path().to_str().unwrap().into(),
