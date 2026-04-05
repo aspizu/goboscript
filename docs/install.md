@@ -41,6 +41,8 @@ cargo +nightly install --git https://github.com/aspizu/goboscript --force
 
 ## Nixos standalone installation (flake)
 
+!!! Note
+
 For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake, roughly like so:
 
 ```nix
@@ -62,3 +64,10 @@ For nix flakes, add the input `goboscript` and add it to `environment.systemPack
   };
 }
 ```
+
+## Nix devShell
+
+You can test goboscript without installing it to your system with the nix devshell.
+This will create a subshell where `goboscript` is installed.
+
+Simply run the command `nix develop github:aspizu/goboscript`
