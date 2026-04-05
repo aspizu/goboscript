@@ -38,3 +38,27 @@ To update:
 ```bash
 cargo +nightly install --git https://github.com/aspizu/goboscript --force
 ```
+
+## Nixos standalone installation (flake)
+
+For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake, roughly like so:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs?ref=25.11";
+    goboscript.url = "github:aspizu/goboscript";
+  };
+  outputs = { self, nixpkgs, goboscript, ... }: {
+    nixosConfigurations.yourHostname = nixpkgs.lib.nixosSystem {
+      modules = [
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
+          ];
+        })
+      ];
+    };
+  };
+}
+```
