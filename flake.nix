@@ -1,5 +1,5 @@
 {
-  description = "goboscript is the scratch compiler";
+  description = "goboscript is the Scratch compiler";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
