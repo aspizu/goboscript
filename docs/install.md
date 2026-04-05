@@ -41,7 +41,7 @@ cargo +nightly install --git https://github.com/aspizu/goboscript --force
 
 ## Install with nix
 
-!!! Note
+!!! note
 
     The nix flake installs goboscript from source, like the other methods, so you will need to be patient.
 
