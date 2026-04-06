@@ -193,6 +193,7 @@ current_minute                    ...                            | ...=MINUTE   
 current_second                    ...                            | ...=SECOND         | 
 days_since_2000                   dayssince2000                  |                    | 
 username                          username                       |                    | 
+online                            online                         |                    | 
 touching_color                    touchingcolor     COLOR        |                    | 
 color_is_touching_color           coloristouchingcolor COLOR,COLOR2|                  | 
 answer                            answer                         |                    | 
