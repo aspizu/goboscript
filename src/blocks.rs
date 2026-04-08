@@ -276,8 +276,7 @@ pub enum Block {
     ChangePenSaturation,
     ChangePenBrightness,
     ChangePenTransparency,
-    PlayDrum1,
-    PlayDrum2,
+    PlayDrum,
     PlayNote,
     SetInstrument,
     Rest,
@@ -438,13 +437,7 @@ impl Block {
                 field: "colorParam",
                 default: "transparency",
             }),
-            Self::PlayDrum1 => Some(Menu {
-                opcode: "music_menu_DRUM",
-                input: "DRUM",
-                field: "DRUM",
-                default: "1",
-            }),
-            Self::PlayDrum2 => Some(Menu {
+            Self::PlayDrum => Some(Menu {
                 opcode: "music_menu_DRUM",
                 input: "DRUM",
                 field: "DRUM",
@@ -467,7 +460,6 @@ impl Block {
             "say" => &[Self::Say2, Self::Say1],
             "think" => &[Self::Think2, Self::Think1],
             "clone" => &[Self::Clone0, Self::Clone1],
-            "play_drum" => &[Self::PlayDrum1, Self::PlayDrum2],
             _ => &[],
         }
     }
@@ -573,9 +565,7 @@ impl Block {
             ("change_pen_saturation", _) => Some(Self::ChangePenSaturation),
             ("change_pen_brightness", _) => Some(Self::ChangePenBrightness),
             ("change_pen_transparency", _) => Some(Self::ChangePenTransparency),
-            ("play_drum", 1) => Some(Self::PlayDrum1),
-            ("play_drum", 2) => Some(Self::PlayDrum2),
-            ("play_drum", _) => Some(Self::PlayDrum1),
+            ("play_drum", _) => Some(Self::PlayDrum),
             ("play_note", _) => Some(Self::PlayNote),
             ("set_instrument", _) => Some(Self::SetInstrument),
             ("rest", _) => Some(Self::Rest),
@@ -681,8 +671,7 @@ impl Block {
             Self::ChangePenSaturation => "change_pen_saturation",
             Self::ChangePenBrightness => "change_pen_brightness",
             Self::ChangePenTransparency => "change_pen_transparency",
-            Self::PlayDrum1 => "play_drum",
-            Self::PlayDrum2 => "play_drum",
+            Self::PlayDrum => "play_drum",
             Self::PlayNote => "play_note",
             Self::SetInstrument => "set_instrument",
             Self::Rest => "rest",
@@ -887,8 +876,7 @@ impl Block {
             Self::ChangePenSaturation => "pen_changePenColorParamBy",
             Self::ChangePenBrightness => "pen_changePenColorParamBy",
             Self::ChangePenTransparency => "pen_changePenColorParamBy",
-            Self::PlayDrum1 => "music_playDrumForBeats",
-            Self::PlayDrum2 => "music_playDrumForBeats",
+            Self::PlayDrum => "music_playDrumForBeats",
             Self::PlayNote => "music_playNoteForBeats",
             Self::SetInstrument => "music_setInstrument",
             Self::Rest => "music_restForBeats",
@@ -993,8 +981,7 @@ impl Block {
             Self::ChangePenSaturation => &["VALUE"],
             Self::ChangePenBrightness => &["VALUE"],
             Self::ChangePenTransparency => &["VALUE"],
-            Self::PlayDrum1 => &["BEATS"],
-            Self::PlayDrum2 => &["DRUM", "BEATS"],
+            Self::PlayDrum => &["DRUM", "BEATS"],
             Self::PlayNote => &["NOTE", "BEATS"],
             Self::SetInstrument => &["INSTRUMENT"],
             Self::Rest => &["BEATS"],
@@ -1101,8 +1088,7 @@ impl Block {
             Self::ChangePenSaturation => None,
             Self::ChangePenBrightness => None,
             Self::ChangePenTransparency => None,
-            Self::PlayDrum1 => None,
-            Self::PlayDrum2 => None,
+            Self::PlayDrum => None,
             Self::PlayNote => None,
             Self::SetInstrument => None,
             Self::Rest => None,
@@ -1142,6 +1128,7 @@ pub enum Repr {
     CurrentSecond,
     DaysSince2000,
     Username,
+    Online,
     TouchingColor,
     ColorIsTouchingColor,
     Answer,
@@ -1192,7 +1179,7 @@ impl Repr {
         }
     }
 
-    pub fn overloads(_name: &str) -> &'static [Self] {
+    pub fn overloads(name: &str) -> &'static [Self] {
         &[]
     }
 
@@ -1227,6 +1214,7 @@ impl Repr {
             ("current_second", _) => Some(Self::CurrentSecond),
             ("days_since_2000", _) => Some(Self::DaysSince2000),
             ("username", _) => Some(Self::Username),
+            ("online", _) => Some(Self::Online),
             ("touching_color", _) => Some(Self::TouchingColor),
             ("color_is_touching_color", _) => Some(Self::ColorIsTouchingColor),
             ("answer", _) => Some(Self::Answer),
@@ -1267,6 +1255,7 @@ impl Repr {
             Self::CurrentSecond => "current_second",
             Self::DaysSince2000 => "days_since_2000",
             Self::Username => "username",
+            Self::Online => "online",
             Self::TouchingColor => "touching_color",
             Self::ColorIsTouchingColor => "color_is_touching_color",
             Self::Answer => "answer",
@@ -1306,6 +1295,7 @@ impl Repr {
             "current_second",
             "days_since_2000",
             "username",
+            "online",
             "touching_color",
             "color_is_touching_color",
             "answer",
@@ -1345,6 +1335,7 @@ impl Repr {
             Self::CurrentSecond => "sensing_current",
             Self::DaysSince2000 => "sensing_dayssince2000",
             Self::Username => "sensing_username",
+            Self::Online => "sensing_online",
             Self::TouchingColor => "sensing_touchingcolor",
             Self::ColorIsTouchingColor => "sensing_coloristouchingcolor",
             Self::Answer => "sensing_answer",
@@ -1384,6 +1375,7 @@ impl Repr {
             Self::CurrentSecond => &[],
             Self::DaysSince2000 => &[],
             Self::Username => &[],
+            Self::Online => &[],
             Self::TouchingColor => &["COLOR"],
             Self::ColorIsTouchingColor => &["COLOR", "COLOR2"],
             Self::Answer => &[],
@@ -1423,6 +1415,7 @@ impl Repr {
             Self::CurrentSecond => Some("{\"CURRENTMENU\": [\"SECOND\", null]}"),
             Self::DaysSince2000 => None,
             Self::Username => None,
+            Self::Online => None,
             Self::TouchingColor => None,
             Self::ColorIsTouchingColor => None,
             Self::Answer => None,
