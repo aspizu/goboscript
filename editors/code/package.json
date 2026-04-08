@@ -49,7 +49,7 @@
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
     "@vscode/vsce": "^2.24.0",
-    "esbuild": "^0.20.1",
+    "esbuild": "^0.28.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "js-yaml": "^4.1.0",
