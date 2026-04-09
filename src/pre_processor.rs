@@ -70,6 +70,10 @@ impl<'a> PreProcessor<'a, '_> {
             if self.substitute_function_define(span, suppress)? {
                 continue;
             }
+            if self.substitute_fmt(span)? {
+                dirty = true;
+                continue;
+            }
             if self.substitute_concat(span)? {
                 dirty = true;
                 continue;
@@ -331,6 +335,145 @@ impl<'a> PreProcessor<'a, '_> {
         self.function_defines.remove(&name);
         self.simple_defines.remove(&*name);
         self.remove_token(span);
+        Ok(true)
+    }
+
+    fn substitute_fmt(&mut self, span: &mut Span) -> Result<bool, Diagnostic> {
+        let Token::Name(macro_name) = get_token(&self.tokens[*self.i]) else {
+            return Ok(false);
+        };
+        let macro_name_span = get_span(&self.tokens[*self.i]);
+        if macro_name != "FMT" {
+            return Ok(false);
+        }
+        if self
+            .tokens
+            .get(*self.i + 1)
+            .is_none_or(|token| get_token(token) != &Token::LParen)
+        {
+            return Ok(false);
+        }
+        self.remove_token(span);
+        self.remove_token(span);
+        self.expect_no_eof()?;
+        let mut token = get_token(&self.tokens[*self.i]).clone();
+        if token == Token::RParen {
+            return Err(Diagnostic {
+                kind: DiagnosticKind::MacroArgsCountMismatch {
+                    expected: 1,
+                    given: 0,
+                },
+                span: macro_name_span,
+            });
+        }
+        let mut args: Vec<Vec<Token>> = vec![];
+        let mut arg_spans: Vec<Span> = vec![];
+        let mut arg: Vec<Token> = vec![];
+        let mut arg_start = get_span(&self.tokens[*self.i]).start;
+        let mut arg_end = arg_start;
+        let mut parens = 0i32;
+        loop {
+            let tok_span = get_span(&self.tokens[*self.i]);
+            match &token {
+                Token::LParen => {
+                    parens += 1;
+                    arg_end = tok_span.end;
+                    arg.push(token);
+                }
+                Token::RParen if parens > 0 => {
+                    parens -= 1;
+                    arg_end = tok_span.end;
+                    arg.push(token);
+                }
+                Token::RParen => {
+                    arg_spans.push(arg_start..arg_end);
+                    args.push(arg);
+                    self.remove_token(span);
+                    break;
+                }
+                Token::Comma if parens == 0 => {
+                    arg_spans.push(arg_start..arg_end);
+                    args.push(arg);
+                    arg = vec![];
+                    self.remove_token(span);
+                    token = get_token(&self.tokens[*self.i]).clone();
+                    arg_start = get_span(&self.tokens[*self.i]).start;
+                    arg_end = arg_start;
+                    continue;
+                }
+                _ => {
+                    arg_end = tok_span.end;
+                    arg.push(token);
+                }
+            }
+            self.remove_token(span);
+            token = get_token(&self.tokens[*self.i]).clone();
+        }
+        self.apply_fmt(args, arg_spans, macro_name_span, span)
+    }
+
+    fn apply_fmt(
+        &mut self,
+        args: Vec<Vec<Token>>,
+        arg_spans: Vec<Span>,
+        macro_name_span: Span,
+        span: &mut Span,
+    ) -> Result<bool, Diagnostic> {
+        let Some([Token::Str(fmt)]) = args.first().map(|a| a.as_slice()) else {
+            return Err(Diagnostic {
+                kind: DiagnosticKind::MacroTypeError {
+                    macro_name: "FMT".into(),
+                    message: "format string argument must be a string literal".into(),
+                },
+                span: arg_spans.first().cloned().unwrap_or(macro_name_span),
+            });
+        };
+        let fmt_str = fmt.clone();
+        let sentinel = "\x00";
+        let escaped = fmt_str.replace("%%", sentinel);
+        let parts: Vec<SmolStr> = escaped
+            .split("%s")
+            .map(|s| SmolStr::from(s.replace(sentinel, "%")))
+            .collect();
+        let placeholders = parts.len() - 1;
+        let given = args.len() - 1;
+        if given != placeholders {
+            return Err(Diagnostic {
+                kind: DiagnosticKind::MacroArgsCountMismatch {
+                    expected: placeholders + 1,
+                    given: given + 1,
+                },
+                span: macro_name_span,
+            });
+        }
+        let mut output: Vec<Token> = vec![];
+        for (idx, part) in parts.iter().enumerate() {
+            if !part.is_empty() {
+                if !output.is_empty() {
+                    output.push(Token::Amp);
+                }
+                output.push(Token::Str(part.clone()));
+            }
+            if idx < args.len() - 1 {
+                let arg_tokens = &args[idx + 1];
+                if !arg_tokens.is_empty() {
+                    if !output.is_empty() {
+                        output.push(Token::Amp);
+                    }
+                    output.extend(arg_tokens.iter().cloned());
+                }
+            }
+        }
+        if output.is_empty() {
+            output.push(Token::Str(SmolStr::from("")));
+        }
+        let inserted: Vec<SpannedToken> = output
+            .into_iter()
+            .map(|t| (macro_name_span.start, t, macro_name_span.end))
+            .collect();
+        let count = inserted.len();
+        self.tokens.splice(*self.i..*self.i, inserted);
+        span.end += count;
         Ok(true)
     }
 
