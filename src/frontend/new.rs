@@ -9,6 +9,8 @@ use std::{
     process::Command,
 };
 
+use log;
+
 use crate::config::Config;
 
 pub enum NewError {

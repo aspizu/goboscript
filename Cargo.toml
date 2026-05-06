@@ -45,6 +45,9 @@ js-sys = "0.3.77"
 tsify = { version = "0.5.5", default-features = false, features = ["js"] }
 tempfile = "3.27.0"
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_log = "1.0.0"
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 inquire = "0.7.5"
 rand = "0.9.1"

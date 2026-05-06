@@ -22,7 +22,7 @@ use crate::{
         Artifact,
         Diagnostic,
     },
-    frontend::build::build_impl,
+    codegen::build::build_impl,
     misc::base64,
     standard_library::StandardLibrary,
     vfs::MemFS,
