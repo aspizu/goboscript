@@ -74,6 +74,10 @@ impl<'a> PreProcessor<'a, '_> {
                 dirty = true;
                 continue;
             }
+            if self.substitute_stringify(span)? {
+                dirty = true;
+                continue;
+            }
             *self.i += 1;
         }
         if dirty {
@@ -331,6 +335,56 @@ impl<'a> PreProcessor<'a, '_> {
         self.function_defines.remove(&name);
         self.simple_defines.remove(&*name);
         self.remove_token(span);
+        Ok(true)
+    }
+
+    fn substitute_stringify(&mut self, span: &mut Span) -> Result<bool, Diagnostic> {
+        let Token::Name(macro_name) = get_token(&self.tokens[*self.i]) else {
+            return Ok(false);
+        };
+        let macro_name_span = get_span(&self.tokens[*self.i]);
+        if macro_name != "STRINGIFY" {
+            return Ok(false);
+        }
+        if self
+            .tokens
+            .get(*self.i + 1)
+            .is_none_or(|token| get_token(token) != &Token::LParen)
+        {
+            return Ok(false);
+        }
+        // Remove STRINGIFY and '('
+        self.remove_token(span);
+        self.remove_token(span);
+        self.expect_no_eof()?;
+        // Collect all tokens until the matching ')'
+        let mut parts: Vec<String> = vec![];
+        let mut parens: i32 = 0;
+        loop {
+            let token = get_token(&self.tokens[*self.i]).clone();
+            if token == Token::RParen && parens == 0 {
+                self.remove_token(span);
+                break;
+            }
+            match token {
+                Token::LParen => parens += 1,
+                Token::RParen => parens -= 1,
+                _ => {}
+            }
+            parts.push(token.to_string());
+            self.remove_token(span);
+            self.expect_no_eof()?;
+        }
+        let stringified: SmolStr = parts.join(" ").into();
+        self.tokens.insert(
+            *self.i,
+            (
+                macro_name_span.start,
+                Token::Str(stringified),
+                macro_name_span.end,
+            ),
+        );
+        span.end += 1;
         Ok(true)
     }
 
