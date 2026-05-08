@@ -178,23 +178,23 @@ where T: Write + Seek
         self.expr(s, d, value, value_id, this_id)
     }
 
-    pub fn show(&mut self, s: S, d: D, name: &Name) -> io::Result<()> {
-        self.begin_inputs()?;
-        self.end_obj()?; // inputs
+    pub fn show_or_hide_monitor(&mut self, s: S, d: D, name: &Name) -> io::Result<()> {
         match s.qualify_name(Some(d), name) {
             Some(QualifiedName::Var(qualified_name, _)) => {
-                self.single_field_id("VARIABLE", &qualified_name)?
+                self.begin_inputs()?;
+                self.end_obj()?; // inputs
+                self.single_field_id("VARIABLE", &qualified_name)?;
+                self.end_obj()?; // node
             }
             Some(QualifiedName::List(qualified_name, _)) => {
-                self.single_field_id("LIST", &qualified_name)?
+                self.begin_inputs()?;
+                self.end_obj()?; // inputs
+                self.single_field_id("LIST", &qualified_name)?;
+                self.end_obj()?; // node
             }
-            None => {}
+            _ => {}
         }
-        self.end_obj() // node
-    }
-
-    pub fn hide(&mut self, s: S, d: D, name: &Name) -> io::Result<()> {
-        self.show(s, d, name)
+        Ok(())
     }
 
     pub fn add_to_list(

@@ -1183,8 +1183,8 @@ where T: Write + Seek
                 is_cloud,
             } => self.set_var(s, d, this_id, name, value, type_, is_local, is_cloud),
             Stmt::ChangeVar { name, value } => self.change_var(s, d, this_id, name, value),
-            Stmt::Show(name) => self.show(s, d, name),
-            Stmt::Hide(name) => self.hide(s, d, name),
+            Stmt::Show(name) => self.show_or_hide_monitor(s, d, name),
+            Stmt::Hide(name) => self.show_or_hide_monitor(s, d, name),
             Stmt::AddToList { name, value } => self.add_to_list(s, d, this_id, name, value),
             Stmt::DeleteListIndex { name, index } => {
                 self.delete_list_index(s, d, this_id, name, index)
