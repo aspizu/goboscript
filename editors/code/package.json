@@ -24,7 +24,7 @@
     "Programming Languages"
   ],
   "engines": {
-    "vscode": "^1.87.0"
+    "vscode": "^1.118.0"
   },
   "scripts": {
     "vscode:prepublish": "npm run build-base -- --minify",
