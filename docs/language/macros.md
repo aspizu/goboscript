@@ -111,3 +111,29 @@ all overloads for that name at once.
 ```goboscript
 CONCAT(prefix, suffix) # becomes prefixsuffix
 ```
+
+## Stringify Tokens
+
+`STRINGIFY` is a built-in macro that converts its argument tokens into a string literal.
+All tokens inside the parentheses are joined with spaces and produced as a single string value.
+
+```goboscript
+STRINGIFY(hello world) # becomes "hello world"
+```
+
+This is useful when you need to turn a macro expansion or a sequence of tokens into a
+string at compile time:
+
+```goboscript
+%define VERSION 1 2 3
+
+onflag {
+    say STRINGIFY(VERSION); # says "1 2 3"
+}
+```
+
+Nested parentheses are supported and are included verbatim in the resulting string:
+
+```goboscript
+STRINGIFY(foo(bar, baz)) # becomes "foo ( bar , baz )"
+```
