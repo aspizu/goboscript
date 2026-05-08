@@ -404,6 +404,21 @@ where T: Write + Seek
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
     ) -> anyhow::Result<()> {
+        // Preload all assets in parallel before sequential zip writing.
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let mut all_asset_paths: Vec<crate::misc::SmolStr> = project
+                .stage
+                .costumes
+                .iter()
+                .chain(&project.stage.sounds)
+                .chain(project.sprites.values().flat_map(|s| s.costumes.iter().chain(&s.sounds)))
+                .map(|a| a.path.clone())
+                .collect();
+            all_asset_paths.sort_unstable();
+            all_asset_paths.dedup();
+            self.asset_object_store.preload(&all_asset_paths);
+        }
         let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
