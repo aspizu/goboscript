@@ -106,6 +106,40 @@ all overloads for that name at once.
 %endif
 ```
 
+## Format Strings
+
+`FMT()` is a built-in macro that builds a string by interpolating values into a format string. The first argument must be a string literal containing `%s` placeholders. Each subsequent argument is substituted in order for each `%s`.
+
+```goboscript
+FMT("Hello, %s! You are %s years old.", name, age)
+```
+
+This expands to a chain of `&` (join) operations:
+
+```goboscript
+"Hello, " & name & "! You are " & age & " years old."
+```
+
+The number of arguments after the format string must exactly match the number of `%s` placeholders in the format string. Passing too few or too many arguments is a compile-time error.
+
+```goboscript
+FMT("x = %s, y = %s", x, y)   # correct: 2 placeholders, 2 arguments
+FMT("x = %s", x, y)           # error: 1 placeholder, 2 arguments given
+FMT("x = %s, y = %s", x)      # error: 2 placeholders, 1 argument given
+```
+
+If no placeholders are present (only one argument), `FMT` simply expands to that string literal:
+
+```goboscript
+FMT("no placeholders")   # expands to "no placeholders"
+```
+
+Use `%%` to include a literal `%` character in the output:
+
+```goboscript
+FMT("%s%%", ratio)   # expands to ratio & "%"
+```
+
 ## Concatenate Tokens
 
 ```goboscript

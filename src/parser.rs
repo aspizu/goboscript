@@ -68,12 +68,13 @@ fn parse_sprite(tokens: Vec<SpannedToken>) -> (Sprite, Vec<Diagnostic>) {
 pub fn parse(translation_unit: &TranslationUnit) -> (Sprite, Vec<Diagnostic>) {
     let (tokens, tokenize_diagnostics) = tokenize(translation_unit);
     let (tokens, preprocess_diagnostic) = preprocess(tokens);
+    let has_preprocess_error = preprocess_diagnostic.is_some();
     let (sprite, parse_diagnostics) = parse_sprite(tokens);
 
     let all_diagnostics = tokenize_diagnostics
         .into_iter()
         .chain(preprocess_diagnostic)
-        .chain(parse_diagnostics)
+        .chain(if has_preprocess_error { vec![] } else { parse_diagnostics })
         .collect();
 
     (sprite, all_diagnostics)
