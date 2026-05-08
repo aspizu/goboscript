@@ -28,7 +28,7 @@ concise and easy to read. Use a version-control system such as git. Use VS Code
 or your favourite text-editor. Share code by copy-pasting. Use the standard library.
 Refactor code using search and replace. Write scripts in other programming languages
 to generate goboscript code. goboscript allows you to integrate external tooling and
-workflows, such as using a script to generate costumes for a text rendering engine, 
+workflows, such as using a script to generate costumes for a text rendering engine,
 or loading in images into lists. goboscript has a powerful macro system similar to C.
 The standard library includes many macros for frequently used patterns, such as
 converting R, G, B values into a single integer. goboscript performs optimization,
@@ -37,12 +37,12 @@ removes unused code, and detects problems & mistakes.
 goboscript is more than just an 1:1 mapping of Scratch blocks to text, it has
 abstractions such as:
 
-  - Custom data-types using Structs and Enums.
-  - Functions that return values
-  - Default parameters for Functions & Procedures
-  - Operators such as: `!=`, `>=`, `<=`, `//` (Floor division), `not in`
-  - Local variables (Function-scoped)
-  - and more...
+- Custom data-types using Structs and Enums.
+- Functions that return values
+- Default parameters for Functions & Procedures
+- Operators such as: `!=`, `>=`, `<=`, `//` (Floor division), `not in`
+- Local variables (Function-scoped)
+- and more...
 
 All these abstractions are compiled down to regular Scratch code.
 
@@ -56,13 +56,13 @@ All these abstractions are compiled down to regular Scratch code.
 
 ## Sister Projects
 
- - [std](https://github.com/goboscript/std): The goboscript standard library.
- - [backpack](https://github.com/aspizu/backpack): Package manager for goboscript.
- - [sb2gs](https://github.com/aspizu/sb2gs): Decompile Scratch projects (.sb3) into goboscript projects (.gs)
- - [IDE](https://github.com/aspizu/goboscript-ide): Online IDE for goboscript, runs projects instantly in the browser.
- - [MCP Server](https://github.com/aspizu/goboscript-mcp): Connects AI coding agents to the compiler and Turbowarp Desktop.
+- [std](https://github.com/goboscript/std): The goboscript standard library.
+- [backpack](https://github.com/aspizu/backpack): Package manager for goboscript.
+- [sb2gs](https://github.com/aspizu/sb2gs): Decompile Scratch projects (.sb3) into goboscript projects (.gs)
+- [IDE](https://github.com/aspizu/goboscript-ide): Online IDE for goboscript, runs projects instantly in the browser.
+- [MCP Server](https://github.com/aspizu/goboscript-mcp): Connects AI coding agents to the compiler and Turbowarp Desktop.
 
-### Other Text-Based Scratch projects
+## Prior Art
 
 For a complete list of all text-based scratch projects, see <https://scratch.mit.edu/discuss/topic/792714/>
 
@@ -75,6 +75,8 @@ Python code. Soon after, I created my own re-implementation of boiga called Gobo
 
 See the [**Contributing Guide**](https://aspiz.uk/goboscript/docs/contributing.html) for
 instructions on setting up the development environment and submitting Pull Requests.
+
+See [**CHANGELOG**](./CHANGELOG.md) for a list of changes.
 
 ## FOSS HACK 25
 
