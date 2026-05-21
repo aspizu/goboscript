@@ -9,7 +9,7 @@ use serde::{
 
 use crate::misc::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Boolean(bool),
     Number(f64),
