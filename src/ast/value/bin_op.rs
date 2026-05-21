@@ -49,8 +49,49 @@ fn contains(lhs: &Value, rhs: &Value) -> Value {
 fn letter_of(lhs: &Value, rhs: &Value) -> Value {
     let index = rhs.to_number() - 1.0;
     let str = lhs.to_string();
-    if index < 0.0 || index >= str.len() as f64 {
+
+    // We cannot check for out-of-bounds `index > str.len()`, since we only know
+    // the length of `str` in bytes rather than characters. Unicode characters
+    // can consist of multiple bytes.
+    if index < 0.0 {
         return arcstr::literal!("").into();
     }
-    SmolStr::from(str.chars().nth(index as usize).unwrap().to_string()).into()
+
+    SmolStr::from(
+        str.chars()
+            .nth(index as usize)
+            .map(|c| c.to_string())
+            .unwrap_or("".into()),
+    )
+    .into()
+}
+
+#[cfg(test)]
+mod test {
+    use super::letter_of;
+    use crate::ast::Value;
+
+    #[test]
+    fn test_letter_of_ascii_out_of_bounds() {
+        let foo = arcstr::literal!("foo").into();
+        let index = Value::Number(7.0);
+
+        assert_eq!(letter_of(&foo, &index), arcstr::literal!("").into());
+    }
+
+    #[test]
+    fn test_letter_of_unicode_in_bounds() {
+        let foo = arcstr::literal!("яблоко").into();
+        let index = Value::Number(6.0);
+
+        assert_eq!(letter_of(&foo, &index), arcstr::literal!("о").into());
+    }
+
+    #[test]
+    fn test_letter_of_unicode_out_of_bounds() {
+        let foo = arcstr::literal!("яблоко").into();
+        let index = Value::Number(7.0);
+
+        assert_eq!(letter_of(&foo, &index), arcstr::literal!("").into());
+    }
 }
