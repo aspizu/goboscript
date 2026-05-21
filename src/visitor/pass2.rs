@@ -135,6 +135,28 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
             true,
         );
     }
+
+    visit_events(
+        &mut sprite.events,
+        S {
+            proc_args: &sprite.proc_args,
+            func_args: &sprite.func_args,
+            args: None,
+            local_vars: None,
+            vars: &sprite.vars,
+            lists: &sprite.lists,
+            enums: &sprite.enums,
+            structs: &sprite.structs,
+            procs: &sprite.procs,
+            funcs: &sprite.funcs,
+            global_vars: stage.map(|stage| &stage.vars),
+            global_lists: stage.map(|stage| &stage.lists),
+            global_enums: stage.map(|stage| &stage.enums),
+            global_structs: stage.map(|stage| &stage.structs),
+        },
+        d,
+    );
+
     for event in &mut sprite.events {
         visit_stmts(
             &mut event.body,
@@ -187,6 +209,21 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
         .collect();
     for (name, span, mut fields) in struct_literals {
         const_struct_literal(s, d, &name, &span, &mut fields);
+    }
+}
+
+fn visit_events(events: &mut Vec<Event>, s: S, d: D) {
+    for event in &mut *events {
+        visit_event(event, s, d);
+    }
+}
+
+fn visit_event(event: &mut Event, s: S, d: D) {
+    match &mut event.kind {
+        EventKind::OnLoudnessGt { value } | EventKind::OnTimerGt { value } => {
+            visit_expr(value.as_mut(), s, d);
+        }
+        _ => { /* no exprs that need to be transformed */ }
     }
 }
 
