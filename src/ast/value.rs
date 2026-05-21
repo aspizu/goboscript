@@ -225,6 +225,16 @@ impl<'de> Deserialize<'de> for Value {
                 Ok(Value::Boolean(value))
             }
 
+            fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+            where E: serde::de::Error {
+                Ok(Value::Number(value as f64))
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+            where E: serde::de::Error {
+                Ok(Value::Number(value as f64))
+            }
+
             fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
             where E: serde::de::Error {
                 Ok(Value::Number(value))
