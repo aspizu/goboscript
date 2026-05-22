@@ -39,14 +39,18 @@ fn visit_sprite(sprite: &mut Sprite) {
         );
     }
     for event in &mut sprite.events {
-        visit_stmts(
-            &event.body,
-            &mut S {
-                references: &mut event.references,
-                proc: None,
-                func: None,
-            },
-        );
+        let s = &mut S {
+            references: &mut event.references,
+            proc: None,
+            func: None,
+        };
+        visit_stmts(&event.body, s);
+        match &mut event.kind {
+            EventKind::OnLoudnessGt { value } | EventKind::OnTimerGt { value } => {
+                visit_expr(value, s);
+            }
+            _ => {}
+        }
     }
 }
 
