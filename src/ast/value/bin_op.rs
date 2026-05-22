@@ -47,10 +47,14 @@ fn contains(lhs: &Value, rhs: &Value) -> Value {
 }
 
 fn letter_of(lhs: &Value, rhs: &Value) -> Value {
-    let index = rhs.to_number() - 1.0;
+    let error = Value::from(arcstr::literal!(""));
+    let index = (rhs.to_number() - 1.0).floor();
     let str = lhs.to_string();
-    if index < 0.0 || index >= str.len() as f64 {
-        return arcstr::literal!("").into();
+    if index < 0.0 {
+        return error;
     }
-    SmolStr::from(str.chars().nth(index as usize).unwrap().to_string()).into()
+    if let Some(letter) = str.chars().nth(index as usize) {
+        return Value::from(SmolStr::from(letter.to_string()));
+    }
+    return error;
 }
