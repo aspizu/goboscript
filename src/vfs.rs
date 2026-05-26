@@ -146,7 +146,7 @@ impl VFS for MemFS {
     }
 
     fn is_dir(&self, path: &Path) -> bool {
-        path.to_str().map_or(false, |path_str| {
+        path.to_str().is_some_and(|path_str| {
             let normalized_path = if path_str.ends_with('/') {
                 path_str.to_string()
             } else {
@@ -160,7 +160,7 @@ impl VFS for MemFS {
 
     fn is_file(&self, path: &Path) -> bool {
         path.to_str()
-            .map_or(false, |path_str| self.files.contains_key(path_str))
+            .is_some_and(|path_str| self.files.contains_key(path_str))
     }
 
     fn glob(&mut self, pattern: &str) -> io::Result<Vec<PathBuf>> {

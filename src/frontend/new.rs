@@ -65,7 +65,7 @@ pub fn new(
         write_templates!(&name, "Makefile");
     }
     if !no_git {
-        let _ = Command::new("git").arg("init").arg(&name).spawn();
+        let _ = Command::new("git").arg("init").arg("--").arg(&name).spawn();
         write_templates!(&name, ".gitignore");
     }
     Ok(())

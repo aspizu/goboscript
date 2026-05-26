@@ -7,102 +7,30 @@ pub fn name(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(lex.slice())
 }
 
-pub fn string(lex: &mut Lexer<Token>) -> SmolStr {
-    SmolStr::from(serde_json::from_str::<'_, String>(lex.slice()).unwrap())
+pub fn string(lex: &mut Lexer<Token>) -> Option<SmolStr> {
+    serde_json::from_str::<String>(lex.slice()).ok().map(SmolStr::from)
 }
 
 pub fn arg(lex: &mut Lexer<Token>) -> SmolStr {
     SmolStr::from(&lex.slice()[1..])
 }
 
-pub fn bin(lex: &mut Lexer<Token>) -> i64 {
-    let mut neg = false;
-    let mut value = 0;
-    for &c in lex.slice().as_bytes()[2..].iter() {
-        if c == b'-' {
-            neg = true;
-            continue;
-        }
-        if c == b'_' {
-            continue;
-        }
-        value *= 2;
-        value += (c - b'0') as i64;
-    }
-    if neg {
-        -value
-    } else {
-        value
-    }
+pub fn bin(lex: &mut Lexer<Token>) -> Option<i64> {
+    i64::from_str_radix(&lex.slice()[2..].replace('_', ""), 2).ok()
 }
 
-pub fn oct(lex: &mut Lexer<Token>) -> i64 {
-    let mut neg = false;
-    let mut value = 0;
-    for &c in lex.slice().as_bytes()[2..].iter() {
-        if c == b'-' {
-            neg = true;
-            continue;
-        }
-        if c == b'_' {
-            continue;
-        }
-        value *= 8;
-        value += (c - b'0') as i64;
-    }
-    if neg {
-        -value
-    } else {
-        value
-    }
+pub fn oct(lex: &mut Lexer<Token>) -> Option<i64> {
+    i64::from_str_radix(&lex.slice()[2..].replace('_', ""), 8).ok()
 }
 
-pub fn int(lex: &mut Lexer<Token>) -> i64 {
-    let mut neg = false;
-    let mut value = 0;
-    for &c in lex.slice().as_bytes().iter() {
-        if c == b'-' {
-            neg = true;
-            continue;
-        }
-        if c == b'_' {
-            continue;
-        }
-        value *= 10;
-        value += (c - b'0') as i64;
-    }
-    if neg {
-        -value
-    } else {
-        value
-    }
+pub fn int(lex: &mut Lexer<Token>) -> Option<i64> {
+    lex.slice().replace('_', "").parse().ok()
 }
 
-pub fn hex(lex: &mut Lexer<Token>) -> i64 {
-    let mut neg = false;
-    let mut value = 0;
-    for &c in lex.slice().as_bytes()[2..].iter() {
-        if c == b'-' {
-            neg = true;
-            continue;
-        }
-        if c == b'_' {
-            continue;
-        }
-        value *= 16;
-        value += match c {
-            0..=b'9' => (c - b'0') as i64,
-            b'a'..=b'f' => (c - b'a' + 10) as i64,
-            _ => (c - b'A' + 10) as i64,
-        };
-    }
-    if neg {
-        -value
-    } else {
-        value
-    }
+pub fn hex(lex: &mut Lexer<Token>) -> Option<i64> {
+    i64::from_str_radix(&lex.slice()[2..].replace('_', ""), 16).ok()
 }
 
-pub fn float(lex: &mut Lexer<Token>) -> f64 {
-    serde_json::from_str(lex.slice()).unwrap()
+pub fn float(lex: &mut Lexer<Token>) -> Option<f64> {
+    lex.slice().replace('_', "").parse().ok()
 }

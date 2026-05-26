@@ -56,6 +56,21 @@ fn visit_sprite(sprite: &mut Sprite, callsites: &mut usize) {
                 func: None,
             },
         );
+        match &mut event.kind {
+            EventKind::OnLoudnessGt { value } | EventKind::OnTimerGt { value } => {
+                visit_expr(
+                    value,
+                    &mut vec![],
+                    &mut S {
+                        vars: &mut sprite.vars,
+                        callsites,
+                        funcs: &sprite.funcs,
+                        func: None,
+                    },
+                );
+            }
+            _ => {}
+        }
     }
     if *callsites != old_callsites {
         visit_sprite(sprite, callsites);

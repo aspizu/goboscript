@@ -124,7 +124,7 @@ pub enum DiagnosticKind {
 impl DiagnosticKind {
     pub fn io_error(error: impl ToString, help: Option<&str>) -> Self {
         DiagnosticKind::IOError {
-            error: error.to_string().into(),
+            error: error.to_string(),
             help: help.map(|h| h.into()),
         }
     }
@@ -153,7 +153,7 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::ExtraToken(_) => "extra token".to_string(),
-            DiagnosticKind::IOError { error, .. } => format!("{error}"),
+            DiagnosticKind::IOError { error, .. } => error.to_string(),
             DiagnosticKind::UnrecognizedReporter(_) => "unrecognized reporter".to_string(),
             DiagnosticKind::UnrecognizedBlock(_) => "unrecognized block".to_string(),
             DiagnosticKind::UnrecognizedVariable(_) => "unrecognized variable".to_string(),

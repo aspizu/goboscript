@@ -135,29 +135,6 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
             true,
         );
     }
-    for event in &mut sprite.events {
-        visit_stmts(
-            &mut event.body,
-            S {
-                proc_args: &sprite.proc_args,
-                func_args: &sprite.func_args,
-                args: None,
-                local_vars: None,
-                vars: &sprite.vars,
-                lists: &sprite.lists,
-                enums: &sprite.enums,
-                structs: &sprite.structs,
-                procs: &sprite.procs,
-                funcs: &sprite.funcs,
-                global_vars: stage.map(|stage| &stage.vars),
-                global_lists: stage.map(|stage| &stage.lists),
-                global_enums: stage.map(|stage| &stage.enums),
-                global_structs: stage.map(|stage| &stage.structs),
-            },
-            d,
-            true,
-        );
-    }
     let s = S {
         proc_args: &sprite.proc_args,
         func_args: &sprite.func_args,
@@ -174,6 +151,15 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
         global_enums: stage.map(|stage| &stage.enums),
         global_structs: stage.map(|stage| &stage.structs),
     };
+    for event in &mut sprite.events {
+        visit_stmts(&mut event.body, s, d, true);
+        match &mut event.kind {
+            EventKind::OnLoudnessGt { value } | EventKind::OnTimerGt { value } => {
+                visit_expr(value, s, d);
+            }
+            _ => {}
+        }
+    }
     let struct_literals: Vec<_> = sprite
         .vars
         .iter()
@@ -197,6 +183,8 @@ fn visit_stmts(stmts: &mut Vec<Stmt>, s: S, d: D, top_level: bool) {
     let mut i = 0;
     while i < stmts.len() {
         let replace = match &stmts[i] {
+            Stmt::Show(name) => visit_show_or_hide_monitor(name, s, d, true),
+            Stmt::Hide(name) => visit_show_or_hide_monitor(name, s, d, false),
             Stmt::SetVar {
                 name,
                 value,
@@ -711,7 +699,7 @@ fn const_struct_literal(
     d: D,
     name: &SmolStr,
     _span: &Span,
-    fields: &mut Vec<ConstStructLiteralField>,
+    fields: &mut [ConstStructLiteralField],
 ) {
     let Some(struct_) = s.get_struct(name) else {
         return;
@@ -728,4 +716,42 @@ fn const_struct_literal(
             );
         }
     }
+}
+
+fn visit_show_or_hide_monitor(name: &Name, s: S, _d: D, is_show: bool) -> Option<Vec<Stmt>> {
+    if name.fieldname().is_some() {
+        return None;
+    }
+    let basename = name.basename();
+    let type_ = s
+        .get_list(basename)
+        .map(|list| &list.type_)
+        .or_else(|| s.get_var(basename).map(|var| &var.type_))?;
+    let (type_name, _) = type_.struct_()?;
+    let struct_ = s.get_struct(type_name)?;
+    Some(
+        struct_
+            .fields
+            .iter()
+            .map(|field| {
+                if is_show {
+                    Stmt::Show(Name::DotName {
+                        lhs: name.basename().clone(),
+                        lhs_span: name.basespan().clone(),
+                        rhs: field.name.clone(),
+                        rhs_span: field.span.clone(),
+                        is_generated: true,
+                    })
+                } else {
+                    Stmt::Hide(Name::DotName {
+                        lhs: name.basename().clone(),
+                        lhs_span: name.basespan().clone(),
+                        rhs: field.name.clone(),
+                        rhs_span: field.span.clone(),
+                        is_generated: true,
+                    })
+                }
+            })
+            .collect(),
+    )
 }

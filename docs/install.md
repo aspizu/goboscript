@@ -38,3 +38,45 @@ To update:
 ```bash
 cargo +nightly install --git https://github.com/aspizu/goboscript --force
 ```
+
+## Install with nix
+
+!!! note
+
+    The nix flake installs goboscript from source, like the other methods, so you will need to be patient.
+
+### devShell
+
+You can test goboscript without installing it to your system with the nix devshell, a bit like `nix-shell -p {some package}`.
+This will create a subshell where `goboscript` is installed.
+Once you exit this subshell, you will no longer be able to use the `goboscript` command
+(until you open a new devShell or install it system-wide).
+Once you run `nix-collect-garbage`, the `goboscript` installation files will actually be removed from your system.
+
+Simply run the command `nix develop github:aspizu/goboscript`
+
+### Nixos standalone installation (flake)
+
+This is for if you want to have `goboscript` available system-wide.
+For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake, roughly like so:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs?ref=25.11";
+    goboscript.url = "github:aspizu/goboscript";
+  };
+  outputs = { self, nixpkgs, goboscript, ... }: {
+    nixosConfigurations.yourHostname = nixpkgs.lib.nixosSystem {
+      modules = [
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
+          ];
+        })
+      ];
+    };
+  };
+}
+```
+

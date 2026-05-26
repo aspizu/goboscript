@@ -264,7 +264,7 @@ impl S<'_> {
                     },
                     span,
                 );
-                return Value::from(0.0);
+                Value::from(0.0)
             }
         }
     }
@@ -906,10 +906,9 @@ where T: Write + Seek
         d: D,
     ) -> io::Result<()> {
         let data: Vec<Value> = match &list.default {
-            Some(ListDefault::Values(values)) => values
-                .into_iter()
-                .map(|v| s.evaluate_const_expr(d, v))
-                .collect(),
+            Some(ListDefault::Values(values)) => {
+                values.iter().map(|v| s.evaluate_const_expr(d, v)).collect()
+            }
             Some(ListDefault::File { path, span }) => match read_list(fs, input, path) {
                 Ok(data) => data,
                 Err(error) => {
@@ -1184,8 +1183,8 @@ where T: Write + Seek
                 is_cloud,
             } => self.set_var(s, d, this_id, name, value, type_, is_local, is_cloud),
             Stmt::ChangeVar { name, value } => self.change_var(s, d, this_id, name, value),
-            Stmt::Show(name) => self.show(s, d, name),
-            Stmt::Hide(name) => self.hide(s, d, name),
+            Stmt::Show(name) => self.show_or_hide_monitor(s, d, name),
+            Stmt::Hide(name) => self.show_or_hide_monitor(s, d, name),
             Stmt::AddToList { name, value } => self.add_to_list(s, d, this_id, name, value),
             Stmt::DeleteListIndex { name, index } => {
                 self.delete_list_index(s, d, this_id, name, index)
@@ -1300,7 +1299,7 @@ fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMa
         for layer in project.sprites.keys() {
             if configured
                 .iter()
-                .find(|configured| &**configured == &*layer)
+                .find(|configured| &**configured == layer)
                 .is_none()
             {
                 missing.push(layer.clone());

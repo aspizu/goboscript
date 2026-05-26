@@ -200,6 +200,16 @@ user = username();
 (username)
 ```
 
+### online?
+
+```goboscript
+is_online = online();
+```
+
+```scratchblocks
+<online?>
+```
+
 ### touching color ()?
 
 ```goboscript
