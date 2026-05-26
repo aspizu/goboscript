@@ -17,12 +17,14 @@ use wasm_bindgen::{
 
 use crate::{
     ast::Sprite,
-    codegen::sb3::Sb3,
+    codegen::{
+        build::build_impl,
+        sb3::Sb3,
+    },
     diagnostic::{
         Artifact,
         Diagnostic,
     },
-    codegen::build::build_impl,
     misc::base64,
     standard_library::StandardLibrary,
     vfs::MemFS,

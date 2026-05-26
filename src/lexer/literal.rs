@@ -8,7 +8,9 @@ pub fn name(lex: &mut Lexer<Token>) -> SmolStr {
 }
 
 pub fn string(lex: &mut Lexer<Token>) -> Option<SmolStr> {
-    serde_json::from_str::<String>(lex.slice()).ok().map(SmolStr::from)
+    serde_json::from_str::<String>(lex.slice())
+        .ok()
+        .map(SmolStr::from)
 }
 
 pub fn arg(lex: &mut Lexer<Token>) -> SmolStr {
