@@ -64,10 +64,11 @@ if args.diff:
     subprocess.run(["delta", *extra, "--side-by-side", *pathids])
 
 if args.validate:
-    sb3ts = Path(__file__).parent.joinpath("sb3.ts")
-    tools = Path(__file__).parent
+    sb3ts = Path(__file__).parent.joinpath("sb3.ts").resolve()
+    tools = Path(__file__).parent.resolve()
+    tsx = tools.joinpath("node_modules/.bin/tsx")
     for pathid in pathids:
         if returncode := subprocess.run(
-            ["pnpm", "--dir", tools, "exec", "tsx", sb3ts, pathid]
+            [tsx, sb3ts, pathid.resolve()]
         ).returncode:
             sys.exit(returncode)
