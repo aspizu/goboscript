@@ -8,7 +8,7 @@ export class GoboscriptTaskProvider implements vscode.TaskProvider {
     this.workspaceRoot = workspaceRoot
   }
 
-  provideTasks(token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
+  provideTasks(_token: vscode.CancellationToken): vscode.ProviderResult<vscode.Task[]> {
     const task = new vscode.Task(
       { type: "goboscript-build" },
       this.workspaceRoot,
@@ -21,8 +21,8 @@ export class GoboscriptTaskProvider implements vscode.TaskProvider {
   }
 
   resolveTask(
-    task: vscode.Task,
-    token: vscode.CancellationToken,
+    _task: vscode.Task,
+    _token: vscode.CancellationToken,
   ): vscode.ProviderResult<vscode.Task> {
     throw new Error("Method not implemented.")
   }

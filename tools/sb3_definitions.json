@@ -20,10 +20,7 @@
       "oneOf": [{ "type": "string" }, { "type": "number" }]
     },
     "scalarVal": {
-      "oneOf": [
-        { "$ref": "#/definitions/stringOrNumber" },
-        { "type": "boolean" }
-      ]
+      "oneOf": [{ "$ref": "#/definitions/stringOrNumber" }, { "type": "boolean" }]
     },
     "assetId": {
       "type": "string",

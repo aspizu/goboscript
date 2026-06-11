@@ -8,13 +8,13 @@ Search goboscript in the Extensions tab, or go to the [VSCode Marketplace](https
 
 ### Install from source
 
-You will need `npm` installed.
+You will need `pnpm` installed.
 
 ```bash
 # Inside the root of the goboscript git repository:
 cd editors/code
-npm install
-npm run package
+pnpm ci
+pnpm run package
 ```
 
 This will output a `goboscript-x.y.z.vsix` file in the `editors/code` directory. You can

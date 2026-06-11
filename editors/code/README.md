@@ -4,7 +4,7 @@ To develop the extension, open the `editors/code` directory in Visual Studio Cod
 
 ```sh
 cd editors/code
-npm install
+pnpm ci
 ```
 
 Go to the Run and Debug view and select `Launch`. This will open a new instance of VS
@@ -17,8 +17,8 @@ Code.
 
 ```sh
 cd editors/code
-npm install
-npm run package
+pnpm ci
+pnpm run package
 ```
 
 Then in Visual Studio Code, press `Ctrl` + `Shift` + `P` and run the

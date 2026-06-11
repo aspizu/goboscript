@@ -27,15 +27,15 @@
     "vscode": "^1.118.0"
   },
   "scripts": {
-    "vscode:prepublish": "npm run build-base -- --minify",
+    "vscode:prepublish": "pnpm run build-base --minify",
     "package": "vsce package -o goboscript.vsix",
-    "build-base": "(npx js-yaml snippets/snippets.yml > snippets/snippets.json) && (npx js-yaml syntaxes/goboscript.tmGrammar.yml > syntaxes/goboscript.tmGrammar.json) && esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16",
-    "build": "npm run build-base -- --sourcemap",
-    "watch": "npm run build-base -- --sourcemap --watch",
+    "build-base": "(pnpm exec js-yaml snippets/snippets.yml > snippets/snippets.json) && (pnpm exec js-yaml syntaxes/goboscript.tmGrammar.yml > syntaxes/goboscript.tmGrammar.json) && esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16",
+    "build": "pnpm run build-base --sourcemap",
+    "watch": "pnpm run build-base --sourcemap --watch",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint -c .eslintrc.js --ext ts ./src",
-    "lint:fix": "npm run lint -- --fix",
+    "lint": "eslint -c eslint.config.cjs ./src",
+    "lint:fix": "pnpm run lint --fix",
     "typecheck": "tsc"
   },
   "main": "./out/main",

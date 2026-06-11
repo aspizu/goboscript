@@ -1,0 +1,21 @@
+packages:
+  - cheatsheet
+  - docs/javascripts
+  - editors/code
+  - tools
+
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 525600
+blockExoticSubdeps: true
+strictDepBuilds: true
+verifyDepsBeforeRun: install
+optimisticRepeatInstall: true
+
+allowBuilds:
+  "@vscode/vsce-sign": true
+  esbuild: true
+  keytar: true
+  sharp: true

@@ -1,7 +1,15 @@
 {
-    "type": "module",
-    "dependencies": {
-        "scratchblocks": "^3.6.4",
-        "shiki": "^4.0.2"
-    }
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "scratchblocks": "^3.6.4",
+    "shiki": "^4.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "js-yaml": "^4.1.1",
+    "prettier": "^3.8.3"
+  }
 }

@@ -1,14 +1,18 @@
 {
-    "type": "module",
-    "dependencies": {
-        "ajv": "^8.18.0",
-        "better-ajv-errors": "^2.0.3"
-    },
-    "devDependencies": {
-        "@types/bun": "latest",
-        "@types/node": "latest"
-    },
-    "peerDependencies": {
-        "typescript": "^5.9.3"
-    }
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "better-ajv-errors": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "prettier": "^3.8.3",
+    "tsx": "^4.21.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  }
 }

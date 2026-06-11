@@ -65,8 +65,9 @@ if args.diff:
 
 if args.validate:
     sb3ts = Path(__file__).parent.joinpath("sb3.ts")
+    tools = Path(__file__).parent
     for pathid in pathids:
         if returncode := subprocess.run(
-            ["bun", "--bun", "run", sb3ts, pathid]
+            ["pnpm", "--dir", tools, "exec", "tsx", sb3ts, pathid]
         ).returncode:
             sys.exit(returncode)
