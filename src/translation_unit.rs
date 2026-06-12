@@ -35,9 +35,9 @@ pub enum Owner {
 /// A section of a source file that is included in the translation unit.
 /// This may be a section of the source file, or the entire source file.
 pub struct Include {
-    /// The range that the source code of the include is in the translation unit.
+    /// The range that the source code of to include is in the translation unit.
     pub unit_range: Span,
-    // The range that the source code of the include is in the source file.
+    /// The range that the source code of to include is in the source file.
     pub source_range: Span,
     pub path: PathBuf,
     pub owner: Owner,
