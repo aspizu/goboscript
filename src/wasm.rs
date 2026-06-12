@@ -30,6 +30,18 @@ use crate::{
     vfs::MemFS,
 };
 
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = "
+export interface Span {
+    start: number
+    end: number
+}
+
+type Sprite = object
+
+type FxHashMap<K, V> = Map<K, V>
+";
+
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Build {
