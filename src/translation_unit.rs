@@ -91,6 +91,14 @@ impl TranslationUnit {
     }
 }
 
+fn blank_directive_line(text: &mut Vec<u8>, start: usize) {
+    let end = text[start..]
+        .iter()
+        .position(|&c| c == b'\n')
+        .map_or(text.len(), |j| start + j);
+    text[start..end].fill(b' ');
+}
+
 pub fn parse_translation_unit(
     unit: &mut TranslationUnit,
     fs: Rc<RefCell<dyn VFS>>,
@@ -102,20 +110,24 @@ pub fn parse_translation_unit(
     while i < unit.text.len() {
         if skip_depth > 0 {
             if i == 0 || unit.text[i - 1] == b'\n' {
+                let line_end = unit.text[i..]
+                    .iter()
+                    .position(|&c| c == b'\n')
+                    .map_or(unit.text.len(), |j| i + j + 1);
                 if unit.text[i..].starts_with(b"%if") {
-                    unit.text[i] = b'#';
-                    i += b"%if".len();
                     skip_depth += 1;
+                    blank_directive_line(&mut unit.text, i);
+                    i = line_end;
                 } else if unit.text[i..].starts_with(b"%else") {
-                    unit.text[i] = b'#';
-                    i += b"%else".len();
                     if skip_depth == 1 {
                         skip_depth = 0;
                     }
+                    blank_directive_line(&mut unit.text, i);
+                    i = line_end;
                 } else if unit.text[i..].starts_with(b"%endif") {
-                    unit.text[i] = b'#';
-                    i += b"%endif".len();
                     skip_depth -= 1;
+                    blank_directive_line(&mut unit.text, i);
+                    i = line_end;
                 } else {
                     unit.text[i] = b'#';
                     i += 1;
@@ -125,7 +137,7 @@ pub fn parse_translation_unit(
             }
         } else if (i == 0 || unit.text[i - 1] == b'\n') && unit.text[i] == b'%' {
             if unit.text[i..].starts_with(b"%include") {
-                unit.text[i] = b'#';
+                let directive_start = i;
                 i += b"%include".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
                     i += 1;
@@ -151,6 +163,7 @@ pub fn parse_translation_unit(
                 } else {
                     None
                 };
+                blank_directive_line(&mut unit.text, directive_start);
                 i = j;
                 add_include_to_translation_unit(
                     unit,
@@ -163,6 +176,7 @@ pub fn parse_translation_unit(
                     help,
                 );
             } else if unit.text[i..].starts_with(b"%define") {
+                let directive_start = i;
                 i += b"%define".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
                     i += 1;
@@ -185,8 +199,10 @@ pub fn parse_translation_unit(
                     .trim()
                     .to_owned();
                 unit.defines.insert(name);
+                blank_directive_line(&mut unit.text, directive_start);
                 i = j;
             } else if unit.text[i..].starts_with(b"%undef") {
+                let directive_start = i;
                 i += b"%undef".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
                     i += 1;
@@ -201,12 +217,12 @@ pub fn parse_translation_unit(
                     .unwrap_or(unit.text.len());
                 let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
                 unit.defines.remove(name);
+                blank_directive_line(&mut unit.text, directive_start);
                 i = j;
             } else if unit.text[i..].starts_with(b"%ifdef")
                 || unit.text[i..].starts_with(b"%ifndef")
             {
                 let start = i;
-                unit.text[i] = b'#';
                 let j = unit.text[i..]
                     .iter()
                     .position(|c| *c == b'\n')
@@ -216,13 +232,14 @@ pub fn parse_translation_unit(
                     .unwrap_or("")
                     .trim()
                     .to_owned();
+                blank_directive_line(&mut unit.text, i);
                 diagnostics.push(Diagnostic {
                     kind: DiagnosticKind::UnknownDirective(name.into()),
                     span: start..j,
                 });
                 i = j;
             } else if unit.text[i..].starts_with(b"%if") {
-                unit.text[i] = b'#';
+                let directive_start = i;
                 i += b"%if".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
                     i += 1;
@@ -248,16 +265,27 @@ pub fn parse_translation_unit(
                 if inverted == unit.defines.contains(name) {
                     skip_depth = 1;
                 }
+                blank_directive_line(&mut unit.text, directive_start);
+                i = j;
             } else if unit.text[i..].starts_with(b"%else") {
-                unit.text[i] = b'#';
-                i += b"%else".len();
+                let directive_start = i;
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map_or(unit.text.len(), |j| i + j + 1);
+                blank_directive_line(&mut unit.text, directive_start);
                 skip_depth = 1;
+                i = j;
             } else if unit.text[i..].starts_with(b"%endif") {
-                unit.text[i] = b'#';
-                i += b"%endif".len();
+                let directive_start = i;
+                let j = unit.text[i..]
+                    .iter()
+                    .position(|c| *c == b'\n')
+                    .map_or(unit.text.len(), |j| i + j + 1);
+                blank_directive_line(&mut unit.text, directive_start);
+                i = j;
             } else {
                 let start = i;
-                unit.text[i] = b'#'; // replace % with # so parser treats it as a comment
                 i += 1; // skip '%'
                 let j = unit.text[i..]
                     .iter()
@@ -268,6 +296,7 @@ pub fn parse_translation_unit(
                     .unwrap_or("")
                     .trim()
                     .to_owned();
+                blank_directive_line(&mut unit.text, start);
                 diagnostics.push(Diagnostic {
                     kind: DiagnosticKind::UnknownDirective(name.into()),
                     span: start..j,
