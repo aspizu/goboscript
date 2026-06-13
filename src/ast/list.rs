@@ -3,14 +3,14 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use super::{
     type_::Type,
     ConstExpr,
 };
 use crate::misc::SmolStr;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Serialize, Deserialize)]
 pub struct List {
     pub name: SmolStr,
     pub span: Span,
@@ -19,7 +19,7 @@ pub struct List {
     pub is_used: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Serialize, Deserialize)]
 pub enum ListDefault {
     Values(Vec<ConstExpr>),
     File { path: SmolStr, span: Span },

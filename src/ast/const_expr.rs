@@ -3,6 +3,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 
 use super::{
     StructLiteralField,
@@ -16,7 +17,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Tsify, Debug, Serialize, Deserialize, Clone)]
 pub enum ConstExpr {
     Value {
         value: Value,
@@ -35,7 +36,7 @@ pub enum ConstExpr {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Clone, Serialize, Deserialize)]
 pub struct ConstStructLiteralField {
     pub name: SmolStr,
     pub name_span: Span,

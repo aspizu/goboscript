@@ -4,7 +4,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use super::{
     value::Value,
     Name,
@@ -19,7 +19,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Clone, Serialize, Deserialize)]
 pub enum Expr {
     Value {
         value: Value,

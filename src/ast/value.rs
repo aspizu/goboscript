@@ -6,7 +6,6 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
 use crate::misc::SmolStr;
 
 #[derive(Debug, Clone)]

@@ -5,10 +5,10 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Tsify, Debug, Serialize, Deserialize, Clone)]
 pub struct Asset {
     pub name: SmolStr,
     pub path: SmolStr,

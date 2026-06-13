@@ -3,14 +3,14 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use super::{
     type_::Type,
     ConstExpr,
 };
 use crate::misc::SmolStr;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Serialize, Deserialize)]
 pub struct Arg {
     pub name: SmolStr,
     pub span: Span,
