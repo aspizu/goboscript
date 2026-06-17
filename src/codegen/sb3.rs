@@ -1289,12 +1289,17 @@ fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMa
     let mut layers: FxHashMap<SmolStr, usize> = Default::default();
     let mut keys: Vec<_> = project.sprites.keys().collect();
     keys.sort();
-    let mut i = 1;
-    for key in keys {
+    for (i, key) in (1..).zip(keys) {
         layers.insert(key.clone(), i);
-        i += 1;
     }
     if let Some(configured) = &config.layers {
+        let mut seen: FxHashSet<&str> = Default::default();
+        let mut duplicates = vec![];
+        for layer in configured {
+            if !seen.insert(layer) {
+                duplicates.push(layer.clone());
+            }
+        }
         let mut extra = vec![];
         for layer in configured {
             if !project.sprites.contains_key(&**layer) {
@@ -1317,16 +1322,20 @@ fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMa
                 extra.join(", ")
             );
         }
+        if !duplicates.is_empty() {
+            bail!(
+                "layers references sprites more than once: {}",
+                duplicates.join(", ")
+            );
+        }
         if !missing.is_empty() {
             bail!(
                 "layers does not reference sprites that exist: {}",
                 missing.join(", ")
             );
         }
-        let mut i = 1;
-        for layer in configured {
+        for (i, layer) in (1..).zip(configured) {
             layers.insert(layer.into(), i);
-            i += 1;
         }
     }
     Ok(layers)
