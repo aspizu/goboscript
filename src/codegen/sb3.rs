@@ -68,6 +68,12 @@ pub enum QualifiedName {
     List(SmolStr, Type),
 }
 
+#[derive(Default)]
+struct Extensions {
+    pen: bool,
+    music: bool,
+}
+
 pub fn qualify_local_var_name(proc_name: &str, var_name: &str) -> SmolStr {
     format!("{}:{}", proc_name, var_name).into()
 }
@@ -332,6 +338,7 @@ where T: Write + Seek
     pub inputs_comma: bool,
     pub block_count: usize,
     pub asset_object_store: AssetObjectStore,
+    extensions: Extensions,
 }
 
 impl<T> Write for Sb3<T>
@@ -357,11 +364,17 @@ where T: Write + Seek
             inputs_comma: false,
             block_count: 0,
             asset_object_store: AssetObjectStore::new(input, fs),
+            extensions: Extensions::default(),
         }
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
         self.block_count += 1;
+        if node.opcode.starts_with("pen_") {
+            self.extensions.pen = true;
+        } else if node.opcode.starts_with("music_") {
+            self.extensions.music = true;
+        }
         write_comma_io(&mut self.zip, &mut self.node_comma)?;
         write!(self, "{node}")
     }
@@ -457,7 +470,15 @@ where T: Write + Seek
         }
         write!(self, "]")?; // targets
         write!(self, r#","monitors":[]"#)?;
-        write!(self, r#","extensions":[]"#)?;
+        if self.extensions.pen && self.extensions.music {
+            write!(self, r#","extensions":["pen","music"]"#)?;
+        } else if self.extensions.pen {
+            write!(self, r#","extensions":["pen"]"#)?;
+        } else if self.extensions.music {
+            write!(self, r#","extensions":["music"]"#)?;
+        } else {
+            write!(self, r#","extensions":[]"#)?;
+        }
         write!(self, r#","meta":{{"#)?;
         write!(self, r#""semver":"3.0.0""#)?;
         write!(self, r#","vm":"0.2.0""#)?;

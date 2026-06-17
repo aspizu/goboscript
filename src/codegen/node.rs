@@ -7,7 +7,7 @@ use super::node_id::NodeID;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Node {
-    opcode: &'static str,
+    pub opcode: &'static str,
     this_id: NodeID,
     next_id: Option<NodeID>,
     parent_id: Option<NodeID>,
