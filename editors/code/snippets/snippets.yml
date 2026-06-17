@@ -55,7 +55,7 @@ insert:
     - insert
     - ins
   body:
-    - "insert ${3:value} at ${2:index} of ${1:list};"
+    - "insert ${3:value} at ${1:list}[${2:index}];"
 replace:
   description: Replace item in list at index
   prefix:
@@ -154,13 +154,13 @@ set_draggable:
   prefix:
     - set drag mode draggable
   body:
-    - "set_draggable;"
+    - "set_drag_mode_draggable;"
 set_not_draggable:
   description: Set drag mode to not draggable
   prefix:
     - set drag mode not draggable
   body:
-    - "set_not_draggable;"
+    - "set_drag_mode_not_draggable;"
 random:
   description: Pick random number
   prefix:
