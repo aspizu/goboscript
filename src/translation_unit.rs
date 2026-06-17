@@ -102,17 +102,17 @@ pub fn parse_translation_unit(
     while i < unit.text.len() {
         if skip_depth > 0 {
             if i == 0 || unit.text[i - 1] == b'\n' {
-                if unit.text[i..].starts_with(b"%if") {
+                if starts_with_directive(&unit.text[i..], b"%if") {
                     unit.text[i] = b'#';
                     i += b"%if".len();
                     skip_depth += 1;
-                } else if unit.text[i..].starts_with(b"%else") {
+                } else if starts_with_directive(&unit.text[i..], b"%else") {
                     unit.text[i] = b'#';
                     i += b"%else".len();
                     if skip_depth == 1 {
                         skip_depth = 0;
                     }
-                } else if unit.text[i..].starts_with(b"%endif") {
+                } else if starts_with_directive(&unit.text[i..], b"%endif") {
                     unit.text[i] = b'#';
                     i += b"%endif".len();
                     skip_depth -= 1;
@@ -124,7 +124,7 @@ pub fn parse_translation_unit(
                 i += 1;
             }
         } else if (i == 0 || unit.text[i - 1] == b'\n') && unit.text[i] == b'%' {
-            if unit.text[i..].starts_with(b"%include") {
+            if starts_with_directive(&unit.text[i..], b"%include") {
                 unit.text[i] = b'#';
                 i += b"%include".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
@@ -162,7 +162,7 @@ pub fn parse_translation_unit(
                     diagnostics,
                     help,
                 );
-            } else if unit.text[i..].starts_with(b"%define") {
+            } else if starts_with_directive(&unit.text[i..], b"%define") {
                 i += b"%define".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
                     i += 1;
@@ -186,7 +186,7 @@ pub fn parse_translation_unit(
                     .to_owned();
                 unit.defines.insert(name);
                 i = j;
-            } else if unit.text[i..].starts_with(b"%undef") {
+            } else if starts_with_directive(&unit.text[i..], b"%undef") {
                 i += b"%undef".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
                     i += 1;
@@ -202,8 +202,8 @@ pub fn parse_translation_unit(
                 let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
                 unit.defines.remove(name);
                 i = j;
-            } else if unit.text[i..].starts_with(b"%ifdef")
-                || unit.text[i..].starts_with(b"%ifndef")
+            } else if starts_with_directive(&unit.text[i..], b"%ifdef")
+                || starts_with_directive(&unit.text[i..], b"%ifndef")
             {
                 let start = i;
                 unit.text[i] = b'#';
@@ -221,7 +221,7 @@ pub fn parse_translation_unit(
                     span: start..j,
                 });
                 i = j;
-            } else if unit.text[i..].starts_with(b"%if") {
+            } else if starts_with_directive(&unit.text[i..], b"%if") {
                 unit.text[i] = b'#';
                 i += b"%if".len();
                 while i < unit.text.len() && unit.text[i] == b' ' {
@@ -248,11 +248,11 @@ pub fn parse_translation_unit(
                 if inverted == unit.defines.contains(name) {
                     skip_depth = 1;
                 }
-            } else if unit.text[i..].starts_with(b"%else") {
+            } else if starts_with_directive(&unit.text[i..], b"%else") {
                 unit.text[i] = b'#';
                 i += b"%else".len();
                 skip_depth = 1;
-            } else if unit.text[i..].starts_with(b"%endif") {
+            } else if starts_with_directive(&unit.text[i..], b"%endif") {
                 unit.text[i] = b'#';
                 i += b"%endif".len();
             } else {
@@ -278,6 +278,13 @@ pub fn parse_translation_unit(
             i += 1;
         }
     }
+}
+
+fn starts_with_directive(text: &[u8], directive: &[u8]) -> bool {
+    text.starts_with(directive)
+        && text
+            .get(directive.len())
+            .is_none_or(|byte| byte.is_ascii_whitespace())
 }
 
 fn add_include_to_translation_unit(
@@ -385,4 +392,19 @@ fn add_include_to_translation_unit(
     }
 
     unit.current_include += 1;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn directive_names_require_a_delimiter() {
+        assert!(starts_with_directive(b"%if FOO\n", b"%if"));
+        assert!(starts_with_directive(b"%endif\n", b"%endif"));
+        assert!(!starts_with_directive(b"%iffoo\n", b"%if"));
+        assert!(!starts_with_directive(b"%if(FOO)\n", b"%if"));
+        assert!(!starts_with_directive(b"%undeffoo\n", b"%undef"));
+        assert!(!starts_with_directive(b"%endifx\n", b"%endif"));
+    }
 }
