@@ -74,6 +74,19 @@ impl Sprite {
 
     pub(crate) fn add_struct(&mut self, struct_: Struct, diagnostics: &mut Vec<Diagnostic>) {
         let name = struct_.name.clone();
+        let mut fields = FxHashSet::default();
+        for field in &struct_.fields {
+            if !fields.insert(field.name.clone()) {
+                diagnostics.push(Diagnostic {
+                    kind: DiagnosticKind::DuplicateField {
+                        struct_name: name,
+                        field_name: field.name.clone(),
+                    },
+                    span: field.span.clone(),
+                });
+                return;
+            }
+        }
         if self.structs.contains_key(&name) {
             diagnostics.push(Diagnostic {
                 kind: DiagnosticKind::StructRedefinition(name),
@@ -86,6 +99,19 @@ impl Sprite {
 
     pub(crate) fn add_enum(&mut self, enum_: Enum, diagnostics: &mut Vec<Diagnostic>) {
         let name = enum_.name.clone();
+        let mut variants = FxHashSet::default();
+        for variant in &enum_.variants {
+            if !variants.insert(variant.name.clone()) {
+                diagnostics.push(Diagnostic {
+                    kind: DiagnosticKind::DuplicateEnumVariant {
+                        enum_name: name,
+                        variant_name: variant.name.clone(),
+                    },
+                    span: variant.span.clone(),
+                });
+                return;
+            }
+        }
         if self.enums.contains_key(&name) {
             diagnostics.push(Diagnostic {
                 kind: DiagnosticKind::EnumRedefinition(name),

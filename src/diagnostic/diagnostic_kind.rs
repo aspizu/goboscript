@@ -110,6 +110,10 @@ pub enum DiagnosticKind {
         struct_name: SmolStr,
         field_name: SmolStr,
     },
+    DuplicateEnumVariant {
+        enum_name: SmolStr,
+        variant_name: SmolStr,
+    },
     EmptyStruct(SmolStr),
     LocalNotSupported,
     UnknownDirective(SmolStr),
@@ -286,6 +290,12 @@ impl DiagnosticKind {
                 field_name,
             } => {
                 format!("duplicate field {field_name} in struct {struct_name}")
+            }
+            DiagnosticKind::DuplicateEnumVariant {
+                enum_name,
+                variant_name,
+            } => {
+                format!("duplicate variant {variant_name} in enum {enum_name}")
             }
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
         }
@@ -465,6 +475,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidDotLhs
             | DiagnosticKind::MissingField { .. }
             | DiagnosticKind::DuplicateField { .. }
+            | DiagnosticKind::DuplicateEnumVariant { .. }
             | DiagnosticKind::StructDoesNotHaveField { .. }
             | DiagnosticKind::EmptyStruct(_)
             | DiagnosticKind::InvalidCostumeName(_)
