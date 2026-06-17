@@ -48,6 +48,54 @@ pub struct Sprite {
 }
 
 impl Sprite {
+    pub(crate) fn add_var(&mut self, var: Var, diagnostics: &mut Vec<Diagnostic>) {
+        let name = var.name.clone();
+        if self.vars.contains_key(&name) || self.lists.contains_key(&name) {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::VariableRedefinition(name),
+                span: var.span.clone(),
+            });
+            return;
+        }
+        self.vars.insert(name, var);
+    }
+
+    pub(crate) fn add_list(&mut self, list: List, diagnostics: &mut Vec<Diagnostic>) {
+        let name = list.name.clone();
+        if self.vars.contains_key(&name) || self.lists.contains_key(&name) {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::ListRedefinition(name),
+                span: list.span.clone(),
+            });
+            return;
+        }
+        self.lists.insert(name, list);
+    }
+
+    pub(crate) fn add_struct(&mut self, struct_: Struct, diagnostics: &mut Vec<Diagnostic>) {
+        let name = struct_.name.clone();
+        if self.structs.contains_key(&name) {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::StructRedefinition(name),
+                span: struct_.span.clone(),
+            });
+            return;
+        }
+        self.structs.insert(name, struct_);
+    }
+
+    pub(crate) fn add_enum(&mut self, enum_: Enum, diagnostics: &mut Vec<Diagnostic>) {
+        let name = enum_.name.clone();
+        if self.enums.contains_key(&name) {
+            diagnostics.push(Diagnostic {
+                kind: DiagnosticKind::EnumRedefinition(name),
+                span: enum_.span.clone(),
+            });
+            return;
+        }
+        self.enums.insert(name, enum_);
+    }
+
     pub fn add_proc(
         &mut self,
         proc: Proc,
@@ -88,5 +136,32 @@ impl Sprite {
         self.func_args.insert(name.clone(), args);
         self.func_definitions.insert(name.clone(), stmts);
         self.func_references.insert(name, Default::default());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn var_and_list_share_declaration_namespace() {
+        let mut sprite = Sprite::default();
+        let mut diagnostics = Vec::new();
+        sprite.add_var(
+            Var {
+                name: "x".into(),
+                span: 0..1,
+                type_: Type::Value,
+                default: None,
+                is_cloud: false,
+                is_used: false,
+            },
+            &mut diagnostics,
+        );
+        sprite.add_list(List::new("x".into(), 2..3, Type::Value), &mut diagnostics);
+        assert!(matches!(
+            diagnostics.first().map(|diagnostic| &diagnostic.kind),
+            Some(DiagnosticKind::ListRedefinition(name)) if name == "x"
+        ));
     }
 }

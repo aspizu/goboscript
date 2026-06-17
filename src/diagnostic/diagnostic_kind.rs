@@ -86,6 +86,10 @@ pub enum DiagnosticKind {
     CommandFailed {
         stderr: Vec<u8>,
     },
+    VariableRedefinition(SmolStr),
+    ListRedefinition(SmolStr),
+    StructRedefinition(SmolStr),
+    EnumRedefinition(SmolStr),
     ProcedureRedefinition(SmolStr),
     FunctionRedefinition(SmolStr),
     TypeMismatch {
@@ -224,6 +228,18 @@ impl DiagnosticKind {
                 )
             }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
+            DiagnosticKind::VariableRedefinition(name) => {
+                format!("variable '{}' is already defined", name)
+            }
+            DiagnosticKind::ListRedefinition(name) => {
+                format!("list '{}' is already defined", name)
+            }
+            DiagnosticKind::StructRedefinition(name) => {
+                format!("struct '{}' is already defined", name)
+            }
+            DiagnosticKind::EnumRedefinition(name) => {
+                format!("enum '{}' is already defined", name)
+            }
             DiagnosticKind::ProcedureRedefinition(name) => {
                 format!("procedure '{}' is already defined", name)
             }
@@ -438,6 +454,10 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::FuncArgsCountMismatch { .. }
             | DiagnosticKind::MacroArgsCountMismatch { .. }
             | DiagnosticKind::CommandFailed { .. }
+            | DiagnosticKind::VariableRedefinition(_)
+            | DiagnosticKind::ListRedefinition(_)
+            | DiagnosticKind::StructRedefinition(_)
+            | DiagnosticKind::EnumRedefinition(_)
             | DiagnosticKind::ProcedureRedefinition(_)
             | DiagnosticKind::FunctionRedefinition(_)
             | DiagnosticKind::TypeMismatch { .. }

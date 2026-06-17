@@ -55,39 +55,39 @@ Declr: () = {
     <l:@L> ONTIMER <r:@R> ">" <value:BoxedIfExpr> <b:Stmts> => sprite.events.push(EventKind::OnTimerGt { value }.to_event(l..r, b)),
     <l:@L> ONCLONE <r:@R> <b:Stmts> => sprite.events.push(EventKind::OnClone.to_event(l..r, b)),
     STRUCT <l:@L> <name:NAME> <r:@R> "{" <fields:Comma<StructField>> "}" => {
-        sprite.structs.insert(name.clone(), Struct::new(name, l..r, fields));
+        sprite.add_struct(Struct::new(name, l..r, fields), diagnostics);
     },
     ENUM <l:@L> <name:NAME> <r:@R> "{" <variants:Comma<EnumVariant>> "}" => {
-        sprite.enums.insert(name.clone(), Enum::new(name, l..r, variants));
+        sprite.add_enum(Enum::new(name, l..r, variants), diagnostics);
     },
     VAR <type_:Type> <l:@L> <name:NAME> <r:@R> <default:("=" <ConstExpr>)?> ";" => {
-        sprite.vars.insert(name.clone(), Var {
+        sprite.add_var(Var {
             name,
             span: l..r,
             type_,
             default,
             is_cloud: false,
             is_used: false,
-        });
+        }, diagnostics);
     },
     CLOUD <l:@L> <name:NAME> <r:@R> ";" => {
-        sprite.vars.insert(name.clone(), Var {
+        sprite.add_var(Var {
             name,
             span: l..r,
             type_: Type::Value,
             default: None,
             is_cloud: true,
             is_used: false,
-        });
+        }, diagnostics);
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> ";" => {
-        sprite.lists.insert(name.clone(), List::new(name, l..r, type_));
+        sprite.add_list(List::new(name, l..r, type_), diagnostics);
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:Comma<ConstExpr>> "]" ";" => {
-        sprite.lists.insert(name.clone(), List::new_array(name, l..r, type_, default));
+        sprite.add_list(List::new_array(name, l..r, type_, default), diagnostics);
     },
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> <pl:@L> <path:STR> <pr:@R> ";" => {
-        sprite.lists.insert(name.clone(), List::new_file(name, l..r, type_, path, pl..pr));
+        sprite.add_list(List::new_file(name, l..r, type_, path, pl..pr), diagnostics);
     },
 }
 
