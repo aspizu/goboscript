@@ -133,6 +133,7 @@ impl<'a> PreProcessor<'a, '_> {
         span: &mut Span,
         define_name: Token,
     ) -> Result<bool, Diagnostic> {
+        self.expect_no_eof()?;
         if !matches!(get_token(&self.tokens[*self.i]), Token::LParen) {
             return Ok(false);
         }
