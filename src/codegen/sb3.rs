@@ -281,6 +281,7 @@ impl Stmt {
                 }
         )
     }
+
     fn opcode(&self, s: S) -> &'static str {
         match self {
             Stmt::Repeat { .. } => "control_repeat",
@@ -1137,7 +1138,12 @@ where T: Write + Seek
             if is_last || stmt.is_terminator() {
                 self.stmt(s, d, stmt, this_id, None, parent_id)?;
                 if !is_last {
-                    d.report(DiagnosticKind::FollowedByUnreachableCode, &stmt.span());
+                    let span = stmts[i..]
+                        .iter()
+                        .map(Stmt::span)
+                        .find(|span| !span.is_empty())
+                        .unwrap_or_else(|| stmt.span());
+                    d.report(DiagnosticKind::FollowedByUnreachableCode, &span);
                 }
                 break;
             }
