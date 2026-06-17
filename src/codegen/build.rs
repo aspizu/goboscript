@@ -48,6 +48,14 @@ pub fn build_impl<T: Write + Seek>(
         .unwrap_or_default();
     let config: Config = toml::from_str(&config_src)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
+    anyhow::ensure!(
+        config.pre_build.is_none(),
+        "pre_build is deprecated; use a Makefile instead"
+    );
+    anyhow::ensure!(
+        config.post_build.is_none(),
+        "post_build is deprecated; use a Makefile instead"
+    );
     let stdlib = if let Some(stdlib) = stdlib {
         stdlib
     } else if let Some(std) = &config.std {
