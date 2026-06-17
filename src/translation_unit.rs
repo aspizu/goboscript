@@ -74,6 +74,8 @@ impl TranslationUnit {
             path: unit.path.clone(),
             owner: Owner::Local,
         });
+        unit.included
+            .insert(unit.path.normalize_lexically().unwrap());
         Ok(unit)
     }
 
@@ -313,16 +315,15 @@ fn add_include_to_translation_unit(
     };
 
     let mut path = path.normalize_lexically().unwrap();
+    if path.extension().is_none_or(|ext| ext != "gs") {
+        path = path.with_added_extension("gs");
+    }
 
     if unit.included.contains(&path) {
         return;
     }
 
     unit.included.insert(path.clone());
-
-    if path.extension().is_none_or(|ext| ext != "gs") {
-        path = path.with_added_extension("gs");
-    }
 
     let mut buffer = match fs.read_to_vec(&path) {
         Ok(buffer) => buffer,
@@ -396,6 +397,14 @@ fn add_include_to_translation_unit(
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        collections::HashMap,
+        io::Cursor,
+        path::Path,
+    };
+
+    use semver::Version;
+
     use super::*;
 
     #[test]
@@ -406,5 +415,55 @@ mod tests {
         assert!(!starts_with_directive(b"%if(FOO)\n", b"%if"));
         assert!(!starts_with_directive(b"%undeffoo\n", b"%undef"));
         assert!(!starts_with_directive(b"%endifx\n", b"%endif"));
+    }
+
+    #[test]
+    fn root_file_is_already_included() {
+        let fs = Rc::new(RefCell::new(TestFS(HashMap::from([(
+            PathBuf::from("/project/main.gs"),
+            b"%include main\nvar x = 1;\n".to_vec(),
+        )]))));
+        let stdlib = StandardLibrary {
+            version: Version::new(0, 0, 0),
+            path: PathBuf::from("/stdlib"),
+        };
+        let mut unit = TranslationUnit::new(fs.clone(), PathBuf::from("/project/main.gs")).unwrap();
+        let mut diagnostics = Vec::new();
+        parse_translation_unit(&mut unit, fs, &stdlib, &mut diagnostics);
+        assert!(diagnostics.is_empty());
+        assert_eq!(
+            std::str::from_utf8(&unit.text).unwrap(),
+            "#include main\nvar x = 1;\n"
+        );
+    }
+
+    struct TestFS(HashMap<PathBuf, Vec<u8>>);
+
+    impl VFS for TestFS {
+        fn read_dir(&mut self, _path: &Path) -> io::Result<Vec<PathBuf>> {
+            Ok(Vec::new())
+        }
+
+        fn read_file<'a>(&'a mut self, path: &Path) -> io::Result<Box<dyn io::Read + 'a>> {
+            let data = self.0.get(path).ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    format!("File not found: {}", path.display()),
+                )
+            })?;
+            Ok(Box::new(Cursor::new(data)))
+        }
+
+        fn is_dir(&self, _path: &Path) -> bool {
+            false
+        }
+
+        fn is_file(&self, path: &Path) -> bool {
+            self.0.contains_key(path)
+        }
+
+        fn glob(&mut self, _pattern: &str) -> io::Result<Vec<PathBuf>> {
+            Ok(Vec::new())
+        }
     }
 }
