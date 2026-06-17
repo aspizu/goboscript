@@ -1,6 +1,6 @@
 costumes "blank.svg";
 
-list input = file ```input.txt```;
+list input "input.txt";
 struct Rule { left, right }
 list Rule rules;
 list pages;

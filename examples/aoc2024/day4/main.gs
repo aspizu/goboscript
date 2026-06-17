@@ -1,6 +1,6 @@
 costumes "blank.svg";
 
-list input = file ```input.txt```;
+list input "input.txt";
 
 proc count_xmas {
     count_xmas = 0;
