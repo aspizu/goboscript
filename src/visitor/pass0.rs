@@ -11,6 +11,7 @@ use crate::{
         },
         sounds::SOUND_FORMATS,
     },
+    diagnostic::SpriteDiagnostics,
     misc::SmolStr,
     vfs::VFS,
 };
@@ -21,10 +22,22 @@ struct V<'a> {
     global_vars: Option<&'a mut FxHashMap<SmolStr, Var>>,
 }
 
-pub fn visit_project(fs: &mut dyn VFS, input: &Path, project: &mut Project) {
-    visit_sprite(fs, input, &mut project.stage, None);
-    for sprite in project.sprites.values_mut() {
-        visit_sprite(fs, input, sprite, Some(&mut project.stage));
+pub fn visit_project(
+    fs: &mut dyn VFS,
+    input: &Path,
+    project: &mut Project,
+    stage_diagnostics: &mut SpriteDiagnostics,
+    sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
+) {
+    visit_sprite(fs, input, &mut project.stage, None, stage_diagnostics);
+    for (sprite_name, sprite) in &mut project.sprites {
+        visit_sprite(
+            fs,
+            input,
+            sprite,
+            Some(&mut project.stage),
+            sprites_diagnostics.get_mut(sprite_name).unwrap(),
+        );
     }
 }
 
@@ -33,9 +46,10 @@ fn visit_sprite(
     input: &Path,
     sprite: &mut Sprite,
     mut stage: Option<&mut Sprite>,
+    d: &mut SpriteDiagnostics,
 ) {
-    visit_assets(fs, input, &mut sprite.costumes, true, is_costume_ext);
-    visit_assets(fs, input, &mut sprite.sounds, false, is_sound_ext);
+    visit_assets(fs, input, &mut sprite.costumes, true, is_costume_ext, d);
+    visit_assets(fs, input, &mut sprite.sounds, false, is_sound_ext, d);
     for enum_ in sprite.enums.values_mut() {
         visit_enum(enum_);
     }
@@ -121,6 +135,7 @@ fn visit_assets(
     assets: &mut Vec<Asset>,
     allow_ascii: bool,
     is_valid_ext: fn(&str) -> bool,
+    d: &mut SpriteDiagnostics,
 ) {
     let mut i = 0;
     while i < assets.len() {
@@ -138,9 +153,13 @@ fn visit_assets(
         }
         if assets[i].path.contains('*') {
             let asset = assets.remove(i);
-            let mut files: Vec<_> = fs
-                .glob(input.join(asset.path.as_str()).to_str().unwrap())
-                .unwrap();
+            let mut files = match fs.glob(input.join(asset.path.as_str()).to_str().unwrap()) {
+                Ok(files) => files,
+                Err(error) => {
+                    d.report_io_error(error, None, &asset.span);
+                    continue;
+                }
+            };
             files.sort();
             for file in files {
                 let Some(ext) = file.extension() else {
