@@ -51,6 +51,7 @@ console_log = "1.0.0"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 inquire = "0.7.5"
 rand = "0.9.1"
+rayon = "1.10"
 
 [build-dependencies]
 lalrpop = "0.22.0"
