@@ -33,13 +33,19 @@ if returncode := subprocess.run(
 ).returncode:
     sys.exit(returncode)
 
-for project in args.projects:
+goboscript = Path("target")
+goboscript = goboscript.joinpath("release" if args.release else "debug", "goboscript")
+if args.parallel:
     if returncode := subprocess.run(
-        ["parallel", "target/debug/goboscript", "build", "{}", ":::", *args.projects]
-        if args.parallel
-        else ["target/debug/goboscript", "build", project]
+        ["parallel", goboscript, "build", "{}", ":::", *args.projects]
     ).returncode:
         sys.exit(returncode)
+else:
+    for project in args.projects:
+        if returncode := subprocess.run(
+            [goboscript, "build", project]
+        ).returncode:
+            sys.exit(returncode)
 
 sb3py = Path(__file__).parent.joinpath("sb3.py")
 for project in args.projects:
