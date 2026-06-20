@@ -7,7 +7,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use super::*;
 use crate::{
     diagnostic::{
@@ -17,7 +17,8 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Default, Serialize, Deserialize)]
+#[tsify(from_wasm_abi, into_wasm_abi)]
 pub struct Sprite {
     pub costumes: Vec<Asset>,
     pub sounds: Vec<Asset>,

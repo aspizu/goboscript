@@ -4,8 +4,9 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Tsify, Default, Debug, Serialize, Deserialize)]
 pub enum RotationStyle {
     LeftRight,
     #[default]
