@@ -74,6 +74,10 @@ impl<'a> PreProcessor<'a, '_> {
                 dirty = true;
                 continue;
             }
+            if self.substitute_fstring(span)? {
+                dirty = true;
+                continue;
+            }
             if self.substitute_stringify(span)? {
                 dirty = true;
                 continue;
@@ -625,6 +629,152 @@ impl<'a> PreProcessor<'a, '_> {
 
         Ok(true)
     }
+
+    fn substitute_fstring(&mut self, span: &mut Span) -> Result<bool, Diagnostic> {
+        let Token::Name(prefix) = get_token(&self.tokens[*self.i]) else {
+            return Ok(false);
+        };
+        if prefix != "f" {
+            return Ok(false);
+        }
+        let Some(format_token) = self.tokens.get(*self.i + 1) else {
+            return Ok(false);
+        };
+        let Token::Str(format) = get_token(format_token) else {
+            return Ok(false);
+        };
+        let tokens = Self::tokenize_fmt(format, get_span(format_token))?;
+        self.remove_token(span);
+        self.remove_token(span);
+        for (i, token) in (*self.i..).zip(tokens) {
+            self.tokens.insert(i, token);
+            span.end += 1;
+        }
+        Ok(true)
+    }
+
+    fn tokenize_fmt(format: &str, span: Span) -> Result<Vec<SpannedToken>, Diagnostic> {
+        let mut tokens = vec![];
+        let mut literal_start = 0;
+        let mut literal = String::new();
+        let content_start = span.start + 1;
+        let mut chars = format.char_indices().peekable();
+        while let Some((index, char)) = chars.next() {
+            if char == '{' {
+                if chars.peek().is_some_and(|(_, char)| char == &'{') {
+                    chars.next();
+                    if literal.is_empty() {
+                        literal_start = index;
+                    }
+                    literal.push('{');
+                    continue;
+                }
+                if !literal.is_empty() {
+                    tokens.push((
+                        content_start + literal_start,
+                        Token::Str(literal.clone().into()),
+                        content_start + index,
+                    ));
+                    literal.clear();
+                }
+                let expr_start = index + char.len_utf8();
+                let mut expr = String::new();
+                let mut closed = false;
+                let mut expr_end = format.len();
+                while let Some((index, char)) = chars.next() {
+                    if char == '{' && chars.peek().is_some_and(|(_, char)| char == &'{') {
+                        chars.next();
+                        expr.push('{');
+                        continue;
+                    }
+                    if char == '}' && chars.peek().is_some_and(|(_, char)| char == &'}') {
+                        let mut lookahead = chars.clone();
+                        lookahead.next();
+                        if lookahead.peek().is_some_and(|(_, char)| char == &'}') {
+                            closed = true;
+                            expr_end = index;
+                            break;
+                        }
+                        chars.next();
+                        expr.push('}');
+                        continue;
+                    }
+                    if char == '}' {
+                        closed = true;
+                        expr_end = index;
+                        break;
+                    }
+                    expr.push(char);
+                }
+                if !closed {
+                    return Err(Diagnostic {
+                        kind: DiagnosticKind::UnrecognizedEof(vec![]),
+                        span,
+                    });
+                }
+                Self::append_join(&mut tokens);
+                for result in crate::lexer::adaptor::Lexer::new(&expr) {
+                    match result {
+                        Ok((start, token, end)) => {
+                            tokens.push((
+                                content_start + expr_start + start,
+                                token,
+                                content_start + expr_start + end,
+                            ));
+                        }
+                        Err(diagnostic) => {
+                            return Err(Diagnostic {
+                                kind: diagnostic.kind,
+                                span: content_start + expr_start + diagnostic.span.start
+                                    ..content_start + expr_start + diagnostic.span.end,
+                            });
+                        }
+                    }
+                }
+                literal_start = expr_end + 1;
+            } else if char == '}' {
+                if chars.peek().is_some_and(|(_, char)| char == &'}') {
+                    chars.next();
+                    if literal.is_empty() {
+                        literal_start = index;
+                    }
+                    literal.push('}');
+                } else {
+                    return Err(Diagnostic {
+                        kind: DiagnosticKind::UnrecognizedToken(
+                            Token::RBrace,
+                            vec!["}}".to_string()],
+                        ),
+                        span: content_start + index..content_start + index + char.len_utf8(),
+                    });
+                }
+            } else {
+                if literal.is_empty() {
+                    literal_start = index;
+                }
+                literal.push(char);
+            }
+        }
+        if !literal.is_empty() {
+            Self::append_join(&mut tokens);
+            tokens.push((
+                content_start + literal_start,
+                Token::Str(literal.into()),
+                span.end.saturating_sub(1),
+            ));
+        }
+        if tokens.is_empty() {
+            tokens.push((span.start, Token::Str("".into()), span.end));
+        }
+        Ok(tokens)
+    }
+
+    fn append_join(tokens: &mut Vec<SpannedToken>) {
+        if !tokens.is_empty() {
+            let span = tokens.last().map_or(0..0, get_span);
+            tokens.push((span.end, Token::Amp, span.end));
+        }
+    }
 }
 
 #[cfg(test)]
@@ -670,5 +820,87 @@ mod tests {
 
         assert!(result.is_err());
         assert!(!tokens.is_empty());
+    }
+
+    #[test]
+    fn fmt_interpolates_expression_between_literals() {
+        let tokens = preprocess(r#"f"({x})""#).unwrap();
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Str("(".into()),
+                Token::Amp,
+                Token::Name("x".into()),
+                Token::Amp,
+                Token::Str(")".into())
+            ]
+        );
+    }
+
+    #[test]
+    fn fmt_interpolates_adjacent_expressions() {
+        let tokens = preprocess(r#"f"{x}{y}""#).unwrap();
+
+        assert_eq!(
+            tokens,
+            vec![Token::Name("x".into()), Token::Amp, Token::Name("y".into())]
+        );
+    }
+
+    #[test]
+    fn fmt_tokenizes_expression_contents() {
+        let tokens = preprocess(r#"f"x = {x + 1}""#).unwrap();
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Str("x = ".into()),
+                Token::Amp,
+                Token::Name("x".into()),
+                Token::Plus,
+                Token::Int(1)
+            ]
+        );
+    }
+
+    #[test]
+    fn fmt_tokenizes_nested_fstrings() {
+        let tokens = preprocess(r#"f"{1+f\"{{x}}\"}""#).unwrap();
+
+        assert_eq!(
+            tokens,
+            vec![Token::Int(1), Token::Plus, Token::Name("x".into())]
+        );
+    }
+
+    #[test]
+    fn fmt_escapes_literal_braces() {
+        let tokens = preprocess(r#"f"{{{x}}}""#).unwrap();
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Str("{".into()),
+                Token::Amp,
+                Token::Name("x".into()),
+                Token::Amp,
+                Token::Str("}".into())
+            ]
+        );
+    }
+
+    #[test]
+    fn fmt_expands_empty_string() {
+        let tokens = preprocess(r#"f"""#).unwrap();
+
+        assert_eq!(tokens, vec![Token::Str("".into())]);
+    }
+
+    #[test]
+    fn fmt_errors_for_unterminated_interpolation() {
+        let result = preprocess(r#"f"{x""#);
+
+        assert!(result.is_err());
     }
 }
