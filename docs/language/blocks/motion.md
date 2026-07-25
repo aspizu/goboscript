@@ -83,7 +83,7 @@ glide (secs) secs to x: (x) y: (y)
 ### glide () secs to ()
 
 ```goboscript
-glide_to "sprite", secs;
+glide "sprite", secs;
 ```
 
 ```scratchblocks
