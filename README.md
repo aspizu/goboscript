@@ -52,7 +52,7 @@ All these abstractions are compiled down to regular Scratch code.
   <img alt="goboscript overview & reference" src="docs/assets/cheatsheet-light.png" />
 </picture>
 
-[**Scratch Forum topic**](https://scratch.mit.edu/discuss/topic/747370/)&nbsp;&nbsp;•&nbsp;&nbsp;[**Made With goboscript Studio**](https://scratch.mit.edu/studios/51262907/)
+[**Scratch Forum topic**](https://scratch.mit.edu/discuss/topic/747370/)&nbsp;&nbsp;•&nbsp;&nbsp;[**Made With goboscript Studio**](https://scratch.mit.edu/studios/51262907/)&nbsp;&nbsp;•&nbsp;&nbsp;[**Hacker News Discussion (Reached Frontpage)**](https://news.ycombinator.com/item?id=44026799)
 
 ## Sister Projects
 
