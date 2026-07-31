@@ -10,7 +10,6 @@ use crate::{
     ast::{
         Sprite,
         Type,
-        Value,
     },
     blocks::{
         Block,
