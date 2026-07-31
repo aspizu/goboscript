@@ -939,13 +939,19 @@ where T: Write + Seek
                 }
             },
             Some(ListDefault::FixedLength(value, length)) => {
+                let multiplier = list
+                    .type_
+                    .struct_()
+                    .and_then(|(struct_name, _)| s.get_struct(struct_name))
+                    .map(|struct_| struct_.fields.len())
+                    .unwrap_or(1);
                 let value = s.evaluate_const_expr(d, value);
                 let len = s.evaluate_const_expr(d, length).to_number();
-                if len > 200_000_f64 {
-                    d.report(DiagnosticKind::ListTooBig, &length.span());
+                if len > 200_00_f64 || len.is_nan() || len.is_infinite() || len < 0_f64 {
+                    d.report(DiagnosticKind::FixedLengthListInvalid(len), &length.span());
                     vec![]
                 } else {
-                    vec![value; len as usize]
+                    vec![value; len as usize * multiplier]
                 }
             }
             None => vec![],

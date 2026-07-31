@@ -10,6 +10,7 @@ use crate::{
     ast::{
         Sprite,
         Type,
+        Value,
     },
     blocks::{
         Block,
@@ -127,7 +128,7 @@ pub enum DiagnosticKind {
     UnusedFunc(SmolStr),
     UnusedArg(SmolStr),
     UnusedStructField(SmolStr),
-    ListTooBig,
+    FixedLengthListInvalid(f64),
 }
 
 impl DiagnosticKind {
@@ -299,7 +300,21 @@ impl DiagnosticKind {
                 format!("duplicate variant {variant_name} in enum {enum_name}")
             }
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
-            DiagnosticKind::ListTooBig => format!("list too big, length should be atmost 200,000"),
+            DiagnosticKind::FixedLengthListInvalid(value) => {
+                if *value < 0_f64 {
+                    return format!("list length cannot be negative");
+                }
+                if value.is_infinite() {
+                    return format!("list length cannot be infinite");
+                }
+                if value.is_nan() {
+                    return format!("list length cannot be nan");
+                }
+                if *value > 200_000_f64 {
+                    return format!("list length cannot be greater than 200,000");
+                }
+                unreachable!()
+            }
         }
     }
 
@@ -487,7 +502,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidCostumeFormat { .. }
             | DiagnosticKind::InvalidSoundFormat { .. }
             | DiagnosticKind::LocalNotSupported
-            | DiagnosticKind::ListTooBig
+            | DiagnosticKind::FixedLengthListInvalid(..)
             | DiagnosticKind::UnknownDirective(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
