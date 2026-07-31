@@ -938,6 +938,16 @@ where T: Write + Seek
                     vec![]
                 }
             },
+            Some(ListDefault::FixedLength(value, length)) => {
+                let value = s.evaluate_const_expr(d, value);
+                let len = s.evaluate_const_expr(d, length).to_number();
+                if len > 200_000_f64 {
+                    d.report(DiagnosticKind::ListTooBig, &length.span());
+                    vec![]
+                } else {
+                    vec![value; len as usize]
+                }
+            }
             None => vec![],
         };
         match &list.type_ {

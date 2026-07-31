@@ -23,6 +23,7 @@ pub struct List {
 pub enum ListDefault {
     Values(Vec<ConstExpr>),
     File { path: SmolStr, span: Span },
+    FixedLength(ConstExpr, ConstExpr),
 }
 
 impl List {
@@ -60,6 +61,22 @@ impl List {
                 path,
                 span: path_span,
             }),
+            is_used: false,
+        }
+    }
+
+    pub fn new_fixed_length(
+        name: SmolStr,
+        span: Span,
+        type_: Type,
+        default: ConstExpr,
+        length: ConstExpr,
+    ) -> Self {
+        Self {
+            name,
+            span,
+            type_,
+            default: Some(ListDefault::FixedLength(default, length)),
             is_used: false,
         }
     }

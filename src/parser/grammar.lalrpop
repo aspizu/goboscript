@@ -89,6 +89,9 @@ Declr: () = {
     LIST <type_:Type> <l:@L> <name:NAME> <r:@R> <pl:@L> <path:STR> <pr:@R> ";" => {
         sprite.add_list(List::new_file(name, l..r, type_, path, pl..pr), diagnostics);
     },
+    LIST <type_:Type> <l:@L> <name:NAME> <r:@R> "=" "[" <default:ConstExpr> ";" <length:ConstExpr> "]" ";" => {
+        sprite.add_list(List::new_fixed_length(name, l..r, type_, default, length), diagnostics);
+    }
 }
 
 EnumVariant: EnumVariant = {

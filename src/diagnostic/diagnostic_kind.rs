@@ -127,6 +127,7 @@ pub enum DiagnosticKind {
     UnusedFunc(SmolStr),
     UnusedArg(SmolStr),
     UnusedStructField(SmolStr),
+    ListTooBig,
 }
 
 impl DiagnosticKind {
@@ -298,6 +299,7 @@ impl DiagnosticKind {
                 format!("duplicate variant {variant_name} in enum {enum_name}")
             }
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
+            DiagnosticKind::ListTooBig => format!("list too big, length should be atmost 200,000"),
         }
     }
 
@@ -485,6 +487,7 @@ impl From<&DiagnosticKind> for Level {
             | DiagnosticKind::InvalidCostumeFormat { .. }
             | DiagnosticKind::InvalidSoundFormat { .. }
             | DiagnosticKind::LocalNotSupported
+            | DiagnosticKind::ListTooBig
             | DiagnosticKind::UnknownDirective(_) => Level::Error,
 
             | DiagnosticKind::FollowedByUnreachableCode
