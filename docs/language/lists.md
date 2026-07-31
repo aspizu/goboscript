@@ -21,6 +21,24 @@ list point points; # empty list of points.
 list point points = [100, 200, 300, 400]; # points[1] == point {x: 100, y: 200} and so on...
 ```
 
+### With a fixed length
+
+Use `[value; length]` to make a list whose items all start with the same value.
+
+```goboscript
+list scores = [0; 1000]; # 1,000 items, all set to 0.
+list names = [""; 25]; # 25 empty strings.
+```
+
+This form also works with struct lists. The starting value is used for each field.
+
+```goboscript
+struct point {x, y}
+list point points = [0; 100]; # 100 points whose x and y fields are both 0.
+```
+
+The length cannot be negative, infinite, `NaN`, or greater than 200,000.
+
 ### Read contents from a text file
 
 This allows you to load a text file line-by-line into a list of strings.
@@ -123,4 +141,3 @@ value = list_name["last"];
 | `list_name[index] //= y;` | ![](../assets/list_floor_divide.png){width="400"} |
 | `list_name[index] %= y;` | ![](../assets/list_mod.png){width="400"} |
 | `list_name[index] &= y;` | ![](../assets/list_join.png){width="400"} |
-
