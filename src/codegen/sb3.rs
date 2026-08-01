@@ -947,7 +947,7 @@ where T: Write + Seek
                     .unwrap_or(1);
                 let value = s.evaluate_const_expr(d, value);
                 let len = s.evaluate_const_expr(d, length).to_number();
-                if len > 200_00_f64 || len.is_nan() || len.is_infinite() || len < 0_f64 {
+                if len > 200_000_f64 || len.is_nan() || len.is_infinite() || len < 0_f64 {
                     d.report(DiagnosticKind::FixedLengthListInvalid(len), &length.span());
                     vec![]
                 } else {
