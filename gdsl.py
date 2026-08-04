@@ -186,6 +186,7 @@ un_ops, bin_ops, blocks, reporters = parse()
 
 f = open("src/blocks.rs", "w")
 f.write("""
+use tsify::Tsify;
 use serde::{Deserialize, Serialize};
 pub struct Menu {
     pub input: &'static str,
@@ -194,7 +195,7 @@ pub struct Menu {
     pub field: &'static str,
 }
 """)
-f.write("#[derive(Debug, Copy, Clone, Serialize, Deserialize)]\npub enum UnOp {")
+f.write("#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]\npub enum UnOp {")
 for un_op in un_ops:
     f.write(f"{un_op},")
 f.write("}\n\n")
@@ -232,7 +233,7 @@ f.write("_ => unreachable!()")
 f.write("}")
 f.write("}")
 f.write("}\n\n")
-f.write("#[derive(Debug, Copy, Clone, Serialize, Deserialize)]\npub enum BinOp {")
+f.write("#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]\npub enum BinOp {")
 for bin_op in bin_ops:
     f.write(f"{bin_op},")
 f.write("}\n\n")
@@ -269,7 +270,7 @@ f.write("}")
 
 def write_blocks(typename: str, blocks: dict[str, Block | list[Block]]):
     f.write(
-        f"#[derive(Debug, Copy, Clone, Serialize, Deserialize)]\npub enum {typename} {{"
+        f"#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]\npub enum {typename} {{"
     )
     for variant, block in blocks.items():
         if isinstance(block, list):

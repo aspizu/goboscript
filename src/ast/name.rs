@@ -3,10 +3,10 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Clone, Serialize, Deserialize)]
 pub enum Name {
     Name {
         name: SmolStr,

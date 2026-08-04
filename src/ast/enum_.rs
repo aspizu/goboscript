@@ -3,11 +3,11 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use super::enum_variant::EnumVariant;
 use crate::misc::SmolStr;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Serialize, Deserialize)]
 pub struct Enum {
     pub name: SmolStr,
     pub span: Span,
