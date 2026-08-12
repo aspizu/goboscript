@@ -299,6 +299,7 @@ impl Stmt {
                     "control_if_else"
                 }
             }
+            Stmt::Until { body, .. } if body.is_empty() => "control_wait_until",
             Stmt::Until { .. } => "control_repeat_until",
             Stmt::SetVar { .. } => "data_setvariableto",
             Stmt::ChangeVar { .. } => "data_changevariableby",
