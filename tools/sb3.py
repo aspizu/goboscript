@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from tempfile import mkstemp
 from zipfile import ZipFile
 
 argparser = argparse.ArgumentParser()
@@ -41,12 +43,21 @@ for path in args.projects:
     pathid: Path = path.parent.joinpath(f"{path.stem}.json")
     pathids.append(pathid)
     if args.patch:
-        with ZipFile(path, "w") as zf:
-            try:
-                zf.write(pathid, "project.json")
-            except (FileNotFoundError, PermissionError) as err:
-                sys.stderr.write(f"error: failed to patch {err}\n")
-                sys.exit(1)
+        fd, name = mkstemp(dir=path.parent)
+        patched = Path(name)
+        try:
+            with os.fdopen(fd, "w+b") as tmp:
+                with ZipFile(path) as source, ZipFile(tmp, "w") as target:
+                    for entry in source.infolist():
+                        if entry.filename != "project.json":
+                            target.writestr(entry, source.read(entry))
+                    target.write(pathid, "project.json")
+            patched.replace(path)
+        except (FileNotFoundError, PermissionError) as err:
+            sys.stderr.write(f"error: failed to patch {err}\n")
+            sys.exit(1)
+        finally:
+            patched.unlink(missing_ok=True)
     with ZipFile(path) as zf:
         with zf.open("project.json") as f:
             with pathid.open("wb") as f2:
