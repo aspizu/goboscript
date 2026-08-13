@@ -4,7 +4,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
-
+use tsify::Tsify;
 use super::{
     expr::Expr,
     type_::Type,
@@ -19,7 +19,7 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Tsify, Clone, Debug, Serialize, Deserialize)]
 pub enum Stmt {
     Repeat {
         times: Box<Expr>,

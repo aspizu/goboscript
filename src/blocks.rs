@@ -2,13 +2,14 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 pub struct Menu {
     pub input: &'static str,
     pub opcode: &'static str,
     pub default: &'static str,
     pub field: &'static str,
 }
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum UnOp {
     Not,
     Length,
@@ -101,7 +102,7 @@ impl UnOp {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum BinOp {
     Add,
     Sub,
@@ -180,7 +181,7 @@ impl BinOp {
         }
     }
 }
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Block {
     Move,
     TurnLeft,
@@ -1097,7 +1098,7 @@ impl Block {
         }
     }
 }
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Tsify, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Repr {
     XPosition,
     YPosition,
