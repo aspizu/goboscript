@@ -1,6 +1,5 @@
 use std::io::{
     self,
-    Seek,
     Write,
 };
 
@@ -31,15 +30,10 @@ use crate::{
         UnOp,
     },
     diagnostic::DiagnosticKind,
-    misc::{
-        write_comma_io,
-        SmolStr,
-    },
+    misc::SmolStr,
 };
 
-impl<T> Sb3<T>
-where T: Write + Seek
-{
+impl Sb3 {
     pub fn arg(
         &mut self,
         s: S,
@@ -144,7 +138,9 @@ where T: Write + Seek
             }
         }
         if menu_is_default {
-            write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
+            if std::mem::replace(&mut self.inputs_comma, true) {
+                self.write_all(b",")?;
+            }
             write!(
                 self,
                 r#""{}":[1,{}]"#,

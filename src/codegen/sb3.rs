@@ -3,7 +3,6 @@ use std::{
     cell::RefCell,
     io::{
         self,
-        Seek,
         Write,
     },
     path::{
@@ -20,12 +19,9 @@ use fxhash::{
 };
 use logos::Span;
 use serde_json::json;
-use zip::{
-    write::SimpleFileOptions,
-    ZipWriter,
-};
 
 use super::{
+    cleanup,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -330,10 +326,8 @@ impl Stmt {
     }
 }
 
-pub struct Sb3<T>
-where T: Write + Seek
-{
-    pub zip: ZipWriter<T>,
+pub struct Sb3 {
+    json: Vec<u8>,
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
@@ -342,24 +336,20 @@ where T: Write + Seek
     extensions: Extensions,
 }
 
-impl<T> Write for Sb3<T>
-where T: Write + Seek
-{
+impl Write for Sb3 {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.zip.write(buf)
+        self.json.write(buf)
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        self.zip.flush()
+        self.json.flush()
     }
 }
 
-impl<T> Sb3<T>
-where T: Write + Seek
-{
-    pub fn new(file: T, fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
+impl Sb3 {
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
         Self {
-            zip: ZipWriter::new(file),
+            json: Vec::new(),
             id: NodeIDFactory::new(),
             node_comma: false,
             inputs_comma: false,
@@ -376,7 +366,7 @@ where T: Write + Seek
         } else if node.opcode.starts_with("music_") {
             self.extensions.music = true;
         }
-        write_comma_io(&mut self.zip, &mut self.node_comma)?;
+        write_comma_io(&mut self.json, &mut self.node_comma)?;
         write!(self, "{node}")
     }
 
@@ -406,7 +396,7 @@ where T: Write + Seek
         let Some(this_id) = this_id else {
             return Ok(());
         };
-        write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
+        write_comma_io(&mut self.json, &mut self.inputs_comma)?;
         write!(self, r#""{name}":[2,{this_id}]"#)
     }
 
@@ -418,7 +408,7 @@ where T: Write + Seek
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<serde_json::Value> {
         let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
@@ -433,13 +423,6 @@ where T: Write + Seek
                 }
             })
             .collect();
-        // TODO: switch to deflate compression
-        // this should be configurable, use store in debug (because it would be
-        // faster?), use deflate in release (because it would be smaller?)
-        self.zip.start_file(
-            "project.json",
-            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
-        )?;
         write!(self, "{{")?;
         write!(self, r#""targets":["#)?;
         self.sprite(
@@ -492,8 +475,9 @@ where T: Write + Seek
         )?;
         write!(self, "}}")?; // meta
         write!(self, "}}")?; // project
-        self.assets()?;
-        Ok(())
+        let mut json = serde_json::from_slice(&self.json)?;
+        cleanup::clean(&mut json);
+        Ok(json)
     }
 
     pub fn sprite(
@@ -591,7 +575,7 @@ where T: Write + Seek
         if stage.is_none() {
             let mut comma = false;
             for broadcast in broadcasts {
-                write_comma_io(&mut self.zip, &mut comma)?;
+                write_comma_io(&mut self.json, &mut comma)?;
                 write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
             }
         }
@@ -727,14 +711,14 @@ where T: Write + Seek
         write!(self, r#","costumes":["#)?;
         let mut comma = false;
         for costume in &sprite.costumes {
-            write_comma_io(&mut self.zip, &mut comma)?;
+            write_comma_io(&mut self.json, &mut comma)?;
             self.costume(config, costume, d)?;
         }
         write!(self, "]")?; // costumes
         write!(self, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
-            write_comma_io(&mut self.zip, &mut comma)?;
+            write_comma_io(&mut self.json, &mut comma)?;
             self.sound(sound, d)?;
         }
         write!(self, "]")?; // sounds
@@ -776,7 +760,7 @@ where T: Write + Seek
         is_cloud: bool,
         comma: &mut bool,
     ) -> io::Result<()> {
-        write_comma_io(&mut self.zip, comma)?;
+        write_comma_io(&mut self.json, comma)?;
         let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
@@ -959,7 +943,7 @@ where T: Write + Seek
         };
         match &list.type_ {
             Type::Value => {
-                write_comma_io(&mut self.zip, comma)?;
+                write_comma_io(&mut self.json, comma)?;
                 write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(data))?;
             }
             Type::Struct {
@@ -975,7 +959,7 @@ where T: Write + Seek
                 };
                 for (i, field) in struct_.fields.iter().enumerate() {
                     let qualified_list_name = qualify_struct_var_name(&field.name, &list.name);
-                    write_comma_io(&mut self.zip, comma)?;
+                    write_comma_io(&mut self.json, comma)?;
                     let column = (0..(data.len() / struct_.fields.len()))
                         .map(|j| &data[j * struct_.fields.len() + i])
                         .collect::<Vec<_>>();
@@ -1053,7 +1037,7 @@ where T: Write + Seek
         self.begin_inputs()?;
         let mut comma = false;
         for (qualified_arg_name, arg_id) in &qualified_args {
-            write_comma_io(&mut self.zip, &mut comma)?;
+            write_comma_io(&mut self.json, &mut comma)?;
             write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
         }
         self.end_obj()?; // inputs
@@ -1127,7 +1111,7 @@ where T: Write + Seek
         self.begin_inputs()?;
         let mut comma = false;
         for (qualified_arg_name, arg_id) in &qualified_args {
-            write_comma_io(&mut self.zip, &mut comma)?;
+            write_comma_io(&mut self.json, &mut comma)?;
             write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
         }
         self.end_obj()?; // inputs

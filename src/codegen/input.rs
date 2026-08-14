@@ -1,6 +1,5 @@
 use std::io::{
     self,
-    Seek,
     Write,
 };
 
@@ -26,7 +25,6 @@ use crate::{
         Repr,
         UnOp,
     },
-    misc::write_comma_io,
 };
 
 pub fn is_expr_boolean(expr: &Expr, s: S) -> bool {
@@ -76,9 +74,7 @@ pub fn coerce_condition(expr: &Expr, s: S) -> Expr {
     BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(true).to_expr(0..0))
 }
 
-impl<T> Sb3<T>
-where T: Write + Seek
-{
+impl Sb3 {
     pub fn input(
         &mut self,
         s: S,
@@ -113,7 +109,9 @@ where T: Write + Seek
         shadow_id: Option<NodeID>,
         no_empty_shadow: bool,
     ) -> io::Result<()> {
-        write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
+        if std::mem::replace(&mut self.inputs_comma, true) {
+            self.write_all(b",")?;
+        }
         write!(self, r#""{input_name}":"#)?;
         match expr {
             Expr::Value { value, span: _ } => return self.value_input(input_name, value),
