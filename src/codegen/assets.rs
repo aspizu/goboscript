@@ -19,8 +19,8 @@ use crate::{
 
 #[derive(Debug, Default)]
 pub struct AssetObject {
-    pub hash: String,
-    pub extension: String,
+    pub hash: SmolStr,
+    pub extension: SmolStr,
     pub content: Vec<u8>,
 }
 
@@ -58,11 +58,12 @@ impl AssetObjectStore {
                 .rsplit_once('.')
                 .unwrap_or_default()
                 .1
-                .to_lowercase();
+                .to_lowercase()
+                .into();
 
             let mut hasher = Md5::new();
             hasher.update(&content);
-            let hash = format!("{:x}", hasher.finalize()).to_string();
+            let hash = arcstr::format!("{:x}", hasher.finalize());
             AssetObject {
                 hash,
                 content,

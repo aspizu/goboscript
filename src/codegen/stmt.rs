@@ -366,10 +366,10 @@ impl Sb3 {
         }
         if menu_is_default {
             if std::mem::replace(&mut self.inputs_comma, true) {
-                self.write_all(b",")?;
+                self.json.write_all(b",")?;
             }
             write!(
-                self,
+                self.json,
                 r#""{}":[1,{}]"#,
                 block.menu().unwrap().input,
                 menu_id.unwrap()
@@ -377,10 +377,10 @@ impl Sb3 {
         }
         self.end_obj()?; // inputs
         if let Some(fields) = block.fields() {
-            write!(self, r#","fields":{fields}"#)?;
+            write!(self.json, r#","fields":{fields}"#)?;
         }
         if let Block::StopOtherScripts = block {
-            self.write_all(
+            self.json.write_all(
                 b",\"mutation\":{\"tagName\":\"mutation\",\"children\": [],\"hasnext\": \"true\"}",
             )?;
         }
@@ -601,7 +601,7 @@ impl Sb3 {
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::call(proc.name.clone(), &qualified_args, proc.warp, compact)
         )?;

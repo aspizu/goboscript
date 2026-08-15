@@ -19,24 +19,24 @@ pub const SOUND_FORMATS: &[&str] = &["wav", "wave", "mp3"];
 impl Sb3 {
     pub fn sound(&mut self, sound: &Asset, d: D) -> io::Result<()> {
         let object = self.asset_object_store.load(sound, d);
-        let hash = object.hash.clone();
-        let extension = object.extension.clone();
+        let hash = &object.hash;
+        let extension = &object.extension;
         if !extension.is_empty()
-            && !SOUND_FORMATS.contains(&extension.as_str())
+            && !SOUND_FORMATS.iter().any(|format| extension == format)
             && d.find_diagnostic_for_span(&sound.span).is_none()
         {
             d.report(
                 DiagnosticKind::InvalidSoundFormat {
-                    extension: extension.as_str().into(),
+                    extension: extension.clone(),
                 },
                 &sound.span,
             );
         }
-        write!(self, "{{")?;
-        write!(self, r#""name":{}"#, json!(&*sound.name))?;
-        write!(self, r#","assetId":"{}""#, hash)?;
-        write!(self, r#","dataFormat":"{}""#, extension)?;
-        write!(self, r#","md5ext":"{}.{}""#, hash, extension)?;
-        write!(self, "}}") // sound
+        write!(self.json, "{{")?;
+        write!(self.json, r#""name":{}"#, json!(&*sound.name))?;
+        write!(self.json, r#","assetId":"{}""#, hash)?;
+        write!(self.json, r#","dataFormat":"{}""#, extension)?;
+        write!(self.json, r#","md5ext":"{}.{}""#, hash, extension)?;
+        write!(self.json, "}}") // sound
     }
 }

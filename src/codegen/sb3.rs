@@ -327,23 +327,13 @@ impl Stmt {
 }
 
 pub struct Sb3 {
-    json: Vec<u8>,
+    pub json: Vec<u8>,
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
     pub block_count: usize,
     pub asset_object_store: AssetObjectStore,
     extensions: Extensions,
-}
-
-impl Write for Sb3 {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.json.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.json.flush()
-    }
 }
 
 impl Sb3 {
@@ -367,25 +357,29 @@ impl Sb3 {
             self.extensions.music = true;
         }
         write_comma_io(&mut self.json, &mut self.node_comma)?;
-        write!(self, "{node}")
+        write!(self.json, "{node}")
     }
 
     pub fn end_obj(&mut self) -> io::Result<()> {
-        self.write_all(b"}")
+        self.json.write_all(b"}")
     }
 
     pub fn begin_inputs(&mut self) -> io::Result<()> {
         self.inputs_comma = false;
-        self.write_all(br#","inputs":{"#)
+        self.json.write_all(br#","inputs":{"#)
     }
 
     pub fn single_field(&mut self, name: &'static str, value: &str) -> io::Result<()> {
-        write!(self, r#","fields":{{"{name}":[{},null]}}"#, json!(value))
+        write!(
+            self.json,
+            r#","fields":{{"{name}":[{},null]}}"#,
+            json!(value)
+        )
     }
 
     pub fn single_field_id(&mut self, name: &'static str, value: &str) -> io::Result<()> {
         write!(
-            self,
+            self.json,
             r#","fields":{{"{name}":[{},{}]}}"#,
             json!(value),
             json!(value)
@@ -397,7 +391,7 @@ impl Sb3 {
             return Ok(());
         };
         write_comma_io(&mut self.json, &mut self.inputs_comma)?;
-        write!(self, r#""{name}":[2,{this_id}]"#)
+        write!(self.json, r#""{name}":[2,{this_id}]"#)
     }
 
     pub fn project(
@@ -423,8 +417,8 @@ impl Sb3 {
                 }
             })
             .collect();
-        write!(self, "{{")?;
-        write!(self, r#""targets":["#)?;
+        write!(self.json, "{{")?;
+        write!(self.json, r#""targets":["#)?;
         self.sprite(
             fs.clone(),
             input,
@@ -439,7 +433,7 @@ impl Sb3 {
         let mut sprite_names: Vec<_> = project.sprites.keys().collect();
         sprite_names.sort();
         for sprite_name in sprite_names {
-            write!(self, r#","#)?;
+            write!(self.json, r#","#)?;
             self.sprite(
                 fs.clone(),
                 input,
@@ -452,29 +446,29 @@ impl Sb3 {
                 layers[sprite_name],
             )?;
         }
-        write!(self, "]")?; // targets
-        write!(self, r#","monitors":[]"#)?;
+        write!(self.json, "]")?; // targets
+        write!(self.json, r#","monitors":[]"#)?;
         if self.extensions.pen && self.extensions.music {
-            write!(self, r#","extensions":["pen","music"]"#)?;
+            write!(self.json, r#","extensions":["pen","music"]"#)?;
         } else if self.extensions.pen {
-            write!(self, r#","extensions":["pen"]"#)?;
+            write!(self.json, r#","extensions":["pen"]"#)?;
         } else if self.extensions.music {
-            write!(self, r#","extensions":["music"]"#)?;
+            write!(self.json, r#","extensions":["music"]"#)?;
         } else {
-            write!(self, r#","extensions":[]"#)?;
+            write!(self.json, r#","extensions":[]"#)?;
         }
-        write!(self, r#","meta":{{"#)?;
-        write!(self, r#""semver":"3.0.0""#)?;
-        write!(self, r#","vm":"0.2.0""#)?;
+        write!(self.json, r#","meta":{{"#)?;
+        write!(self.json, r#""semver":"3.0.0""#)?;
+        write!(self.json, r#","vm":"0.2.0""#)?;
         write!(
-            self,
+            self.json,
             r#","agent":"goboscript ({})""#,
             option_env!("GIT_HASH")
                 .map(|hash| format!("commit {hash}"))
                 .unwrap_or_else(|| format!("v{}", env!("CARGO_PKG_VERSION")))
         )?;
-        write!(self, "}}")?; // meta
-        write!(self, "}}")?; // project
+        write!(self.json, "}}")?; // meta
+        write!(self.json, "}}")?; // project
         let mut json = serde_json::from_slice(&self.json)?;
         cleanup::clean(&mut json);
         Ok(json)
@@ -551,36 +545,41 @@ impl Sb3 {
             costumes.insert(&costume.name);
         }
         self.id.reset();
-        write!(self, "{{")?;
-        write!(self, r#""isStage":{}"#, name == STAGE_NAME)?;
-        write!(self, r#","name":{}"#, json!(name))?;
+        write!(self.json, "{{")?;
+        write!(self.json, r#""isStage":{}"#, name == STAGE_NAME)?;
+        write!(self.json, r#","name":{}"#, json!(name))?;
         if name == STAGE_NAME {
-            write!(self, r#","comments":{{"#)?;
-            write!(self, r#""twconfig":{{"#)?;
-            write!(self, r#""blockId":null"#)?;
-            write!(self, r#","x":0"#)?;
-            write!(self, r#","y":0"#)?;
-            write!(self, r#","width":350"#)?;
-            write!(self, r#","height":170"#)?;
-            write!(self, r#","minimized":false"#)?;
+            write!(self.json, r#","comments":{{"#)?;
+            write!(self.json, r#""twconfig":{{"#)?;
+            write!(self.json, r#""blockId":null"#)?;
+            write!(self.json, r#","x":0"#)?;
+            write!(self.json, r#","y":0"#)?;
+            write!(self.json, r#","width":350"#)?;
+            write!(self.json, r#","height":170"#)?;
+            write!(self.json, r#","minimized":false"#)?;
             write!(
-                self,
+                self.json,
                 r#","text":{}"#,
                 json!(TurbowarpConfig::from(config).to_string())
             )?;
-            write!(self, "}}")?; // twconfig
-            write!(self, "}}")?; // comments
+            write!(self.json, "}}")?; // twconfig
+            write!(self.json, "}}")?; // comments
         }
-        write!(self, r#","broadcasts":{{"#)?;
+        write!(self.json, r#","broadcasts":{{"#)?;
         if stage.is_none() {
             let mut comma = false;
             for broadcast in broadcasts {
                 write_comma_io(&mut self.json, &mut comma)?;
-                write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+                write!(
+                    self.json,
+                    r#"{}:{}"#,
+                    json!(**broadcast),
+                    json!(**broadcast)
+                )?;
             }
         }
-        write!(self, "}}")?; // broadcasts
-        write!(self, r#","variables":{{"#)?;
+        write!(self.json, "}}")?; // broadcasts
+        write!(self.json, r#","variables":{{"#)?;
         let mut comma = false;
         for proc in sprite
             .procs
@@ -635,8 +634,8 @@ impl Sb3 {
                 d,
             )?;
         }
-        write!(self, "}}")?; // variables
-        write!(self, r#","lists":{{"#)?;
+        write!(self.json, "}}")?; // variables
+        write!(self.json, r#","lists":{{"#)?;
         let mut comma = false;
         for list in sprite.lists.values() {
             self.list_declaration(
@@ -653,8 +652,8 @@ impl Sb3 {
                 d,
             )?;
         }
-        write!(self, "}}")?; // lists
-        write!(self, r#","blocks":{{"#)?;
+        write!(self.json, "}}")?; // lists
+        write!(self.json, r#","blocks":{{"#)?;
         self.node_comma = false;
         for proc in sprite
             .procs
@@ -704,52 +703,52 @@ impl Sb3 {
                 event,
             )?;
         }
-        write!(self, "}}")?; // blocks
+        write!(self.json, "}}")?; // blocks
         if sprite.costumes.is_empty() {
             d.report(DiagnosticKind::NoCostumes, &(0..0));
         }
-        write!(self, r#","costumes":["#)?;
+        write!(self.json, r#","costumes":["#)?;
         let mut comma = false;
         for costume in &sprite.costumes {
             write_comma_io(&mut self.json, &mut comma)?;
             self.costume(config, costume, d)?;
         }
-        write!(self, "]")?; // costumes
-        write!(self, r#","sounds":["#)?;
+        write!(self.json, "]")?; // costumes
+        write!(self.json, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
             write_comma_io(&mut self.json, &mut comma)?;
             self.sound(sound, d)?;
         }
-        write!(self, "]")?; // sounds
+        write!(self.json, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
             let x_position = x_position.to_js_number();
-            write!(self, r#","x":{}"#, json!(x_position))?;
+            write!(self.json, r#","x":{}"#, json!(x_position))?;
         }
         if let Some((y_position, _)) = &sprite.y_position {
             let y_position = y_position.to_js_number();
-            write!(self, r#","y":{}"#, json!(y_position))?;
+            write!(self.json, r#","y":{}"#, json!(y_position))?;
         }
         if let Some((size, _)) = &sprite.size {
             let size = size.to_js_number();
-            write!(self, r#","size":{}"#, json!(size))?;
+            write!(self.json, r#","size":{}"#, json!(size))?;
         }
         if let Some((direction, _)) = &sprite.direction {
             let direction = direction.to_js_number();
-            write!(self, r#","direction":{}"#, json!(direction))?;
+            write!(self.json, r#","direction":{}"#, json!(direction))?;
         }
         if let Some((volume, _)) = &sprite.volume {
             let volume = volume.to_js_number();
-            write!(self, r#","volume":{}"#, json!(volume))?;
+            write!(self.json, r#","volume":{}"#, json!(volume))?;
         }
-        write!(self, r#","layerOrder":{}"#, layer_order)?;
+        write!(self.json, r#","layerOrder":{}"#, layer_order)?;
         if !sprite.hidden {
-            write!(self, r#","visible":true"#)?;
+            write!(self.json, r#","visible":true"#)?;
         } else {
-            write!(self, r#","visible":false"#)?;
+            write!(self.json, r#","visible":false"#)?;
         }
-        write!(self, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
-        write!(self, "}}")?; // sprite
+        write!(self.json, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
+        write!(self.json, "}}")?; // sprite
         Ok(())
     }
 
@@ -764,7 +763,7 @@ impl Sb3 {
         let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
-                self,
+                self.json,
                 "\"{}\":[\"\u{2601} {}\",{},true]",
                 var_name,
                 var_name,
@@ -772,7 +771,7 @@ impl Sb3 {
             )
         } else {
             write!(
-                self,
+                self.json,
                 "\"{}\":[\"{}\",{}]",
                 var_name,
                 var_name,
@@ -944,7 +943,13 @@ impl Sb3 {
         match &list.type_ {
             Type::Value => {
                 write_comma_io(&mut self.json, comma)?;
-                write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(data))?;
+                write!(
+                    self.json,
+                    r#""{}":["{}",{}]"#,
+                    list.name,
+                    list.name,
+                    json!(data)
+                )?;
             }
             Type::Struct {
                 name: type_name,
@@ -964,7 +969,7 @@ impl Sb3 {
                         .map(|j| &data[j * struct_.fields.len() + i])
                         .collect::<Vec<_>>();
                     write!(
-                        self,
+                        self.json,
                         r#""{}":["{}",{}]"#,
                         qualified_list_name,
                         qualified_list_name,
@@ -986,7 +991,7 @@ impl Sb3 {
                 .top_level(true),
         )?;
         self.begin_inputs()?;
-        write!(self, r#""custom_block":[1,{prototype_id}]"#)?;
+        write!(self.json, r#""custom_block":[1,{prototype_id}]"#)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
@@ -1038,11 +1043,11 @@ impl Sb3 {
         let mut comma = false;
         for (qualified_arg_name, arg_id) in &qualified_args {
             write_comma_io(&mut self.json, &mut comma)?;
-            write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
+            write!(self.json, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp, false)
         )?;
@@ -1060,7 +1065,7 @@ impl Sb3 {
                 .top_level(true),
         )?;
         self.begin_inputs()?;
-        write!(self, r#""custom_block":[1,{prototype_id}]"#)?;
+        write!(self.json, r#""custom_block":[1,{prototype_id}]"#)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
@@ -1112,11 +1117,11 @@ impl Sb3 {
         let mut comma = false;
         for (qualified_arg_name, arg_id) in &qualified_args {
             write_comma_io(&mut self.json, &mut comma)?;
-            write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
+            write!(self.json, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::prototype(func.name.clone(), &qualified_args, true, false)
         )?;
