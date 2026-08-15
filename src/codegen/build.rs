@@ -10,7 +10,14 @@ use std::{
 
 use anyhow::Context;
 use directories::ProjectDirs;
-use fxhash::FxHashMap;
+use fxhash::{
+    FxHashMap,
+    FxHashSet,
+};
+use zip::{
+    write::SimpleFileOptions,
+    ZipWriter,
+};
 
 use crate::{
     ast::{
@@ -38,7 +45,7 @@ use crate::{
 pub fn build_impl<T: Write + Seek>(
     fs: Rc<RefCell<dyn VFS>>,
     input: PathBuf,
-    mut sb3: Sb3<T>,
+    file: T,
     stdlib: Option<StandardLibrary>,
 ) -> anyhow::Result<Artifact> {
     let config_path = input.join("goboscript.toml");
@@ -139,7 +146,8 @@ pub fn build_impl<T: Write + Seek>(
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
-    sb3.project(
+    let mut sb3 = Sb3::new(fs.clone(), input.clone());
+    let json = sb3.project(
         fs.clone(),
         &input,
         &project,
@@ -148,7 +156,25 @@ pub fn build_impl<T: Write + Seek>(
         &mut sprites_diagnostics,
     )?;
     let node_count = sb3.block_count;
-    drop(sb3);
+    let mut zip = ZipWriter::new(file);
+    // TODO: make compression configurable: store in debug, deflate in release.
+    zip.start_file(
+        "project.json",
+        SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
+    )?;
+    serde_json::to_writer(&mut zip, &json)?;
+    let mut added = FxHashSet::default();
+    for object in sb3.asset_object_store.get_objects() {
+        if !added.insert(&object.hash) {
+            continue;
+        }
+        zip.start_file(
+            format!("{}.{}", object.hash, object.extension),
+            SimpleFileOptions::default(),
+        )?;
+        zip.write_all(&object.content)?;
+    }
+    zip.finish()?;
     Ok(Artifact {
         project,
         stage_diagnostics,

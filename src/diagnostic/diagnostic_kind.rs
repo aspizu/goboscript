@@ -58,7 +58,7 @@ pub enum DiagnosticKind {
     InvalidCostumeName(SmolStr),
     InvalidBackdropName(SmolStr),
     InvalidCostumeFormat {
-        extension: String,
+        extension: SmolStr,
     },
     InvalidSoundFormat {
         extension: SmolStr,

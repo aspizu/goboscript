@@ -17,10 +17,7 @@ use wasm_bindgen::{
 
 use crate::{
     ast::Sprite,
-    codegen::{
-        build::build_impl,
-        sb3::Sb3,
-    },
+    codegen::build::build_impl,
     diagnostic::{
         Artifact,
         Diagnostic,
@@ -55,12 +52,11 @@ pub fn build(fs: JsValue) -> JsValue {
     let fs: MemFS = serde_wasm_bindgen::from_value(fs).unwrap();
     let fs = Rc::new(RefCell::new(fs));
     let mut file = Vec::new();
-    let sb3 = Sb3::new(Cursor::new(&mut file), fs.clone(), "project".into());
     let stdlib = StandardLibrary {
         path: "stdlib".into(),
         version: Version::new(0, 0, 0),
     };
-    let artifact = build_impl(fs, "project".into(), sb3, Some(stdlib)).unwrap();
+    let artifact = build_impl(fs, "project".into(), Cursor::new(&mut file), Some(stdlib)).unwrap();
     serde_wasm_bindgen::to_value(&Build { file, artifact }).unwrap()
 }
 

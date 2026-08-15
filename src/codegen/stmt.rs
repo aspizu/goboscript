@@ -1,6 +1,5 @@
 use std::io::{
     self,
-    Seek,
     Write,
 };
 
@@ -31,15 +30,10 @@ use crate::{
     blocks::Block,
     codegen::mutation::Mutation,
     diagnostic::DiagnosticKind,
-    misc::{
-        write_comma_io,
-        SmolStr,
-    },
+    misc::SmolStr,
 };
 
-impl<T> Sb3<T>
-where T: Write + Seek
-{
+impl Sb3 {
     pub fn repeat(
         &mut self,
         s: S,
@@ -371,9 +365,11 @@ where T: Write + Seek
             }
         }
         if menu_is_default {
-            write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
+            if std::mem::replace(&mut self.inputs_comma, true) {
+                self.json.write_all(b",")?;
+            }
             write!(
-                self,
+                self.json,
                 r#""{}":[1,{}]"#,
                 block.menu().unwrap().input,
                 menu_id.unwrap()
@@ -381,10 +377,10 @@ where T: Write + Seek
         }
         self.end_obj()?; // inputs
         if let Some(fields) = block.fields() {
-            write!(self, r#","fields":{fields}"#)?;
+            write!(self.json, r#","fields":{fields}"#)?;
         }
         if let Block::StopOtherScripts = block {
-            self.write_all(
+            self.json.write_all(
                 b",\"mutation\":{\"tagName\":\"mutation\",\"children\": [],\"hasnext\": \"true\"}",
             )?;
         }
@@ -605,7 +601,7 @@ where T: Write + Seek
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::call(proc.name.clone(), &qualified_args, proc.warp, compact)
         )?;

@@ -1,6 +1,5 @@
 use std::io::{
     self,
-    Seek,
     Write,
 };
 
@@ -31,15 +30,10 @@ use crate::{
         UnOp,
     },
     diagnostic::DiagnosticKind,
-    misc::{
-        write_comma_io,
-        SmolStr,
-    },
+    misc::SmolStr,
 };
 
-impl<T> Sb3<T>
-where T: Write + Seek
-{
+impl Sb3 {
     pub fn arg(
         &mut self,
         s: S,
@@ -144,9 +138,11 @@ where T: Write + Seek
             }
         }
         if menu_is_default {
-            write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
+            if std::mem::replace(&mut self.inputs_comma, true) {
+                self.json.write_all(b",")?;
+            }
             write!(
-                self,
+                self.json,
                 r#""{}":[1,{}]"#,
                 repr.menu().unwrap().input,
                 menu_id.unwrap()
@@ -154,7 +150,7 @@ where T: Write + Seek
         }
         self.end_obj()?; // inputs
         if let Some(fields) = repr.fields() {
-            write!(self, r#","fields":{fields}"#)?;
+            write!(self.json, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
         for (arg, arg_id) in args.iter().zip(arg_ids) {
@@ -203,7 +199,7 @@ where T: Write + Seek
         self.input(s, d, op.input(), opr, opr_id, matches!(op, UnOp::Not))?;
         self.end_obj()?; // inputs
         if let Some(fields) = op.fields() {
-            write!(self, r#","fields":{fields}"#)?;
+            write!(self.json, r#","fields":{fields}"#)?;
         }
         self.end_obj()?; // node
         self.expr(s, d, opr, opr_id, this_id)
@@ -455,7 +451,7 @@ where T: Write + Seek
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::call(func.name.clone(), &qualified_args, true, false)
         )?;
@@ -497,13 +493,13 @@ where T: Write + Seek
                         let qualified_list_name = QualifiedName::List(qualified_name, Type::Value);
                         match qualified_list_name {
                             QualifiedName::Var(qname, _) => {
-                                write!(self, "[3,[12,{},{}],", json!(*qname), json!(*qname))?;
+                                write!(self.json, "[3,[12,{},{}],", json!(*qname), json!(*qname))?;
                             }
                             QualifiedName::List(qname, _) => {
-                                write!(self, "[3,[13,{},{}],", json!(*qname), json!(*qname))?;
+                                write!(self.json, "[3,[13,{},{}],", json!(*qname), json!(*qname))?;
                             }
                         }
-                        return write!(self, "[10, \"\"]]");
+                        return write!(self.json, "[10, \"\"]]");
                     }
 
                     d.report(
@@ -570,7 +566,7 @@ where T: Write + Seek
         self.begin_node(Node::new("sensing_of", this_id).parent_id(parent_id))?;
         self.begin_inputs()?;
         if is_default {
-            write!(self, r#""OBJECT":[1,{}]"#, menu_id)?;
+            write!(self.json, r#""OBJECT":[1,{}]"#, menu_id)?;
         } else {
             self.input_with_shadow(s, d, "OBJECT", object, object_id, menu_id)?;
         }

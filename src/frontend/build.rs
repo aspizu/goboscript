@@ -8,10 +8,7 @@ use std::{
 };
 
 use crate::{
-    codegen::{
-        build::build_impl,
-        sb3::Sb3,
-    },
+    codegen::build::build_impl,
     diagnostic::Artifact,
     vfs::RealFS,
 };
@@ -22,10 +19,6 @@ pub fn build(input: Option<PathBuf>, output: Option<PathBuf>) -> anyhow::Result<
     let project_name = canonical_input.file_name().unwrap().to_str().unwrap();
     let output = output.unwrap_or_else(|| input.join(format!("{project_name}.sb3")));
     let fs = Rc::new(RefCell::new(RealFS));
-    let sb3 = Sb3::new(
-        BufWriter::new(File::create(&output)?),
-        fs.clone(),
-        canonical_input.clone(),
-    );
-    build_impl(fs, canonical_input, sb3, None)
+    let file = BufWriter::new(File::create(&output)?);
+    build_impl(fs, canonical_input, file, None)
 }

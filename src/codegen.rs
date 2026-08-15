@@ -1,5 +1,6 @@
 pub mod assets;
 pub mod build;
+mod cleanup;
 pub mod costumes;
 pub mod datalists;
 pub mod debug_info;

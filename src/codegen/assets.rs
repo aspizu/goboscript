@@ -1,37 +1,26 @@
 use std::{
     cell::RefCell,
-    io::{
-        self,
-        Write,
-    },
     path::PathBuf,
     rc::Rc,
 };
 
-use fxhash::{
-    FxHashMap,
-    FxHashSet,
-};
+use fxhash::FxHashMap;
 use md5::{
     Digest,
     Md5,
 };
-use zip::write::SimpleFileOptions;
 
 use crate::{
     ast::Asset,
-    codegen::sb3::{
-        Sb3,
-        D,
-    },
+    codegen::sb3::D,
     misc::SmolStr,
     vfs::VFS,
 };
 
 #[derive(Debug, Default)]
 pub struct AssetObject {
-    pub hash: String,
-    pub extension: String,
+    pub hash: SmolStr,
+    pub extension: SmolStr,
     pub content: Vec<u8>,
 }
 
@@ -69,11 +58,12 @@ impl AssetObjectStore {
                 .rsplit_once('.')
                 .unwrap_or_default()
                 .1
-                .to_lowercase();
+                .to_lowercase()
+                .into();
 
             let mut hasher = Md5::new();
             hasher.update(&content);
-            let hash = format!("{:x}", hasher.finalize()).to_string();
+            let hash = arcstr::format!("{:x}", hasher.finalize());
             AssetObject {
                 hash,
                 content,
@@ -84,25 +74,5 @@ impl AssetObjectStore {
 
     pub fn get_objects(&self) -> impl Iterator<Item = &AssetObject> {
         self.store.values()
-    }
-}
-
-impl<T> Sb3<T>
-where T: io::Write + io::Seek
-{
-    pub fn assets(&mut self) -> io::Result<()> {
-        let mut added = FxHashSet::default();
-        for object in self.asset_object_store.get_objects() {
-            if added.contains(&&*object.hash) {
-                continue;
-            }
-            added.insert(object.hash.as_str());
-            self.zip.start_file(
-                format!("{}.{}", object.hash, object.extension),
-                SimpleFileOptions::default(),
-            )?;
-            self.zip.write_all(&object.content)?;
-        }
-        Ok(())
     }
 }

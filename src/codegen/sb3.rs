@@ -3,7 +3,6 @@ use std::{
     cell::RefCell,
     io::{
         self,
-        Seek,
         Write,
     },
     path::{
@@ -20,12 +19,9 @@ use fxhash::{
 };
 use logos::Span;
 use serde_json::json;
-use zip::{
-    write::SimpleFileOptions,
-    ZipWriter,
-};
 
 use super::{
+    cleanup,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -330,10 +326,8 @@ impl Stmt {
     }
 }
 
-pub struct Sb3<T>
-where T: Write + Seek
-{
-    pub zip: ZipWriter<T>,
+pub struct Sb3 {
+    pub json: Vec<u8>,
     pub id: NodeIDFactory,
     pub node_comma: bool,
     pub inputs_comma: bool,
@@ -342,24 +336,10 @@ where T: Write + Seek
     extensions: Extensions,
 }
 
-impl<T> Write for Sb3<T>
-where T: Write + Seek
-{
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.zip.write(buf)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        self.zip.flush()
-    }
-}
-
-impl<T> Sb3<T>
-where T: Write + Seek
-{
-    pub fn new(file: T, fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
+impl Sb3 {
+    pub fn new(fs: Rc<RefCell<dyn VFS>>, input: PathBuf) -> Self {
         Self {
-            zip: ZipWriter::new(file),
+            json: Vec::new(),
             id: NodeIDFactory::new(),
             node_comma: false,
             inputs_comma: false,
@@ -376,26 +356,30 @@ where T: Write + Seek
         } else if node.opcode.starts_with("music_") {
             self.extensions.music = true;
         }
-        write_comma_io(&mut self.zip, &mut self.node_comma)?;
-        write!(self, "{node}")
+        write_comma_io(&mut self.json, &mut self.node_comma)?;
+        write!(self.json, "{node}")
     }
 
     pub fn end_obj(&mut self) -> io::Result<()> {
-        self.write_all(b"}")
+        self.json.write_all(b"}")
     }
 
     pub fn begin_inputs(&mut self) -> io::Result<()> {
         self.inputs_comma = false;
-        self.write_all(br#","inputs":{"#)
+        self.json.write_all(br#","inputs":{"#)
     }
 
     pub fn single_field(&mut self, name: &'static str, value: &str) -> io::Result<()> {
-        write!(self, r#","fields":{{"{name}":[{},null]}}"#, json!(value))
+        write!(
+            self.json,
+            r#","fields":{{"{name}":[{},null]}}"#,
+            json!(value)
+        )
     }
 
     pub fn single_field_id(&mut self, name: &'static str, value: &str) -> io::Result<()> {
         write!(
-            self,
+            self.json,
             r#","fields":{{"{name}":[{},{}]}}"#,
             json!(value),
             json!(value)
@@ -406,8 +390,8 @@ where T: Write + Seek
         let Some(this_id) = this_id else {
             return Ok(());
         };
-        write_comma_io(&mut self.zip, &mut self.inputs_comma)?;
-        write!(self, r#""{name}":[2,{this_id}]"#)
+        write_comma_io(&mut self.json, &mut self.inputs_comma)?;
+        write!(self.json, r#""{name}":[2,{this_id}]"#)
     }
 
     pub fn project(
@@ -418,7 +402,7 @@ where T: Write + Seek
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<serde_json::Value> {
         let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
@@ -433,15 +417,8 @@ where T: Write + Seek
                 }
             })
             .collect();
-        // TODO: switch to deflate compression
-        // this should be configurable, use store in debug (because it would be
-        // faster?), use deflate in release (because it would be smaller?)
-        self.zip.start_file(
-            "project.json",
-            SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated),
-        )?;
-        write!(self, "{{")?;
-        write!(self, r#""targets":["#)?;
+        write!(self.json, "{{")?;
+        write!(self.json, r#""targets":["#)?;
         self.sprite(
             fs.clone(),
             input,
@@ -456,7 +433,7 @@ where T: Write + Seek
         let mut sprite_names: Vec<_> = project.sprites.keys().collect();
         sprite_names.sort();
         for sprite_name in sprite_names {
-            write!(self, r#","#)?;
+            write!(self.json, r#","#)?;
             self.sprite(
                 fs.clone(),
                 input,
@@ -469,31 +446,32 @@ where T: Write + Seek
                 layers[sprite_name],
             )?;
         }
-        write!(self, "]")?; // targets
-        write!(self, r#","monitors":[]"#)?;
+        write!(self.json, "]")?; // targets
+        write!(self.json, r#","monitors":[]"#)?;
         if self.extensions.pen && self.extensions.music {
-            write!(self, r#","extensions":["pen","music"]"#)?;
+            write!(self.json, r#","extensions":["pen","music"]"#)?;
         } else if self.extensions.pen {
-            write!(self, r#","extensions":["pen"]"#)?;
+            write!(self.json, r#","extensions":["pen"]"#)?;
         } else if self.extensions.music {
-            write!(self, r#","extensions":["music"]"#)?;
+            write!(self.json, r#","extensions":["music"]"#)?;
         } else {
-            write!(self, r#","extensions":[]"#)?;
+            write!(self.json, r#","extensions":[]"#)?;
         }
-        write!(self, r#","meta":{{"#)?;
-        write!(self, r#""semver":"3.0.0""#)?;
-        write!(self, r#","vm":"0.2.0""#)?;
+        write!(self.json, r#","meta":{{"#)?;
+        write!(self.json, r#""semver":"3.0.0""#)?;
+        write!(self.json, r#","vm":"0.2.0""#)?;
         write!(
-            self,
+            self.json,
             r#","agent":"goboscript ({})""#,
             option_env!("GIT_HASH")
                 .map(|hash| format!("commit {hash}"))
                 .unwrap_or_else(|| format!("v{}", env!("CARGO_PKG_VERSION")))
         )?;
-        write!(self, "}}")?; // meta
-        write!(self, "}}")?; // project
-        self.assets()?;
-        Ok(())
+        write!(self.json, "}}")?; // meta
+        write!(self.json, "}}")?; // project
+        let mut json = serde_json::from_slice(&self.json)?;
+        cleanup::clean(&mut json);
+        Ok(json)
     }
 
     pub fn sprite(
@@ -567,36 +545,41 @@ where T: Write + Seek
             costumes.insert(&costume.name);
         }
         self.id.reset();
-        write!(self, "{{")?;
-        write!(self, r#""isStage":{}"#, name == STAGE_NAME)?;
-        write!(self, r#","name":{}"#, json!(name))?;
+        write!(self.json, "{{")?;
+        write!(self.json, r#""isStage":{}"#, name == STAGE_NAME)?;
+        write!(self.json, r#","name":{}"#, json!(name))?;
         if name == STAGE_NAME {
-            write!(self, r#","comments":{{"#)?;
-            write!(self, r#""twconfig":{{"#)?;
-            write!(self, r#""blockId":null"#)?;
-            write!(self, r#","x":0"#)?;
-            write!(self, r#","y":0"#)?;
-            write!(self, r#","width":350"#)?;
-            write!(self, r#","height":170"#)?;
-            write!(self, r#","minimized":false"#)?;
+            write!(self.json, r#","comments":{{"#)?;
+            write!(self.json, r#""twconfig":{{"#)?;
+            write!(self.json, r#""blockId":null"#)?;
+            write!(self.json, r#","x":0"#)?;
+            write!(self.json, r#","y":0"#)?;
+            write!(self.json, r#","width":350"#)?;
+            write!(self.json, r#","height":170"#)?;
+            write!(self.json, r#","minimized":false"#)?;
             write!(
-                self,
+                self.json,
                 r#","text":{}"#,
                 json!(TurbowarpConfig::from(config).to_string())
             )?;
-            write!(self, "}}")?; // twconfig
-            write!(self, "}}")?; // comments
+            write!(self.json, "}}")?; // twconfig
+            write!(self.json, "}}")?; // comments
         }
-        write!(self, r#","broadcasts":{{"#)?;
+        write!(self.json, r#","broadcasts":{{"#)?;
         if stage.is_none() {
             let mut comma = false;
             for broadcast in broadcasts {
-                write_comma_io(&mut self.zip, &mut comma)?;
-                write!(self, r#"{}:{}"#, json!(**broadcast), json!(**broadcast))?;
+                write_comma_io(&mut self.json, &mut comma)?;
+                write!(
+                    self.json,
+                    r#"{}:{}"#,
+                    json!(**broadcast),
+                    json!(**broadcast)
+                )?;
             }
         }
-        write!(self, "}}")?; // broadcasts
-        write!(self, r#","variables":{{"#)?;
+        write!(self.json, "}}")?; // broadcasts
+        write!(self.json, r#","variables":{{"#)?;
         let mut comma = false;
         for proc in sprite
             .procs
@@ -651,8 +634,8 @@ where T: Write + Seek
                 d,
             )?;
         }
-        write!(self, "}}")?; // variables
-        write!(self, r#","lists":{{"#)?;
+        write!(self.json, "}}")?; // variables
+        write!(self.json, r#","lists":{{"#)?;
         let mut comma = false;
         for list in sprite.lists.values() {
             self.list_declaration(
@@ -669,8 +652,8 @@ where T: Write + Seek
                 d,
             )?;
         }
-        write!(self, "}}")?; // lists
-        write!(self, r#","blocks":{{"#)?;
+        write!(self.json, "}}")?; // lists
+        write!(self.json, r#","blocks":{{"#)?;
         self.node_comma = false;
         for proc in sprite
             .procs
@@ -720,52 +703,52 @@ where T: Write + Seek
                 event,
             )?;
         }
-        write!(self, "}}")?; // blocks
+        write!(self.json, "}}")?; // blocks
         if sprite.costumes.is_empty() {
             d.report(DiagnosticKind::NoCostumes, &(0..0));
         }
-        write!(self, r#","costumes":["#)?;
+        write!(self.json, r#","costumes":["#)?;
         let mut comma = false;
         for costume in &sprite.costumes {
-            write_comma_io(&mut self.zip, &mut comma)?;
+            write_comma_io(&mut self.json, &mut comma)?;
             self.costume(config, costume, d)?;
         }
-        write!(self, "]")?; // costumes
-        write!(self, r#","sounds":["#)?;
+        write!(self.json, "]")?; // costumes
+        write!(self.json, r#","sounds":["#)?;
         let mut comma = false;
         for sound in &sprite.sounds {
-            write_comma_io(&mut self.zip, &mut comma)?;
+            write_comma_io(&mut self.json, &mut comma)?;
             self.sound(sound, d)?;
         }
-        write!(self, "]")?; // sounds
+        write!(self.json, "]")?; // sounds
         if let Some((x_position, _)) = &sprite.x_position {
             let x_position = x_position.to_js_number();
-            write!(self, r#","x":{}"#, json!(x_position))?;
+            write!(self.json, r#","x":{}"#, json!(x_position))?;
         }
         if let Some((y_position, _)) = &sprite.y_position {
             let y_position = y_position.to_js_number();
-            write!(self, r#","y":{}"#, json!(y_position))?;
+            write!(self.json, r#","y":{}"#, json!(y_position))?;
         }
         if let Some((size, _)) = &sprite.size {
             let size = size.to_js_number();
-            write!(self, r#","size":{}"#, json!(size))?;
+            write!(self.json, r#","size":{}"#, json!(size))?;
         }
         if let Some((direction, _)) = &sprite.direction {
             let direction = direction.to_js_number();
-            write!(self, r#","direction":{}"#, json!(direction))?;
+            write!(self.json, r#","direction":{}"#, json!(direction))?;
         }
         if let Some((volume, _)) = &sprite.volume {
             let volume = volume.to_js_number();
-            write!(self, r#","volume":{}"#, json!(volume))?;
+            write!(self.json, r#","volume":{}"#, json!(volume))?;
         }
-        write!(self, r#","layerOrder":{}"#, layer_order)?;
+        write!(self.json, r#","layerOrder":{}"#, layer_order)?;
         if !sprite.hidden {
-            write!(self, r#","visible":true"#)?;
+            write!(self.json, r#","visible":true"#)?;
         } else {
-            write!(self, r#","visible":false"#)?;
+            write!(self.json, r#","visible":false"#)?;
         }
-        write!(self, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
-        write!(self, "}}")?; // sprite
+        write!(self.json, r#","rotationStyle":"{}""#, sprite.rotation_style)?;
+        write!(self.json, "}}")?; // sprite
         Ok(())
     }
 
@@ -776,11 +759,11 @@ where T: Write + Seek
         is_cloud: bool,
         comma: &mut bool,
     ) -> io::Result<()> {
-        write_comma_io(&mut self.zip, comma)?;
+        write_comma_io(&mut self.json, comma)?;
         let default = default.unwrap_or(Value::from(0.0));
         if is_cloud {
             write!(
-                self,
+                self.json,
                 "\"{}\":[\"\u{2601} {}\",{},true]",
                 var_name,
                 var_name,
@@ -788,7 +771,7 @@ where T: Write + Seek
             )
         } else {
             write!(
-                self,
+                self.json,
                 "\"{}\":[\"{}\",{}]",
                 var_name,
                 var_name,
@@ -959,8 +942,14 @@ where T: Write + Seek
         };
         match &list.type_ {
             Type::Value => {
-                write_comma_io(&mut self.zip, comma)?;
-                write!(self, r#""{}":["{}",{}]"#, list.name, list.name, json!(data))?;
+                write_comma_io(&mut self.json, comma)?;
+                write!(
+                    self.json,
+                    r#""{}":["{}",{}]"#,
+                    list.name,
+                    list.name,
+                    json!(data)
+                )?;
             }
             Type::Struct {
                 name: type_name,
@@ -975,12 +964,12 @@ where T: Write + Seek
                 };
                 for (i, field) in struct_.fields.iter().enumerate() {
                     let qualified_list_name = qualify_struct_var_name(&field.name, &list.name);
-                    write_comma_io(&mut self.zip, comma)?;
+                    write_comma_io(&mut self.json, comma)?;
                     let column = (0..(data.len() / struct_.fields.len()))
                         .map(|j| &data[j * struct_.fields.len() + i])
                         .collect::<Vec<_>>();
                     write!(
-                        self,
+                        self.json,
                         r#""{}":["{}",{}]"#,
                         qualified_list_name,
                         qualified_list_name,
@@ -1002,7 +991,7 @@ where T: Write + Seek
                 .top_level(true),
         )?;
         self.begin_inputs()?;
-        write!(self, r#""custom_block":[1,{prototype_id}]"#)?;
+        write!(self.json, r#""custom_block":[1,{prototype_id}]"#)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
@@ -1053,12 +1042,12 @@ where T: Write + Seek
         self.begin_inputs()?;
         let mut comma = false;
         for (qualified_arg_name, arg_id) in &qualified_args {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
+            write_comma_io(&mut self.json, &mut comma)?;
+            write!(self.json, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp, false)
         )?;
@@ -1076,7 +1065,7 @@ where T: Write + Seek
                 .top_level(true),
         )?;
         self.begin_inputs()?;
-        write!(self, r#""custom_block":[1,{prototype_id}]"#)?;
+        write!(self.json, r#""custom_block":[1,{prototype_id}]"#)?;
         self.end_obj()?; // inputs
         self.end_obj()?; // node
         let mut qualified_args: Vec<(SmolStr, NodeID)> = Vec::new();
@@ -1127,12 +1116,12 @@ where T: Write + Seek
         self.begin_inputs()?;
         let mut comma = false;
         for (qualified_arg_name, arg_id) in &qualified_args {
-            write_comma_io(&mut self.zip, &mut comma)?;
-            write!(self, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
+            write_comma_io(&mut self.json, &mut comma)?;
+            write!(self.json, r#"{}:[2,{arg_id}]"#, json!(**qualified_arg_name))?;
         }
         self.end_obj()?; // inputs
         write!(
-            self,
+            self.json,
             "{}",
             Mutation::prototype(func.name.clone(), &qualified_args, true, false)
         )?;
