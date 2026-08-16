@@ -21,7 +21,6 @@ use logos::Span;
 use serde_json::json;
 
 use super::{
-    cleanup,
     node::Node,
     node_id::NodeID,
     node_id_factory::NodeIDFactory,
@@ -469,9 +468,7 @@ impl Sb3 {
         )?;
         write!(self.json, "}}")?; // meta
         write!(self.json, "}}")?; // project
-        let mut json = serde_json::from_slice(&self.json)?;
-        cleanup::clean(&mut json);
-        Ok(json)
+        Ok(serde_json::from_slice(&self.json)?)
     }
 
     pub fn sprite(

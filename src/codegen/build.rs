@@ -24,7 +24,10 @@ use crate::{
         Project,
         Sprite,
     },
-    codegen::sb3::Sb3,
+    codegen::{
+        cleanup,
+        sb3::Sb3,
+    },
     config::Config,
     diagnostic::{
         Artifact,
@@ -147,7 +150,7 @@ pub fn build_impl<T: Write + Seek>(
     visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
     let mut sb3 = Sb3::new(fs.clone(), input.clone());
-    let json = sb3.project(
+    let mut json = sb3.project(
         fs.clone(),
         &input,
         &project,
@@ -155,7 +158,15 @@ pub fn build_impl<T: Write + Seek>(
         &mut stage_diagnostics,
         &mut sprites_diagnostics,
     )?;
-    let node_count = sb3.block_count;
+    let artifact = Artifact {
+        project,
+        stage_diagnostics,
+        sprites_diagnostics,
+        block_count: sb3.block_count,
+    };
+    if !artifact.failure() {
+        cleanup::clean(&mut json);
+    }
     let mut zip = ZipWriter::new(file);
     // TODO: make compression configurable: store in debug, deflate in release.
     zip.start_file(
@@ -175,10 +186,5 @@ pub fn build_impl<T: Write + Seek>(
         zip.write_all(&object.content)?;
     }
     zip.finish()?;
-    Ok(Artifact {
-        project,
-        stage_diagnostics,
-        sprites_diagnostics,
-        block_count: node_count,
-    })
+    Ok(artifact)
 }
