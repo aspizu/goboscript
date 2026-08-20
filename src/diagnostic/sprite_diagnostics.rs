@@ -78,13 +78,16 @@ impl SpriteDiagnostics {
         self.report(DiagnosticKind::io_error(error, help), span);
     }
 
-    pub fn eprint(&self, cwd: &Path, renderer: &Renderer, project: &Project) {
+    pub fn eprint(&self, cwd: &Path, renderer: &Renderer, project: &Project, print_level: &Level) {
         let sprite = match self.sprite_name.as_str() {
             "stage" => &project.stage,
             name => &project.sprites[name],
         };
         for diagnostic in &self.diagnostics {
             let level: Level = (&diagnostic.kind).into();
+            if &level != print_level {
+                continue;
+            }
             let title = diagnostic.kind.to_string(sprite);
             let help = diagnostic.kind.help(sprite);
             let help = help.as_ref();
