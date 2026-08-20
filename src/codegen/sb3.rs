@@ -401,7 +401,7 @@ impl Sb3 {
         config: &Config,
         stage_diagnostics: D,
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
-    ) -> anyhow::Result<serde_json::Value> {
+    ) -> anyhow::Result<()> {
         let layers = compute_layers(project, config)?;
         let broadcasts: FxHashSet<_> = project
             .stage
@@ -468,7 +468,7 @@ impl Sb3 {
         )?;
         write!(self.json, "}}")?; // meta
         write!(self.json, "}}")?; // project
-        Ok(serde_json::from_slice(&self.json)?)
+        Ok(())
     }
 
     pub fn sprite(

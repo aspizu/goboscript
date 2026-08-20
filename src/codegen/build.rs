@@ -150,7 +150,7 @@ pub fn build_impl<T: Write + Seek>(
     visitor::pass4::visit_project(&mut project);
     log::info!("{:#?}", project);
     let mut sb3 = Sb3::new(fs.clone(), input.clone());
-    let mut json = sb3.project(
+    sb3.project(
         fs.clone(),
         &input,
         &project,
@@ -164,9 +164,11 @@ pub fn build_impl<T: Write + Seek>(
         sprites_diagnostics,
         block_count: sb3.block_count,
     };
-    if !artifact.failure() {
-        cleanup::clean(&mut json);
+    if artifact.failure() {
+        return Ok(artifact);
     }
+    let mut json = serde_json::from_slice(&sb3.json)?;
+    cleanup::clean(&mut json);
     let mut zip = ZipWriter::new(file);
     // TODO: make compression configurable: store in debug, deflate in release.
     zip.start_file(
