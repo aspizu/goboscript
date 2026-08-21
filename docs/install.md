@@ -30,13 +30,13 @@ cargo +nightly install --path .
 Installs the latest version from the git repository in a single command.
 
 ```bash
-cargo +nightly install --git https://github.com/aspizu/goboscript
+cargo +nightly install --git https://github.com/aspizu/goboscript --locked
 ```
 
 To update:
 
 ```bash
-cargo +nightly install --git https://github.com/aspizu/goboscript --force
+cargo +nightly install --git https://github.com/aspizu/goboscript --locked --force
 ```
 
 ## Install with nix
@@ -79,4 +79,3 @@ For nix flakes, add the input `goboscript` and add it to `environment.systemPack
   };
 }
 ```
-

@@ -1,4 +1,4 @@
-use fxhash::{
+use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };

@@ -11,7 +11,7 @@ use std::{
     },
 };
 
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 use glob::{
     glob,
     MatchOptions,
@@ -86,14 +86,12 @@ impl VFS for RealFS {
 }
 
 #[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
 struct Data {
     #[serde(with = "base64")]
     pub inner: Vec<u8>,
 }
 
 #[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct MemFS {
     files: FxHashMap<String, Data>,
 }

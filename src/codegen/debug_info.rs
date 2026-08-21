@@ -1,4 +1,4 @@
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 use logos::Span;
 use serde::{
     Deserialize,
@@ -7,7 +7,6 @@ use serde::{
 use tsify::Tsify;
 
 #[derive(Tsify, Serialize, Deserialize, Default)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct DebugInfo {
     pub blocks: FxHashMap<String, Span>,
     pub variables: FxHashMap<String, Span>,

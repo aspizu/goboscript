@@ -41,7 +41,6 @@ use crate::{
 };
 
 #[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct SpriteDiagnostics {
     pub sprite_name: String,
     pub translation_unit: TranslationUnit,

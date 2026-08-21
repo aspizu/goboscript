@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 
 use crate::{
     ast::*,

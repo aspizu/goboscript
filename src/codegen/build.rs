@@ -10,7 +10,7 @@ use std::{
 
 use anyhow::Context;
 use directories::ProjectDirs;
-use fxhash::{
+use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };

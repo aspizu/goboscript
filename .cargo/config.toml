@@ -1,2 +1,5 @@
 [build]
 rustflags = ["-Ctarget-cpu=native"]
+
+[registry]
+global-min-publish-age = "14 days"

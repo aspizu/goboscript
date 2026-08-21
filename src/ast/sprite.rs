@@ -1,4 +1,4 @@
-use fxhash::{
+use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };
@@ -7,6 +7,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
+use tsify::Tsify;
 
 use super::*;
 use crate::{
@@ -17,7 +18,8 @@ use crate::{
     misc::SmolStr,
 };
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Tsify, Serialize, Deserialize)]
+#[tsify(type = "object")]
 pub struct Sprite {
     pub costumes: Vec<Asset>,
     pub sounds: Vec<Asset>,

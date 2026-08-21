@@ -4,7 +4,7 @@ use std::{
     rc::Rc,
 };
 
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 use md5::{
     Digest,
     Md5,

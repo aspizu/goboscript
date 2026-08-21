@@ -2,7 +2,7 @@ use annotate_snippets::{
     Level,
     Renderer,
 };
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 use serde::{
     Deserialize,
     Serialize,
@@ -16,7 +16,6 @@ use crate::{
 };
 
 #[derive(Tsify, Serialize, Deserialize)]
-#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct Artifact {
     pub project: Project,
     pub stage_diagnostics: SpriteDiagnostics,

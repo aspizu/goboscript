@@ -13,7 +13,7 @@ use std::{
 };
 
 use anyhow::bail;
-use fxhash::{
+use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };
