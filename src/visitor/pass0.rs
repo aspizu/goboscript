@@ -14,6 +14,7 @@ use crate::{
     diagnostic::SpriteDiagnostics,
     misc::SmolStr,
     vfs::VFS,
+    visitor::ternary::extract_ternary_from_stmts,
 };
 
 struct V<'a> {
@@ -58,6 +59,7 @@ fn visit_sprite(
             .proc_locals
             .insert(proc.name.clone(), Default::default());
         let proc_definition = sprite.proc_definitions.get_mut(&proc.name).unwrap();
+        extract_ternary_from_stmts(proc_definition);
         visit_stmts(
             proc_definition,
             &mut V {
@@ -86,6 +88,7 @@ fn visit_sprite(
             );
         }
         let func_definition = sprite.func_definitions.get_mut(&func.name).unwrap();
+        extract_ternary_from_stmts(func_definition);
         visit_stmts(
             func_definition,
             &mut V {
@@ -96,6 +99,7 @@ fn visit_sprite(
         );
     }
     for event in &mut sprite.events {
+        extract_ternary_from_stmts(&mut event.body);
         visit_stmts(
             &mut event.body,
             &mut V {
