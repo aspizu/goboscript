@@ -27,7 +27,6 @@ jobs:
         with:
           runtime: node@24
           cache: true
-          require-lockfile: true
 
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@v10.0.1
