@@ -1,6 +1,7 @@
 {
   "type": "module",
   "scripts": {
+    "build": "js-yaml ../../editors/code/syntaxes/goboscript.tmGrammar.yml > goboscript.tmGrammar.json && esbuild --bundle --minify main.ts --outfile=main.js",
     "format": "prettier --write ."
   },
   "dependencies": {

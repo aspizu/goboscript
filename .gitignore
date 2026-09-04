@@ -10,4 +10,5 @@ dist/
 .intentionally-empty-file.o
 target/
 .cache/
+.wrangler/
 AGENTS.md

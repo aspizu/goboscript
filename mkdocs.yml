@@ -1,4 +1,10 @@
 site_name: goboscript docs
+exclude_docs: |
+  javascripts/node_modules/
+  javascripts/package.json
+  javascripts/tsconfig.json
+  javascripts/*.ts
+  javascripts/*.tmGrammar.json
 nav:
   - Install: install.md
   - Getting Started:

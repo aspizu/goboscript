@@ -2,6 +2,12 @@
   "private": true,
   "packageManager": "pnpm@11.5.2",
   "scripts": {
+    "build:docs": "pnpm --dir docs/javascripts run build && rm -rf site && MKDOCS_GIT_COMMITTERS_APIKEY=\"${MKDOCS_GIT_COMMITTERS_APIKEY:-${GITHUB_TOKEN:-$(gh auth token 2>/dev/null)}}\" NO_MKDOCS_2_WARNING=1 uv run --locked mkdocs build --strict --site-dir site/goboscript/docs && mv site/goboscript/docs/_redirects site/_redirects",
+    "dev:docs": "pnpm run build:docs && wrangler dev",
+    "deploy:docs": "pnpm run build:docs && wrangler deploy",
     "format": "pnpm -r --if-present run format"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
   }
 }

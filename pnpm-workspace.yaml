@@ -19,3 +19,4 @@ allowBuilds:
   esbuild: true
   keytar: true
   sharp: true
+  workerd: true

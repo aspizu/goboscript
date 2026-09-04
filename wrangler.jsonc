@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "goboscript-docs",
+  "compatibility_date": "2026-09-04",
+  "routes": ["aspiz.uk/goboscript/docs", "aspiz.uk/goboscript/docs/*"],
+  "assets": {
+    "directory": "./site",
+    "html_handling": "none",
+    "not_found_handling": "404-page",
+  },
+}
