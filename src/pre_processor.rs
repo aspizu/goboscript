@@ -1,8 +1,8 @@
+use logos::Span;
 use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };
-use logos::Span;
 
 use crate::{
     diagnostic::{
@@ -259,7 +259,7 @@ impl<'a> PreProcessor<'a, '_> {
             return Ok(false);
         }
 
-        let (_, args) = self.parse_macro_call_args(span)?;
+        let (_, mut args) = self.parse_macro_call_args(span)?;
 
         let arity = args.len();
         let Some((function_define_params, function_define_body)) = overloads.get(&arity).cloned()
@@ -272,6 +272,14 @@ impl<'a> PreProcessor<'a, '_> {
                 span: macro_name_span,
             });
         };
+
+        // Expand used arguments before suppressing this macro in its replacement body.
+        for (param, arg) in function_define_params.iter().zip(&mut args) {
+            if function_define_body.contains(param) {
+                *arg =
+                    self.expand_token_list(std::mem::take(arg), suppress, macro_name_span.clone())?;
+            }
+        }
 
         let mut i = *self.i;
         for token in function_define_body {
@@ -442,9 +450,12 @@ impl<'a> PreProcessor<'a, '_> {
         &mut self,
         tokens: Vec<Token>,
         suppress: &FxHashSet<SmolStr>,
+        source_span: Span,
     ) -> Result<Vec<Token>, Diagnostic> {
-        let mut spanned: Vec<SpannedToken> =
-            tokens.into_iter().map(|token| (0, token, 0)).collect();
+        let mut spanned: Vec<SpannedToken> = tokens
+            .into_iter()
+            .map(|token| (source_span.start, token, source_span.end))
+            .collect();
 
         let length = spanned.len();
 
@@ -597,8 +608,8 @@ impl<'a> PreProcessor<'a, '_> {
             });
         }
 
-        let left = self.expand_token_list(args[0].clone(), suppress)?;
-        let right = self.expand_token_list(args[1].clone(), suppress)?;
+        let left = self.expand_token_list(args[0].clone(), suppress, macro_name_span.clone())?;
+        let right = self.expand_token_list(args[1].clone(), suppress, macro_name_span.clone())?;
 
         let [left] = &left[..] else {
             return Err(Diagnostic {
