@@ -25,17 +25,17 @@ use serde::{
 use tsify::Tsify;
 
 use super::{
-    diagnostic_kind::DiagnosticKind,
     Diagnostic,
+    diagnostic_kind::DiagnosticKind,
 };
 use crate::{
     ast::Project,
     codegen::debug_info::DebugInfo,
     standard_library::StandardLibrary,
     translation_unit::{
-        parse_translation_unit,
         Owner,
         TranslationUnit,
+        parse_translation_unit,
     },
     vfs::VFS,
 };
@@ -100,7 +100,10 @@ impl SpriteDiagnostics {
                 continue;
             }
             // TODO: memoize this using a memoization crate.
-            let text = fs::read_to_string(&include.path).unwrap();
+            let mut text = fs::read_to_string(&include.path).unwrap();
+            if !text.ends_with('\n') {
+                text.push('\n');
+            }
             let include_path = include
                 .path
                 .strip_prefix(cwd)
