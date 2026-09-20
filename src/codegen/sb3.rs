@@ -333,6 +333,7 @@ pub struct Sb3 {
     pub block_count: usize,
     pub asset_object_store: AssetObjectStore,
     extensions: Extensions,
+    attributed_block: Option<(SmolStr, bool)>,
 }
 
 impl Sb3 {
@@ -345,7 +346,16 @@ impl Sb3 {
             block_count: 0,
             asset_object_store: AssetObjectStore::new(input, fs),
             extensions: Extensions::default(),
+            attributed_block: None,
         }
+    }
+
+    pub fn has_attribution(&self, name: &str, is_function: bool) -> bool {
+        self.attributed_block
+            .as_ref()
+            .is_some_and(|(selected_name, selected_is_function)| {
+                selected_name.as_str() == name && *selected_is_function == is_function
+            })
     }
 
     pub fn begin_node(&mut self, node: Node) -> io::Result<()> {
@@ -400,6 +410,37 @@ impl Sb3 {
         sprites_diagnostics: &mut FxHashMap<SmolStr, SpriteDiagnostics>,
     ) -> anyhow::Result<()> {
         let layers = compute_layers(project, config)?;
+        let candidates: Vec<_> = std::iter::once(&project.stage)
+            .chain(project.sprites.values())
+            .flat_map(|sprite| {
+                sprite
+                    .procs
+                    .keys()
+                    .filter(|name| sprite.used_procs.contains(*name))
+                    .map(move |name| (sprite, name, false))
+                    .chain(
+                        sprite
+                            .funcs
+                            .keys()
+                            .filter(|name| sprite.used_funcs.contains(*name))
+                            .map(move |name| (sprite, name, true)),
+                    )
+            })
+            .collect();
+        let selected = if candidates.is_empty() {
+            None
+        } else {
+            #[cfg(not(target_arch = "wasm32"))]
+            let index = rand::random_range(0..candidates.len());
+            #[cfg(target_arch = "wasm32")]
+            let index = (js_sys::Math::random() * candidates.len() as f64) as usize;
+            Some(candidates[index])
+        };
+        let attribution_for = |sprite: &Sprite| {
+            selected
+                .filter(|(selected_sprite, _, _)| std::ptr::eq(*selected_sprite, sprite))
+                .map(|(_, name, is_function)| (name.clone(), is_function))
+        };
         let broadcasts: FxHashSet<_> = project
             .stage
             .events
@@ -415,6 +456,7 @@ impl Sb3 {
             .collect();
         write!(self.json, "{{")?;
         write!(self.json, r#""targets":["#)?;
+        self.attributed_block = attribution_for(&project.stage);
         self.sprite(
             fs.clone(),
             input,
@@ -430,6 +472,7 @@ impl Sb3 {
         sprite_names.sort();
         for sprite_name in sprite_names {
             write!(self.json, r#","#)?;
+            self.attributed_block = attribution_for(&project.sprites[sprite_name]);
             self.sprite(
                 fs.clone(),
                 input,
@@ -1044,6 +1087,7 @@ impl Sb3 {
             self.json,
             "{}",
             Mutation::prototype(proc.name.clone(), &qualified_args, proc.warp, false)
+                .with_attribution(self.has_attribution(&proc.name, false))
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, definition, next_id, Some(this_id))
@@ -1118,6 +1162,7 @@ impl Sb3 {
             self.json,
             "{}",
             Mutation::prototype(func.name.clone(), &qualified_args, true, false)
+                .with_attribution(self.has_attribution(&func.name, true))
         )?;
         self.end_obj()?; // node
         self.stmts(s, d, definition, next_id, Some(this_id))
