@@ -604,6 +604,7 @@ impl Sb3 {
             self.json,
             "{}",
             Mutation::call(proc.name.clone(), &qualified_args, proc.warp, compact)
+                .with_attribution(self.has_attribution(&proc.name, false))
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {

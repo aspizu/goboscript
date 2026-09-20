@@ -15,6 +15,7 @@ pub struct Mutation<'a> {
     warp: bool,
     is_call: bool,
     compact: bool,
+    attribution: bool,
 }
 
 impl<'a> Mutation<'a> {
@@ -30,6 +31,7 @@ impl<'a> Mutation<'a> {
             warp,
             is_call: false,
             compact,
+            attribution: false,
         }
     }
 
@@ -45,7 +47,13 @@ impl<'a> Mutation<'a> {
             warp,
             is_call: true,
             compact,
+            attribution: false,
         }
+    }
+
+    pub fn with_attribution(mut self, attribution: bool) -> Self {
+        self.attribution = attribution;
+        self
     }
 }
 
@@ -60,6 +68,9 @@ impl Display for Mutation<'_> {
             } else {
                 write!(f, " {arg_name}: %s")?;
             }
+        }
+        if self.attribution {
+            write!(f, " (via goboscript)")?;
         }
         write!(f, "\"")?;
         write!(f, r#","argumentids":"["#)?;

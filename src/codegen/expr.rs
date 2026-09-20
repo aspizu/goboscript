@@ -454,6 +454,7 @@ impl Sb3 {
             self.json,
             "{}",
             Mutation::call(func.name.clone(), &qualified_args, true, false)
+                .with_attribution(self.has_attribution(&func.name, true))
         )?;
         self.end_obj()?; // node
         for (arg, (_, arg_id)) in qualified_arg_values.iter().zip(qualified_args) {
