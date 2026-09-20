@@ -55,13 +55,16 @@ fn open_output(path: &Path) -> io::Result<File> {
 
     let file = options.open(path)?;
     // Inspect and truncate the same handle; never check the path before opening it.
+    let metadata = file.metadata()?;
     #[cfg(windows)]
-    if file.metadata()?.file_type().is_symlink() {
+    if metadata.file_type().is_symlink() {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             "output path is a symlink",
         ));
     }
-    file.set_len(0)?;
+    if metadata.is_file() {
+        file.set_len(0)?;
+    }
     Ok(file)
 }
