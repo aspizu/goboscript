@@ -369,20 +369,17 @@ impl Sb3 {
     }
 
     pub fn single_field(&mut self, name: &'static str, value: &str) -> io::Result<()> {
-        write!(
-            self.json,
-            r#","fields":{{"{name}":[{},null]}}"#,
-            json!(value)
-        )
+        write!(self.json, r#","fields":{{"{name}":["#)?;
+        serde_json::to_writer(&mut self.json, value)?;
+        self.json.write_all(b",null]}")
     }
 
     pub fn single_field_id(&mut self, name: &'static str, value: &str) -> io::Result<()> {
-        write!(
-            self.json,
-            r#","fields":{{"{name}":[{},{}]}}"#,
-            json!(value),
-            json!(value)
-        )
+        write!(self.json, r#","fields":{{"{name}":["#)?;
+        serde_json::to_writer(&mut self.json, value)?;
+        self.json.write_all(b",")?;
+        serde_json::to_writer(&mut self.json, value)?;
+        self.json.write_all(b"]}")
     }
 
     pub fn substack(&mut self, name: &str, this_id: Option<NodeID>) -> io::Result<()> {
