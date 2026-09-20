@@ -1,6 +1,9 @@
-use std::io::{
-    self,
-    Write,
+use std::{
+    borrow::Cow,
+    io::{
+        self,
+        Write,
+    },
 };
 
 use serde_json::json;
@@ -67,11 +70,11 @@ pub fn is_expr_boolean(expr: &Expr, s: S) -> bool {
     )
 }
 
-pub fn coerce_condition(expr: &Expr, s: S) -> Expr {
+pub fn coerce_condition<'a>(expr: &'a Expr, s: S) -> Cow<'a, Expr> {
     if is_expr_boolean(expr, s) {
-        return expr.clone();
+        return Cow::Borrowed(expr);
     }
-    BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(true).to_expr(0..0))
+    Cow::Owned(BinOp::Eq.to_expr(0..0, expr.clone(), Value::from(true).to_expr(0..0)))
 }
 
 impl Sb3 {
