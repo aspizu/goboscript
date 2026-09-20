@@ -514,37 +514,22 @@ pub fn keyword_arguments(
     d: D,
 ) {
     if let Some(sig) = signature {
-        // Build a new vector of arguments in the order given by the signature.
-        let mut new_args = Vec::with_capacity(sig.len());
-        let mut pos = 0;
+        let positional_count = args.len();
 
-        for param in sig {
-            if pos < args.len() {
+        for (index, param) in sig.iter().enumerate() {
+            if index < positional_count {
                 // If there is both a positional and keyword argument, we prefer the positional one.
-                // Remove the keyword argument from the map.
                 kwargs.remove(&param.name);
-                // Use the next positional argument.
-                new_args.push(args[pos].clone());
-                pos += 1;
             } else if let Some((_, kw_expr)) = kwargs.remove(&param.name) {
                 // No more positional args, but there is a matching keyword argument.
-                new_args.push(kw_expr);
+                args.push(kw_expr);
             } else if let Some(default) = &param.default {
                 // Compute the default value if one is provided.
-                new_args.push(default.clone().into());
+                args.push(default.clone().into());
             }
             // If no positional, keyword, or default value exists, then
             // we simply do not insert anything (and no error is raised).
         }
-
-        // Append any extra positional arguments that exceed the signature length.
-        while pos < args.len() {
-            new_args.push(args[pos].clone());
-            pos += 1;
-        }
-
-        // Replace the original args with the re-ordered version.
-        *args = new_args;
     }
 
     // Generate diagnostics for any remaining unknown keyword arguments
