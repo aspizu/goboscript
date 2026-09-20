@@ -50,6 +50,12 @@ console_log = "1.0.0"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rand = "0.9.1"
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.60", features = ["Win32_Storage_FileSystem"] }
+
 [build-dependencies]
 lalrpop = "0.22.0"
 
