@@ -684,6 +684,7 @@ dependencies = [
  "js-sys",
  "lalrpop",
  "lalrpop-util",
+ "libc",
  "log",
  "logos",
  "md-5",
@@ -700,6 +701,7 @@ dependencies = [
  "tsify",
  "walkdir",
  "wasm-bindgen",
+ "windows-sys 0.60.2",
  "zip",
 ]
 
