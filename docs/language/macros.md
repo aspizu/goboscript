@@ -137,3 +137,32 @@ Nested parentheses are supported and are included verbatim in the resulting stri
 ```goboscript
 STRINGIFY(foo(bar, baz)) # becomes "foo ( bar , baz )"
 ```
+
+## Format Strings
+
+Format strings interpolate expressions into strings at compile time. Prefix a string
+literal with `f` and write expressions inside `{}`. The preprocessor expands the string
+into an expression joined with `&`.
+
+```goboscript
+say f"Hello, {name}!"; # becomes "Hello, " & name & "!"
+```
+
+Any goboscript expression can be used inside `{}`:
+
+```goboscript
+say f"Score: {score + bonus}";
+say f"Position: ({x}, {y})";
+```
+
+Use `{{` and `}}` to include literal braces:
+
+```goboscript
+say f"{{{name}}}"; # becomes "{" & name & "}"
+```
+
+Nested format strings must escape the braces that belong to the inner string:
+
+```goboscript
+say f"{1 + f\"{{name}}\"}";
+```
