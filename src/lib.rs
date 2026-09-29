@@ -1,5 +1,3 @@
-#![feature(normalize_lexically)]
-
 pub mod ast;
 pub mod blocks;
 pub mod codegen;

@@ -15,11 +15,18 @@ git clone https://github.com/$USER/goboscript
 cd goboscript
 ```
 
-Install and set the default Rust toolchain to nightly:
+Install and set the default Rust toolchain to stable:
+
+```bash
+rustup toolchain install stable
+rustup default stable
+```
+
+Formatting still uses nightly rustfmt options (`cargo +nightly fmt`), so install
+nightly too:
 
 ```bash
 rustup toolchain install nightly
-rustup default nightly
 ```
 
 ## Development

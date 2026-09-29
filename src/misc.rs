@@ -1,7 +1,39 @@
 use core::fmt;
-use std::io;
+use std::{
+    io,
+    path::{
+        Component,
+        Path,
+        PathBuf,
+    },
+};
 
 use arcstr::ArcStr;
+
+// TODO: Replace with `Path::normalize_lexically` when it becomes stable.
+pub fn normalize_lexically(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                if matches!(
+                    normalized.components().next_back(),
+                    Some(Component::Normal(_))
+                ) {
+                    normalized.pop();
+                } else if !path.has_root() {
+                    normalized.push("..");
+                }
+            }
+            other => normalized.push(other.as_os_str()),
+        }
+    }
+    if normalized.as_os_str().is_empty() {
+        normalized.push(".");
+    }
+    normalized
+}
 
 pub fn write_comma_io<T>(mut file: T, comma: &mut bool) -> io::Result<()>
 where T: io::Write {

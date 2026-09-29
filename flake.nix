@@ -13,7 +13,7 @@
     pkgs = import nixpkgs {
       inherit system overlays;
     };
-    rust = pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default);
+    rust = pkgs.rust-bin.stable.latest.default;
   in rec {
     packages.goboscript = pkgs.callPackage ./default.nix {
       inherit (pkgs) pkg-config openssl;

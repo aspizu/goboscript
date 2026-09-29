@@ -19,6 +19,7 @@ use crate::{
         Diagnostic,
         DiagnosticKind,
     },
+    misc::normalize_lexically,
     standard_library::StandardLibrary,
     vfs::VFS,
 };
@@ -71,8 +72,7 @@ impl TranslationUnit {
             path: unit.path.clone(),
             owner: Owner::Local,
         });
-        unit.included
-            .insert(unit.path.normalize_lexically().unwrap());
+        unit.included.insert(normalize_lexically(&unit.path));
         Ok(unit)
     }
 
@@ -311,7 +311,7 @@ fn add_include_to_translation_unit(
         (Owner::Local, unit.path.parent().unwrap().join(path))
     };
 
-    let mut path = path.normalize_lexically().unwrap();
+    let mut path = normalize_lexically(&path);
     if path.extension().is_none_or(|ext| ext != "gs") {
         path = path.with_added_extension("gs");
     }
