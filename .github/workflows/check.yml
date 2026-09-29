@@ -5,9 +5,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            # TODO: remove this step and the script when stable cargo supports
+            # registry.global-min-publish-age (stabilized in cargo 1.100).
+            - run: python3 tools/check-min-publish-age.py
             - uses: actions-rust-lang/setup-rust-toolchain@v1
               with:
                   toolchain: "stable"
                   rustflags: "-A warnings"
-            - run: cargo check
-            - run: cargo test
+            - run: cargo check --locked
+            - run: cargo test --locked
