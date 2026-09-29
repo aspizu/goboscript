@@ -1,11 +1,5 @@
 # Install
 
-!!! tip
-    goboscript requires the **nightly** Rust toolchain. Install it once with:
-    ```bash
-    rustup toolchain install nightly
-    ```
-
 ## Install from source
 
 Clones and installs the latest version from the git repository. Requires `git` and the
@@ -14,7 +8,7 @@ Clones and installs the latest version from the git repository. Requires `git` a
 ```bash
 git clone https://github.com/aspizu/goboscript
 cd goboscript
-cargo +nightly install --path .
+cargo install --path .
 ```
 
 To update:
@@ -22,7 +16,7 @@ To update:
 ```bash
 cd goboscript
 git pull
-cargo +nightly install --path .
+cargo install --path .
 ```
 
 ## Install from source (using cargo)
@@ -30,13 +24,13 @@ cargo +nightly install --path .
 Installs the latest version from the git repository in a single command.
 
 ```bash
-cargo +nightly install --git https://github.com/aspizu/goboscript --locked
+cargo install --git https://github.com/aspizu/goboscript --locked
 ```
 
 To update:
 
 ```bash
-cargo +nightly install --git https://github.com/aspizu/goboscript --locked --force
+cargo install --git https://github.com/aspizu/goboscript --locked --force
 ```
 
 ## Install with nix
