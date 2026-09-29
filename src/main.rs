@@ -14,6 +14,7 @@ const AGENT_ENV_VARS: &[&str] = &[
     "CLAUDE_CODE_ENTRYPOINT",
     "CODEX_SANDBOX",
     "CODEX_ROOT",
+    "CODEX_THREAD_ID",
     "CURSOR_AGENT",
     "CURSOR_TRACE_ID",
     "OPENCODE",
