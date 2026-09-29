@@ -47,6 +47,9 @@ use crate::{
 };
 
 const STAGE_NAME: &str = "Stage";
+const NOTES_WIDTH: i64 = 800;
+const NOTES_HEIGHT: i64 = 600;
+const COMMENT_GAP: i64 = 20;
 
 #[derive(Debug, Copy, Clone)]
 pub struct S<'a> {
@@ -468,6 +471,26 @@ impl Sb3 {
         Ok(())
     }
 
+    fn comment(
+        &mut self,
+        id: &str,
+        x: i64,
+        y: i64,
+        width: i64,
+        height: i64,
+        text: &str,
+    ) -> io::Result<()> {
+        write!(self.json, r#""{id}":{{"#)?;
+        write!(self.json, r#""blockId":null"#)?;
+        write!(self.json, r#","x":{x}"#)?;
+        write!(self.json, r#","y":{y}"#)?;
+        write!(self.json, r#","width":{width}"#)?;
+        write!(self.json, r#","height":{height}"#)?;
+        write!(self.json, r#","minimized":false"#)?;
+        write!(self.json, r#","text":{}"#, json!(text))?;
+        write!(self.json, "}}")
+    }
+
     pub fn sprite(
         &mut self,
         fs: Rc<RefCell<dyn VFS>>,
@@ -543,41 +566,25 @@ impl Sb3 {
         write!(self.json, r#""isStage":{}"#, name == STAGE_NAME)?;
         write!(self.json, r#","name":{}"#, json!(name))?;
         if name == STAGE_NAME {
-            let notes_path = config.notes.as_deref().unwrap_or("README.md");
-            let notes = if notes_path.is_empty() {
-                String::new()
-            } else {
-                fs.borrow_mut()
-                    .read_to_string(&input.join(notes_path))
-                    .unwrap_or_default()
-            };
+            let notes = read_notes(&fs, input, config)?;
             write!(self.json, r#","comments":{{"#)?;
-            let mut twconfig_y = 0;
-            if !notes.is_empty() {
-                write!(self.json, r#""notes":{{"#)?;
-                write!(self.json, r#""blockId":null"#)?;
-                write!(self.json, r#","x":0"#)?;
-                write!(self.json, r#","y":0"#)?;
-                write!(self.json, r#","width":800"#)?;
-                write!(self.json, r#","height":600"#)?;
-                write!(self.json, r#","minimized":false"#)?;
-                write!(self.json, r#","text":{}"#, json!(notes))?;
-                write!(self.json, "}},")?; // notes
-                twconfig_y = 620;
-            }
-            write!(self.json, r#""twconfig":{{"#)?;
-            write!(self.json, r#""blockId":null"#)?;
-            write!(self.json, r#","x":0"#)?;
-            write!(self.json, r#","y":{twconfig_y}"#)?;
-            write!(self.json, r#","width":350"#)?;
-            write!(self.json, r#","height":170"#)?;
-            write!(self.json, r#","minimized":false"#)?;
-            write!(
-                self.json,
-                r#","text":{}"#,
-                json!(TurbowarpConfig::from(config).to_string())
+            let mut comma = false;
+            let twconfig_y = if notes.trim().is_empty() {
+                0
+            } else {
+                write_comma_io(&mut self.json, &mut comma)?;
+                self.comment("notes", 0, 0, NOTES_WIDTH, NOTES_HEIGHT, &notes)?;
+                NOTES_HEIGHT + COMMENT_GAP
+            };
+            write_comma_io(&mut self.json, &mut comma)?;
+            self.comment(
+                "twconfig",
+                0,
+                twconfig_y,
+                350,
+                170,
+                &TurbowarpConfig::from(config).to_string(),
             )?;
-            write!(self.json, "}}")?; // twconfig
             write!(self.json, "}}")?; // comments
         }
         write!(self.json, r#","broadcasts":{{"#)?;
@@ -1325,6 +1332,21 @@ impl Sb3 {
             } => self.property(s, d, this_id, parent_id, object, property, span),
             Expr::Ternary { .. } => unreachable!(),
         }
+    }
+}
+
+fn read_notes(fs: &Rc<RefCell<dyn VFS>>, input: &Path, config: &Config) -> io::Result<String> {
+    let notes_path = config.notes_path.as_deref().unwrap_or("README.md");
+    if notes_path.is_empty() {
+        return Ok(String::new());
+    }
+    match fs.borrow_mut().read_to_string(&input.join(notes_path)) {
+        Ok(notes) => Ok(notes.strip_prefix('\u{feff}').unwrap_or(&notes).to_string()),
+        Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(String::new()),
+        Err(err) => Err(io::Error::new(
+            err.kind(),
+            format!("failed to read notes file `{notes_path}`"),
+        )),
     }
 }
 

@@ -34,7 +34,7 @@ pub(super) fn clean(project: &mut Value) {
 }
 
 fn clean_target(target: &mut Value) {
-    let comments_width = target["comments"]
+    let comments_right_edge = target["comments"]
         .as_object()
         .and_then(|comments| {
             comments
@@ -43,8 +43,8 @@ fn clean_target(target: &mut Value) {
                 .max()
         })
         .unwrap_or(0);
-    let script_x = if comments_width > 0 {
-        comments_width + SCRIPT_SPACING
+    let script_x = if comments_right_edge > 0 {
+        comments_right_edge + SCRIPT_SPACING
     } else {
         0
     };
