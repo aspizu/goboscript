@@ -21,8 +21,12 @@ use zip::{
 
 use crate::{
     ast::{
+        ConstExpr,
         Project,
         Sprite,
+        Type,
+        Value,
+        Var,
     },
     codegen::{
         cleanup,
@@ -44,6 +48,24 @@ use crate::{
     vfs::VFS,
     visitor,
 };
+
+const AGENT_ENV_VARS: &[&str] = &[
+    "CLAUDECODE",
+    "CLAUDE_CODE_ENTRYPOINT",
+    "CODEX_SANDBOX",
+    "CODEX_ROOT",
+    "CODEX_THREAD_ID",
+    "CURSOR_AGENT",
+    "CURSOR_TRACE_ID",
+    "OPENCODE",
+    "GEMINI_CLI",
+];
+
+fn is_run_by_agent() -> bool {
+    AGENT_ENV_VARS
+        .iter()
+        .any(|name| std::env::var_os(name).is_some())
+}
 
 pub fn build_impl<T: Write + Seek>(
     fs: Rc<RefCell<dyn VFS>>,
@@ -149,6 +171,19 @@ pub fn build_impl<T: Write + Seek>(
     );
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
+    if is_run_by_agent() {
+        project.stage.vars.entry("AI=true".into()).or_insert(Var {
+            name: "AI=true".into(),
+            span: 0..0,
+            type_: Type::Value,
+            default: Some(ConstExpr::Value {
+                value: Value::String("".into()),
+                span: 0..0,
+            }),
+            is_cloud: false,
+            is_used: true,
+        });
+    }
     log::info!("{:#?}", project);
     let mut sb3 = Sb3::new(fs.clone(), input.clone());
     sb3.project(
