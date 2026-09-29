@@ -34,6 +34,20 @@ pub(super) fn clean(project: &mut Value) {
 }
 
 fn clean_target(target: &mut Value) {
+    let comments_width = target["comments"]
+        .as_object()
+        .and_then(|comments| {
+            comments
+                .values()
+                .map(|comment| comment["x"].as_i64().unwrap() + comment["width"].as_i64().unwrap())
+                .max()
+        })
+        .unwrap_or(0);
+    let script_x = if comments_width > 0 {
+        comments_width + SCRIPT_SPACING
+    } else {
+        0
+    };
     let blocks = target["blocks"].as_object_mut().unwrap();
     let mut parents: Vec<_> = blocks
         .iter()
@@ -47,7 +61,7 @@ fn clean_target(target: &mut Value) {
         let height = height_stack(blocks, Some(&id))
             + (blocks[&id]["opcode"] == "procedures_definition") as i64 * MARGIN * 2;
         let block = blocks[&id].as_object_mut().unwrap();
-        block.insert("x".into(), 0.into());
+        block.insert("x".into(), script_x.into());
         block.insert("y".into(), y.into());
         y += height + SCRIPT_SPACING;
     }

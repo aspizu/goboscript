@@ -543,11 +543,32 @@ impl Sb3 {
         write!(self.json, r#""isStage":{}"#, name == STAGE_NAME)?;
         write!(self.json, r#","name":{}"#, json!(name))?;
         if name == STAGE_NAME {
+            let notes_path = config.notes.as_deref().unwrap_or("README.md");
+            let notes = if notes_path.is_empty() {
+                String::new()
+            } else {
+                fs.borrow_mut()
+                    .read_to_string(&input.join(notes_path))
+                    .unwrap_or_default()
+            };
             write!(self.json, r#","comments":{{"#)?;
+            let mut twconfig_y = 0;
+            if !notes.is_empty() {
+                write!(self.json, r#""notes":{{"#)?;
+                write!(self.json, r#""blockId":null"#)?;
+                write!(self.json, r#","x":0"#)?;
+                write!(self.json, r#","y":0"#)?;
+                write!(self.json, r#","width":800"#)?;
+                write!(self.json, r#","height":600"#)?;
+                write!(self.json, r#","minimized":false"#)?;
+                write!(self.json, r#","text":{}"#, json!(notes))?;
+                write!(self.json, "}},")?; // notes
+                twconfig_y = 620;
+            }
             write!(self.json, r#""twconfig":{{"#)?;
             write!(self.json, r#""blockId":null"#)?;
             write!(self.json, r#","x":0"#)?;
-            write!(self.json, r#","y":0"#)?;
+            write!(self.json, r#","y":{twconfig_y}"#)?;
             write!(self.json, r#","width":350"#)?;
             write!(self.json, r#","height":170"#)?;
             write!(self.json, r#","minimized":false"#)?;

@@ -83,6 +83,7 @@ pub fn frontend() -> ExitCode {
                     high_quality_pen: high_quality_pen.then_some(true),
                     stage_width,
                     stage_height,
+                    notes: None,
                 },
             ) {
                 Err(NewError::AnyhowError(err)) => {
