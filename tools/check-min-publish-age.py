@@ -2,13 +2,17 @@
 import argparse
 import http.client
 import json
-import re
 import sys
 import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument("--age-days", type=int)
@@ -20,13 +24,15 @@ def age_days():
     if args.age_days is not None:
         return args.age_days
     try:
-        config = open(".cargo/config.toml").read()
+        with open(".cargo/config.toml", "rb") as file:
+            config = tomllib.load(file)
     except FileNotFoundError:
         sys.exit("no --age-days and no .cargo/config.toml")
-    match = re.search(r'global-min-publish-age = "(\d+) days"', config)
-    if not match:
+    value = config.get("registry", {}).get("global-min-publish-age")
+    days = str(value or "").removesuffix("days").strip()
+    if not days.isdigit():
         sys.exit("no --age-days and no global-min-publish-age in .cargo/config.toml")
-    return int(match.group(1))
+    return int(days)
 
 
 def index_path(name):
@@ -78,10 +84,12 @@ def check(entry, cutoff):
 
 age = age_days()
 cutoff = time.time() - age * 86400
-lock = open(args.lockfile).read()
-entries = re.findall(
-    r'\[\[package\]\]\nname = "(.+?)"\nversion = "(.+?)"\nsource = "registry', lock
-)
+lock = tomllib.load(open(args.lockfile, "rb"))
+entries = [
+    (package["name"], package["version"])
+    for package in lock.get("package", [])
+    if package.get("source") == "registry+https://github.com/rust-lang/crates.io-index"
+]
 if not entries:
     sys.exit(f"no packages found in {args.lockfile}")
 with ThreadPoolExecutor(max_workers=16) as pool:
