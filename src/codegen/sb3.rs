@@ -50,6 +50,8 @@ const STAGE_NAME: &str = "Stage";
 const NOTES_WIDTH: i64 = 800;
 const NOTES_HEIGHT: i64 = 600;
 const COMMENT_GAP: i64 = 20;
+const COMMENT_TEXT_LIMIT: usize = 8000;
+const ELLIPSIS: char = '\u{2026}';
 
 #[derive(Debug, Copy, Clone)]
 pub struct S<'a> {
@@ -1341,7 +1343,16 @@ fn read_notes(fs: &Rc<RefCell<dyn VFS>>, input: &Path, config: &Config) -> io::R
         return Ok(String::new());
     }
     match fs.borrow_mut().read_to_string(&input.join(notes_path)) {
-        Ok(notes) => Ok(notes.strip_prefix('\u{feff}').unwrap_or(&notes).to_string()),
+        Ok(notes) => {
+            let notes = notes.strip_prefix('\u{feff}').unwrap_or(&notes);
+            if notes.chars().count() > COMMENT_TEXT_LIMIT {
+                let mut truncated: String = notes.chars().take(COMMENT_TEXT_LIMIT - 1).collect();
+                truncated.push(ELLIPSIS);
+                Ok(truncated)
+            } else {
+                Ok(notes.to_string())
+            }
+        }
         Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(String::new()),
         Err(err) => Err(io::Error::new(
             err.kind(),
