@@ -1336,7 +1336,7 @@ impl Sb3 {
 }
 
 fn read_notes(fs: &Rc<RefCell<dyn VFS>>, input: &Path, config: &Config) -> io::Result<String> {
-    let notes_path = config.notes_path.as_deref().unwrap_or("README.md");
+    let notes_path = config.notes.as_deref().unwrap_or("README.md");
     if notes_path.is_empty() {
         return Ok(String::new());
     }
