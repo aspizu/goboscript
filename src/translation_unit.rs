@@ -6,8 +6,8 @@ use std::{
     str,
 };
 
-use rustc_hash::FxHashSet;
 use logos::Span;
+use rustc_hash::FxHashSet;
 use serde::{
     Deserialize,
     Serialize,

@@ -11,12 +11,12 @@ use std::{
     },
 };
 
-use rustc_hash::FxHashMap;
 use glob::{
     glob,
     MatchOptions,
     Pattern,
 };
+use rustc_hash::FxHashMap;
 use serde::{
     Deserialize,
     Serialize,

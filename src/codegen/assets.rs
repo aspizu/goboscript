@@ -4,11 +4,11 @@ use std::{
     rc::Rc,
 };
 
-use rustc_hash::FxHashMap;
 use md5::{
     Digest,
     Md5,
 };
+use rustc_hash::FxHashMap;
 
 use crate::{
     ast::Asset,
