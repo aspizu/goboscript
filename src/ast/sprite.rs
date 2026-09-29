@@ -1,8 +1,8 @@
+use logos::Span;
 use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };
-use logos::Span;
 use serde::{
     Deserialize,
     Serialize,

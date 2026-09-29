@@ -25,17 +25,17 @@ use serde::{
 use tsify::Tsify;
 
 use super::{
-    Diagnostic,
     diagnostic_kind::DiagnosticKind,
+    Diagnostic,
 };
 use crate::{
     ast::Project,
     codegen::debug_info::DebugInfo,
     standard_library::StandardLibrary,
     translation_unit::{
+        parse_translation_unit,
         Owner,
         TranslationUnit,
-        parse_translation_unit,
     },
     vfs::VFS,
 };

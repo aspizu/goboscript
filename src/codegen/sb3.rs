@@ -13,11 +13,11 @@ use std::{
 };
 
 use anyhow::bail;
+use logos::Span;
 use rustc_hash::{
     FxHashMap,
     FxHashSet,
 };
-use logos::Span;
 use serde_json::json;
 
 use super::{

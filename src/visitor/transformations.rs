@@ -1,5 +1,5 @@
-use rustc_hash::FxHashMap;
 use logos::Span;
+use rustc_hash::FxHashMap;
 
 use super::pass2::S;
 use crate::{
