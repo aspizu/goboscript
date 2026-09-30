@@ -1,0 +1,3 @@
+goboscript is a compiler for Scratch projects.
+It has structs, enums, lists and macros.
+This file is loaded into a list.

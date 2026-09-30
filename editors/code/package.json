@@ -45,6 +45,28 @@
     "oxlint": "^1.86.0",
     "typescript": "^7.0.2"
   },
+  "contributes": {
+    "languages": [
+      {
+        "id": "goboscript",
+        "aliases": [
+          "goboscript",
+          "GoboScript"
+        ],
+        "extensions": [
+          ".gs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "goboscript",
+        "scopeName": "source.goboscript",
+        "path": "./syntaxes/goboscript.tmLanguage.json"
+      }
+    ]
+  },
   "activationEvents": [
     "workspaceContains:stage.gs"
   ],

@@ -1,0 +1,211 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "goboscript",
+  "scopeName": "source.goboscript",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#directives" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#definitions" },
+    { "include": "#keywords" },
+    { "include": "#builtins" },
+    { "include": "#args" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#dotted-names" },
+    { "include": "#pascal-case-names" },
+    { "include": "#screaming-case-names" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.number-sign.goboscript",
+      "match": "#.*$"
+    },
+    "directives": {
+      "patterns": [
+        {
+          "name": "meta.preprocessor.goboscript",
+          "match": "^(%)(define)\\s+([_a-zA-Z][_a-zA-Z0-9]*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.directive.goboscript"
+            },
+            "2": {
+              "name": "keyword.control.directive.define.goboscript"
+            },
+            "3": {
+              "name": "variable.other.constant.preprocessor.goboscript"
+            }
+          }
+        },
+        {
+          "name": "meta.preprocessor.goboscript",
+          "match": "^(%)(include|define|undef|if|else|endif)\\b",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.directive.goboscript"
+            },
+            "2": {
+              "name": "keyword.control.directive.goboscript"
+            }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.goboscript",
+      "begin": "\"",
+      "end": "\"|$",
+      "patterns": [
+        {
+          "name": "constant.character.escape.goboscript",
+          "match": "\\\\[\"\\\\/bfnrt]"
+        },
+        {
+          "name": "constant.character.escape.goboscript",
+          "match": "\\\\u[0-9a-zA-Z]{4}"
+        },
+        {
+          "name": "invalid.illegal.unrecognized-escape.goboscript",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.goboscript",
+          "match": "\\b0x[0-9a-fA-F][0-9a-fA-F_]*\\b"
+        },
+        {
+          "name": "constant.numeric.binary.goboscript",
+          "match": "\\b0b[0-1][0-1_]*\\b"
+        },
+        {
+          "name": "constant.numeric.octal.goboscript",
+          "match": "\\b0o[0-7][0-7_]*\\b"
+        },
+        {
+          "name": "constant.numeric.float.goboscript",
+          "match": "\\b(0|[1-9][0-9_]*)(\\.[0-9]+([Ee][-+][0-9]+)?|[Ee][-+][0-9]+)"
+        },
+        {
+          "name": "constant.numeric.integer.goboscript",
+          "match": "\\b[0-9][0-9_]*\\b"
+        }
+      ]
+    },
+    "definitions": {
+      "patterns": [
+        {
+          "comment": "proc and func names",
+          "match": "\\b(proc|func)\\b\\s*([_a-zA-Z][_a-zA-Z0-9]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.other.declaration.goboscript"
+            },
+            "2": {
+              "name": "entity.name.function.goboscript"
+            }
+          }
+        },
+        {
+          "comment": "struct and enum names",
+          "match": "\\b(struct|enum)\\b\\s*([_a-zA-Z][_a-zA-Z0-9]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.other.declaration.goboscript"
+            },
+            "2": {
+              "name": "entity.name.type.goboscript"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.goboscript",
+          "match": "\\b(if|else|elif|until|forever|repeat|return)\\b"
+        },
+        {
+          "name": "keyword.other.declaration.goboscript",
+          "match": "\\b(costumes|sounds|local|nowarp|on|onflag|onkey|onclick|onbackdrop|onloudness|ontimer|onclone|var|list|cloud)\\b"
+        },
+        {
+          "name": "keyword.control.logical.goboscript",
+          "match": "\\b(not|and|or|in)\\b"
+        },
+        {
+          "name": "constant.language.goboscript",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "keyword.other.goboscript",
+          "match": "\\b(add|to|delete|insert|at|as|show|hide|set_x|set_y|set_size|set_volume|point_in_direction|set_rotation_style_left_right|set_rotation_style_all_around|set_rotation_style_do_not_rotate)\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.goboscript",
+          "match": "\\b(length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
+        },
+        {
+          "name": "support.function.goboscript",
+          "match": "\\b(move|turn_left|turn_right|goto_random_position|goto_mouse_pointer|goto|glide|glide_to_random_position|glide_to_mouse_pointer|point_towards_mouse_pointer|point_towards_random_direction|point_towards|change_x|change_y|if_on_edge_bounce|say|think|switch_costume|next_costume|switch_backdrop|previous_backdrop|random_backdrop|next_backdrop|change_size|change_color_effect|change_fisheye_effect|change_whirl_effect|change_pixelate_effect|change_mosaic_effect|change_brightness_effect|change_ghost_effect|set_color_effect|set_fisheye_effect|set_whirl_effect|set_pixelate_effect|set_mosaic_effect|set_brightness_effect|set_ghost_effect|clear_graphic_effects|goto_front|goto_back|go_forward|go_backward|play_sound_until_done|start_sound|stop_all_sounds|change_pitch_effect|change_pan_effect|set_pitch_effect|set_pan_effect|change_volume|clear_sound_effects|broadcast|broadcast_and_wait|wait|stop_all|stop_this_script|stop_other_scripts|delete_this_clone|clone|ask|set_drag_mode_draggable|set_drag_mode_not_draggable|reset_timer|erase_all|stamp|pen_down|pen_up|set_pen_color|change_pen_size|set_pen_size|set_pen_hue|set_pen_saturation|set_pen_brightness|set_pen_transparency|change_pen_hue|change_pen_saturation|change_pen_brightness|change_pen_transparency|play_drum|play_note|set_instrument|rest|set_tempo|change_tempo)\\b"
+        }
+      ]
+    },
+    "args": {
+      "name": "variable.parameter.goboscript",
+      "match": "\\$[_a-zA-Z0-9]+"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.goboscript",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.assignment.goboscript",
+          "match": "\\+\\+|--|\\+=|-=|\\*=|//=|/=|%=|&=|="
+        },
+        {
+          "name": "keyword.operator.arithmetic.goboscript",
+          "match": "//|[+*/%&-]"
+        },
+        {
+          "name": "keyword.operator.pipe.goboscript",
+          "match": "\\|>"
+        }
+      ]
+    },
+    "punctuation": {
+      "name": "punctuation.separator.goboscript",
+      "match": ",|;|:|\\.|\\(|\\)|\\[|\\]|\\{|\\}"
+    },
+    "dotted-names": {
+      "match": "([_a-zA-Z][_a-zA-Z0-9]*)\\.([_a-zA-Z][_a-zA-Z0-9]*)",
+      "captures": {
+        "1": {
+          "name": "entity.name.type.goboscript"
+        },
+        "2": {
+          "name": "variable.other.member.goboscript"
+        }
+      }
+    },
+    "pascal-case-names": {
+      "name": "entity.name.type.goboscript",
+      "match": "\\b[A-Z][_a-zA-Z0-9]*[a-z][_a-zA-Z0-9]*\\b"
+    },
+    "screaming-case-names": {
+      "name": "variable.other.constant.goboscript",
+      "match": "\\b[A-Z_][A-Z0-9_]*\\b"
+    }
+  }
+}

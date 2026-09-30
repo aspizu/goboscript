@@ -1,5 +1,7 @@
 **
 !icon.png
 !out/main.js
+!syntaxes/**
+!language-configuration.json
 !package.json
 !README.md
