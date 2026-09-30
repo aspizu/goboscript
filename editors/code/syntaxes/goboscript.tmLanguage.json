@@ -151,8 +151,16 @@
     "builtins": {
       "patterns": [
         {
+          "name": "keyword.other.debug.goboscript",
+          "match": "\\b(error|warn|breakpoint)\\b"
+        },
+        {
           "name": "support.function.builtin.goboscript",
           "match": "\\b(length|round|abs|floor|ceil|sqrt|sin|cos|tan|asin|acos|atan|ln|log|antiln|antilog)\\b"
+        },
+        {
+          "name": "support.function.builtin.goboscript",
+          "match": "\\b(x_position|y_position|direction|size|costume_number|costume_name|backdrop_number|backdrop_name|volume|distance_to_mouse_pointer|distance_to|touching_mouse_pointer|touching_edge|touching|key_pressed|mouse_down|mouse_x|mouse_y|loudness|timer|current_year|current_month|current_date|current_day_of_week|current_hour|current_minute|current_second|days_since_2000|username|online|touching_color|color_is_touching_color|answer|random|contains)\\b"
         },
         {
           "name": "support.function.goboscript",
@@ -161,8 +169,16 @@
       ]
     },
     "args": {
-      "name": "variable.parameter.goboscript",
-      "match": "\\$[_a-zA-Z0-9]+"
+      "patterns": [
+        {
+          "name": "variable.other.constant.goboscript",
+          "match": "\\$(tw_is_compiled|tw_is_turbowarp|tw_is_forkphorus)\\b"
+        },
+        {
+          "name": "variable.parameter.goboscript",
+          "match": "\\$[_a-zA-Z0-9]+"
+        }
+      ]
     },
     "operators": {
       "patterns": [
