@@ -1,6 +1,7 @@
 packages:
   - cheatsheet
   - docs/javascripts
+  - editors/code
   - tools
 
 minimumReleaseAge: 1440
@@ -14,6 +15,8 @@ verifyDepsBeforeRun: install
 optimisticRepeatInstall: true
 
 allowBuilds:
+  "@vscode/vsce-sign": true
   esbuild: true
+  keytar: true
   sharp: true
   workerd: true

@@ -1,0 +1,54 @@
+{
+  "name": "goboscript",
+  "displayName": "goboscript",
+  "version": "2.0.0",
+  "description": "goboscript language support for Visual Studio Code.",
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "goboscript"
+  ],
+  "homepage": "https://github.com/aspizu/goboscript",
+  "license": "MIT",
+  "author": {
+    "name": "Priyanshu Dangare",
+    "email": "hi@aspiz.uk",
+    "url": "https://aspiz.uk"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aspizu/goboscript.git"
+  },
+  "publisher": "aspizu",
+  "main": "./out/main.js",
+  "scripts": {
+    "vscode:prepublish": "pnpm run build --minify",
+    "package": "vsce package -o goboscript.vsix",
+    "build-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node22",
+    "build": "pnpm run build-base --sourcemap",
+    "watch": "pnpm run build-base --sourcemap --watch",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^10.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/vscode": "^1.138.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "typescript": "^7.0.2"
+  },
+  "activationEvents": [
+    "workspaceContains:stage.gs"
+  ],
+  "engines": {
+    "vscode": "^1.138.0"
+  }
+}
