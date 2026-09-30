@@ -6,6 +6,17 @@ struct S<'a> {
     func: Option<&'a Func>,
 }
 
+impl S<'_> {
+    fn visit_stmt_name(&mut self, name: &Name) {
+        self.references.names.insert(NameReference {
+            name: name.basename().clone(),
+            field: name.fieldname().cloned(),
+            proc: self.proc.map(|p| p.name.clone()),
+            func: self.func.map(|f| f.name.clone()),
+        });
+    }
+}
+
 pub fn visit_project(project: &mut Project) {
     visit_sprite(&mut project.stage);
     for sprite in project.sprites.values_mut() {
@@ -81,39 +92,39 @@ fn visit_stmt(stmt: &Stmt, s: &mut S) {
             visit_stmts(body, s);
         }
         Stmt::SetVar {
-            name: _,
+            name,
             value,
             type_: _,
-            is_local: _,
+            is_local,
             is_cloud: _,
         } => {
+            if !is_local && !name.is_generated() {
+                s.visit_stmt_name(name);
+            }
             visit_expr(value, s);
         }
-        Stmt::ChangeVar { name: _, value } => {
+        Stmt::ChangeVar { name, value } => {
+            s.visit_stmt_name(name);
             visit_expr(value, s);
         }
-        Stmt::Show(_name) => {}
-        Stmt::Hide(_name) => {}
-        Stmt::AddToList { name: _, value } => {
+        Stmt::Show(name) => s.visit_stmt_name(name),
+        Stmt::Hide(name) => s.visit_stmt_name(name),
+        Stmt::AddToList { name, value } => {
+            s.visit_stmt_name(name);
             visit_expr(value, s);
         }
-        Stmt::DeleteList(_name) => {}
-        Stmt::DeleteListIndex { name: _, index } => {
+        Stmt::DeleteList(name) => s.visit_stmt_name(name),
+        Stmt::DeleteListIndex { name, index } => {
+            s.visit_stmt_name(name);
             visit_expr(index, s);
         }
-        Stmt::InsertAtList {
-            name: _,
-            index,
-            value,
-        } => {
+        Stmt::InsertAtList { name, index, value } => {
+            s.visit_stmt_name(name);
             visit_expr(index, s);
             visit_expr(value, s);
         }
-        Stmt::SetListIndex {
-            name: _,
-            index,
-            value,
-        } => {
+        Stmt::SetListIndex { name, index, value } => {
+            s.visit_stmt_name(name);
             visit_expr(index, s);
             visit_expr(value, s);
         }
@@ -206,9 +217,16 @@ fn visit_expr(expr: &Expr, s: &mut S) {
         Expr::FuncCall {
             name: _,
             span: _,
-            args: _,
-            kwargs: _,
-        } => {}
+            args,
+            kwargs,
+        } => {
+            for arg in args {
+                visit_expr(arg, s);
+            }
+            for (_, arg) in kwargs.values() {
+                visit_expr(arg, s);
+            }
+        }
         Expr::UnOp {
             op: _,
             span: _,

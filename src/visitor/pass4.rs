@@ -165,6 +165,18 @@ fn resolve_references(
         }
     }
     for refr in &references.names {
+        if let Some(list) = scope.lists.get_mut(&refr.name) {
+            list.is_used = true;
+            continue;
+        }
+        if let Some(list) = scope
+            .global_lists
+            .as_mut()
+            .and_then(|g| g.get_mut(&refr.name))
+        {
+            list.is_used = true;
+            continue;
+        }
         if let Some(var) = refr
             .proc
             .as_ref()
@@ -213,18 +225,6 @@ fn resolve_references(
             Scope::mark_struct_field(refr, scope.structs, scope.global_vars.as_mut().unwrap());
             continue;
         }
-        if let Some(list) = scope.lists.get_mut(&refr.name) {
-            list.is_used = true;
-            continue;
-        }
-        if let Some(list) = scope
-            .global_lists
-            .as_mut()
-            .and_then(|g| g.get_mut(&refr.name))
-        {
-            list.is_used = true;
-            continue;
-        }
         if let Some(enum_) = scope.enums.get_mut(&refr.name) {
             enum_.is_used = true;
             if let Some(variant) = refr
@@ -242,6 +242,36 @@ fn resolve_references(
         // generated, so mark as used here.
         if let Some(struct_) = scope.structs.get_mut(&refr.name) {
             struct_.is_used = true;
+        }
+        if let Some(list) = scope.lists.get_mut(&refr.name).or_else(|| {
+            scope
+                .global_lists
+                .as_mut()
+                .and_then(|g| g.get_mut(&refr.name))
+        }) {
+            if !list.is_initialized_empty() {
+                list.is_used = true;
+            }
+        } else if let Some(var) = refr
+            .proc
+            .as_ref()
+            .and_then(|p| scope.proc_locals.get_mut(p))
+            .and_then(|l| l.get_mut(&refr.name))
+            .or_else(|| {
+                refr.func
+                    .as_ref()
+                    .and_then(|p| scope.func_locals.get_mut(p))
+                    .and_then(|l| l.get_mut(&refr.name))
+            })
+            .or_else(|| scope.vars.get_mut(&refr.name))
+            .or_else(|| {
+                scope
+                    .global_vars
+                    .as_mut()
+                    .and_then(|g| g.get_mut(&refr.name))
+            })
+        {
+            var.is_used = true;
         }
     }
     for struct_name in &references.structs {

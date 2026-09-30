@@ -261,7 +261,7 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
             if !v.vars.contains_key(basename)
                 && v.global_vars
                     .as_ref()
-                    .is_some_and(|vars| !vars.contains_key(basename))
+                    .is_none_or(|vars| !vars.contains_key(basename))
             {
                 v.vars.insert(basename.clone(), var);
             }

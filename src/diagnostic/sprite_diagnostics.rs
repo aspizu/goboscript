@@ -100,7 +100,12 @@ impl SpriteDiagnostics {
                 continue;
             }
             // TODO: memoize this using a memoization crate.
-            let mut text = fs::read_to_string(&include.path).unwrap();
+            let bytes = match fs::read(&include.path) {
+                Ok(bytes) => bytes,
+                Err(_) => continue,
+            };
+            let valid_utf8 = std::str::from_utf8(&bytes).is_ok();
+            let mut text = String::from_utf8_lossy(&bytes).into_owned();
             if !text.ends_with('\n') {
                 text.push('\n');
             }
@@ -110,7 +115,7 @@ impl SpriteDiagnostics {
                 .unwrap_or(&include.path)
                 .to_str()
                 .unwrap();
-            if diagnostic.span.start == 0 && diagnostic.span.end == 0 {
+            if !valid_utf8 || diagnostic.span.start == 0 && diagnostic.span.end == 0 {
                 let mut message = level
                     .title(&title)
                     .snippet(Snippet::source(&text).origin(include_path).fold(true));

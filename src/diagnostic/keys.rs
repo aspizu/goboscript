@@ -59,9 +59,11 @@ const KEYS: &[&str] = &[
 const KEY_CHARS: &str = "-,.`=[]\\;'/!@#$%^&*()_+{}|:\"?<>~";
 
 pub fn all_keys<'a>() -> impl Iterator<Item = &'a str> {
-    KEYS.iter().copied().chain(KEY_CHARS.split(""))
+    KEYS.iter()
+        .copied()
+        .chain(KEY_CHARS.split("").filter(|key| !key.is_empty()))
 }
 
 pub fn is_key(s: &str) -> bool {
-    KEYS.contains(&s) || KEY_CHARS.split("").any(|c| c == s)
+    KEYS.contains(&s) || KEY_CHARS.split("").any(|key| !key.is_empty() && key == s)
 }

@@ -19,7 +19,13 @@ fn main() -> ExitCode {
         );
     }));
     let begin = Instant::now();
-    let result = frontend();
+    let result = match std::thread::Builder::new()
+        .stack_size(512 * 1024 * 1024)
+        .spawn(frontend)
+    {
+        Ok(handle) => handle.join().unwrap_or(ExitCode::FAILURE),
+        Err(_) => frontend(),
+    };
     let color = if matches!(result, ExitCode::SUCCESS) {
         Color::Green
     } else {
