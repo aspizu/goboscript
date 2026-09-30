@@ -1338,10 +1338,13 @@ impl Sb3 {
 }
 
 fn read_notes(fs: &Rc<RefCell<dyn VFS>>, input: &Path, config: &Config) -> io::Result<String> {
-    let notes_path = config.notes.as_deref().unwrap_or("README.md");
-    if notes_path.is_empty() {
+    let Some(notes_path) = config
+        .notes
+        .as_deref()
+        .filter(|notes_path| !notes_path.is_empty())
+    else {
         return Ok(String::new());
-    }
+    };
     match fs.borrow_mut().read_to_string(&input.join(notes_path)) {
         Ok(notes) => {
             let notes = notes.strip_prefix('\u{feff}').unwrap_or(&notes);

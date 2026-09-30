@@ -93,3 +93,14 @@ high_quality_pen = true # default is false
 stage_width = 640 # default is 480
 stage_height = 480 # default is 360
 ```
+
+## Notes
+
+Embeds the contents of a file as a comment inside the Stage.
+
+```toml
+notes = "NOTES.md" # default is unset
+```
+
+The comment is skipped if the file is missing or empty, and text longer than 8000
+characters is truncated.
