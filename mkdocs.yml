@@ -5,6 +5,7 @@ exclude_docs: |
   javascripts/tsconfig.json
   javascripts/*.ts
   javascripts/*.tmGrammar.json
+  javascripts/*.tmGrammar.yml
 nav:
   - Install: install.md
   - Getting Started:
@@ -47,7 +48,6 @@ nav:
   - Contributing: contributing.md
   - Editor Integration:
       - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
-      - Visual Studio Code: editor-integration/vscode.md
       - Sublime Text: editor-integration/sublime-text.md
       - Notepad++: editor-integration/notepad++.md
 theme:
