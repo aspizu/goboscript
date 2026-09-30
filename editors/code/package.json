@@ -24,7 +24,7 @@
   "main": "./out/main.js",
   "scripts": {
     "vscode:prepublish": "pnpm run build --minify",
-    "package": "vsce package -o goboscript.vsix",
+    "package": "vsce package --no-dependencies -o goboscript.vsix",
     "build-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node22",
     "build": "pnpm run build-base --sourcemap",
     "watch": "pnpm run build-base --sourcemap --watch",
@@ -48,6 +48,7 @@
   "activationEvents": [
     "workspaceContains:stage.gs"
   ],
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.138.0"
   }
