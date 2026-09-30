@@ -3,7 +3,10 @@ use lalrpop_util::lalrpop_mod;
 
 use crate::{
     ast::Sprite,
-    diagnostic::Diagnostic,
+    diagnostic::{
+        Diagnostic,
+        DiagnosticKind,
+    },
     lexer::{
         adaptor,
         token::Token,
@@ -26,11 +29,16 @@ fn tokenize(translation_unit: &TranslationUnit) -> (Vec<SpannedToken>, Vec<Diagn
     let mut tokens = Vec::new();
     let mut diagnostics = Vec::new();
 
-    adaptor::Lexer::new(std::str::from_utf8(&translation_unit.text).unwrap()).for_each(|result| {
-        match result {
-            Ok(token) => tokens.push(token),
-            Err(diagnostic) => diagnostics.push(diagnostic),
-        }
+    let Ok(text) = std::str::from_utf8(&translation_unit.text) else {
+        diagnostics.push(Diagnostic {
+            kind: DiagnosticKind::io_error("source file is not valid UTF-8", None),
+            span: 0..0,
+        });
+        return (tokens, diagnostics);
+    };
+    adaptor::Lexer::new(text).for_each(|result| match result {
+        Ok(token) => tokens.push(token),
+        Err(diagnostic) => diagnostics.push(diagnostic),
     });
 
     (tokens, diagnostics)

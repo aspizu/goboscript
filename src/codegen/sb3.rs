@@ -489,6 +489,11 @@ impl Sb3 {
                         d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
                     }
                 }
+                for var in sprite.proc_locals[&proc.name].values() {
+                    if !var.is_used {
+                        d.report(DiagnosticKind::UnusedVariable(var.name.clone()), &var.span);
+                    }
+                }
             }
         }
         for func in sprite.funcs.values() {
@@ -500,6 +505,21 @@ impl Sb3 {
                         d.report(DiagnosticKind::UnusedArg(arg.name.clone()), &arg.span);
                     }
                 }
+                for var in sprite.func_locals[&func.name].values() {
+                    if !var.is_used {
+                        d.report(DiagnosticKind::UnusedVariable(var.name.clone()), &var.span);
+                    }
+                }
+            }
+        }
+        for var in sprite.vars.values() {
+            if !var.is_used {
+                d.report(DiagnosticKind::UnusedVariable(var.name.clone()), &var.span);
+            }
+        }
+        for list in sprite.lists.values() {
+            if !list.is_used {
+                d.report(DiagnosticKind::UnusedList(list.name.clone()), &list.span);
             }
         }
         for struct_ in sprite.structs.values() {
@@ -1282,6 +1302,10 @@ impl Sb3 {
             Expr::UnOp { op, opr, .. } => self.un_op(s, d, this_id, parent_id, op, opr),
             Expr::BinOp { op, lhs, rhs, .. } => self.bin_op(s, d, this_id, parent_id, op, lhs, rhs),
             Expr::StructLiteral { name, span, .. } => {
+                if s.get_struct(name).is_none() {
+                    d.report(DiagnosticKind::UnrecognizedStruct(name.clone()), span);
+                    return Ok(());
+                }
                 d.report(
                     DiagnosticKind::TypeMismatch {
                         expected: Type::Value,

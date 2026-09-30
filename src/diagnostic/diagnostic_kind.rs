@@ -129,6 +129,10 @@ pub enum DiagnosticKind {
     FixedLengthListInvalid(f64),
 }
 
+fn arguments(count: usize) -> String {
+    format!("{count} argument{}", if count == 1 { "" } else { "s" })
+}
+
 impl DiagnosticKind {
     pub fn io_error(error: impl ToString, help: Option<&str>) -> Self {
         DiagnosticKind::IOError {
@@ -197,39 +201,36 @@ impl DiagnosticKind {
             }
             DiagnosticKind::BlockArgsCountMismatch { block, given } => {
                 format!(
-                    "block {:?} expects {} arguments, but {} were given",
+                    "block {:?} expects {}, but got {}",
                     block,
-                    block.args().len(),
+                    arguments(block.args().len()),
                     given
                 )
             }
             DiagnosticKind::ReprArgsCountMismatch { repr, given } => {
                 format!(
-                    "repr {:?} expects {} arguments, but {} were given",
+                    "repr {:?} expects {}, but got {}",
                     repr,
-                    repr.args().len(),
+                    arguments(repr.args().len()),
                     given
                 )
             }
             DiagnosticKind::ProcArgsCountMismatch { proc, given } => {
                 format!(
-                    "procedure expects {} arguments, but {} were given",
-                    sprite.proc_args[proc].len(),
+                    "procedure expects {}, but got {}",
+                    arguments(sprite.proc_args[proc].len()),
                     given
                 )
             }
             DiagnosticKind::FuncArgsCountMismatch { func, given } => {
                 format!(
-                    "function expects {} arguments, but {} were given",
-                    sprite.func_args[func].len(),
+                    "function expects {}, but got {}",
+                    arguments(sprite.func_args[func].len()),
                     given
                 )
             }
             DiagnosticKind::MacroArgsCountMismatch { expected, given } => {
-                format!(
-                    "macro expects {} arguments, but {} were given",
-                    expected, given
-                )
+                format!("macro expects {}, but got {}", arguments(*expected), given)
             }
             DiagnosticKind::CommandFailed { .. } => "command failed".to_string(),
             DiagnosticKind::VariableRedefinition(name) => {

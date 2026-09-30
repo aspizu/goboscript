@@ -7,6 +7,7 @@ use serde::{
 use super::{
     type_::Type,
     ConstExpr,
+    Value,
 };
 use crate::misc::SmolStr;
 
@@ -27,6 +28,22 @@ pub enum ListDefault {
 }
 
 impl List {
+    pub fn is_initialized_empty(&self) -> bool {
+        match &self.default {
+            None => true,
+            Some(ListDefault::Values(values)) => values.is_empty(),
+            Some(ListDefault::File { .. }) => false,
+            Some(ListDefault::FixedLength(
+                _,
+                ConstExpr::Value {
+                    value: Value::Number(length),
+                    ..
+                },
+            )) => *length <= 0.0,
+            Some(ListDefault::FixedLength(..)) => false,
+        }
+    }
+
     pub fn new(name: SmolStr, span: Span, type_: Type) -> Self {
         Self {
             name,

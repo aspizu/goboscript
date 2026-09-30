@@ -12,6 +12,10 @@ use super::{
 };
 use crate::{
     ast::Expr,
+    diagnostic::{
+        keys,
+        DiagnosticKind,
+    },
     misc::SmolStr,
 };
 
@@ -28,11 +32,14 @@ impl Sb3 {
     pub fn on_key(
         &mut self,
         _s: S,
-        _d: D,
+        d: D,
         _this_id: NodeID,
         key: &SmolStr,
-        _span: &Span,
+        span: &Span,
     ) -> io::Result<()> {
+        if !keys::is_key(key) {
+            d.report(DiagnosticKind::UnrecognizedKey(key.clone()), span);
+        }
         self.single_field("KEY_OPTION", key)?;
         self.end_obj() // node
     }

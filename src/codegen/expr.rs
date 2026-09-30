@@ -189,7 +189,7 @@ impl Sb3 {
                 if s.sprite.lists.contains_key(name)
                     || s.stage.is_some_and(|stage| stage.lists.contains_key(name))
                 {
-                    return self.list_length(s, this_id, parent_id, name);
+                    return self.list_length(s, d, this_id, parent_id, name);
                 }
             }
         }
@@ -245,8 +245,14 @@ impl Sb3 {
             {
                 if let Expr::Name(name) = dot_lhs.as_ref() {
                     if let Some(list) = s.get_list(name.basename()) {
-                        if let Some((type_name, _type_span)) = list.type_.struct_() {
-                            let struct_ = s.get_struct(type_name).unwrap();
+                        if let Some((type_name, type_span)) = list.type_.struct_() {
+                            let Some(struct_) = s.get_struct(type_name) else {
+                                d.report(
+                                    DiagnosticKind::UnrecognizedStruct(type_name.clone()),
+                                    type_span,
+                                );
+                                return Ok(());
+                            };
                             if struct_
                                 .fields
                                 .iter()
@@ -329,14 +335,21 @@ impl Sb3 {
     fn list_length(
         &mut self,
         s: S,
+        d: D,
         this_id: NodeID,
         parent_id: NodeID,
         name: &str,
     ) -> io::Result<()> {
         self.begin_node(Node::new("data_lengthoflist", this_id).parent_id(parent_id))?;
         let list = s.get_list(name).unwrap();
-        if let Some((type_name, _type_span)) = list.type_.struct_() {
-            let struct_ = s.get_struct(type_name).unwrap();
+        if let Some((type_name, type_span)) = list.type_.struct_() {
+            let Some(struct_) = s.get_struct(type_name) else {
+                d.report(
+                    DiagnosticKind::UnrecognizedStruct(type_name.clone()),
+                    type_span,
+                );
+                return self.end_obj(); // node
+            };
             if struct_.fields.is_empty() {
                 // For empty structs, we can't access fields[0], so we use the list name directly
                 self.single_field_id("LIST", name)?;
@@ -480,9 +493,14 @@ impl Sb3 {
             // Check if this is a struct list field access
             // First check if this is a list directly
             if let Some(list) = s.get_list(name.basename()) {
-                if let Some((type_name, _type_span)) = list.type_.struct_() {
-                    // This is a struct list, check if field exists in struct
-                    let struct_ = s.get_struct(type_name).unwrap();
+                if let Some((type_name, type_span)) = list.type_.struct_() {
+                    let Some(struct_) = s.get_struct(type_name) else {
+                        d.report(
+                            DiagnosticKind::UnrecognizedStruct(type_name.clone()),
+                            type_span,
+                        );
+                        return Ok(());
+                    };
                     // Verify the field exists in the struct
                     if struct_
                         .fields

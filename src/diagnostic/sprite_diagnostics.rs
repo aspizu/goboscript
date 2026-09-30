@@ -100,7 +100,11 @@ impl SpriteDiagnostics {
                 continue;
             }
             // TODO: memoize this using a memoization crate.
-            let mut text = fs::read_to_string(&include.path).unwrap();
+            let Ok(mut text) =
+                fs::read(&include.path).map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+            else {
+                continue;
+            };
             if !text.ends_with('\n') {
                 text.push('\n');
             }

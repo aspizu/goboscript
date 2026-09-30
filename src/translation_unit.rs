@@ -139,10 +139,16 @@ pub fn parse_translation_unit(
                     .map(|j| i + j + 1)
                     .unwrap_or(unit.text.len());
                 let path = std::str::from_utf8(&unit.text[i..j])
-                    .unwrap()
+                    .unwrap_or("")
                     .trim()
                     .to_owned();
-                let help = if path.ends_with(';') {
+                let help = if path.starts_with('"')
+                    || path.starts_with('\'')
+                    || path.ends_with('"')
+                    || path.ends_with('\'')
+                {
+                    Some("include paths are written without quotes, try removing the quotes".into())
+                } else if path.ends_with(';') {
                     Some(
                         "pre-processor directives do not require a semicolon, try removing the `;`"
                             .into(),
@@ -180,7 +186,7 @@ pub fn parse_translation_unit(
                     .map(|x| i + x)
                     .unwrap_or(j);
                 let name = std::str::from_utf8(&unit.text[i..x])
-                    .unwrap()
+                    .unwrap_or("")
                     .trim()
                     .to_owned();
                 unit.defines.insert(name);
@@ -198,7 +204,7 @@ pub fn parse_translation_unit(
                     .position(|c| *c == b'\n')
                     .map(|j| i + j + 1)
                     .unwrap_or(unit.text.len());
-                let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
+                let name = std::str::from_utf8(&unit.text[i..j]).unwrap_or("").trim();
                 unit.defines.remove(name);
                 i = j;
             } else if starts_with_directive(&unit.text[i..], b"%ifdef")
@@ -243,7 +249,7 @@ pub fn parse_translation_unit(
                     .position(|c| *c == b'\n')
                     .map(|j| i + j + 1)
                     .unwrap_or(unit.text.len());
-                let name = std::str::from_utf8(&unit.text[i..j]).unwrap().trim();
+                let name = std::str::from_utf8(&unit.text[i..j]).unwrap_or("").trim();
                 if inverted == unit.defines.contains(name) {
                     skip_depth = 1;
                 }
