@@ -1302,10 +1302,6 @@ impl Sb3 {
             Expr::UnOp { op, opr, .. } => self.un_op(s, d, this_id, parent_id, op, opr),
             Expr::BinOp { op, lhs, rhs, .. } => self.bin_op(s, d, this_id, parent_id, op, lhs, rhs),
             Expr::StructLiteral { name, span, .. } => {
-                if s.get_struct(name).is_none() {
-                    d.report(DiagnosticKind::UnrecognizedStruct(name.clone()), span);
-                    return Ok(());
-                }
                 d.report(
                     DiagnosticKind::TypeMismatch {
                         expected: Type::Value,

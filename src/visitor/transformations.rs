@@ -27,6 +27,20 @@ where F: FnOnce(&T) -> Option<T> {
     }
 }
 
+pub fn unknown_struct_literal(expr: &Expr, s: S, d: D) -> Option<Expr> {
+    let Expr::StructLiteral { name, span, .. } = expr else {
+        return None;
+    };
+    if s.get_struct(name).is_some() {
+        return None;
+    }
+    d.report(DiagnosticKind::UnrecognizedStruct(name.clone()), span);
+    Some(Expr::Value {
+        value: Value::from(0.0),
+        span: span.clone(),
+    })
+}
+
 pub fn struct_literal_field_access(expr: &Expr, d: D) -> Option<Expr> {
     let Expr::Dot { lhs, rhs, rhs_span } = expr else {
         return None;

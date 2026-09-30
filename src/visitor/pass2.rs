@@ -419,6 +419,9 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, |expr| transformations::arg_field_access(expr, s));
     transformations::apply(expr, |expr| transformations::list_field_access(expr, s));
     transformations::apply(expr, |expr| {
+        transformations::unknown_struct_literal(expr, s, d)
+    });
+    transformations::apply(expr, |expr| {
         transformations::struct_literal_field_access(expr, d)
     });
 }
