@@ -19,12 +19,13 @@ fn main() -> ExitCode {
         );
     }));
     let begin = Instant::now();
-    let result = std::thread::Builder::new()
+    let result = match std::thread::Builder::new()
         .stack_size(512 * 1024 * 1024)
         .spawn(frontend)
-        .expect("failed to spawn compiler thread")
-        .join()
-        .unwrap_or(ExitCode::FAILURE);
+    {
+        Ok(handle) => handle.join().unwrap_or(ExitCode::FAILURE),
+        Err(_) => frontend(),
+    };
     let color = if matches!(result, ExitCode::SUCCESS) {
         Color::Green
     } else {
