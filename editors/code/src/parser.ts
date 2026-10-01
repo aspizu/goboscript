@@ -9,6 +9,7 @@ export interface ParsedDiagnostic {
   helps: string[]
 }
 
+// oxlint-disable-next-line no-control-regex
 const ANSI_PATTERN = /\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g
 
 export function stripAnsi(text: string): string {
@@ -27,7 +28,9 @@ export function parseDiagnostics(stderr: string): ParsedDiagnostic[] {
     const line = stripAnsi(rawLine)
     const headline = HEADLINE_PATTERN.exec(line)
     if (headline) {
-      if (current) diagnostics.push(current)
+      if (current) {
+        diagnostics.push(current)
+      }
       current = {
         severity: headline[1] as Severity,
         message: headline[2].trim(),
@@ -38,7 +41,9 @@ export function parseDiagnostics(stderr: string): ParsedDiagnostic[] {
       }
       continue
     }
-    if (!current) continue
+    if (!current) {
+      continue
+    }
     if (current.path === undefined) {
       const location = LOCATION_PATTERN.exec(line)
       if (location) {
@@ -59,6 +64,8 @@ export function parseDiagnostics(stderr: string): ParsedDiagnostic[] {
       current.helps.push(helpFooter[1].trim())
     }
   }
-  if (current) diagnostics.push(current)
+  if (current) {
+    diagnostics.push(current)
+  }
   return diagnostics
 }

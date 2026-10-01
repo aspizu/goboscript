@@ -1,5 +1,8 @@
+import { ResultAsync } from "neverthrow"
 import * as vscode from "vscode"
 import { buildHtml } from "./html"
+import type { WebviewMessage } from "./messages"
+import { serializeResult } from "./result"
 
 export class Sb3PreviewProvider implements vscode.CustomReadonlyEditorProvider<Sb3Document> {
   constructor(private readonly extensionUri: vscode.Uri) {}
@@ -17,30 +20,36 @@ export class Sb3PreviewProvider implements vscode.CustomReadonlyEditorProvider<S
     webview.options = { enableScripts: true, localResourceRoots: [this.extensionUri] }
     webview.html = buildHtml(webview, this.extensionUri)
 
-    const sendProject = async () => {
-      try {
-        const bytes = await vscode.workspace.fs.readFile(document.uri)
-        const base64 = Buffer.from(bytes).toString("base64")
-        await webview.postMessage({ type: "project", data: base64 })
-      } catch (err) {
-        console.error(`goboscript preview: failed to read ${document.uri.fsPath}: ${err}`)
-        await webview.postMessage({
-          type: "error",
-          message: `failed to read ${document.uri.fsPath}: ${err}`,
-        })
+    const respond = async (id: number): Promise<void> => {
+      const result = await ResultAsync.fromPromise(
+        vscode.workspace.fs.readFile(document.uri),
+        (err) => `failed to read ${document.uri.fsPath}: ${err}`,
+      ).map((bytes) => Buffer.from(bytes).toString("base64"))
+      if (result.isErr()) {
+        console.error(`goboscript preview ${document.uri.fsPath}: ${result.error}`)
       }
+      await webview.postMessage({ type: "loadProjectResult", id, result: serializeResult(result) })
     }
 
-    const subscription = webview.onDidReceiveMessage((message: { type?: string; level?: string; message?: string }) => {
-      if (message?.type === "log") {
-        const line = `goboscript preview ${document.uri.fsPath}: ${message.message ?? ""}`
-        if (message.level === "warn") console.warn(line)
-        else if (message.level === "error") console.error(line)
-        else console.log(line)
-        return
-      }
-      if (message?.type === "ready" || message?.type === "reload") {
-        void sendProject()
+    const subscription = webview.onDidReceiveMessage((message: WebviewMessage) => {
+      switch (message.type) {
+        case "loadProject":
+          void respond(message.id)
+          break
+        case "log": {
+          const line = `goboscript preview ${document.uri.fsPath}: ${message.message}`
+          switch (message.level) {
+            case "warn":
+              console.warn(line)
+              break
+            case "error":
+              console.error(line)
+              break
+            default:
+              console.log(line)
+          }
+          break
+        }
       }
     })
     webviewPanel.onDidDispose(() => subscription.dispose())

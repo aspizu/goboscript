@@ -30,7 +30,9 @@ export class ProjectRunner {
       this.dirty = true
       return
     }
-    if (this.timer) clearTimeout(this.timer)
+    if (this.timer) {
+      clearTimeout(this.timer)
+    }
     this.timer = setTimeout(() => {
       this.timer = undefined
       this.run()
@@ -38,7 +40,9 @@ export class ProjectRunner {
   }
 
   dispose(): void {
-    if (this.timer) clearTimeout(this.timer)
+    if (this.timer) {
+      clearTimeout(this.timer)
+    }
     this.timer = undefined
   }
 
@@ -53,7 +57,9 @@ export class ProjectRunner {
     })
     const timeout = setTimeout(() => child.kill(), this.options.timeoutMs)
     const finish = (error: string | undefined) => {
-      if (done) return
+      if (done) {
+        return
+      }
       done = true
       clearTimeout(timeout)
       this.inFlight = false
@@ -74,9 +80,11 @@ export class ProjectRunner {
     })
     child.on("error", (err) => finish(`failed to spawn goboscript: ${err.message}`))
     child.on("close", (_code, signal) => {
-      if (signal)
+      if (signal) {
         finish(`goboscript killed by ${signal} after ${this.options.timeoutMs}ms`)
-      else finish(undefined)
+      } else {
+        finish(undefined)
+      }
     })
   }
 }

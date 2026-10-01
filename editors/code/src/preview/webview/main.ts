@@ -1,37 +1,53 @@
 import { Scaffolding as ScaffoldingConstructor } from "@turbowarp/scaffolding/with-music"
+import type { HostMessage } from "../messages"
+import { deserializeResult, type Result } from "../result"
 import { Logger } from "./logger"
+
+declare function acquireVsCodeApi(): { postMessage(message: unknown): void }
 
 const api = acquireVsCodeApi()
 const logger = new Logger(api.postMessage)
 
-api.postMessage({ type: "ready" })
-
 for (const event of ["error", "unhandledrejection"] as const) {
   window.addEventListener(event, (ev: Event) => {
-    const detail = ev instanceof ErrorEvent ? ev.message : ev instanceof PromiseRejectionEvent ? String(ev.reason) : String(ev)
+    const detail =
+      ev instanceof ErrorEvent
+        ? ev.message
+        : ev instanceof PromiseRejectionEvent
+          ? String(ev.reason)
+          : String(ev)
     const where = ev instanceof ErrorEvent ? ` (${ev.filename}:${ev.lineno}:${ev.colno})` : ""
     reportError(`${event}: ${detail}${where}`)
   })
 }
 
-type HostMessage =
-  | { type: "project"; data: string }
-  | { type: "error"; message: string }
-
-declare function acquireVsCodeApi(): { postMessage(message: unknown): void }
-
-let pendingProject: string | undefined
 let player: Scaffolding | undefined
+
+const pendingRequests = new Map<number, (result: Result<string>) => void>()
+let nextRequestId = 0
 
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
   const message = event.data
-  if (message?.type === "project") {
-    pendingProject = message.data
-    void load()
-  } else if (message?.type === "error") {
-    showOverlay("Failed to read file", message.message)
+  switch (message.type) {
+    case "loadProjectResult": {
+      const resolve = pendingRequests.get(message.id)
+      if (resolve === undefined) {
+        break
+      }
+      pendingRequests.delete(message.id)
+      resolve(message.result)
+      break
+    }
   }
 })
+
+function requestProject(): Promise<Result<string>> {
+  return new Promise((resolve) => {
+    const id = nextRequestId++
+    pendingRequests.set(id, resolve)
+    api.postMessage({ type: "loadProject", id })
+  })
+}
 
 try {
   const stage = requiredElement<HTMLElement>("#stage")
@@ -39,8 +55,10 @@ try {
   scaffolding.resizeMode = "preserve-ratio"
   scaffolding.setup()
   scaffolding.appendTo(stage)
-  requiredElement<HTMLButtonElement>("#reload").addEventListener("click", () => api.postMessage({ type: "reload" }))
-  requiredElement<HTMLButtonElement>("#green-flag").addEventListener("click", () => scaffolding.greenFlag())
+  requiredElement<HTMLButtonElement>("#reload").addEventListener("click", () => void load())
+  requiredElement<HTMLButtonElement>("#green-flag").addEventListener("click", () =>
+    scaffolding.greenFlag(),
+  )
   requiredElement<HTMLButtonElement>("#stop").addEventListener("click", () => scaffolding.stopAll())
   player = scaffolding
 } catch (err) {
@@ -50,11 +68,12 @@ try {
 
 let generation = 0
 
-if (pendingProject !== undefined) void load()
+void load()
 
 async function load(): Promise<void> {
-  const base64 = pendingProject
-  if (base64 === undefined || player === undefined) return
+  if (player === undefined) {
+    return
+  }
   const current = ++generation
   setControlsEnabled(false)
   showLoading()
@@ -63,12 +82,24 @@ async function load(): Promise<void> {
     setTimeout(() => reject(new Error("timed out after 30s")), 30_000)
   })
   try {
-    await Promise.race([player.loadProject(base64ToBytes(base64)), timeout])
-    if (generation !== current) return
+    const project = deserializeResult(await Promise.race([requestProject(), timeout]))
+    if (generation !== current) {
+      return
+    }
+    if (project.isErr()) {
+      showOverlay("Failed to read file", project.error)
+      return
+    }
+    await Promise.race([player.loadProject(base64ToBytes(project.value)), timeout])
+    if (generation !== current) {
+      return
+    }
     hideOverlay()
     setControlsEnabled(true)
   } catch (err) {
-    if (generation !== current) return
+    if (generation !== current) {
+      return
+    }
     const message = err instanceof Error ? err.message : String(err)
     showOverlay("Failed to load project", message)
     logger.error(`load failed: ${err instanceof Error ? err.stack : String(err)}`)
@@ -86,31 +117,33 @@ function setControlsEnabled(ready: boolean): void {
 }
 
 function showOverlay(title: string, detail: string): void {
-  requiredElement<HTMLDivElement>("#spinner").hidden = true
+  requiredElement<HTMLElement>("#spinner").hidden = true
   const titleElement = requiredElement<HTMLElement>("#overlay-title")
   const detailElement = requiredElement<HTMLElement>("#overlay-detail")
   titleElement.textContent = title
   detailElement.textContent = detail
   titleElement.hidden = false
   detailElement.hidden = detail === ""
-  requiredElement<HTMLDivElement>("#overlay").hidden = false
+  requiredElement<HTMLElement>("#overlay").hidden = false
 }
 
 function showLoading(): void {
   requiredElement<HTMLElement>("#overlay-title").hidden = true
   requiredElement<HTMLElement>("#overlay-detail").hidden = true
-  requiredElement<HTMLDivElement>("#spinner").hidden = false
-  requiredElement<HTMLDivElement>("#overlay").hidden = false
+  requiredElement<HTMLElement>("#spinner").hidden = false
+  requiredElement<HTMLElement>("#overlay").hidden = false
 }
 
 function hideOverlay(): void {
-  requiredElement<HTMLDivElement>("#overlay").hidden = true
+  requiredElement<HTMLElement>("#overlay").hidden = true
 }
 
 function base64ToBytes(base64: string): Uint8Array {
   const binary = atob(base64)
   const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
   return bytes
 }
 

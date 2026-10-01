@@ -1,4 +1,4 @@
-export type LogLevel = "log" | "warn" | "error"
+import type { LogLevel } from "../messages"
 
 export class Logger {
   constructor(private readonly post: (message: unknown) => void) {}

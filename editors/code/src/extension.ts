@@ -22,16 +22,22 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     collection,
     vscode.workspace.onDidSaveTextDocument((document) => {
-      if (document.languageId !== "goboscript" || document.uri.scheme !== "file") return
+      if (document.languageId !== "goboscript" || document.uri.scheme !== "file") {
+        return
+      }
       const projectDir = findProjectRoot(document.uri.fsPath)
-      if (projectDir === undefined) return
+      if (projectDir === undefined) {
+        return
+      }
       let runner = runners.get(projectDir)
       if (runner === undefined) {
         runner = new ProjectRunner(projectDir, {
           debounceMs: DEBOUNCE_MS,
           timeoutMs: BUILD_TIMEOUT_MS,
           onResult: ({ parsed, savedDoc, error }) => {
-            if (error !== undefined) console.error(`goboscript ${projectDir}: ${error}`)
+            if (error !== undefined) {
+              console.error(`goboscript ${projectDir}: ${error}`)
+            }
             publish(collection, reportedUris, projectDir, parsed, savedDoc)
           },
         })
@@ -59,31 +65,34 @@ function publish(
     const diagnostic = new vscode.Diagnostic(
       range,
       item.message,
-      item.severity === "error" ?
-        vscode.DiagnosticSeverity.Error
-      : vscode.DiagnosticSeverity.Warning,
+      item.severity === "error"
+        ? vscode.DiagnosticSeverity.Error
+        : vscode.DiagnosticSeverity.Warning,
     )
     diagnostic.source = "goboscript"
     if (item.helps.length > 0) {
       diagnostic.relatedInformation = item.helps.map(
-        (help) =>
-          new vscode.DiagnosticRelatedInformation(
-            new vscode.Location(uri, range),
-            help,
-          ),
+        (help) => new vscode.DiagnosticRelatedInformation(new vscode.Location(uri, range), help),
       )
     }
     const list = byUri.get(uri)
-    if (list) list.push(diagnostic)
-    else byUri.set(uri, [diagnostic])
+    if (list) {
+      list.push(diagnostic)
+    } else {
+      byUri.set(uri, [diagnostic])
+    }
   }
   const previous = reportedUris.get(projectDir)
   if (previous) {
     for (const uri of previous) {
-      if (!byUri.has(uri)) collection.delete(uri)
+      if (!byUri.has(uri)) {
+        collection.delete(uri)
+      }
     }
   }
-  for (const [uri, diagnostics] of byUri) collection.set(uri, diagnostics)
+  for (const [uri, diagnostics] of byUri) {
+    collection.set(uri, diagnostics)
+  }
   reportedUris.set(projectDir, new Set(byUri.keys()))
 }
 

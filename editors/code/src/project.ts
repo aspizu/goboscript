@@ -8,7 +8,9 @@ export function findProjectRoot(file: string): string | undefined {
       return dir
     }
     const parent = dirname(dir)
-    if (parent === dir) return undefined
+    if (parent === dir) {
+      return undefined
+    }
     dir = parent
   }
 }
