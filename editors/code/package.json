@@ -31,8 +31,8 @@
     "onCustomEditor:goboscript.sb3Preview"
   ],
   "scripts": {
-    "compile": "node esbuild.js",
-    "watch": "node esbuild.js --watch",
+    "compile": "node esbuild.ts",
+    "watch": "node esbuild.ts --watch",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.webview.json",
     "package": "pnpm run compile && vsce package --no-dependencies -o goboscript.vsix"
   },

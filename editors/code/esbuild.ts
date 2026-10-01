@@ -1,22 +1,23 @@
-const esbuild = require("esbuild")
+import type { BuildOptions } from "esbuild"
+
+const esbuild = require("esbuild") as typeof import("esbuild")
 
 const watch = process.argv.includes("--watch")
 
-/** @type {import("esbuild").BuildOptions} */
-const extensionOptions = {
+const extensionOptions: BuildOptions = {
   bundle: true,
   platform: "node",
   target: "node24",
   format: "cjs",
   sourcemap: true,
   external: ["vscode"],
+  loader: { ".html": "text", ".css": "text" },
   logLevel: "info",
 }
 
 // The `.sb3` preview webview. Scaffolding ships as a single prebuilt
 // browser bundle, so this is an inline of ~4 MB, not a real transform.
-/** @type {import("esbuild").BuildOptions} */
-const previewOptions = {
+const previewOptions: BuildOptions = {
   bundle: true,
   platform: "browser",
   target: "es2022",
@@ -26,7 +27,7 @@ const previewOptions = {
   logLevel: "info",
 }
 
-async function main() {
+async function main(): Promise<void> {
   if (watch) {
     const context = await esbuild.context({
       ...extensionOptions,

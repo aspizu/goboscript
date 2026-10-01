@@ -12,6 +12,6 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src"],
+  "include": ["src", "esbuild.ts"],
   "exclude": ["src/preview/webview"]
 }
