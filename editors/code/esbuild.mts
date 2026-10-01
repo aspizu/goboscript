@@ -11,12 +11,10 @@ const extensionOptions: BuildOptions = {
   format: "cjs",
   sourcemap: true,
   external: ["vscode"],
-  loader: { ".html": "text", ".css": "text" },
+  loader: { ".html": "text" },
   logLevel: "info",
 }
 
-// The `.sb3` preview webview. Scaffolding ships as a single prebuilt
-// browser bundle, so this is an inline of ~4 MB, not a real transform.
 const previewOptions: BuildOptions = {
   bundle: true,
   platform: "browser",

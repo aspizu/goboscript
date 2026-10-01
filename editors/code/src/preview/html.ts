@@ -1,6 +1,5 @@
 import * as vscode from "vscode"
 import htmlSource from "./index.html"
-import cssSource from "./style.css"
 
 export function buildHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const script = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "dist", "preview.js"))
@@ -17,7 +16,6 @@ export function buildHtml(webview: vscode.Webview, extensionUri: vscode.Uri): st
   ].join("; ")
   return htmlSource
     .replace("{{csp}}", () => csp)
-    .replace("{{style}}", () => cssSource)
     .replace("{{tailwind}}", () => stylesheet.toString())
     .replace("{{script}}", () => script.toString())
 }

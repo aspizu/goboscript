@@ -1,5 +1,4 @@
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss";
 
 @theme static {
   --font-sans: var(--vscode-font-family);
@@ -8,5 +7,6 @@
   --color-vscode-border: var(--vscode-panel-border);
   --color-vscode-hover: var(--vscode-toolbar-hoverBackground);
   --color-vscode-active: var(--vscode-toolbar-activeBackground);
-  --color-vscode-widget-border: var(--vscode-editorWidget-border);
+  --color-vscode-widget-border: var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.4));
+  --color-vscode-icon: var(--vscode-icon-foreground, var(--vscode-editor-foreground));
 }

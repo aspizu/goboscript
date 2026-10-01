@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs"
-import { isAbsolute, resolve } from "node:path"
+import { existsSync, readFileSync } from "node:fs"
+import { dirname, isAbsolute, join, resolve } from "node:path"
 import * as vscode from "vscode"
 import type { ParsedDiagnostic } from "./parser"
-import { findProjectRoot } from "./project"
 import { Sb3PreviewProvider } from "./preview/provider"
 import { ProjectRunner } from "./runner"
 
@@ -50,6 +49,20 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
+
+function findProjectRoot(file: string): string | undefined {
+  let dir = dirname(file)
+  while (true) {
+    if (existsSync(join(dir, "stage.gs")) || existsSync(join(dir, "goboscript.toml"))) {
+      return dir
+    }
+    const parent = dirname(dir)
+    if (parent === dir) {
+      return undefined
+    }
+    dir = parent
+  }
+}
 
 function publish(
   collection: vscode.DiagnosticCollection,
