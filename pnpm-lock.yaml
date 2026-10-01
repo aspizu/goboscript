@@ -64,12 +64,15 @@ importers:
       '@turbowarp/scaffolding':
         specifier: 0.4.0
         version: 0.4.0
+      lucide-preact:
+        specifier: ^1.49.0
+        version: 1.49.0(preact@10.29.8)
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
       preact:
-        specifier: ^11.0.0
-        version: 11.0.0
+        specifier: ^10.29.8
+        version: 10.29.8
     devDependencies:
       '@turbowarp/types':
         specifier: 0.0.15
@@ -3089,6 +3092,11 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
+  lucide-preact@1.49.0:
+    resolution: {integrity: sha512-ug1ygXsky/O6k4P0ZGXGfudg323PPJJc3tTwkuasVIIvwH0b9d/Nrk3Ic5HtFI4geJLZS1cfgDPD3J2WHfZEHQ==}
+    peerDependencies:
+      preact: ^10.27.2
+
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -3438,10 +3446,10 @@ packages:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
 
-  preact@11.0.0:
-    resolution: {integrity: sha512-LRTLKuSe6VYPhvBDjwFaX+nuZnpsw6IN2GSboisAvhGsncylBmrbDCERhgKDn6yP2mAwbGvsB5OVyTe33M8gBg==}
+  preact@10.29.8:
+    resolution: {integrity: sha512-ej2aVZ+vZ8WO7tvlQWRM9N63A0KzF9q4mWJfDUHgYaIofWY9hu74QdnQrjoPMmZi2/nZ5gN0bJCQF49xQqx09Q==}
     peerDependencies:
-      preact-render-to-string: '>=6.7.0'
+      preact-render-to-string: '>=5'
     peerDependenciesMeta:
       preact-render-to-string:
         optional: true
@@ -6493,6 +6501,10 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
+  lucide-preact@1.49.0(preact@10.29.8):
+    dependencies:
+      preact: 10.29.8
+
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -7043,7 +7055,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  preact@11.0.0: {}
+  preact@10.29.8: {}
 
   prettier-plugin-tailwindcss@0.6.14(prettier@3.8.4):
     dependencies:

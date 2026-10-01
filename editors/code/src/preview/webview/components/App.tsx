@@ -27,6 +27,7 @@ export function App({ logger }: { logger: Logger }) {
     <>
       <Toolbar
         ready={status.kind === "ready"}
+        loading={status.kind === "loading"}
         onReload={reload}
         onGreenFlag={greenFlag}
         onStop={stop}

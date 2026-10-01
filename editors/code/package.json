@@ -35,8 +35,9 @@
   },
   "dependencies": {
     "@turbowarp/scaffolding": "0.4.0",
+    "lucide-preact": "^1.49.0",
     "neverthrow": "^8.2.0",
-    "preact": "^11.0.0"
+    "preact": "^10.29.8"
   },
   "devDependencies": {
     "@turbowarp/types": "0.0.15",
