@@ -7,16 +7,21 @@
 ## Introduction
 
 This VS Code extension adds support for the goboscript programming language, which
-compiles to Scratch. It provides syntax highlighting and language server features such
-as diagnostics and completions.
-
-Note: The extension starts the `goboscript` compiler as a language server, so it must
-be installed and available on your `PATH`.
+compiles to Scratch. It provides syntax highlighting based on the compiler's grammar,
+and compile-on-save diagnostics.
 
 ## Installation
 
 Install from the Visual Studio Code Marketplace or by searching within VS Code. See the
 [installation guide](https://aspiz.uk/goboscript/docs) for installing the compiler.
+
+## Compile on save
+
+Saving a `.gs` file runs `goboscript build` on the enclosing project (the nearest
+directory containing `stage.gs` or `goboscript.toml`) and shows the reported errors
+and warnings in the **Problems** panel. The build also writes the project's `.sb3`
+file. The `goboscript` compiler must be installed and available on your `PATH`,
+see the [installation guide](https://aspiz.uk/goboscript/docs).
 
 ## Documentation
 

@@ -4,7 +4,8 @@
   "version": "2.0.0",
   "description": "goboscript language support for Visual Studio Code.",
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Linters"
   ],
   "keywords": [
     "goboscript"
@@ -21,29 +22,23 @@
     "url": "https://github.com/aspizu/goboscript.git"
   },
   "publisher": "aspizu",
-  "main": "./out/main.js",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:goboscript"
+  ],
   "scripts": {
-    "vscode:prepublish": "pnpm run build --minify",
-    "package": "vsce package --no-dependencies -o goboscript.vsix",
-    "build-base": "esbuild ./src/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node22",
-    "build": "pnpm run build-base --sourcemap",
-    "watch": "pnpm run build-base --sourcemap --watch",
-    "format": "oxfmt --write .",
-    "format:check": "oxfmt --check .",
-    "lint": "oxlint",
-    "typecheck": "tsc"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^10.1.2"
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node esbuild.js --tests && node --test dist-test/*.test.js",
+    "package": "pnpm run compile && vsce package --no-dependencies -o goboscript.vsix"
   },
   "devDependencies": {
-    "@types/node": "^26.6.3",
+    "@types/node": "^24.19.0",
     "@types/vscode": "^1.138.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
-    "oxfmt": "^0.71.0",
-    "oxlint": "^1.86.0",
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
   },
   "contributes": {
     "languages": [
@@ -67,9 +62,6 @@
       }
     ]
   },
-  "activationEvents": [
-    "workspaceContains:stage.gs"
-  ],
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.138.0"

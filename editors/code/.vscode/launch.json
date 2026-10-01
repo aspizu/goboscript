@@ -5,9 +5,11 @@
       "name": "Run extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["${workspaceFolder}/test-project", "--extensionDevelopmentPath=${workspaceFolder}"],
-      "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "build",
+      "args": [
+        "${workspaceFolder}/test-project",
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "env": {
         "PATH": "${workspaceFolder}/../../target/debug:${env:PATH}"
       }
