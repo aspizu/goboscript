@@ -2,10 +2,6 @@ import { Scaffolding as ScaffoldingConstructor } from "@turbowarp/scaffolding/wi
 
 const api = acquireVsCodeApi()
 
-// Ask the host for the project immediately, and register listeners before
-// doing anything that can throw: if player initialization fails below, we
-// still receive the project and the error surfaces instead of an endless
-// "Loading…" state.
 api.postMessage({ type: "ready" })
 
 for (const event of ["error", "unhandledrejection"] as const) {
@@ -52,8 +48,6 @@ try {
   showOverlay("Failed to initialize player", err instanceof Error ? err.message : String(err))
 }
 
-// Each incoming project message increments this; an async load only commits
-// if no newer message has arrived in the meantime.
 let generation = 0
 
 if (pendingProject !== undefined) void load()
@@ -64,7 +58,6 @@ async function load(): Promise<void> {
   const current = ++generation
   setControlsEnabled(false)
   showLoading()
-  // Stop any running threads before swapping the project out.
   player.stopAll()
   const timeout = new Promise<never>((_, reject) => {
     setTimeout(() => reject(new Error("timed out after 30s")), 30_000)

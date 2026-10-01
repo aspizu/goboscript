@@ -1,7 +1,6 @@
 const esbuild = require("esbuild")
 
 const watch = process.argv.includes("--watch")
-const tests = process.argv.includes("--tests")
 
 /** @type {import("esbuild").BuildOptions} */
 const extensionOptions = {
@@ -49,14 +48,6 @@ async function main() {
     entryPoints: ["src/preview/webview/main.ts"],
     outfile: "dist/preview.js",
   })
-  if (tests) {
-    await esbuild.build({
-      ...extensionOptions,
-      entryPoints: ["src/parser.test.ts"],
-      outfile: "dist-test/parser.test.js",
-      minify: false,
-    })
-  }
 }
 
 main().catch((error) => {

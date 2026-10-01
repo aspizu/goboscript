@@ -2,14 +2,8 @@ import { spawn } from "node:child_process"
 import { parseDiagnostics, type ParsedDiagnostic } from "./parser"
 
 export interface BuildOutcome {
-  /** Diagnostics parsed from the compiler's stderr. */
   parsed: ParsedDiagnostic[]
-  /**
-   * Path of the document whose save triggered this build. Diagnostics without
-   * any location are reported on it.
-   */
   savedDoc: string | undefined
-  /** Set when the compiler could not be spawned or timed out. */
   error: string | undefined
 }
 
@@ -19,13 +13,6 @@ export interface ProjectRunnerOptions {
   onResult: (outcome: BuildOutcome) => void
 }
 
-/**
- * Runs `goboscript build` for one project directory.
- *
- * Saves are debounced; if a build is requested while one is already running,
- * the request is remembered and another build follows once it finishes, so a
- * project is never built concurrently with itself.
- */
 export class ProjectRunner {
   private timer: NodeJS.Timeout | undefined
   private inFlight = false

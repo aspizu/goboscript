@@ -13,8 +13,6 @@ export function activate(context: vscode.ExtensionContext): void {
   const channel = vscode.window.createOutputChannel("goboscript")
   const collection = vscode.languages.createDiagnosticCollection("goboscript")
   const runners = new Map<string, ProjectRunner>()
-  // URIs each project last reported diagnostics for, so that diagnostics for
-  // files that are no longer reported (e.g. a deleted sprite) get cleared.
   const reportedUris = new Map<string, Set<vscode.Uri>>()
 
   context.subscriptions.push(
@@ -49,11 +47,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {}
 
-/**
- * Replaces the diagnostics of `projectDir` with `parsed`, resolving printed
- * paths against the project directory, and pinning diagnostics without a
- * location to `savedDoc` (or the project's `stage.gs` as a last resort).
- */
 function publish(
   collection: vscode.DiagnosticCollection,
   reportedUris: Map<string, Set<vscode.Uri>>,
@@ -102,10 +95,8 @@ function resolveUri(
   savedDoc: string | undefined,
 ): vscode.Uri {
   if (item.path === undefined) {
-    // Diagnostics without any location, e.g. "failed to read stage.gs".
     return vscode.Uri.file(savedDoc ?? resolve(projectDir, "stage.gs"))
   }
-  // Standard library files outside the project are printed as absolute paths.
   const path = isAbsolute(item.path) ? item.path : resolve(projectDir, item.path)
   return vscode.Uri.file(path)
 }
@@ -122,8 +113,6 @@ function computeRange(item: ParsedDiagnostic, uri: vscode.Uri): vscode.Range {
   }
   const lines = text.split(/\r?\n/)
   const line = Math.min(Math.max(item.line - 1, 0), lines.length - 1)
-  // Compiler columns are 1-based code point indices, VS Code positions are
-  // 0-based UTF-16 code unit indices.
   const column = Math.max(item.column - 1, 0)
   const utf16Column = Array.from(lines[line]).slice(0, column).join("").length
   const position = new vscode.Position(line, utf16Column)

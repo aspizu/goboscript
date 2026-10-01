@@ -1,49 +1,11 @@
-/**
- * Parsing of `goboscript build` diagnostics from stderr.
- *
- * The compiler renders diagnostics with `annotate-snippets` in rustc style:
- *
- * ```text
- * error: unrecognized token, expected one of `PROC`, `FUNC`, ...
- *  --> stage.gs:1:1
- *   |
- * 1 | when_flag_clicked()
- *   | ^^^^^^^^^^^^^^^^^^
- *   |
- * ```
- *
- * Diagnostics without a span (reported as `0..0`, e.g. "no costumes") or in
- * files that are not valid UTF-8 are rendered without an annotation, and the
- * origin line then carries the path only, without `:line:column`:
- *
- * ```text
- * error: no costumes
- *  --> main.gs
- *   |
- *   |
- *   = help: if this is a header, move it inside a directory such as `lib/`
- * ```
- *
- * Errors that are not attached to a sprite (e.g. "failed to read stage.gs")
- * are printed as a bare `error: ...` headline with no `-->` line at all.
- */
-
 export type Severity = "error" | "warning"
 
 export interface ParsedDiagnostic {
   severity: Severity
   message: string
-  /**
-   * Path as printed on the `-->` line, if the diagnostic had one. Relative to
-   * the directory the compiler ran in, unless absolute (e.g. standard library
-   * files outside the project).
-   */
   path: string | undefined
-  /** 1-based line number, if the location carried one. */
   line: number | undefined
-  /** 1-based code point column, if the location carried one. */
   column: number | undefined
-  /** `= help: ...` footer texts belonging to this diagnostic. */
   helps: string[]
 }
 
@@ -58,14 +20,6 @@ const LOCATION_PATTERN = /^\s*-->\s+(.*)$/
 const PATH_LINE_COLUMN_PATTERN = /^(.*):(\d+):(\d+)$/
 const HELP_FOOTER_PATTERN = /^\s*=\s*help: ?(.*)$/
 
-/**
- * Extracts diagnostics from the (possibly ANSI colored) stderr of
- * `goboscript build`.
- *
- * Lines that do not contribute to a diagnostic are ignored. Notably, the
- * indented stderr block printed for `CommandFailed` diagnostics cannot
- * false-match because real headlines are anchored at the start of the line.
- */
 export function parseDiagnostics(stderr: string): ParsedDiagnostic[] {
   const diagnostics: ParsedDiagnostic[] = []
   let current: ParsedDiagnostic | undefined
