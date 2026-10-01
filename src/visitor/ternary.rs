@@ -86,7 +86,7 @@ fn stmt_find_closest_ternary(stmt: &Stmt) -> Option<&Expr> {
                     return Some(found);
                 }
             }
-            return None;
+            None
         }
         Stmt::ProcCall { args, kwargs, .. } => {
             for arg in args {
@@ -99,7 +99,7 @@ fn stmt_find_closest_ternary(stmt: &Stmt) -> Option<&Expr> {
                     return Some(found);
                 }
             }
-            return None;
+            None
         }
         Stmt::FuncCall { args, kwargs, .. } => {
             for arg in args {
@@ -112,7 +112,7 @@ fn stmt_find_closest_ternary(stmt: &Stmt) -> Option<&Expr> {
                     return Some(found);
                 }
             }
-            return None;
+            None
         }
         Stmt::Return { value, .. } => expr_find_closest_ternary(value),
     }
@@ -130,7 +130,7 @@ fn expr_find_closest_ternary(expr: &Expr) -> Option<&Expr> {
                     return Some(found);
                 }
             }
-            return None;
+            None
         }
         Expr::FuncCall { args, kwargs, .. } => {
             for arg in args {
@@ -143,7 +143,7 @@ fn expr_find_closest_ternary(expr: &Expr) -> Option<&Expr> {
                     return Some(found);
                 }
             }
-            return None;
+            None
         }
         Expr::UnOp { opr, .. } => expr_find_closest_ternary(opr),
         Expr::BinOp { lhs, rhs, .. } => {
@@ -155,7 +155,7 @@ fn expr_find_closest_ternary(expr: &Expr) -> Option<&Expr> {
                     return Some(found);
                 }
             }
-            return None;
+            None
         }
         Expr::Property { object, .. } => expr_find_closest_ternary(object),
         Expr::Ternary { condition, .. } => Some(condition),

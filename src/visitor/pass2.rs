@@ -162,8 +162,8 @@ fn visit_sprite(sprite: &mut Sprite, stage: Option<&Sprite>, d: D) {
     }
     let struct_literals: Vec<_> = sprite
         .vars
-        .iter()
-        .filter_map(|(_name, var)| {
+        .values()
+        .filter_map(|var| {
             if let Some(ConstExpr::StructLiteral { name, span, fields }) = &var.default {
                 Some((name.clone(), span.clone(), fields.clone()))
             } else {
