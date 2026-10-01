@@ -24,9 +24,9 @@
   "publisher": "aspizu",
   "main": "./dist/extension.js",
   "scripts": {
-    "compile": "node esbuild.ts",
-    "watch": "node esbuild.ts --watch",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.webview.json",
+    "compile": "node esbuild.mts",
+    "watch": "node esbuild.mts --watch",
+    "typecheck": "tsc -p tsconfig.json && tsc -p src/preview/webview/tsconfig.json",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
@@ -43,8 +43,10 @@
     "@types/vscode": "^1.138.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
+    "esbuild-plugin-tailwindcss": "^2.2.0",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3"
   },
   "contributes": {

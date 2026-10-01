@@ -1,6 +1,6 @@
 import type { BuildOptions } from "esbuild"
-
-const esbuild = require("esbuild") as typeof import("esbuild")
+import { build, context } from "esbuild"
+import tailwindPlugin from "esbuild-plugin-tailwindcss"
 
 const watch = process.argv.includes("--watch")
 
@@ -25,26 +25,27 @@ const previewOptions: BuildOptions = {
   sourcemap: false,
   minify: false,
   logLevel: "info",
+  plugins: [tailwindPlugin()],
 }
 
 async function main(): Promise<void> {
   if (watch) {
-    const context = await esbuild.context({
+    const ctx = await context({
       ...extensionOptions,
       entryPoints: ["src/extension.ts"],
       outfile: "dist/extension.js",
       minify: false,
     })
-    await context.watch()
+    await ctx.watch()
     return
   }
-  await esbuild.build({
+  await build({
     ...extensionOptions,
     entryPoints: ["src/extension.ts"],
     outfile: "dist/extension.js",
     minify: true,
   })
-  await esbuild.build({
+  await build({
     ...previewOptions,
     entryPoints: ["src/preview/webview/main.ts"],
     outfile: "dist/preview.js",

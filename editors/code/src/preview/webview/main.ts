@@ -2,6 +2,7 @@ import { Scaffolding as ScaffoldingConstructor } from "@turbowarp/scaffolding/wi
 import type { HostMessage } from "../messages"
 import { deserializeResult, type Result } from "../result"
 import { Logger } from "./logger"
+import "./styles.css"
 
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void }
 

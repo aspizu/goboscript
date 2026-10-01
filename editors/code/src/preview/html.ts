@@ -4,6 +4,7 @@ import cssSource from "./style.css"
 
 export function buildHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const script = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "dist", "preview.js"))
+  const stylesheet = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "dist", "preview.css"))
   const csp = [
     "default-src 'none'",
     `img-src ${webview.cspSource} blob: data:`,
@@ -17,5 +18,6 @@ export function buildHtml(webview: vscode.Webview, extensionUri: vscode.Uri): st
   return htmlSource
     .replace("{{csp}}", () => csp)
     .replace("{{style}}", () => cssSource)
+    .replace("{{tailwind}}", () => stylesheet.toString())
     .replace("{{script}}", () => script.toString())
 }
