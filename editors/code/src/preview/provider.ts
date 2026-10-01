@@ -2,10 +2,7 @@ import * as vscode from "vscode"
 import { buildHtml } from "./html"
 
 export class Sb3PreviewProvider implements vscode.CustomReadonlyEditorProvider<Sb3Document> {
-  constructor(
-    private readonly extensionUri: vscode.Uri,
-    private readonly log: (line: string) => void,
-  ) {}
+  constructor(private readonly extensionUri: vscode.Uri) {}
 
   async openCustomDocument(uri: vscode.Uri): Promise<Sb3Document> {
     return { uri, dispose: () => {} }
@@ -24,9 +21,9 @@ export class Sb3PreviewProvider implements vscode.CustomReadonlyEditorProvider<S
       try {
         const bytes = await vscode.workspace.fs.readFile(document.uri)
         const base64 = Buffer.from(bytes).toString("base64")
-        const delivered = await webview.postMessage({ type: "project", data: base64 })
-        this.log(`sb3 preview ${document.uri.fsPath}: sent project (${base64.length} base64 chars), delivered=${delivered}`)
+        await webview.postMessage({ type: "project", data: base64 })
       } catch (err) {
+        console.error(`goboscript preview: failed to read ${document.uri.fsPath}: ${err}`)
         await webview.postMessage({
           type: "error",
           message: `failed to read ${document.uri.fsPath}: ${err}`,
@@ -34,13 +31,15 @@ export class Sb3PreviewProvider implements vscode.CustomReadonlyEditorProvider<S
       }
     }
 
-    const subscription = webview.onDidReceiveMessage((message: { type?: string; message?: string }) => {
-      if (message?.type === "webview-error" || message?.type === "log") {
-        this.log(`sb3 preview ${document.uri.fsPath}: ${message.message ?? "unknown error"}`)
+    const subscription = webview.onDidReceiveMessage((message: { type?: string; level?: string; message?: string }) => {
+      if (message?.type === "log") {
+        const line = `goboscript preview ${document.uri.fsPath}: ${message.message ?? ""}`
+        if (message.level === "warn") console.warn(line)
+        else if (message.level === "error") console.error(line)
+        else console.log(line)
         return
       }
       if (message?.type === "ready" || message?.type === "reload") {
-        this.log(`sb3 preview ${document.uri.fsPath}: ${message.type}, sending project`)
         void sendProject()
       }
     })

@@ -10,7 +10,6 @@ const DEBOUNCE_MS = 250
 const BUILD_TIMEOUT_MS = 60_000
 
 export function activate(context: vscode.ExtensionContext): void {
-  const channel = vscode.window.createOutputChannel("goboscript")
   const collection = vscode.languages.createDiagnosticCollection("goboscript")
   const runners = new Map<string, ProjectRunner>()
   const reportedUris = new Map<string, Set<vscode.Uri>>()
@@ -18,10 +17,9 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       "goboscript.sb3Preview",
-      new Sb3PreviewProvider(context.extensionUri, (line) => channel.appendLine(line)),
+      new Sb3PreviewProvider(context.extensionUri),
       { supportsMultipleEditorsPerDocument: false },
     ),
-    channel,
     collection,
     vscode.workspace.onDidSaveTextDocument((document) => {
       if (document.languageId !== "goboscript" || document.uri.scheme !== "file") return
@@ -33,7 +31,7 @@ export function activate(context: vscode.ExtensionContext): void {
           debounceMs: DEBOUNCE_MS,
           timeoutMs: BUILD_TIMEOUT_MS,
           onResult: ({ parsed, savedDoc, error }) => {
-            if (error !== undefined) channel.appendLine(`${projectDir}: ${error}`)
+            if (error !== undefined) console.error(`goboscript ${projectDir}: ${error}`)
             publish(collection, reportedUris, projectDir, parsed, savedDoc)
           },
         })

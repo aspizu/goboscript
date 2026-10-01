@@ -1,6 +1,8 @@
 import { Scaffolding as ScaffoldingConstructor } from "@turbowarp/scaffolding/with-music"
+import { Logger } from "./logger"
 
 const api = acquireVsCodeApi()
+const logger = new Logger(api.postMessage)
 
 api.postMessage({ type: "ready" })
 
@@ -24,11 +26,9 @@ let player: Scaffolding | undefined
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
   const message = event.data
   if (message?.type === "project") {
-    api.postMessage({ type: "log", message: `received project (${message.data.length} base64 chars)` })
     pendingProject = message.data
     void load()
   } else if (message?.type === "error") {
-    api.postMessage({ type: "log", message: `host read failed: ${message.message}` })
     showOverlay("Failed to read file", message.message)
   }
 })
@@ -71,13 +71,13 @@ async function load(): Promise<void> {
     if (generation !== current) return
     const message = err instanceof Error ? err.message : String(err)
     showOverlay("Failed to load project", message)
-    api.postMessage({ type: "log", message: `load failed: ${err instanceof Error ? err.stack : String(err)}` })
+    logger.error(`load failed: ${err instanceof Error ? err.stack : String(err)}`)
   }
 }
 
 function reportError(message: string): void {
   showOverlay("Player crashed", message)
-  api.postMessage({ type: "webview-error", message })
+  logger.error(message)
 }
 
 function setControlsEnabled(ready: boolean): void {
