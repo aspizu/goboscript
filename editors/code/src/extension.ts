@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       "goboscript.sb3Preview",
-      new Sb3PreviewProvider(context.extensionUri),
+      new Sb3PreviewProvider(context.extensionUri, (line) => channel.appendLine(line)),
       { supportsMultipleEditorsPerDocument: false },
     ),
     channel,
