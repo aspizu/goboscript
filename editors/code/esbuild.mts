@@ -22,6 +22,8 @@ const previewOptions: BuildOptions = {
   format: "iife",
   sourcemap: false,
   minify: false,
+  jsx: "automatic",
+  jsxImportSource: "preact",
   logLevel: "info",
   plugins: [tailwindPlugin()],
 }
@@ -45,7 +47,7 @@ async function main(): Promise<void> {
   })
   await build({
     ...previewOptions,
-    entryPoints: ["src/preview/webview/main.ts"],
+    entryPoints: ["src/preview/webview/main.tsx"],
     outfile: "dist/preview.js",
   })
 }
