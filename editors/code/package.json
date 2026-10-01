@@ -22,18 +22,23 @@
     "url": "https://github.com/aspizu/goboscript.git"
   },
   "publisher": "aspizu",
+  "dependencies": {
+    "@turbowarp/scaffolding": "0.4.0"
+  },
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onLanguage:goboscript"
+    "onLanguage:goboscript",
+    "onCustomEditor:goboscript.sb3Preview"
   ],
   "scripts": {
     "compile": "node esbuild.js",
     "watch": "node esbuild.js --watch",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.webview.json",
     "test": "node esbuild.js --tests && node --test dist-test/*.test.js",
     "package": "pnpm run compile && vsce package --no-dependencies -o goboscript.vsix"
   },
   "devDependencies": {
+    "@turbowarp/types": "0.0.15",
     "@types/node": "^24.19.0",
     "@types/vscode": "^1.138.0",
     "@vscode/vsce": "^4.0.0",
@@ -59,6 +64,18 @@
         "language": "goboscript",
         "scopeName": "source.goboscript",
         "path": "./syntaxes/goboscript.tmLanguage.json"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "goboscript.sb3Preview",
+        "displayName": "goboscript preview",
+        "selector": [
+          {
+            "filenamePattern": "*.sb3"
+          }
+        ],
+        "priority": "default"
       }
     ]
   },

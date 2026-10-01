@@ -4,6 +4,9 @@ packages:
   - editors/code
   - tools
 
+overrides:
+  "@turbowarp/types": 0.0.15
+
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false

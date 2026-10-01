@@ -23,6 +23,15 @@ and warnings in the **Problems** panel. The build also writes the project's `.sb
 file. The `goboscript` compiler must be installed and available on your `PATH`,
 see the [installation guide](https://aspiz.uk/goboscript/docs).
 
+## `.sb3` preview
+
+Opening a `.sb3` file (the output of `goboscript build`) shows it running in the
+embedded [TurboWarp Scaffolding](https://github.com/TurboWarp/scaffolding) player,
+fully offline. The preview shows exactly the bytes on disk when it opens; press
+**Reload** to load the file again after rebuilding. It never builds or watches
+anything itself. The stage is scaled to fit the panel while preserving its
+aspect ratio, and the project stays paused until you press **Green flag**.
+
 ## Documentation
 
 Please see the [goboscript documentation](https://aspiz.uk/goboscript/docs) for using

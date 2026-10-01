@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@turbowarp/types': 0.0.15
+
 importers:
 
   .:
@@ -57,7 +60,14 @@ importers:
         version: 3.8.4
 
   editors/code:
+    dependencies:
+      '@turbowarp/scaffolding':
+        specifier: 0.4.0
+        version: 0.4.0
     devDependencies:
+      '@turbowarp/types':
+        specifier: 0.0.15
+        version: 0.0.15
       '@types/node':
         specifier: ^24.19.0
         version: 24.19.0
@@ -1773,6 +1783,12 @@ packages:
     resolution: {integrity: sha512-t6J3OrB5Fc0ExuhohouH0fWUGMYL6PTLhW+E7zIk/pdbnJARZDCwjBznFnkh5ynRnIRSI4YjtTH0t6USjJISrw==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
+
+  '@turbowarp/scaffolding@0.4.0':
+    resolution: {integrity: sha512-e/Dg0f+KmSeHRcN+nh8Gw4WO/3Uox4JiBTMBuGY2t3Ovsy/GQcPaAJMuKRKJw96ZF7dhIoy4f3yChPU9bppljw==}
+
+  '@turbowarp/types@0.0.15':
+    resolution: {integrity: sha512-htwWpnzrbIVqMth3Sk7amo3J7mJGuFLHKVqxSya+Ufa3nBo+2ze3a+drucxn9UMN8CYMNzN9yQipg7hH996weQ==}
 
   '@types/debug@4.1.13':
     resolution: {integrity: sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw==}
@@ -4685,6 +4701,12 @@ snapshots:
       '@tailwindcss/oxide': 4.3.0
       tailwindcss: 4.3.0
       vite: 6.4.3(@types/node@26.6.3)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)
+
+  '@turbowarp/scaffolding@0.4.0':
+    dependencies:
+      '@turbowarp/types': 0.0.15
+
+  '@turbowarp/types@0.0.15': {}
 
   '@types/debug@4.1.13':
     dependencies:

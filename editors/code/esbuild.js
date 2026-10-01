@@ -4,7 +4,7 @@ const watch = process.argv.includes("--watch")
 const tests = process.argv.includes("--tests")
 
 /** @type {import("esbuild").BuildOptions} */
-const options = {
+const extensionOptions = {
   bundle: true,
   platform: "node",
   target: "node24",
@@ -14,10 +14,23 @@ const options = {
   logLevel: "info",
 }
 
+// The `.sb3` preview webview. Scaffolding ships as a single prebuilt
+// browser bundle, so this is an inline of ~4 MB, not a real transform.
+/** @type {import("esbuild").BuildOptions} */
+const previewOptions = {
+  bundle: true,
+  platform: "browser",
+  target: "es2022",
+  format: "iife",
+  sourcemap: false,
+  minify: false,
+  logLevel: "info",
+}
+
 async function main() {
   if (watch) {
     const context = await esbuild.context({
-      ...options,
+      ...extensionOptions,
       entryPoints: ["src/extension.ts"],
       outfile: "dist/extension.js",
       minify: false,
@@ -26,14 +39,19 @@ async function main() {
     return
   }
   await esbuild.build({
-    ...options,
+    ...extensionOptions,
     entryPoints: ["src/extension.ts"],
     outfile: "dist/extension.js",
     minify: true,
   })
+  await esbuild.build({
+    ...previewOptions,
+    entryPoints: ["src/preview/webview/main.ts"],
+    outfile: "dist/preview.js",
+  })
   if (tests) {
     await esbuild.build({
-      ...options,
+      ...extensionOptions,
       entryPoints: ["src/parser.test.ts"],
       outfile: "dist-test/parser.test.js",
       minify: false,

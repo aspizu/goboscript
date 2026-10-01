@@ -3,6 +3,7 @@ import { isAbsolute, resolve } from "node:path"
 import * as vscode from "vscode"
 import type { ParsedDiagnostic } from "./parser"
 import { findProjectRoot } from "./project"
+import { Sb3PreviewProvider } from "./preview/provider"
 import { ProjectRunner } from "./runner"
 
 const DEBOUNCE_MS = 250
@@ -17,6 +18,11 @@ export function activate(context: vscode.ExtensionContext): void {
   const reportedUris = new Map<string, Set<vscode.Uri>>()
 
   context.subscriptions.push(
+    vscode.window.registerCustomEditorProvider(
+      "goboscript.sb3Preview",
+      new Sb3PreviewProvider(context.extensionUri),
+      { supportsMultipleEditorsPerDocument: false },
+    ),
     channel,
     collection,
     vscode.workspace.onDidSaveTextDocument((document) => {
