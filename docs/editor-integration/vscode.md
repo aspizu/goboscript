@@ -11,6 +11,10 @@ The [goboscript compiler](../install.md) must be installed and available on your
 Saving a `.gs` file builds the project, writes its `.sb3` file, and shows compiler
 errors and warnings in the **Problems** panel.
 
+By default the extension runs `goboscript` from your `PATH`. Set the
+`goboscript.compilerPath` setting to an absolute path to use a specific
+executable.
+
 ## Project preview
 
 Open a `.sb3` file to preview it in VS Code. The preview runs offline using

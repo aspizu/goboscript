@@ -21,7 +21,8 @@ Saving a `.gs` file runs `goboscript build` on the enclosing project (the neares
 directory containing `stage.gs` or `goboscript.toml`) and shows the reported errors
 and warnings in the **Problems** panel. The build also writes the project's `.sb3`
 file. The `goboscript` compiler must be installed and available on your `PATH`,
-see the [installation guide](https://aspiz.uk/goboscript/docs).
+see the [installation guide](https://aspiz.uk/goboscript/docs). Alternatively, set
+`goboscript.compilerPath` to an absolute path to the executable.
 
 ## `.sb3` preview
 

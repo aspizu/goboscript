@@ -73,6 +73,16 @@
         "path": "./syntaxes/goboscript.tmLanguage.json"
       }
     ],
+    "configuration": {
+      "title": "goboscript",
+      "properties": {
+        "goboscript.compilerPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Absolute path to the `goboscript` compiler executable used for builds on save. Leave empty to use `goboscript` from your `PATH` (on Windows, `goboscript.exe`; the project folder is never searched). Relative paths are not allowed."
+        }
+      }
+    },
     "customEditors": [
       {
         "viewType": "goboscript.sb3Preview",

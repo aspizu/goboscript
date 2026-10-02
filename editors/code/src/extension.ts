@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, isAbsolute, join, resolve } from "node:path"
 import * as vscode from "vscode"
+import { resolveCompiler, type CompilerFailure } from "./compiler"
 import type { ParsedDiagnostic } from "./parser"
 import { Sb3PreviewProvider } from "./preview/provider"
 import { ProjectRunner } from "./runner"
@@ -12,8 +13,14 @@ export function activate(context: vscode.ExtensionContext): void {
   const collection = vscode.languages.createDiagnosticCollection("goboscript")
   const runners = new Map<string, ProjectRunner>()
   const reportedUris = new Map<string, Set<string>>()
+  const notified = new Set<CompilerFailure>()
 
   context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration("goboscript.compilerPath")) {
+        notified.clear()
+      }
+    }),
     vscode.window.registerCustomEditorProvider(
       "goboscript.sb3Preview",
       new Sb3PreviewProvider(context.extensionUri),
@@ -33,8 +40,17 @@ export function activate(context: vscode.ExtensionContext): void {
         runner = new ProjectRunner(projectDir, {
           debounceMs: DEBOUNCE_MS,
           timeoutMs: BUILD_TIMEOUT_MS,
-          onResult: ({ parsed, savedDoc, error }) => {
-            if (error !== undefined) {
+          resolveCompiler: () =>
+            resolveCompiler(
+              vscode.workspace
+                .getConfiguration("goboscript", vscode.Uri.file(projectDir))
+                .get("compilerPath", ""),
+              projectDir,
+            ),
+          onResult: ({ parsed, savedDoc, error, failure }) => {
+            if (failure !== undefined) {
+              notifyFailure(notified, failure)
+            } else if (error !== undefined) {
               console.error(`goboscript ${projectDir}: ${error}`)
             }
             publish(collection, reportedUris, projectDir, parsed, savedDoc)
@@ -49,6 +65,27 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
+
+const FAILURE_MESSAGES: Record<CompilerFailure, string> = {
+  "not-found-on-path":
+    "goboscript was not found on PATH. Set goboscript.compilerPath to an absolute path.",
+  "relative-path": "goboscript.compilerPath must be an absolute path.",
+}
+
+function notifyFailure(notified: Set<CompilerFailure>, failure: CompilerFailure): void {
+  if (notified.has(failure)) {
+    return
+  }
+  notified.add(failure)
+  void vscode.window.showErrorMessage(FAILURE_MESSAGES[failure], "Configure").then((choice) => {
+    if (choice === "Configure") {
+      void vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "goboscript.compilerPath",
+      )
+    }
+  })
+}
 
 function findProjectRoot(file: string): string | undefined {
   let dir = dirname(file)
