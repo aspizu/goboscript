@@ -403,14 +403,6 @@ fn visit_expr(expr: &mut Expr, s: S, d: D) {
     transformations::apply(expr, transformations::greater_than_equal);
     transformations::apply(expr, transformations::not_equal);
     transformations::apply(expr, transformations::floor_div);
-    transformations::apply(expr, transformations::add_zero_left);
-    transformations::apply(expr, transformations::add_zero_right);
-    transformations::apply(expr, transformations::sub_zero);
-    transformations::apply(expr, transformations::mul_one_left);
-    transformations::apply(expr, transformations::mul_one_right);
-    transformations::apply(expr, transformations::div_one);
-    transformations::apply(expr, transformations::mul_zero_left);
-    transformations::apply(expr, transformations::mul_zero_right);
     transformations::apply(expr, transformations::join_empty_left);
     transformations::apply(expr, transformations::join_empty_right);
     transformations::apply(expr, transformations::bin_op);
@@ -755,4 +747,158 @@ fn visit_show_or_hide_monitor(name: &Name, s: S, _d: D, is_show: bool) -> Option
             })
             .collect(),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        blocks::BinOp,
+        codegen::debug_info::DebugInfo,
+    };
+
+    fn diagnostics() -> SpriteDiagnostics {
+        SpriteDiagnostics {
+            sprite_name: String::new(),
+            translation_unit: crate::translation_unit::TranslationUnit::empty_for_test(),
+            diagnostics: vec![],
+            debug_info: DebugInfo::default(),
+        }
+    }
+
+    fn with_s<R>(f: impl FnOnce(S, &mut SpriteDiagnostics) -> R) -> R {
+        let func_args: FxHashMap<SmolStr, Vec<Arg>> = Default::default();
+        let proc_args: FxHashMap<SmolStr, Vec<Arg>> = Default::default();
+        let vars: FxHashMap<SmolStr, Var> = Default::default();
+        let lists: FxHashMap<SmolStr, List> = Default::default();
+        let enums: FxHashMap<SmolStr, Enum> = Default::default();
+        let structs: FxHashMap<SmolStr, Struct> = Default::default();
+        let procs: FxHashMap<SmolStr, Proc> = Default::default();
+        let funcs: FxHashMap<SmolStr, Func> = Default::default();
+        let s = S {
+            func_args: &func_args,
+            proc_args: &proc_args,
+            args: None,
+            local_vars: None,
+            vars: &vars,
+            lists: &lists,
+            enums: &enums,
+            structs: &structs,
+            procs: &procs,
+            funcs: &funcs,
+            global_vars: None,
+            global_lists: None,
+            global_enums: None,
+            global_structs: None,
+        };
+        let mut d = diagnostics();
+        f(s, &mut d)
+    }
+
+    fn name_expr(name: &str) -> Expr {
+        Expr::Name(Name::Name {
+            name: name.into(),
+            span: 0..0,
+        })
+    }
+
+    #[track_caller]
+    fn assert_folds_to_number(expr: Expr, expected: f64) {
+        let Expr::Value {
+            value: Value::Number(value),
+            ..
+        } = expr
+        else {
+            panic!("expected constant fold, got {expr:?}");
+        };
+        assert_eq!(value, expected);
+    }
+
+    #[track_caller]
+    fn assert_stays_bin_op(expr: &Expr, op: BinOp) {
+        match expr {
+            Expr::BinOp {
+                op: found,
+                lhs,
+                rhs,
+                ..
+            } => {
+                assert_eq!(std::mem::discriminant(found), std::mem::discriminant(&op));
+                // The non-constant operand must be preserved as-is.
+                assert!(
+                    !matches!(**lhs, Expr::Value { .. }) || !matches!(**rhs, Expr::Value { .. })
+                );
+            }
+            other => panic!("expected an unfolded {op:?} node, got {other:?}"),
+        }
+    }
+
+    // Scratch evaluates arithmetic through `Cast.toNumber`, which maps
+    // non-numeric strings to 0. So `0 + x` is 0 for a text `x`, not `x`;
+    // `x - 0`, `x * 1` and `x / 1` are likewise 0. Folding these identities
+    // away silently changes the program's behaviour, so they must be kept.
+    #[test]
+    fn arithmetic_identities_are_not_folded_away() {
+        with_s(|s, d| {
+            let zero = || Value::from(0.0).to_expr(0..0);
+            let one = || Value::from(1.0).to_expr(0..0);
+
+            let mut expr = BinOp::Add.to_expr(0..0, zero(), name_expr("x"));
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Add);
+
+            let mut expr = BinOp::Add.to_expr(0..0, name_expr("x"), zero());
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Add);
+
+            let mut expr = BinOp::Sub.to_expr(0..0, name_expr("x"), zero());
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Sub);
+
+            let mut expr = BinOp::Mul.to_expr(0..0, one(), name_expr("x"));
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Mul);
+
+            let mut expr = BinOp::Mul.to_expr(0..0, name_expr("x"), one());
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Mul);
+
+            let mut expr = BinOp::Div.to_expr(0..0, name_expr("x"), one());
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Div);
+
+            // `x * 0` is only 0 when `x` is finite: `"Infinity" * 0` is NaN.
+            let mut expr = BinOp::Mul.to_expr(0..0, zero(), name_expr("x"));
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Mul);
+
+            let mut expr = BinOp::Mul.to_expr(0..0, name_expr("x"), zero());
+            visit_expr(&mut expr, s, d);
+            assert_stays_bin_op(&expr, BinOp::Mul);
+        });
+    }
+
+    #[test]
+    fn constant_folding_follows_scratch_semantics() {
+        with_s(|s, d| {
+            // Both operands are constant, so the arithmetic is still folded:
+            // Scratch treats a non-numeric string as 0, giving 0 + 0 = 0.
+            let mut expr = BinOp::Add.to_expr(
+                0..0,
+                Value::from(0.0).to_expr(0..0),
+                Value::from("apple").to_expr(0..0),
+            );
+            visit_expr(&mut expr, s, d);
+            assert_folds_to_number(expr, 0.0);
+
+            // Plain numeric folding still works.
+            let mut expr = BinOp::Mul.to_expr(
+                0..0,
+                Value::from(2.0).to_expr(0..0),
+                Value::from(3.0).to_expr(0..0),
+            );
+            visit_expr(&mut expr, s, d);
+            assert_folds_to_number(expr, 6.0);
+        });
+    }
 }

@@ -399,6 +399,27 @@ fn add_include_to_translation_unit(
 }
 
 #[cfg(test)]
+impl TranslationUnit {
+    pub fn empty_for_test() -> Self {
+        let mut unit = Self {
+            text: vec![b'\n'],
+            path: PathBuf::new(),
+            defines: Default::default(),
+            includes: Default::default(),
+            included: Default::default(),
+            current_include: 0,
+        };
+        unit.includes.push(Include {
+            unit_range: 0..unit.text.len(),
+            source_range: 0..unit.text.len(),
+            path: unit.path.clone(),
+            owner: Owner::Local,
+        });
+        unit
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use std::{
         collections::HashMap,
