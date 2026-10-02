@@ -151,13 +151,7 @@ function publish(
   const linesByFsPath = new Map<string, string[] | null>()
   for (const item of parsed) {
     const uri = resolveUri(item, projectDir, savedDoc)
-    const fsPath = uri.fsPath
-    let lines = linesByFsPath.get(fsPath)
-    if (lines === undefined) {
-      lines = readLines(fsPath)
-      linesByFsPath.set(fsPath, lines)
-    }
-    const range = computeRange(item, lines)
+    const range = computeRange(item, uri.fsPath, linesByFsPath)
     const diagnostic = new vscode.Diagnostic(
       range,
       item.message,
@@ -213,13 +207,34 @@ function readLines(fsPath: string): string[] | null {
   }
 }
 
-function computeRange(item: ParsedDiagnostic, lines: string[] | null): vscode.Range {
-  if (item.line === undefined || item.column === undefined || lines === null) {
+function computeRange(
+  item: ParsedDiagnostic,
+  fsPath: string,
+  linesByFsPath: Map<string, string[] | null>,
+): vscode.Range {
+  if (item.line === undefined || item.column === undefined) {
+    return new vscode.Range(0, 0, 0, 0)
+  }
+  let lines = linesByFsPath.get(fsPath)
+  if (lines === undefined) {
+    lines = readLines(fsPath)
+    linesByFsPath.set(fsPath, lines)
+  }
+  if (lines === null) {
     return new vscode.Range(0, 0, 0, 0)
   }
   const line = Math.min(Math.max(item.line - 1, 0), lines.length - 1)
   const column = Math.max(item.column - 1, 0)
-  const utf16Column = Array.from(lines[line]).slice(0, column).join("").length
-  const position = new vscode.Position(line, utf16Column)
+  const position = new vscode.Position(line, utf16ColumnOfCodePoints(lines[line], column))
   return new vscode.Range(position, position)
+}
+
+function utf16ColumnOfCodePoints(text: string, codePoints: number): number {
+  let units = 0
+  for (let i = 0; i < text.length && codePoints > 0; codePoints--) {
+    const width = text.codePointAt(i)! > 0xffff ? 2 : 1
+    units += width
+    i += width
+  }
+  return units
 }
