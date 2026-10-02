@@ -19,7 +19,7 @@
     forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system (pkgsFor system));
     pkgsFor = system: nixpkgs.legacyPackages.${system};
   in {
-    packages = forAllSystems (_: pkgs: pkgs.callPackages ./default.nix {});
+    packages = forAllSystems (_: pkgs: pkgs.callPackage ./default.nix {});
     devShells = forAllSystems (system: pkgs: {
       default = pkgs.mkShell {
         buildInputs = with pkgs; [git cargo rustc];
