@@ -4,7 +4,7 @@ import * as vscode from "vscode"
 import { resolveCompiler, type CompilerFailure } from "./compiler"
 import type { ParsedDiagnostic } from "./parser"
 import { Sb3PreviewProvider } from "./preview/provider"
-import { ProjectRunner } from "./runner"
+import { ProjectRunner, type Crash } from "./runner"
 
 const DEBOUNCE_MS = 250
 const BUILD_TIMEOUT_MS = 60_000
@@ -47,11 +47,15 @@ export function activate(context: vscode.ExtensionContext): void {
                 .get("compilerPath", ""),
               projectDir,
             ),
-          onResult: ({ parsed, savedDoc, error, failure }) => {
+          onResult: ({ parsed, savedDoc, stderr, error, failure, crash }) => {
             if (failure !== undefined) {
               notifyFailure(notified, failure)
             } else if (error !== undefined) {
               console.error(`goboscript ${projectDir}: ${error}`)
+            }
+            if (crash !== undefined) {
+              console.error(`goboscript ${projectDir} ${crashCause(crash)}\n${stderr}`)
+              notifyCrash(crash)
             }
             publish(collection, reportedUris, projectDir, parsed, savedDoc)
           },
@@ -85,6 +89,32 @@ function notifyFailure(notified: Set<CompilerFailure>, failure: CompilerFailure)
       )
     }
   })
+}
+
+const ISSUE_URL = "https://github.com/aspizu/goboscript/issues"
+
+function crashCause(crash: Crash): string {
+  switch (crash.kind) {
+    case "timeout": {
+      return `timed out after ${BUILD_TIMEOUT_MS / 1000}s`
+    }
+    case "signal": {
+      return `crashed (${crash.signal})`
+    }
+    case "exit": {
+      return `exited with code ${crash.code} and reported nothing`
+    }
+  }
+}
+
+function notifyCrash(crash: Crash): void {
+  void vscode.window
+    .showErrorMessage(`goboscript is cooked 💀: ${crashCause(crash)}`, "Open Issue")
+    .then((choice) => {
+      if (choice === "Open Issue") {
+        void vscode.env.openExternal(vscode.Uri.parse(ISSUE_URL))
+      }
+    })
 }
 
 function findProjectRoot(file: string): string | undefined {

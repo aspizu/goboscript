@@ -2,11 +2,18 @@ import { spawn } from "node:child_process"
 import type { CompilerFailure, CompilerResolution } from "./compiler"
 import { parseDiagnostics, type ParsedDiagnostic } from "./parser"
 
+export type Crash =
+  | { kind: "timeout" }
+  | { kind: "signal"; signal: string }
+  | { kind: "exit"; code: number }
+
 export interface BuildOutcome {
   parsed: ParsedDiagnostic[]
   savedDoc: string | undefined
+  stderr: string
   error: string | undefined
   failure: CompilerFailure | undefined
+  crash: Crash | undefined
 }
 
 export interface ProjectRunnerOptions {
@@ -54,8 +61,14 @@ export class ProjectRunner {
     const savedDoc = this.savedDoc
     let stderr = ""
     let done = false
+    let timedOut = false
     let timeout: NodeJS.Timeout | undefined
-    const finish = (error: string | undefined, failure?: CompilerFailure) => {
+    const finish = (result: {
+      error?: string
+      failure?: CompilerFailure
+      crash?: Crash
+      parsed?: ParsedDiagnostic[]
+    }) => {
       if (done) {
         return
       }
@@ -64,11 +77,14 @@ export class ProjectRunner {
         clearTimeout(timeout)
       }
       this.inFlight = false
+      const abnormal = result.error !== undefined || result.failure !== undefined
       this.options.onResult({
-        parsed: error === undefined && failure === undefined ? parseDiagnostics(stderr) : [],
+        parsed: result.parsed ?? (abnormal ? [] : parseDiagnostics(stderr)),
         savedDoc,
-        error,
-        failure: failure ?? undefined,
+        stderr,
+        error: result.error,
+        failure: result.failure,
+        crash: abnormal ? undefined : result.crash,
       })
       if (this.dirty) {
         this.dirty = false
@@ -77,25 +93,35 @@ export class ProjectRunner {
     }
     const { command, failure } = this.options.resolveCompiler()
     if (failure !== undefined) {
-      finish(undefined, failure)
+      finish({ failure })
       return
     }
     const child = spawn(command, ["build"], {
       cwd: this.projectDir,
       stdio: ["ignore", "pipe", "pipe"],
     })
-    timeout = setTimeout(() => child.kill(), this.options.timeoutMs)
+    timeout = setTimeout(() => {
+      timedOut = true
+      child.kill()
+    }, this.options.timeoutMs)
     child.stdout.on("data", () => {})
     child.stderr.setEncoding("utf8")
     child.stderr.on("data", (chunk: string) => {
       stderr += chunk
     })
-    child.on("error", (err) => finish(`failed to spawn ${command}: ${err.message}`))
-    child.on("close", (_code, signal) => {
-      if (signal) {
-        finish(`goboscript killed by ${signal} after ${this.options.timeoutMs}ms`)
+    child.on("error", (err) => finish({ error: `failed to spawn ${command}: ${err.message}` }))
+    child.on("close", (code, signal) => {
+      const parsed = parseDiagnostics(stderr)
+      if (signal !== null) {
+        finish(
+          timedOut
+            ? { crash: { kind: "timeout" }, parsed }
+            : { crash: { kind: "signal", signal }, parsed },
+        )
+      } else if (code !== null && code !== 0 && parsed.length === 0) {
+        finish({ crash: { kind: "exit", code }, parsed })
       } else {
-        finish(undefined)
+        finish({ parsed })
       }
     })
   }
