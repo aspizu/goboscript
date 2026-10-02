@@ -86,10 +86,6 @@
       }
     ]
   },
-  "activationEvents": [
-    "onCustomEditor:goboscript.sb3Preview",
-    "onLanguage:goboscript"
-  ],
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.138.0"
