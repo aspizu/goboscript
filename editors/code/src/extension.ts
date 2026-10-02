@@ -48,10 +48,12 @@ export function activate(context: vscode.ExtensionContext): void {
               projectDir,
             ),
           onResult: ({ parsed, savedDoc, stderr, error, failure, crash }) => {
-            if (failure !== undefined) {
-              notifyFailure(notified, failure)
-            } else if (error !== undefined) {
+            if (error !== undefined) {
               console.error(`goboscript ${projectDir}: ${error}`)
+            }
+            if (failure !== undefined) {
+              notifyFailure(notified, failure, error)
+              return
             }
             if (crash !== undefined) {
               console.error(`goboscript ${projectDir} ${crashCause(crash)}\n${stderr}`)
@@ -74,14 +76,21 @@ const FAILURE_MESSAGES: Record<CompilerFailure, string> = {
   "not-found-on-path":
     "goboscript was not found on PATH. Set goboscript.compilerPath to an absolute path.",
   "relative-path": "goboscript.compilerPath must be an absolute path.",
+  "spawn-failed": "Could not start the compiler. Check goboscript.compilerPath and permissions.",
 }
 
-function notifyFailure(notified: Set<CompilerFailure>, failure: CompilerFailure): void {
+function notifyFailure(
+  notified: Set<CompilerFailure>,
+  failure: CompilerFailure,
+  detail?: string,
+): void {
   if (notified.has(failure)) {
     return
   }
   notified.add(failure)
-  void vscode.window.showErrorMessage(FAILURE_MESSAGES[failure], "Configure").then((choice) => {
+  const message =
+    detail === undefined ? FAILURE_MESSAGES[failure] : `${FAILURE_MESSAGES[failure]} ${detail}`
+  void vscode.window.showErrorMessage(message, "Configure").then((choice) => {
     if (choice === "Configure") {
       void vscode.commands.executeCommand(
         "workbench.action.openSettings",
@@ -139,9 +148,16 @@ function publish(
   savedDoc: string | undefined,
 ): void {
   const byUri = new Map<string, vscode.Diagnostic[]>()
+  const linesByFsPath = new Map<string, string[] | null>()
   for (const item of parsed) {
     const uri = resolveUri(item, projectDir, savedDoc)
-    const range = computeRange(item, uri)
+    const fsPath = uri.fsPath
+    let lines = linesByFsPath.get(fsPath)
+    if (lines === undefined) {
+      lines = readLines(fsPath)
+      linesByFsPath.set(fsPath, lines)
+    }
+    const range = computeRange(item, lines)
     const diagnostic = new vscode.Diagnostic(
       range,
       item.message,

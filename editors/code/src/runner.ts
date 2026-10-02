@@ -109,7 +109,13 @@ export class ProjectRunner {
     child.stderr.on("data", (chunk: string) => {
       stderr += chunk
     })
-    child.on("error", (err) => finish({ error: `failed to spawn ${command}: ${err.message}` }))
+    child.on("error", (err: NodeJS.ErrnoException) => {
+      finish({
+        failure:
+          err.code === "ENOENT" && command === "goboscript" ? "not-found-on-path" : "spawn-failed",
+        error: `failed to spawn ${command}: ${err.message}`,
+      })
+    })
     child.on("close", (code, signal) => {
       const parsed = parseDiagnostics(stderr)
       if (signal !== null) {

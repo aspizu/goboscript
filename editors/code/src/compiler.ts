@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs"
 import { delimiter, extname, isAbsolute, join, resolve } from "node:path"
 
-export type CompilerFailure = "not-found-on-path" | "relative-path"
+export type CompilerFailure = "not-found-on-path" | "relative-path" | "spawn-failed"
 
 export type CompilerResolution =
   | { command: string; failure: undefined }
