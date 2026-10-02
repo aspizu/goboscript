@@ -7,23 +7,6 @@ import { Overlay } from "./Overlay"
 import { Stage } from "./Stage"
 import { Toolbar } from "./Toolbar"
 
-const DUMMY_MESSAGES: ConsoleMessage[] = [
-  { level: "info", message: "Project started", origin: "Stage" },
-  { level: "log", message: "Loaded 3 sprites and 12 sounds", origin: "Loader" },
-  { level: "log", message: "score is now 5", origin: "Score Keeper" },
-  {
-    level: "warning",
-    message: "list 'leaderboard' has 11 items, expected at most 10",
-    origin: "leaderboard",
-  },
-  {
-    level: "error",
-    message: "could not connect to cloud variables, retrying in 5 seconds",
-    origin: "Cloud",
-  },
-  { level: "log", message: "Player touched the edge at (218, -14)", origin: "Player" },
-]
-
 export function App({ logger }: { logger: Logger }) {
   const { status, load, fail } = useProject(logger)
   const [messages, setMessages] = useState<ConsoleMessage[]>([])
@@ -36,7 +19,6 @@ export function App({ logger }: { logger: Logger }) {
 
   const greenFlag = useCallback(() => {
     player?.greenFlag()
-    setMessages((previous) => [...previous, ...DUMMY_MESSAGES])
   }, [])
 
   const stop = useCallback(() => {
