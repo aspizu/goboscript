@@ -3,7 +3,6 @@
   rustPlatform,
   pkg-config,
   openssl,
-  rust,
 }:
 rustPlatform.buildRustPackage {
   pname = "goboscript";
@@ -13,7 +12,7 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ./Cargo.lock;
 
-  nativeBuildInputs = [pkg-config rust];
+  nativeBuildInputs = [pkg-config];
   buildInputs = [openssl];
 
   meta = {
