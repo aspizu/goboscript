@@ -47,6 +47,7 @@ nav:
   - Standard Library: standard-library.md
   - Contributing: contributing.md
   - Editor Integration:
+      - VS Code: editor-integration/vscode.md
       - TurboWarp Desktop: editor-integration/turbowarp-desktop.md
       - Sublime Text: editor-integration/sublime-text.md
       - Notepad++: editor-integration/notepad++.md

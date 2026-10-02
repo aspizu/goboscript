@@ -34,6 +34,9 @@ aspect ratio, and the project stays paused until you press **Green flag**.
 
 ## Documentation
 
+See the [VS Code extension guide](https://aspiz.uk/goboscript/docs/editor-integration/vscode.html)
+for setup, builds on save, and the project preview and console.
+
 Please see the [goboscript documentation](https://aspiz.uk/goboscript/docs) for using
 goboscript.
 
