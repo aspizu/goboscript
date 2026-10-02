@@ -116,7 +116,7 @@ fn visit_enum(enum_: &mut Enum) {
     for variant in &mut enum_.variants {
         if let Some((value, _)) = &variant.value {
             if let Value::Number(number) = value {
-                index = *number;
+                index = *number + 1.0;
             }
         } else {
             variant.value = Some((Value::Number(index), variant.span.clone()));
@@ -267,5 +267,30 @@ fn visit_stmt(stmt: &mut Stmt, v: &mut V) {
             }
         }
         _ => (),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::visit_enum;
+    use crate::ast::{Enum, EnumVariant, Value};
+
+    #[test]
+    fn implicit_enum_value_follows_explicit_number() {
+        let mut enum_ = Enum::new(
+            "Direction".into(),
+            0..2,
+            vec![
+                EnumVariant::new("E".into(), 0..1, Some((Value::from(2.0), 0..1))),
+                EnumVariant::new("F".into(), 1..2, None),
+            ],
+        );
+
+        visit_enum(&mut enum_);
+
+        assert_eq!(
+            enum_.variants[1].value.as_ref().unwrap().0.number(),
+            Some(3.0)
+        );
     }
 }
