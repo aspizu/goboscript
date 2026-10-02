@@ -39,6 +39,8 @@ cargo install --git https://github.com/aspizu/goboscript --locked --force
 
     The nix flake installs goboscript from source, like the other methods, so you will need to be patient.
 
+    You can also [install the goboscript VSCode extension with nix](./editor-integration/vscode.md).
+
 ### devShell
 
 You can test goboscript without installing it to your system with the nix devshell, a bit like `nix-shell -p {some package}`.
@@ -51,13 +53,15 @@ Simply run the command `nix develop github:aspizu/goboscript`
 
 ### Nixos standalone installation (flake)
 
-This is for if you want to have `goboscript` available system-wide.
-For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake, roughly like so:
+To install the goboscript *compiler*, you can add `goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript` to your system packages list.
+For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake like so:
+
+[This repository](https://codeberg.org/rtk/dotfiles) is an example usage of the goboscript flake.
 
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=25.11";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=26.05";
     goboscript.url = "github:aspizu/goboscript";
   };
   outputs = { self, nixpkgs, goboscript, ... }: {
@@ -68,6 +72,7 @@ For nix flakes, add the input `goboscript` and add it to `environment.systemPack
             goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
           ];
         })
+        # The rest of your nixos configuration...
       ];
     };
   };
