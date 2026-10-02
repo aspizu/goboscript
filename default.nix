@@ -3,21 +3,23 @@
   rustPlatform,
   pkg-config,
   openssl,
-}:
-rustPlatform.buildRustPackage {
-  pname = "goboscript";
-  version = "3.3.0";
+}: rec {
+  default = goboscript;
+  goboscript = rustPlatform.buildRustPackage {
+    pname = "goboscript";
+    version = "3.3.0";
 
-  src = ./.;
+    src = ./.;
 
-  cargoLock.lockFile = ./Cargo.lock;
+    cargoLock.lockFile = ./Cargo.lock;
 
-  nativeBuildInputs = [pkg-config];
-  buildInputs = [openssl];
+    nativeBuildInputs = [pkg-config];
+    buildInputs = [openssl];
 
-  meta = {
-    description = "goboscript is the Scratch compiler";
-    homepage = "https://github.com/aspizu/goboscript";
-    license = lib.licenses.mit;
+    meta = {
+      description = "goboscript is the Scratch compiler";
+      homepage = "https://github.com/aspizu/goboscript";
+      license = lib.licenses.mit;
+    };
   };
 }

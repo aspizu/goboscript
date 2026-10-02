@@ -3,26 +3,28 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
+    self,
     nixpkgs,
-    flake-utils,
     ...
-  }:
-    flake-utils.lib.eachSystem ["x86_64-linux" "aarch64-darwin"] (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-    in rec {
-      packages.goboscript = pkgs.callPackage ./default.nix {};
-
-      legacyPackages = packages;
-
-      defaultPackage = packages.goboscript;
-
-      devShell = pkgs.mkShell {
+  }: let
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system (pkgsFor system));
+    pkgsFor = system: nixpkgs.legacyPackages.${system};
+  in {
+    packages = forAllSystems (_: pkgs: pkgs.callPackages ./default.nix {});
+    devShells = forAllSystems (system: pkgs: {
+      default = pkgs.mkShell {
         buildInputs = with pkgs; [git cargo rustc];
-        packages = [packages.goboscript];
+        packages = [self.packages.${system}.goboscript];
       };
     });
+  };
 }
