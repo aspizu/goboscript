@@ -1,17 +1,14 @@
-import { useLayoutEffect, useRef, useState } from "preact/hooks"
+import { useSignal } from "@preact/signals"
+import { useLayoutEffect, useRef } from "preact/hooks"
 import { Ban, CircleX, Info, TriangleAlert } from "lucide-preact"
+import {
+  messages,
+  severity,
+  visibleMessages,
+  type ConsoleLevel,
+  type ConsoleMessage,
+} from "../lib/console"
 import { IconButton } from "./IconButton"
-
-export type ConsoleLevel = "error" | "warning" | "info" | "log"
-
-export interface ConsoleMessage {
-  level: ConsoleLevel
-  message: string
-  origin: string
-}
-
-// A message is visible when its level is at or above the chosen severity.
-const SEVERITY: Record<ConsoleLevel, number> = { log: 0, info: 1, warning: 2, error: 3 }
 
 const FILTERS: { severity: ConsoleLevel; label: string }[] = [
   { severity: "log", label: "All levels" },
@@ -20,25 +17,17 @@ const FILTERS: { severity: ConsoleLevel; label: string }[] = [
   { severity: "error", label: "Errors only" },
 ]
 
-export function Console({
-  messages,
-  onClear,
-}: {
-  messages: ConsoleMessage[]
-  onClear: () => void
-}) {
-  const [severity, setSeverity] = useState<ConsoleLevel>("log")
-  const visible = messages.filter((message) => SEVERITY[message.level] >= SEVERITY[severity])
-
+export function Console() {
+  const visible = visibleMessages.value
   const list = useRef<HTMLUListElement>(null)
-  const atBottom = useRef(true)
+  const atBottom = useSignal(true)
 
   useLayoutEffect(() => {
     const element = list.current
-    if (element !== null && atBottom.current) {
+    if (element !== null && atBottom.peek()) {
       element.scrollTop = element.scrollHeight
     }
-  }, [messages])
+  }, [visible])
 
   return (
     <section class="flex min-h-24 min-w-0 flex-1 flex-col">
@@ -48,16 +37,16 @@ export function Console({
           <select
             title="Filter by level"
             class="h-6 cursor-pointer rounded-[5px] bg-vscode-dropdown px-1.5 text-xs text-vscode-foreground"
-            value={severity}
+            value={severity.value}
             onChange={(event) => {
-              setSeverity(event.currentTarget.value as ConsoleLevel)
+              severity.value = event.currentTarget.value as ConsoleLevel
             }}
           >
             {FILTERS.map(({ severity: value, label }) => (
               <option value={value}>{label}</option>
             ))}
           </select>
-          <IconButton title="Clear the console" onClick={onClear}>
+          <IconButton title="Clear the console" onClick={() => (messages.value = [])}>
             <Ban class="h-4 w-4" />
           </IconButton>
         </div>
@@ -68,7 +57,7 @@ export function Console({
         onScroll={() => {
           const element = list.current
           if (element !== null) {
-            atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 1
+            atBottom.value = element.scrollHeight - element.scrollTop - element.clientHeight < 1
           }
         }}
       >

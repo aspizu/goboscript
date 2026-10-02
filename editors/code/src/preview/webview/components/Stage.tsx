@@ -1,16 +1,9 @@
 import type { ComponentChild } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { player, playerInitFailure } from "../lib/player"
+import { fail, loadProject } from "../lib/project"
 
-export function Stage({
-  onReady,
-  onError,
-  children,
-}: {
-  onReady: () => void
-  onError: (title: string, detail: string, log: string) => void
-  children: ComponentChild
-}) {
+export function Stage({ children }: { children: ComponentChild }) {
   const container = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -20,13 +13,13 @@ export function Stage({
     }
     if (player === undefined) {
       if (playerInitFailure !== undefined) {
-        onError("Failed to initialize player", playerInitFailure.detail, playerInitFailure.log)
+        fail("Failed to initialize player", playerInitFailure.detail, playerInitFailure.log)
       }
       return
     }
     player.appendTo(element)
-    onReady()
-  }, [onReady, onError])
+    void loadProject()
+  }, [])
 
   return (
     <div

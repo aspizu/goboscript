@@ -34,6 +34,7 @@
     "package": "pnpm run compile && vsce package --no-dependencies -o goboscript.vsix"
   },
   "dependencies": {
+    "@preact/signals": "^2.11.3",
     "@turbowarp/scaffolding": "0.4.0",
     "lucide-preact": "^1.49.0",
     "neverthrow": "^8.2.0",

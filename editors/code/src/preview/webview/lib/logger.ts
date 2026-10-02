@@ -1,6 +1,7 @@
 import type { LogLevel } from "../../messages"
+import { postToHost } from "./host"
 
-export class Logger {
+class Logger {
   constructor(private readonly post: (message: unknown) => void) {}
 
   log(message: string): void {
@@ -19,3 +20,5 @@ export class Logger {
     this.post({ type: "log", level, message })
   }
 }
+
+export const logger = new Logger(postToHost)
