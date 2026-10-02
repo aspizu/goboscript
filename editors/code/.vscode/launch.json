@@ -2,16 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch",
+      "name": "Run extension",
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        //"--disable-extensions",
+        "${workspaceFolder}/../../examples/aoc2024/day1",
         "--extensionDevelopmentPath=${workspaceFolder}"
       ],
-      "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "Build Extension",
-      "skipFiles": ["<node_internals>/**/*.js"]
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "env": {
+        "PATH": "${workspaceFolder}/../../target/debug:${env:PATH}"
+      }
     }
   ]
 }

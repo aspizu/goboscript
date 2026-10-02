@@ -1,26 +1,47 @@
-# Contributing
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/aspizu/goboscript/main/docs/assets/og-image-dark.webp" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/aspizu/goboscript/main/docs/assets/og-image-light.webp" />
+  <img alt="goboscript screenshot" src="https://raw.githubusercontent.com/aspizu/goboscript/main/docs/assets/og-image-light.webp" />
+</picture>
 
-To develop the extension, open the `editors/code` directory in Visual Studio Code.
+## Introduction
 
-```sh
-cd editors/code
-pnpm ci
-```
+This VS Code extension adds support for the goboscript programming language, which
+compiles to Scratch. It provides syntax highlighting based on the compiler's grammar,
+and compile-on-save diagnostics.
 
-Go to the Run and Debug view and select `Launch`. This will open a new instance of VS
-Code with the extension enabled.
+## Installation
 
-# Installation from Source
+Install from the Visual Studio Code Marketplace or by searching within VS Code. See the
+[installation guide](https://aspiz.uk/goboscript/docs) for installing the compiler.
 
-To install the extension from source, open the `editors/code` directory in Visual Studio
-Code.
+## Compile on save
 
-```sh
-cd editors/code
-pnpm ci
-pnpm run package
-```
+Saving a `.gs` file runs `goboscript build` on the enclosing project (the nearest
+directory containing `stage.gs` or `goboscript.toml`) and shows the reported errors
+and warnings in the **Problems** panel. The build also writes the project's `.sb3`
+file. The `goboscript` compiler must be installed and available on your `PATH`,
+see the [installation guide](https://aspiz.uk/goboscript/docs). Alternatively, set
+`goboscript.compilerPath` to an absolute path to the executable.
 
-Then in Visual Studio Code, press `Ctrl` + `Shift` + `P` and run the
-`Extensions: Install from VSIX...` command.
-Select the `editors/code/goboscript.vsix` file to install the extension.
+## `.sb3` preview
+
+Opening a `.sb3` file (the output of `goboscript build`) shows it running in the
+embedded [TurboWarp Scaffolding](https://github.com/TurboWarp/scaffolding) player,
+fully offline. The preview shows exactly the bytes on disk when it opens; press
+**Reload** to load the file again after rebuilding. It never builds or watches
+anything itself. The stage is scaled to fit the panel while preserving its
+aspect ratio, and the project stays paused until you press **Green flag**.
+
+## Documentation
+
+See the [VS Code extension guide](https://aspiz.uk/goboscript/docs/editor-integration/vscode.html)
+for setup, builds on save, and the project preview and console.
+
+Please see the [goboscript documentation](https://aspiz.uk/goboscript/docs) for using
+goboscript.
+
+## Reporting Issues
+
+Issues should be reported in the
+[goboscript issue tracker](https://github.com/aspizu/goboscript/issues).

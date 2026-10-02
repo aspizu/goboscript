@@ -1,50 +1,30 @@
-## Visual Studio Code
+# VS Code
 
-The VSCode extension provides code snippets, syntax highlighting and diagnostics.
+Install the [goboscript extension](https://marketplace.visualstudio.com/items?itemName=aspizu.goboscript)
+for syntax highlighting, builds on save, and a Scratch project preview.
 
-### Install from VSCode Marketplace
+The [goboscript compiler](../install.md) must be installed and available on your
+`PATH` for builds on save.
 
-Search goboscript in the Extensions tab, or go to the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=aspizu.goboscript) to install it.
+## Build on save
 
-### Install from source
+Saving a `.gs` file builds the project, writes its `.sb3` file, and shows compiler
+errors and warnings in the **Problems** panel.
 
-You will need `pnpm` installed.
+By default the extension runs `goboscript` from your `PATH`. Set the
+`goboscript.compilerPath` setting to an absolute path to use a specific
+executable.
 
-```bash
-# Inside the root of the goboscript git repository:
-cd editors/code
-pnpm ci
-pnpm run package
-```
+## Project preview
 
-This will output a `goboscript-x.y.z.vsix` file in the `editors/code` directory. You can
-install it by pressing ++ctrl+shift+p++ and typing `Extensions: Install from VSIX...`.
+Open a `.sb3` file to preview it in VS Code. The preview runs offline using
+[TurboWarp](https://turbowarp.org/).
 
-### Configure Build Task
+Press **Start** to run the project. After rebuilding, press **Reload** to load the
+updated `.sb3` file. The preview does not reload automatically.
 
-You can configure the goboscript build task to get diagnostics in vscode.
+## Console
 
-Add to `.vscode/tasks.json`:
-
-```json
-{
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "type": "goboscript-build",
-      "problemMatcher": ["$rustc"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "clear": true,
-        "reveal": "never"
-      },
-      "label": "Build .sb3"
-    }
-  ]
-}
-```
-
-Either press ++ctrl+shift+b++ or run `Tasks: Run Task` and select `Build .sb3`.
+The preview's **Console** shows messages from
+[`log`, `warn`, and `error`](../language/blocks/debugger.md), along with the sprite
+or clone that sent them. Messages can be filtered by level.

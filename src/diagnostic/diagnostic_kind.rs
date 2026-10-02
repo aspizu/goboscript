@@ -301,16 +301,16 @@ impl DiagnosticKind {
             DiagnosticKind::EmptyStruct(name) => format!("struct {name} is empty"),
             DiagnosticKind::FixedLengthListInvalid(value) => {
                 if *value < 0_f64 {
-                    return format!("list length cannot be negative");
+                    return "list length cannot be negative".to_string();
                 }
                 if value.is_infinite() {
-                    return format!("list length cannot be infinite");
+                    return "list length cannot be infinite".to_string();
                 }
                 if value.is_nan() {
-                    return format!("list length cannot be nan");
+                    return "list length cannot be nan".to_string();
                 }
                 if *value > 200_000_f64 {
-                    return format!("list length cannot be greater than 200,000");
+                    return "list length cannot be greater than 200,000".to_string();
                 }
                 unreachable!()
             }

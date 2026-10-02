@@ -56,5 +56,5 @@ fn letter_of(lhs: &Value, rhs: &Value) -> Value {
     if let Some(letter) = str.chars().nth(index as usize) {
         return Value::from(SmolStr::from(letter.to_string()));
     }
-    return error;
+    error
 }

@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["dist", "node_modules"],
+  "rules": {
+    "curly": ["error", "all"],
+    "unicorn/switch-case-braces": "error"
+  }
+}
