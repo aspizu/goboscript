@@ -13,22 +13,24 @@ try {
   const scaffolding = new ScaffoldingConstructor()
   scaffolding.resizeMode = "preserve-ratio"
   scaffolding.setup()
-  scaffolding.vm.addAddonBlock({
-    procedureCode: "\u200b\u200blog\u200b\u200b %s",
-    arguments: ["message"],
-    hidden: true,
-    callback: ({ message }, { target }) => {
-      const origin = target.isStage ? "Stage" : target.getName()
-      messages.value = [
-        ...messages.peek(),
-        {
-          level: "log",
-          message: String(message),
-          origin: target.isOriginal ? origin : `${origin} (clone)`,
-        },
-      ]
-    },
-  })
+  for (const name of ["log", "warn", "error"] as const) {
+    scaffolding.vm.addAddonBlock({
+      procedureCode: `\u200b\u200b${name}\u200b\u200b %s`,
+      arguments: ["message"],
+      hidden: true,
+      callback: ({ message }, { target }) => {
+        const origin = target.isStage ? "Stage" : target.getName()
+        messages.value = [
+          ...messages.peek(),
+          {
+            level: name === "warn" ? "warning" : name,
+            message: String(message),
+            origin: target.isOriginal ? origin : `${origin} (clone)`,
+          },
+        ]
+      },
+    })
+  }
   player = scaffolding
 } catch (err) {
   playerInitFailure = {
