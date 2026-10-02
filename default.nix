@@ -1,17 +1,20 @@
-{ lib, rustPlatform, pkg-config, openssl, rust }:
-
+{
+  lib,
+  rustPlatform,
+  pkg-config,
+  openssl,
+  rust,
+}:
 rustPlatform.buildRustPackage {
   pname = "goboscript";
   version = "3.3.0";
 
   src = ./.;
 
-  cargoLock = {
-    lockFile = ./Cargo.lock;
-  };
+  cargoLock.lockFile = ./Cargo.lock;
 
-  nativeBuildInputs = [ pkg-config rust ];
-  buildInputs = [ openssl ];
+  nativeBuildInputs = [pkg-config rust];
+  buildInputs = [openssl];
 
   meta = {
     description = "goboscript is the Scratch compiler";
