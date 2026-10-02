@@ -22,7 +22,7 @@
 
 # Pre-processor directives do not require a semicolon.
 
-costumes "assets/blank.svg" as "@blank";
+costumes "assets/blank.svg" as "blank";
 sounds "assets/pop.wav";
 
 set_x -100;
@@ -213,5 +213,4 @@ on "jump" {
 
 onbackdrop "city" {
     demo_structs;
-    switch_backdrop "blank";
 }

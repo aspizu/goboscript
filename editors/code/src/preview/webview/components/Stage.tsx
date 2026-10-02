@@ -29,13 +29,10 @@ export function Stage({
   }, [onReady, onError])
 
   return (
-    <div class="relative min-h-0 flex-1">
-      <div
-        ref={container}
-        // The player centers the stage vertically; align it to the top instead.
-        // The `!` wins over the player's own stylesheet, which loads after ours.
-        class="absolute inset-x-0 top-0 aspect-4/3 max-h-full border-b border-vscode-border *:[align-items:flex-start]!"
-      />
+    <div
+      ref={container}
+      class="relative aspect-4/3 min-h-0 border-b border-vscode-border *:items-start!"
+    >
       {children}
     </div>
   )

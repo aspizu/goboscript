@@ -1,6 +1,6 @@
 %include assets/macros
 
-costumes "assets/blank.svg";
+costumes "assets/bg.svg";
 
 enum Mode { Idle, Running }
 
@@ -24,7 +24,6 @@ on "reset" {
 }
 
 onbackdrop "city" {
-    switch_backdrop "blank";
 }
 
 ontimer > 300 {
