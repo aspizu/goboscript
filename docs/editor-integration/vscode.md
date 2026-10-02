@@ -28,3 +28,22 @@ updated `.sb3` file. The preview does not reload automatically.
 The preview's **Console** shows messages from
 [`log`, `warn`, and `error`](../language/blocks/debugger.md), along with the sprite
 or clone that sent them. Messages can be filtered by level.
+
+## Install on nix
+
+To install with nix, add the goboscript flake to your flake inputs.
+You can then use `inputs.goboscript.packages.${system}.goboscript-vscode`
+(`${system}` is a string like `x86_64-linux` or `aarch64-darwin`) to access the
+packaged VSCode extension. You can then use this package much like any other
+VSCode package which you would find in nixpkgs: e.g. for use with `home-manager`:
+
+```nix
+programs.vscode = {
+  enable = true;
+  profiles.default = {
+    extensions = [
+      inputs.goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript-vscode
+    ];
+  };
+};
+```

@@ -3,31 +3,28 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-utils, rust-overlay, ... }:
-  flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-darwin" ] (system: let
-    overlays = [ (import rust-overlay) ];
-    pkgs = import nixpkgs {
-      inherit system overlays;
-    };
-    rust = pkgs.rust-bin.stable.latest.default;
-  in rec {
-    packages.goboscript = pkgs.callPackage ./default.nix {
-      inherit (pkgs) pkg-config openssl;
-      inherit rust;
-    };
-
-    legacyPackages = packages;
-
-    defaultPackage = packages.goboscript;
-
-    devShell = pkgs.mkShell {
-      buildInputs = with pkgs; [ git openssl pkg-config ];
-      packages = [ packages.goboscript ];
-      nativeBuildInputs = [ rust ];
-    };
-  });
+  outputs = {
+    self,
+    nixpkgs,
+    ...
+  }: let
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system (pkgsFor system));
+    pkgsFor = system: nixpkgs.legacyPackages.${system};
+  in {
+    packages = forAllSystems (_: pkgs: pkgs.callPackage ./default.nix {});
+    devShells = forAllSystems (system: pkgs: {
+      default = pkgs.mkShell {
+        buildInputs = with pkgs; [git cargo rustc];
+        packages = [self.packages.${system}.goboscript];
+      };
+    });
+  };
 }
