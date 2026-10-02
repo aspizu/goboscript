@@ -21,7 +21,11 @@ export function IconButton({
       title={title}
       disabled={disabled}
       onClick={onClick}
-      class={`flex h-6 w-6 items-center justify-center rounded-[5px] bg-transparent p-0 text-xs text-vscode-icon transition-transform duration-75 enabled:cursor-pointer enabled:hover:bg-vscode-hover enabled:active:scale-95 enabled:active:bg-vscode-active disabled:cursor-default disabled:opacity-40 ${active ? "bg-vscode-active" : ""} ${className ?? ""}`}
+      class={`flex h-6 w-6 items-center justify-center rounded-[5px] p-0 text-xs transition-transform duration-75 enabled:cursor-pointer enabled:active:scale-95 disabled:cursor-default disabled:opacity-40 ${
+        active
+          ? "bg-vscode-run text-vscode-run-foreground enabled:hover:brightness-90 enabled:active:brightness-80"
+          : "bg-transparent text-vscode-icon enabled:hover:bg-vscode-hover enabled:active:bg-vscode-active"
+      } ${className ?? ""}`}
     >
       {children}
     </button>
