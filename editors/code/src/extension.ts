@@ -11,7 +11,7 @@ const BUILD_TIMEOUT_MS = 60_000
 export function activate(context: vscode.ExtensionContext): void {
   const collection = vscode.languages.createDiagnosticCollection("goboscript")
   const runners = new Map<string, ProjectRunner>()
-  const reportedUris = new Map<string, Set<vscode.Uri>>()
+  const reportedUris = new Map<string, Set<string>>()
 
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
@@ -66,12 +66,12 @@ function findProjectRoot(file: string): string | undefined {
 
 function publish(
   collection: vscode.DiagnosticCollection,
-  reportedUris: Map<string, Set<vscode.Uri>>,
+  reportedUris: Map<string, Set<string>>,
   projectDir: string,
   parsed: ParsedDiagnostic[],
   savedDoc: string | undefined,
 ): void {
-  const byUri = new Map<vscode.Uri, vscode.Diagnostic[]>()
+  const byUri = new Map<string, vscode.Diagnostic[]>()
   for (const item of parsed) {
     const uri = resolveUri(item, projectDir, savedDoc)
     const range = computeRange(item, uri)
@@ -88,23 +88,24 @@ function publish(
         (help) => new vscode.DiagnosticRelatedInformation(new vscode.Location(uri, range), help),
       )
     }
-    const list = byUri.get(uri)
+    const key = uri.toString()
+    const list = byUri.get(key)
     if (list) {
       list.push(diagnostic)
     } else {
-      byUri.set(uri, [diagnostic])
+      byUri.set(key, [diagnostic])
     }
   }
   const previous = reportedUris.get(projectDir)
   if (previous) {
     for (const uri of previous) {
       if (!byUri.has(uri)) {
-        collection.delete(uri)
+        collection.delete(vscode.Uri.parse(uri))
       }
     }
   }
   for (const [uri, diagnostics] of byUri) {
-    collection.set(uri, diagnostics)
+    collection.set(vscode.Uri.parse(uri), diagnostics)
   }
   reportedUris.set(projectDir, new Set(byUri.keys()))
 }
