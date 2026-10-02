@@ -205,17 +205,18 @@ function resolveUri(
   return vscode.Uri.file(path)
 }
 
-function computeRange(item: ParsedDiagnostic, uri: vscode.Uri): vscode.Range {
-  if (item.line === undefined || item.column === undefined) {
-    return new vscode.Range(0, 0, 0, 0)
-  }
-  let text: string
+function readLines(fsPath: string): string[] | null {
   try {
-    text = readFileSync(uri.fsPath, "utf8")
+    return readFileSync(fsPath, "utf8").split(/\r?\n/)
   } catch {
+    return null
+  }
+}
+
+function computeRange(item: ParsedDiagnostic, lines: string[] | null): vscode.Range {
+  if (item.line === undefined || item.column === undefined || lines === null) {
     return new vscode.Range(0, 0, 0, 0)
   }
-  const lines = text.split(/\r?\n/)
   const line = Math.min(Math.max(item.line - 1, 0), lines.length - 1)
   const column = Math.max(item.column - 1, 0)
   const utf16Column = Array.from(lines[line]).slice(0, column).join("").length
