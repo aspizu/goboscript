@@ -8,9 +8,7 @@
   <strong><a href="https://aspiz.uk/goboscript/docs">Documentation</a></strong>&nbsp;&nbsp;•&nbsp;
   <strong><a href="https://github.com/goboscript/std">Standard Library</a></strong>&nbsp;&nbsp;•&nbsp;
   <strong><a href="https://github.com/aspizu/backpack">Package Manager</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://github.com/aspizu/sb2gs">Decompiler</a></strong>&nbsp;&nbsp;•&nbsp;
-  <strong><a href="https://github.com/aspizu/goboscript-mcp">MCP Server</a></strong>
-</p>
+  <strong><a href="https://github.com/aspizu/sb2gs">Decompiler</a></strong></p>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/og-image-dark.webp" />
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/og-image-light.webp" />
