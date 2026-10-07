@@ -578,8 +578,8 @@ impl Sb3 {
                 "twconfig",
                 0,
                 NOTES_HEIGHT + COMMENT_GAP,
-                350,
-                170,
+                240,
+                120,
                 &TurbowarpConfig::from(config).to_string(),
             )?;
             write!(self.json, "}}")?; // comments
