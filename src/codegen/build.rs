@@ -21,15 +21,10 @@ use zip::{
 
 use crate::{
     ast::{
-        ConstExpr,
         Project,
         Sprite,
-        Type,
-        Value,
-        Var,
     },
     codegen::{
-        ai_detection::is_run_by_agent,
         cleanup,
         sb3::Sb3,
     },
@@ -154,23 +149,6 @@ pub fn build_impl<T: Write + Seek>(
     );
     visitor::pass3::visit_project(&mut project);
     visitor::pass4::visit_project(&mut project);
-    if is_run_by_agent(|name| std::env::var(name).ok()) {
-        project
-            .stage
-            .vars
-            .entry("goboscript_version=510P".into())
-            .or_insert(Var {
-                name: "goboscript_version=510P".into(),
-                span: 0..0,
-                type_: Type::Value,
-                default: Some(ConstExpr::Value {
-                    value: Value::String("".into()),
-                    span: 0..0,
-                }),
-                is_cloud: false,
-                is_used: true,
-            });
-    }
     log::info!("{:#?}", project);
     let mut sb3 = Sb3::new(fs.clone(), input.clone());
     sb3.project(

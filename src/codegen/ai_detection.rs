@@ -1,3 +1,7 @@
+use std::path::Path;
+
+use crate::vfs::VFS;
+
 // https://github.com/vercel/vercel/blob/main/packages/detect-agent/src/index.ts
 // https://github.com/sdairs/is-ai-agent/blob/main/src/lib.rs
 const AGENT_NONEMPTY_ENV_VARS: &[&str] = &[
@@ -24,10 +28,7 @@ const AGENT_NONEMPTY_ENV_VARS: &[&str] = &[
     "COPILOT_AGENT",
     "COPILOT_AGENT_JOB_ID",
     "COPILOT_AGENT_SESSION_ID",
-    "COPILOT_ALLOW_ALL",
     "COPILOT_CLI",
-    "COPILOT_GITHUB_TOKEN",
-    "COPILOT_MODEL",
     "CRUSH",
     "CURSOR_AGENT",
     "CURSOR_SANDBOX",
@@ -47,7 +48,6 @@ const AGENT_NONEMPTY_ENV_VARS: &[&str] = &[
     "OZ_RUN_ID",
     "PI_CODING_AGENT",
     "QWEN_CODE",
-    "REPL_ID",
     "ROO_CODE_TASK_ID",
     "TRAE_AI_SHELL_ID",
     "VECLI_DIR",
@@ -111,7 +111,8 @@ fn env_is_enabled(names: &[&str], env: &impl Fn(&str) -> Option<String>) -> bool
     })
 }
 
-pub(super) fn is_run_by_agent(env: impl Fn(&str) -> Option<String>) -> bool {
+pub(super) fn is_ai_project(fs: &dyn VFS, input: &Path) -> bool {
+    let env = |name: &str| std::env::var(name).ok();
     env_is_nonempty(AGENT_NONEMPTY_ENV_VARS, &env)
         || env_is_nonblank(AGENT_NONBLANK_ENV_VARS, &env)
         || env_equals(AGENT_EXACT_ENV_VALUES, &env)
@@ -121,4 +122,7 @@ pub(super) fn is_run_by_agent(env: impl Fn(&str) -> Option<String>) -> bool {
         || (env_is_nonempty(&["AGENT_CONTEXT_OUT"], &env)
             && env_is_nonempty(&["AGENT_DISPLAY_OUT"], &env))
         || env_contains(&["PS1", "PROMPT_COMMAND"], "###PS1JSON###", &env)
+        || ["AGENTS.md", "CLAUDE.md"]
+            .iter()
+            .any(|name| fs.is_file(&input.join(name)))
 }

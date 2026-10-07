@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run --no-project --with tomli python
+#!/usr/bin/env python3
 import argparse
 import http.client
 import json

@@ -96,11 +96,12 @@ stage_height = 480 # default is 360
 
 ## Notes
 
-Embeds the contents of a file as a comment inside the Stage.
+Add credits, instructions, or other project notes to the Stage using a text file.
 
 ```toml
 notes = "NOTES.md" # default is unset
 ```
 
-The comment is skipped if the file is missing or empty, and text longer than 8000
-characters is truncated.
+Notes appear in a Stage comment beneath the "created with goboscript" header.
+The header is included even when no notes are provided. Comments longer than
+8000 characters are shortened.

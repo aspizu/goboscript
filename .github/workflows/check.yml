@@ -5,7 +5,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: astral-sh/setup-uv@v10.0.1
             # TODO: remove this step and the script when stable cargo supports
             # registry.global-min-publish-age (stabilized in cargo 1.100).
             - run: ./tools/check-min-publish-age.py
