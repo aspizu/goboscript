@@ -1,3 +1,4 @@
+mod ai_detection;
 pub mod assets;
 pub mod build;
 mod cleanup;

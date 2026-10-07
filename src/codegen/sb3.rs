@@ -1,48 +1,29 @@
 use core::str;
 use std::{
     cell::RefCell,
-    io::{
-        self,
-        Write,
-    },
-    path::{
-        Path,
-        PathBuf,
-    },
+    io::{self, Write},
+    path::{Path, PathBuf},
     rc::Rc,
 };
 
 use anyhow::bail;
 use logos::Span;
-use rustc_hash::{
-    FxHashMap,
-    FxHashSet,
-};
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 
 use super::{
-    node::Node,
-    node_id::NodeID,
-    node_id_factory::NodeIDFactory,
-    turbowarp_config::TurbowarpConfig,
+    node::Node, node_id::NodeID, node_id_factory::NodeIDFactory, turbowarp_config::TurbowarpConfig,
 };
 use crate::{
     ast::*,
     blocks::Block,
     codegen::{
-        assets::AssetObjectStore,
-        datalists::read_list,
+        ai_detection::is_ai_project, assets::AssetObjectStore, datalists::read_list,
         mutation::Mutation,
     },
     config::Config,
-    diagnostic::{
-        DiagnosticKind,
-        SpriteDiagnostics,
-    },
-    misc::{
-        write_comma_io,
-        SmolStr,
-    },
+    diagnostic::{DiagnosticKind, SpriteDiagnostics},
+    misc::{write_comma_io, SmolStr},
     vfs::VFS,
 };
 
@@ -588,23 +569,17 @@ impl Sb3 {
         write!(self.json, r#""isStage":{}"#, name == STAGE_NAME)?;
         write!(self.json, r#","name":{}"#, json!(name))?;
         if name == STAGE_NAME {
-            let notes = read_notes(&fs, input, config)?;
+            let notes = read_notes(&mut *fs.borrow_mut(), input, config)?;
+            let notes = build_notes_comment(&notes, is_ai_project(&mut *fs.borrow_mut(), input));
             write!(self.json, r#","comments":{{"#)?;
-            let mut comma = false;
-            let twconfig_y = if notes.trim().is_empty() {
-                0
-            } else {
-                write_comma_io(&mut self.json, &mut comma)?;
-                self.comment("notes", 0, 0, NOTES_WIDTH, NOTES_HEIGHT, &notes)?;
-                NOTES_HEIGHT + COMMENT_GAP
-            };
-            write_comma_io(&mut self.json, &mut comma)?;
+            self.comment("notes", 0, 0, NOTES_WIDTH, NOTES_HEIGHT, &notes)?;
+            write!(self.json, ",")?;
             self.comment(
                 "twconfig",
                 0,
-                twconfig_y,
-                350,
-                170,
+                NOTES_HEIGHT + COMMENT_GAP,
+                240,
+                120,
                 &TurbowarpConfig::from(config).to_string(),
             )?;
             write!(self.json, "}}")?; // comments
@@ -1361,7 +1336,7 @@ impl Sb3 {
     }
 }
 
-fn read_notes(fs: &Rc<RefCell<dyn VFS>>, input: &Path, config: &Config) -> io::Result<String> {
+fn read_notes(fs: &mut dyn VFS, input: &Path, config: &Config) -> io::Result<String> {
     let Some(notes_path) = config
         .notes
         .as_deref()
@@ -1369,23 +1344,28 @@ fn read_notes(fs: &Rc<RefCell<dyn VFS>>, input: &Path, config: &Config) -> io::R
     else {
         return Ok(String::new());
     };
-    match fs.borrow_mut().read_to_string(&input.join(notes_path)) {
-        Ok(notes) => {
-            let notes = notes.strip_prefix('\u{feff}').unwrap_or(&notes);
-            if notes.chars().count() > COMMENT_TEXT_LIMIT {
-                let mut truncated: String = notes.chars().take(COMMENT_TEXT_LIMIT - 1).collect();
-                truncated.push(ELLIPSIS);
-                Ok(truncated)
-            } else {
-                Ok(notes.to_string())
-            }
-        }
+    match fs.read_to_string(&input.join(notes_path)) {
+        Ok(notes) => Ok(notes),
         Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(String::new()),
         Err(err) => Err(io::Error::new(
             err.kind(),
             format!("failed to read notes file `{notes_path}`"),
         )),
     }
+}
+
+fn build_notes_comment(notes: &str, is_ai: bool) -> String {
+    let slop_marker = if is_ai { "510P" } else { "" };
+    let notes = notes.strip_prefix('\u{feff}').unwrap_or(notes);
+    let mut text = format!(
+        "{}{slop_marker}\n\n{notes}",
+        include_str!("../LOGO.txt").trim_end(),
+    );
+    if text.chars().count() > COMMENT_TEXT_LIMIT {
+        text = text.chars().take(COMMENT_TEXT_LIMIT - 1).collect();
+        text.push(ELLIPSIS);
+    }
+    text
 }
 
 fn compute_layers(project: &Project, config: &Config) -> anyhow::Result<FxHashMap<SmolStr, usize>> {
