@@ -102,6 +102,6 @@ Add credits, instructions, or other project notes to the Stage using a text file
 notes = "NOTES.md" # default is unset
 ```
 
-Notes appear in a Stage comment beneath the "created with goboscript" header.
-The header is included even when no notes are provided. Comments longer than
+Notes appear in a Stage comment beneath the goboscript logo.
+The logo is included even when no notes are provided. Comments longer than
 8000 characters are shortened.

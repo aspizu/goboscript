@@ -1355,13 +1355,11 @@ fn read_notes(fs: &mut dyn VFS, input: &Path, config: &Config) -> io::Result<Str
 }
 
 fn build_notes_comment(notes: &str, is_ai: bool) -> String {
-    let slop_marker = if is_ai { "510P" } else { "5000" };
+    let slop_marker = if is_ai { "510P" } else { "" };
     let notes = notes.strip_prefix('\u{feff}').unwrap_or(notes);
     let mut text = format!(
-        "created with goboscript {} ({slop_marker})\n---\n{notes}",
-        option_env!("GIT_HASH")
-            .filter(|hash| !hash.is_empty())
-            .unwrap_or(env!("CARGO_PKG_VERSION"))
+        "{}{slop_marker}\n\n{notes}",
+        include_str!("../LOGO.txt").trim_end(),
     );
     if text.chars().count() > COMMENT_TEXT_LIMIT {
         text = text.chars().take(COMMENT_TEXT_LIMIT - 1).collect();
