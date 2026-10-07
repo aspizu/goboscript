@@ -570,7 +570,7 @@ impl Sb3 {
         write!(self.json, r#","name":{}"#, json!(name))?;
         if name == STAGE_NAME {
             let notes = read_notes(&mut *fs.borrow_mut(), input, config)?;
-            let notes = build_notes_comment(&notes, is_ai_project(&*fs.borrow(), input));
+            let notes = build_notes_comment(&notes, is_ai_project(&mut *fs.borrow_mut(), input));
             write!(self.json, r#","comments":{{"#)?;
             self.comment("notes", 0, 0, NOTES_WIDTH, NOTES_HEIGHT, &notes)?;
             write!(self.json, ",")?;

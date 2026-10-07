@@ -4,6 +4,7 @@ use std::{
         self,
         Cursor,
         Read,
+        Write,
     },
     path::{
         Path,
@@ -31,6 +32,10 @@ pub trait VFS {
     fn is_dir(&self, path: &Path) -> bool;
     fn is_file(&self, path: &Path) -> bool;
     fn glob(&mut self, pattern: &str) -> io::Result<Vec<PathBuf>>;
+
+    fn create_new_file(&mut self, _path: &Path, _contents: &[u8]) -> io::Result<()> {
+        Err(io::ErrorKind::Unsupported.into())
+    }
 
     fn read_to_string(&mut self, path: &Path) -> io::Result<String> {
         let mut file = self.read_file(path)?;
@@ -82,6 +87,14 @@ impl VFS for RealFS {
             entries.push(path);
         }
         Ok(entries)
+    }
+
+    fn create_new_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)?
+            .write_all(contents)
     }
 }
 
@@ -176,6 +189,22 @@ impl VFS for MemFS {
             }
         }
         Ok(entries)
+    }
+
+    fn create_new_file(&mut self, path: &Path, contents: &[u8]) -> io::Result<()> {
+        if self.is_file(path) || self.is_dir(path) {
+            return Err(io::ErrorKind::AlreadyExists.into());
+        }
+        let path_str = path
+            .to_str()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid UTF-8 in path"))?;
+        self.files.insert(
+            path_str.to_owned(),
+            Data {
+                inner: contents.to_vec(),
+            },
+        );
+        Ok(())
     }
 }
 
