@@ -1,17 +1,16 @@
 # Functions
 
-Functions are reusable procedures (custom blocks) that can return values, including 
-primitives or structs. Functions always run in **Run without screen refresh** mode and 
-**must only be called** from other **Run without screen refresh** procedures or 
+Functions are reusable procedures (custom blocks) that can return values, including
+primitives or structs. Functions always run in **Run without screen refresh** mode and
+**must only be called** from other **Run without screen refresh** procedures or
 functions to prevent undefined behavior.
 
-Each function must **end with a `return` statement**. Using `stop_this_script` inside 
-a function is undefined behavior.
-
+Each function must **end with a `return` statement** — the compiler does not check this.
+Using `stop_this_script` inside a function is undefined behavior.
 
 ## Declaring a Function
 
-Use the `func` keyword to define a function. Optionally, include a return type for 
+Use the `func` keyword to define a function. Optionally, include a return type for
 functions that return a struct.
 
 ```goboscript
@@ -51,21 +50,28 @@ func vec_add(Vector lhs, Vector rhs) Vector {
 ### Using the Returned Struct
 
 ```goboscript
-# Create vectors
-Vector vec1 = Vector { x: 10, y: 20 };
-Vector vec2 = Vector { x: 5, y: 15 };
+proc show_vector_sum {
+    # Create vectors
+    Vector vec1 = Vector { x: 10, y: 20 };
+    Vector vec2 = Vector { x: 5, y: 15 };
 
-# Call function that returns a struct
-Vector result = vec_add(vec1, vec2);
+    # Call function that returns a struct
+    Vector result = vec_add(vec1, vec2);
 
-# Access the returned struct's fields
-say result.x; # Outputs: 15
-say result.y; # Outputs: 35
+    # Access the returned struct's fields
+    say result.x; # Outputs: 15
+    say result.y; # Outputs: 35
+}
+
+onflag {
+    show_vector_sum;
+}
 ```
 
-!!!NOTE
+!!! note
     When returning struct variables from functions, the return type must be explicitly
-    specified when returning a struct
+    specified when returning a struct.
+
 ---
 
 ## Default Argument Values
@@ -85,7 +91,7 @@ func greet(name = "world") {
 
 ## Calling a Function
 
-Functions are called by name with argument values:
+Call a function by name with argument values:
 
 ```goboscript
 say my_function(1, 2);
@@ -96,14 +102,14 @@ say my_function(1, 2);
 ## Keyword Arguments
 
 You can also call functions using **keyword arguments**, which specify parameter names
- explicitly. This is useful when using default arguments or calling functions with many 
- parameters:
+explicitly. This is useful when using default arguments or calling functions with many
+parameters:
 
 ```goboscript
-greet(name: "aspizu")
+say greet(name: "aspizu");
 ```
 
-This behaves the same as `greet("aspizu")`, but makes the call more readable—especially 
+The call returns the same value as `greet("aspizu")`, but makes the call more readable—especially
 when multiple parameters are involved:
 
 ```goboscript
@@ -115,15 +121,15 @@ func introduce(name, title = "developer", location = "unknown") {
 Call it with keyword arguments:
 
 ```goboscript
-introduce(name: "aspizu", location: "India")
-# Equivalent to: introduce("aspizu", "developer", "India")
+say introduce(name: "aspizu", location: "India");
+# Equivalent to: say introduce("aspizu", "developer", "India");
 ```
 
-!!!NOTE 
+!!! note
     Keyword arguments can be used in any order, as long as the required parameters
     are provided:
 
     ```goboscript
-    introduce(location: "Berlin", name: "Kai");
+    say introduce(location: "Berlin", name: "Kai");
     # Still valid
     ```

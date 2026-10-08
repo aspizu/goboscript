@@ -121,14 +121,15 @@ All tokens inside the parentheses are joined with spaces and produced as a singl
 STRINGIFY(hello world) # becomes "hello world"
 ```
 
-This is useful when you need to turn a macro expansion or a sequence of tokens into a
-string at compile time:
+This is useful when you need to turn a sequence of tokens into a string at compile time.
+Tokens inside `STRINGIFY` are stringified as written; macros inside its argument are
+not expanded:
 
 ```goboscript
 %define VERSION 1 2 3
 
 onflag {
-    say STRINGIFY(VERSION); # says "1 2 3"
+    say STRINGIFY(VERSION); # says "VERSION"
 }
 ```
 

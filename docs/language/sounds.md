@@ -1,9 +1,8 @@
 # Sounds
 
 !!! note
-    Scratch only supports MP3 and WAV files.
-    Other formats will (as of now) not raise a warning or error, and the project will
-    refuse to load in Scratch.
+    Scratch only supports MP3 and WAV files. goboscript accepts `.mp3`, `.wav`, and
+    `.wave` file extensions and reports an error for unsupported sound formats.
 
 You can add sounds to a sprite by specifying their file paths relative to the project
 directory.

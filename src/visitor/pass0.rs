@@ -116,7 +116,7 @@ fn visit_enum(enum_: &mut Enum) {
     for variant in &mut enum_.variants {
         if let Some((value, _)) = &variant.value {
             if let Value::Number(number) = value {
-                index = *number;
+                index = *number + 1.0;
             }
         } else {
             variant.value = Some((Value::Number(index), variant.span.clone()));
