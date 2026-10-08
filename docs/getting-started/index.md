@@ -21,7 +21,6 @@ This will create a new project with the following structure:
 ├── .gitignore
 ├── goboscript.toml
 ├── main.gs
-├── playground.sb3
 └── stage.gs
 ```
 

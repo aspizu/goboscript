@@ -60,7 +60,7 @@ next_costume;
 next costume
 ```
 
-### switch backdrop to (next backdrop)
+### switch backdrop to ()
 
 ```goboscript
 switch_backdrop "backdrop";

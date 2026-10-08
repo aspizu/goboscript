@@ -23,14 +23,22 @@ Use an `until` loop with an empty body:
 until (condition) {}
 ```
 
-### Encapsulating Variables
+### Namespacing Variables
 
-Use `%define` to alias a long unique name to a short local one, then `%undef` it at the end of the file so other files can't access it directly.
+Use `%define` to alias a long unique variable name to a short name within a header,
+then `%undef` it at the end of the header to prevent the alias from affecting later
+code. Declare the variable before reading it.
+
+The underlying variable remains accessible to other code by its full name.
+After `%undef`, assigning `private_variable = 10;` declares a separate variable
+named `private_variable`.
 
 `lib/my_module.gs`
 
 ```goboscript
 %define private_variable __my_module__private_variable
+
+var private_variable = 0;
 
 func get_my_variable() {
     return private_variable;
@@ -44,9 +52,13 @@ func get_my_variable() {
 ```goboscript
 %include lib/my_module
 
-onflag {
+proc show_my_variable {
     say get_my_variable();
-    # private_variable = 10; # error — alias no longer defined
+}
+
+onflag {
+    show_my_variable;
+    # say private_variable; # error — alias no longer defined
 }
 ```
 

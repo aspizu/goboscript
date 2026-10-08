@@ -5,7 +5,8 @@ configuration.
 
 ## Standard Library Version
 
-If not provided, the latest version is picked (Updates fetched daily)
+If not provided, the latest version is picked. The selected version is cached for
+seven days before checking for updates on a subsequent build.
 
 ```toml
 std = "2.1.0" # default is unset

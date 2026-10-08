@@ -29,6 +29,18 @@ nightly too:
 rustup toolchain install nightly
 ```
 
+The development scripts also require Python 3.9 or later, Node.js, and the pnpm
+version declared in `package.json`. Install Prettier separately and ensure the
+`prettier` command is available on your `PATH`. From the repository root, install
+the workspace dependencies:
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+This provides `tsx` and its dependencies for schema validation. Run the development
+commands below from the repository root.
+
 ## Development
 
 To make development easier, and to validate the generated Scratch project -- use
@@ -39,7 +51,7 @@ tools/run.py --validate # or `-v`
 ```
 
 This assumes that you have set-up a testing project at `playground/`. (You can create a
-testing project by running `goboscript new -G playground`). It will compile the project,
+testing project by running `cargo run -- new -G playground`). It will compile the project,
 validate it using the schemas from `scratch-parser`. If the validation fails, Scratch
 will refuse to load the project.
 
