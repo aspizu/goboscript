@@ -43,13 +43,7 @@ cargo install --git https://github.com/aspizu/goboscript --locked --force
 
 ### devShell
 
-You can test goboscript without installing it to your system with the nix devshell, a bit like `nix-shell -p {some package}`.
-This will create a subshell where `goboscript` is installed.
-Once you exit this subshell, you will no longer be able to use the `goboscript` command
-(until you open a new devShell or install it system-wide).
-Once you run `nix-collect-garbage`, the `goboscript` installation files will actually be removed from your system.
-
-Simply run the command `nix develop github:aspizu/goboscript`
+The demo devshell can be accessed with `nix develop github:aspizu/goboscript#demo`
 
 ### Nixos standalone installation (flake)
 
@@ -69,7 +63,7 @@ For nix flakes, add the input `goboscript` and add it to `environment.systemPack
       modules = [
         ({ pkgs, ... }: {
           environment.systemPackages = [
-            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
+            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript # this is the important line
           ];
         })
         # The rest of your nixos configuration...
