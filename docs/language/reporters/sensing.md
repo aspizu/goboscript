@@ -242,10 +242,19 @@ user_answer = answer();
 
 ### difficult to name thing of thing block
 
+Use `object."property"` to read a sprite or Stage property or variable. The object
+may be an expression; the property must be a string literal.
+
 ```goboscript
 backdrop_number = "Stage"."backdrop #";
+other_score = "main"."score";
 ```
 
 ```scratchblocks
 ([backdrop #] of (Stage v))
 ```
+
+Sprite properties include `"x position"`, `"y position"`, `"direction"`,
+`"costume #"`, `"costume name"`, `"size"`, and `"volume"`. For the Stage, use
+`"backdrop #"`, `"backdrop name"`, or `"volume"`. To read a variable, use its name
+as the property string.

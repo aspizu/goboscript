@@ -33,6 +33,16 @@ If a variable is assigned to in `stage.gs`, it will be declared as **for all spr
 Variables are by-default declared as **for this sprite only**. If you want to declare a
 variable **for all sprites**, assign to it in `stage.gs`.
 
+## Cloud Variables
+
+Declare cloud variables in `stage.gs`:
+
+```goboscript
+cloud high_score;
+```
+
+Inside a script, you can also declare one with `cloud high_score = 100;`.
+
 ## Local Variables
 
 Local variables are accessible only within the procedure they are declared in.
@@ -77,3 +87,5 @@ show variable_name;
 ```goboscript
 hide variable_name;
 ```
+
+For a struct variable, `show` and `hide` apply to the monitor for each field.

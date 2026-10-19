@@ -19,11 +19,12 @@ Include the contents of a file.
 The `.gs` extension is optional. If not specified (recommended), the file extension will
 be added automatically.
 
-If the include path is a directory, the file inside the directory with the same name as
-the directory will be included.
-
 By default, the include path is relative to the project root directory. To include a
-file relative to the current file, use `./` or `../`
+file relative to the current file, use `./` or `../`. Paths starting with `std/`
+refer to the [standard library](../standard-library.md).
+
+Each header is included once per sprite. Macro definitions do not cross sprite
+boundaries.
 
 !!! tip
     [`bkpk.py`](https://gist.github.com/aspizu/c81452bfb7a333d0819f0279e51e078a) is a small
@@ -94,9 +95,14 @@ all overloads for that name at once.
 
 ## Conditional compilation
 
+`%if name` checks whether a macro without arguments is defined, even if its value
+is `0`.
+
 ```goboscript
 %if macro_name
     code
+%else
+    other_code
 %endif
 ```
 
@@ -107,6 +113,8 @@ all overloads for that name at once.
 ```
 
 ## Concatenate Tokens
+
+`CONCAT` expands its arguments before joining them. Each must expand to one token.
 
 ```goboscript
 CONCAT(prefix, suffix) # becomes prefixsuffix

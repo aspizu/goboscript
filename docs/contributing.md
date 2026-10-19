@@ -78,6 +78,11 @@ If you want to validate some `.sb3` file, use:
 tools/sb3.py path/to/project.sb3 --validate # or `-v`
 ```
 
+## Documentation
+
+Install [uv](https://docs.astral.sh/uv/), then run `pnpm run build:docs` to build
+the docs or `pnpm run dev:docs` for a local preview.
+
 ## Conventions
 
 We use conventional commits. (See `git log --oneline` to understand this)

@@ -62,3 +62,7 @@ If the compilation fails, and you have got errors, the generated `.sb3` file wil
 invalid and should not be opened in Scratch.
 
 Run `goboscript build --help` for more information.
+
+## Shell completions
+
+For Bash completions, run `source <(goboscript completions bash)`.
