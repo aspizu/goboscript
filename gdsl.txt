@@ -200,3 +200,5 @@ answer                            answer                         |              
 [operator]=======================================================|====================|=
 random                            random            FROM,TO      |                    | 
 contains                          contains          STRING1,STRING2|                  |
+[music]==========================================================|====================|=
+tempo                             getTempo                       |                    |

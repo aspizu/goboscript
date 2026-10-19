@@ -1134,6 +1134,7 @@ pub enum Repr {
     Answer,
     Random,
     Contains,
+    Tempo,
 }
 
 impl Repr {
@@ -1220,6 +1221,7 @@ impl Repr {
             ("answer", _) => Some(Self::Answer),
             ("random", _) => Some(Self::Random),
             ("contains", _) => Some(Self::Contains),
+            ("tempo", _) => Some(Self::Tempo),
             _ => None,
         }
     }
@@ -1261,6 +1263,7 @@ impl Repr {
             Self::Answer => "answer",
             Self::Random => "random",
             Self::Contains => "contains",
+            Self::Tempo => "tempo",
         }
     }
 
@@ -1301,6 +1304,7 @@ impl Repr {
             "answer",
             "random",
             "contains",
+            "tempo",
         ]
     }
 
@@ -1341,6 +1345,7 @@ impl Repr {
             Self::Answer => "sensing_answer",
             Self::Random => "operator_random",
             Self::Contains => "operator_contains",
+            Self::Tempo => "music_getTempo",
         }
     }
 
@@ -1381,6 +1386,7 @@ impl Repr {
             Self::Answer => &[],
             Self::Random => &["FROM", "TO"],
             Self::Contains => &["STRING1", "STRING2"],
+            Self::Tempo => &[],
         }
     }
 
@@ -1421,6 +1427,7 @@ impl Repr {
             Self::Answer => None,
             Self::Random => None,
             Self::Contains => None,
+            Self::Tempo => None,
         }
     }
 }
