@@ -52,6 +52,9 @@ If type is specified, each list item is made-up by N lines where N is the no. of
 
 ## Operations
 
+List indices start at `1`. `item in list_name` returns the first matching index,
+or `0` if absent.
+
 ### Add item to list
 
 ```goboscript
@@ -117,6 +120,8 @@ show list_name;
 ```goboscript
 hide list_name;
 ```
+
+For a struct list, `show` and `hide` apply to the list monitor for each field.
 
 ### Get random/last item in list
 

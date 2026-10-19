@@ -38,6 +38,7 @@ nav:
           - Sound: language/reporters/sound.md
           - Sensing: language/reporters/sensing.md
           - Music: language/reporters/music.md
+          - TurboWarp: language/reporters/turbowarp.md
       - Custom Blocks: language/custom-blocks.md
       - Functions: language/functions.md
       - Enums: language/enums.md

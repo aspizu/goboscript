@@ -20,6 +20,8 @@ Specify the order in which sprites are layered, by default the order is alphabet
 layers = ["sprite_name_1", "sprite_name_2"]
 ```
 
+Sprites are listed from back to front.
+
 ## Bitmap Resolution
 
 Controls the resolution handling for bitmap images (PNG, BMP) in your project.
@@ -106,3 +108,5 @@ notes = "NOTES.md" # default is unset
 Notes appear in a Stage comment beneath the goboscript logo.
 The logo is included even when no notes are provided. Comments longer than
 8000 characters are shortened.
+
+The notes path is relative to the project directory.

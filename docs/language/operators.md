@@ -45,6 +45,22 @@
 | `x not in y` | ![](../assets/notin.png){width="125"} |
 | `x[y]` | ![](../assets/letterof.png){width="125"} |
 
+## Operator Precedence
+
+Highest precedence first:
+
+| Order | Operators | Grouping |
+| --- | --- | --- |
+| 1 | Calls `f(...)`, indexing `x[i]`, and field access `x.field` | Left to right |
+| 2 | Unary operators, including `-`, `not`, and `length` | Right to left |
+| 3 | `*`, `/`, `//`, `%` | Left to right |
+| 4 | `+`, `-` | Left to right |
+| 5 | `<`, `<=`, `>`, `>=` | Left to right |
+| 6 | `&` | Right to left |
+| 7 | `in`, `not in`, `==`, `!=` | Left to right |
+| 8 | `and` | Left to right |
+| 9 | `or` | Left to right |
+
 ## Reporters
 
 ### pick random () to ()
