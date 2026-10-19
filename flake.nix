@@ -23,7 +23,13 @@
     devShells = forAllSystems (system: pkgs: {
       default = pkgs.mkShell {
         buildInputs = with pkgs; [git cargo rustc];
+        inputsFrom = [self.packages.${system}.goboscript];
+      };
+      demo = pkgs.mkShell {
         packages = [self.packages.${system}.goboscript];
+        shellHook = ''
+          goboscript --help
+        '';
       };
     });
   };
