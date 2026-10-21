@@ -39,25 +39,23 @@ cargo install --git https://github.com/aspizu/goboscript --locked --force
 
     The nix flake installs goboscript from source, like the other methods, so you will need to be patient.
 
+    You can also [install the goboscript VSCode extension with nix](./editor-integration/vscode.md).
+
 ### devShell
 
-You can test goboscript without installing it to your system with the nix devshell, a bit like `nix-shell -p {some package}`.
-This will create a subshell where `goboscript` is installed.
-Once you exit this subshell, you will no longer be able to use the `goboscript` command
-(until you open a new devShell or install it system-wide).
-Once you run `nix-collect-garbage`, the `goboscript` installation files will actually be removed from your system.
-
-Simply run the command `nix develop github:aspizu/goboscript`
+The demo devshell can be accessed with `nix develop github:aspizu/goboscript#demo`
 
 ### Nixos standalone installation (flake)
 
-This is for if you want to have `goboscript` available system-wide.
-For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake, roughly like so:
+To install the goboscript *compiler*, you can add `goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript` to your system packages list.
+For nix flakes, add the input `goboscript` and add it to `environment.systemPackages` in your flake like so:
+
+[This repository](https://codeberg.org/rtk/dotfiles) is an example usage of the goboscript flake.
 
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=25.11";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=26.05";
     goboscript.url = "github:aspizu/goboscript";
   };
   outputs = { self, nixpkgs, goboscript, ... }: {
@@ -65,9 +63,10 @@ For nix flakes, add the input `goboscript` and add it to `environment.systemPack
       modules = [
         ({ pkgs, ... }: {
           environment.systemPackages = [
-            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript
+            goboscript.packages.${pkgs.stdenv.hostPlatform.system}.goboscript # this is the important line
           ];
         })
+        # The rest of your nixos configuration...
       ];
     };
   };
