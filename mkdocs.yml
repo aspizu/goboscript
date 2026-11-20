@@ -55,6 +55,7 @@ nav:
       - Notepad++: editor-integration/notepad++.md
 theme:
   name: material
+  custom_dir: overrides
   logo: assets/goboscript.svg
   favicon: assets/goboscript.svg
   features:
