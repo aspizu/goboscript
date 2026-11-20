@@ -26,7 +26,7 @@
       "patterns": [
         {
           "name": "meta.preprocessor.goboscript",
-          "match": "^(%)(define)\\s+([_a-zA-Z][_a-zA-Z0-9]*)",
+          "match": "^(%)(define)\\s+([_a-zA-Z\\u0400-\\u04FF][_a-zA-Z0-9\\u0400-\\u04FF]*)",
           "captures": {
             "1": {
               "name": "punctuation.definition.directive.goboscript"
@@ -100,7 +100,7 @@
       "patterns": [
         {
           "comment": "proc and func names",
-          "match": "\\b(proc|func)\\b\\s*([_a-zA-Z][_a-zA-Z0-9]*)",
+          "match": "\\b(proc|func)\\b\\s*([_a-zA-Z\\u0400-\\u04FF][_a-zA-Z0-9\\u0400-\\u04FF]*)",
           "captures": {
             "1": {
               "name": "keyword.other.declaration.goboscript"
@@ -112,7 +112,7 @@
         },
         {
           "comment": "struct and enum names",
-          "match": "\\b(struct|enum)\\b\\s*([_a-zA-Z][_a-zA-Z0-9]*)",
+          "match": "\\b(struct|enum)\\b\\s*([_a-zA-Z\\u0400-\\u04FF][_a-zA-Z0-9\\u0400-\\u04FF]*)",
           "captures": {
             "1": {
               "name": "keyword.other.declaration.goboscript"
@@ -176,7 +176,7 @@
         },
         {
           "name": "variable.parameter.goboscript",
-          "match": "\\$[_a-zA-Z0-9]+"
+          "match": "\\$[_a-zA-Z0-9\\u0400-\\u04FF]+"
         }
       ]
     },
@@ -205,7 +205,7 @@
       "match": ",|;|:|\\.|\\(|\\)|\\[|\\]|\\{|\\}"
     },
     "dotted-names": {
-      "match": "([_a-zA-Z][_a-zA-Z0-9]*)\\.([_a-zA-Z][_a-zA-Z0-9]*)",
+      "match": "([_a-zA-Z\\u0400-\\u04FF][_a-zA-Z0-9\\u0400-\\u04FF]*)\\.([_a-zA-Z\\u0400-\\u04FF][_a-zA-Z0-9\\u0400-\\u04FF]*)",
       "captures": {
         "1": {
           "name": "entity.name.type.goboscript"
@@ -217,11 +217,11 @@
     },
     "pascal-case-names": {
       "name": "entity.name.type.goboscript",
-      "match": "\\b[A-Z][_a-zA-Z0-9]*[a-z][_a-zA-Z0-9]*\\b"
+      "match": "\\b[A-Z\\u0400-\\u042F][_a-zA-Z0-9\\u0400-\\u04FF]*[a-z\\u0430-\\u045F][_a-zA-Z0-9\\u0400-\\u04FF]*\\b"
     },
     "screaming-case-names": {
       "name": "variable.other.constant.goboscript",
-      "match": "\\b[A-Z_][A-Z0-9_]*\\b"
+      "match": "\\b[A-Z_\\u0400-\\u042F][A-Z0-9_\\u0400-\\u042F]*\\b"
     }
   }
 }
