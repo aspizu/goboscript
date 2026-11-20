@@ -24,9 +24,9 @@ pub enum Token {
     Newline,
     #[token("\\")]
     Backslash,
-    #[regex(r"[_a-zA-Z][_a-zA-Z0-9]*", name)]
+    #[regex(r"[\p{XID_Start}_][\p{XID_Continue}]*", name)]
     Name(SmolStr),
-    #[regex(r"\$[_a-zA-Z0-9]+", arg)]
+    #[regex(r"\$[\p{XID_Continue}]+", arg)]
     Arg(SmolStr),
     #[regex(r"0b[0-1][_0-1]*", bin)]
     Bin(i64),
